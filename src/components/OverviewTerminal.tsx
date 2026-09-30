@@ -997,7 +997,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </div>
             </div>
 
-            <div className="space-y-3 flex-1 flex flex-col justify-around my-auto py-1">
+            <div className="space-y-2 flex-1 flex flex-col justify-around my-auto py-0.5">
               {[
                 {
                   id: 'weather-us-corn-belt',
@@ -1029,30 +1029,29 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               ].map((item, index) => (
                 <div 
                   key={index} 
-                  className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200/60 text-xs gap-2"
+                  className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 border border-slate-200/60 text-xs"
                 >
-                  {/* Left Group: Icon + Region Title + (Country/State) */}
-                  <div className="flex items-center gap-1.5 min-w-0 shrink-0">
-                    <span className="text-base shrink-0">{item.icon}</span>
+                  {/* Left: Icon + Title + Sub-region */}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-base flex-shrink-0">{item.icon}</span>
                     <span className="font-bold text-slate-800 whitespace-nowrap">{item.title}</span>
-                    <span className="text-slate-400 text-[11px] whitespace-nowrap">({item.region})</span>
+                    <span className="text-slate-400 text-[10px] font-normal whitespace-nowrap">({item.region})</span>
                   </div>
 
-                  {/* Right Group: Temp + Rain + Status Badge */}
-                  <div className="flex items-center gap-2.5 shrink-0 ml-auto" id={item.id}>
-                    <span className="font-mono text-slate-700 font-semibold whitespace-nowrap">{item.temp}°C</span>
+                  {/* Right: Temp + Rain + Status Badge */}
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2" id={item.id}>
+                    <span className="font-mono font-semibold text-slate-700 text-xs">{item.temp}°C</span>
                     <span className="text-slate-300">·</span>
-                    <span className="font-mono text-slate-500 text-[11px] whitespace-nowrap">강우 {item.rain}mm</span>
+                    <span className="font-mono text-slate-500 text-[11px]">{item.rain}mm</span>
                     
-                    {/* Status Badge */}
-                    <span className={`px-2 py-0.5 rounded text-[11px] font-medium whitespace-nowrap ${
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
                       item.status.includes('건조') || item.status.includes('고온') 
-                        ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+                        ? 'bg-rose-50 text-rose-700 border-rose-200' 
                         : item.status.includes('흐림') || item.status.includes('주의')
-                        ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                        : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     }`}>
-                      ({item.status})
+                      {item.status}
                     </span>
                   </div>
                 </div>
@@ -1304,142 +1303,110 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
       {/* ==================== PAGE 2: AI BRIEFS & DESK DIRECTIVES ==================== */}
       <div className="overview-page-2 print:break-before-page flex flex-col space-y-4 print:space-y-3.5 w-full">
         {/* 5. Lower Split Dashboard: AI Market Brief + Key Market Issues */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 print:grid print:grid-cols-2 print:gap-4 print:w-full break-inside-avoid print:break-inside-avoid">
-        {/* Left: Combined AI Market Brief & Desk Sourcing Directives (7 cols on lg, 1 col in print) */}
-        <div className="lg:col-span-7 print:col-span-1 print:w-full">
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 shadow-sm flex flex-col justify-between h-full space-y-6 pdf-section-card min-h-[320px] break-inside-avoid print:break-inside-avoid">
-            {/* Top Section: AI Market Brief */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 my-4">
+          {/* Left Column (7 cols): AI Market Brief & Desk Directives */}
+          <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
             <AiMarketBrief aiBriefText={aiBriefText} />
 
-            {/* Divider */}
-            <hr className="border-t border-[#F1F5F9] my-2" />
+            <hr className="border-t border-slate-100 my-2" />
 
-            {/* Bottom Section: Desk Sourcing Directives */}
-            <div className="space-y-3">
-              <span className="text-[10px] text-[#6b7280] uppercase font-bold tracking-wider block mb-1">
-                데스크 구매 실행 지침 (Desk Sourcing Directives)
+            <div className="space-y-2.5">
+              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">
+                데스크 구매 실행 지침 (DESK SOURCING DIRECTIVES)
               </span>
-              <div className="flex items-center gap-3 p-3.5 bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
-                <span className="px-1.5 py-0.5 bg-[#DF0029] text-white text-[10px] rounded font-bold shrink-0">
+              
+              <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
+                <span className="px-2 py-0.5 bg-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">
                   조치 필요
                 </span>
-                <span className="text-xs font-semibold text-[#111827] break-keep">
+                <span className="text-xs font-bold text-slate-800 break-keep">
                   현재 BMD 하락 구간에서 2025 Q1 팜유 포워드 커버리지 확보
                 </span>
               </div>
-              <div className="flex items-center gap-3 p-3.5 bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
-                <span className="px-1.5 py-0.5 bg-[#fff7ed] text-[#EC870C] border border-[#fed7aa] text-[10px] rounded font-bold shrink-0">
+
+              <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
+                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/80 text-[11px] rounded font-bold shrink-0">
                   주시
                 </span>
-                <span className="text-xs font-semibold text-[#111827] break-keep">
+                <span className="text-xs font-bold text-slate-800 break-keep">
                   미국 농무부(USDA) 캔자스 동계소맥 작황 보고서 발표
                 </span>
               </div>
-              <div className="flex items-center gap-3 p-3.5 bg-white border border-[#E2E8F0] rounded-lg shadow-sm">
-                <span className="px-1.5 py-0.5 bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] text-[10px] rounded font-semibold shrink-0">
+
+              <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
+                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] rounded font-semibold shrink-0">
                   우호적 조건
                 </span>
-                <span className="text-xs font-semibold text-[#111827] break-keep">
-                  로테르담 및 함부르크발 부산향 스팟 컨테이너 운임 안정
+                <span className="text-xs font-bold text-slate-800 break-keep">
+                  로테르담 및 함부르크발 부산항 스팟 컨테이너 운임 안정
                 </span>
               </div>
             </div>
 
-            {/* Footer Citation */}
-            <div className="text-xs text-[#94A3B8] font-normal text-right pt-2 select-none">
+            <div className="text-[10px] text-slate-400 font-normal text-right pt-2 select-none">
               출처: Refinitiv · USDA · CBOT · Platts (Gemini AI & RMS 멀티소스 피드 분석)
             </div>
           </div>
-        </div>
 
-        {/* Right: Key Market Issues (5 cols on lg, 1 col in print) */}
-        <div className="lg:col-span-5 print:col-span-1 print:w-full bg-white p-4 rounded-lg shadow-sm border border-[#e5e7eb] flex flex-col justify-between space-y-3 pdf-section-card min-h-[320px] break-inside-avoid print:break-inside-avoid">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between pb-1.5 border-b border-[#f3f4f6]">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="material-symbols-outlined text-[20px] text-[#DF0029] shrink-0">notification_important</span>
-                <h2 className="text-sm text-[#111827] font-bold break-keep">주요 시장 이슈 (Key Market Issues)</h2>
+          {/* Right Column (5 cols): Key Market Issues */}
+          <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-3">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="material-symbols-outlined text-[20px] text-[#DF0029] shrink-0">notification_important</span>
+                  <h2 className="text-sm font-bold text-slate-900 break-keep">주요 시장 이슈 (Key Market Issues)</h2>
+                </div>
+                <span className="text-[10px] bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded text-slate-600 font-sans font-medium shrink-0">
+                  5개 활성 모니터링
+                </span>
               </div>
-              <span className="text-[10px] bg-[#f3f4f6] border border-[#e5e7eb] px-1.5 py-0.5 rounded text-[#4b5563] font-sans font-medium shrink-0">
-                5개 활성 모니터링
-              </span>
-            </div>
 
-            <div className="space-y-2">
-              {localMarketIssues.map((issue) => {
-                const targetUrl = issue.url && !isInvalidOrSearchUrl(issue.url)
-                  ? issue.url
-                  : getPublisherPortalUrl(issue.source, issue.url);
-
-                return (
+              <div className="space-y-2.5">
+                {localMarketIssues.map((issue) => (
                   <article
                     key={issue.id}
-                    className="news-card-item p-4 bg-white border border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between min-w-0"
+                    className="p-3 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 transition-all flex flex-col justify-between space-y-2"
                   >
-                    <div>
-                      {/* Top Row: Pill Badges */}
-                      <div className="flex items-center justify-between mb-2 gap-2">
-                        <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-semibold border ${
-                              issue.risk === 'High'
-                                ? 'bg-rose-50 border-rose-200 text-[#DF0029]'
-                                : issue.risk === 'Med'
-                                ? 'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
-                                : 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
-                            }`}
-                          >
-                            {issue.risk === 'High' ? '고위험' : issue.risk === 'Med' ? '중위험' : '저위험'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Title Link */}
-                      <h4 className="text-sm font-bold text-slate-900 hover:text-blue-600 hover:underline leading-snug break-keep cursor-pointer transition-colors mb-1.5">
-                        <a
-                          href={targetUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="block w-full"
-                        >
-                          {issue.title}
-                        </a>
-                      </h4>
-                    </div>
-
-                    {/* Unified Footer Row: Date + Direction on Left | Publisher Source on Right */}
-                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                      <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-400 flex-wrap">
-                        <span>{issue.date}</span>
-                        {issue.direction && (
-                          <>
-                            <span>·</span>
-                            <span
-                              className={`font-sans font-bold text-[10px] ${
-                                issue.direction === 'Bullish' || issue.direction === '상승' ? 'text-[#DF0029]' : 'text-[#059669]'
-                              }`}
-                            >
-                              {issue.direction === 'Bullish' || issue.direction === '상승' ? '↑ 상승' : '↓ 하락'}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <span className="font-sans font-medium text-slate-600 text-xs shrink-0">
-                        {issue.source}
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-bold border ${
+                          issue.risk === 'High'
+                            ? 'bg-rose-50 border-rose-200 text-[#DF0029]'
+                            : issue.risk === 'Med'
+                            ? 'bg-amber-50 border-amber-200 text-amber-700'
+                            : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        }`}
+                      >
+                        {issue.risk === 'High' ? '고위험' : issue.risk === 'Med' ? '중위험' : '저위험'}
                       </span>
                     </div>
+
+                    <h4 className="text-xs font-bold text-slate-900 leading-snug break-keep">
+                      <a href={issue.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                        {issue.title}
+                      </a>
+                    </h4>
+
+                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                      <div className="flex items-center gap-1.5">
+                        <span>{issue.date}</span>
+                        <span>·</span>
+                        <span className={`font-sans font-bold text-[10px] ${issue.direction === 'Bullish' || issue.direction === '상승' ? 'text-[#DF0029]' : 'text-emerald-600'}`}>
+                          ↑ {issue.direction === 'Bullish' || issue.direction === '상승' ? '상승' : '하락'}
+                        </span>
+                      </div>
+                      <span className="font-sans text-slate-500 font-medium text-[11px]">{issue.source}</span>
+                    </div>
                   </article>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+
+            <div className="text-[10px] text-slate-400 font-normal text-right pt-2 select-none">
+              출처: 글로벌 농산물 인텔리전스 네트워크 & S&P Global
             </div>
           </div>
-
-          <div className="text-xs text-[#94A3B8] font-normal text-right mt-auto pt-3 select-none">
-            출처: 글로벌 농산물 인텔리전스 네트워크 & S&P Global
-          </div>
-        </div>
-      </section>
+        </section>
       </div>
     </div>
   );
