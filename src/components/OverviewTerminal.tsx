@@ -942,10 +942,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         )}
         </div>
 
-        {/* 3. Row 3: WASDE Matrix (7 cols) + Weather Radar (5 cols) */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-4 my-3 print:grid-cols-12 print:gap-3 print:my-2 pdf-section-card break-inside-avoid print:break-inside-avoid w-full" id="wasde-weather-grid">
+        {/* 3. Row 3: WASDE Matrix (7 cols) + Weather Radar (5 cols) in 12-column grid */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 my-3 print:grid-cols-12 print:gap-3 print:my-2 pdf-section-card break-inside-avoid print:break-inside-avoid w-full" id="wasde-weather-grid">
           {/* WASDE Summary Table (7 Cols) */}
-          <div className="lg:col-span-7 print:col-span-7 bg-white rounded-xl border border-slate-200 p-4 print:p-3 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-7 print:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 print:p-3 shadow-sm flex flex-col justify-between">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
@@ -987,7 +987,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
           </div>
 
           {/* Weather Radar (5 Cols) */}
-          <div className="lg:col-span-5 print:col-span-5 bg-white rounded-xl border border-slate-200 p-4 print:p-3 shadow-sm flex flex-col justify-between" id="external-pipeline-section">
+          <div className="lg:col-span-5 print:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 print:p-3 shadow-sm flex flex-col justify-between" id="external-pipeline-section">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-1.5">
                 <span className="material-symbols-outlined text-[18px] text-sky-500">cloud</span>
@@ -997,69 +997,66 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col justify-around gap-2.5 my-auto py-1">
-              {/* Row 1: US Corn Belt */}
-              <div className="flex items-center justify-between p-3.5 print:p-2.5 bg-[#f8fafc] border border-slate-200 rounded-xl shadow-2xs">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="text-base">🌽</span>
-                  <span>미국 콘벨트</span>
-                  <span className="font-normal text-slate-400 text-xs">(Iowa)</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm" id="weather-us-corn-belt">
-                  <span className="font-mono text-slate-900 font-bold text-sm">
-                    {weatherData.usCornBelt.temp.toFixed(1)}°C
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="font-mono text-slate-700 font-medium text-sm">
-                    {weatherData.usCornBelt.precip.toFixed(1)}mm
-                  </span>
-                  <span className="font-bold text-[#EC870C] text-xs ml-1 bg-[#fff7ed] border border-[#fed7aa] px-2 py-0.5 rounded-md">
-                    (적정 강우)
-                  </span>
-                </div>
-              </div>
+            <div className="space-y-3 flex-1 flex flex-col justify-around my-auto py-1">
+              {[
+                {
+                  id: 'weather-us-corn-belt',
+                  icon: '🌽',
+                  title: '미국 콘벨트',
+                  region: 'Iowa',
+                  temp: weatherData.usCornBelt.temp.toFixed(1),
+                  rain: weatherData.usCornBelt.precip.toFixed(1),
+                  status: '적정 강우'
+                },
+                {
+                  id: 'weather-sa-soy-belt',
+                  icon: '🌱',
+                  title: '남미 대두벨트',
+                  region: 'Mato Grosso',
+                  temp: weatherData.saSoyBelt.temp.toFixed(1),
+                  rain: weatherData.saSoyBelt.precip.toFixed(1),
+                  status: '고온 건조'
+                },
+                {
+                  id: 'weather-eu-crop-radar',
+                  icon: '🥔',
+                  title: '유럽 곡창/감자',
+                  region: 'France',
+                  temp: weatherData.euCropRadar.temp.toFixed(1),
+                  rain: weatherData.euCropRadar.precip.toFixed(1),
+                  status: '온화 강우'
+                }
+              ].map((item, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200/60 text-xs gap-2"
+                >
+                  {/* Left Group: Icon + Region Title + (Country/State) */}
+                  <div className="flex items-center gap-1.5 min-w-0 shrink-0">
+                    <span className="text-base shrink-0">{item.icon}</span>
+                    <span className="font-bold text-slate-800 whitespace-nowrap">{item.title}</span>
+                    <span className="text-slate-400 text-[11px] whitespace-nowrap">({item.region})</span>
+                  </div>
 
-              {/* Row 2: South America Soy Belt */}
-              <div className="flex items-center justify-between p-3.5 print:p-2.5 bg-[#f8fafc] border border-slate-200 rounded-xl shadow-2xs">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="text-base">🌱</span>
-                  <span>남미 대두벨트</span>
-                  <span className="font-normal text-slate-400 text-xs">(Mato Grosso)</span>
+                  {/* Right Group: Temp + Rain + Status Badge */}
+                  <div className="flex items-center gap-2.5 shrink-0 ml-auto" id={item.id}>
+                    <span className="font-mono text-slate-700 font-semibold whitespace-nowrap">{item.temp}°C</span>
+                    <span className="text-slate-300">·</span>
+                    <span className="font-mono text-slate-500 text-[11px] whitespace-nowrap">강우 {item.rain}mm</span>
+                    
+                    {/* Status Badge */}
+                    <span className={`px-2 py-0.5 rounded text-[11px] font-medium whitespace-nowrap ${
+                      item.status.includes('건조') || item.status.includes('고온') 
+                        ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+                        : item.status.includes('흐림') || item.status.includes('주의')
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                        : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                    }`}>
+                      ({item.status})
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm" id="weather-sa-soy-belt">
-                  <span className="font-mono text-slate-900 font-bold text-sm">
-                    {weatherData.saSoyBelt.temp.toFixed(1)}°C
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="font-mono text-slate-700 font-medium text-sm">
-                    {weatherData.saSoyBelt.precip.toFixed(1)}mm
-                  </span>
-                  <span className="font-bold text-rose-600 text-xs ml-1 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
-                    (고온 건조)
-                  </span>
-                </div>
-              </div>
-
-              {/* Row 3: Europe Crop Radar */}
-              <div className="flex items-center justify-between p-3.5 print:p-2.5 bg-[#f8fafc] border border-slate-200 rounded-xl shadow-2xs">
-                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span className="text-base">🥔</span>
-                  <span>유럽 곡창/감자</span>
-                  <span className="font-normal text-slate-400 text-xs">(France)</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm" id="weather-eu-crop-radar">
-                  <span className="font-mono text-slate-900 font-bold text-sm">
-                    {weatherData.euCropRadar.temp.toFixed(1)}°C
-                  </span>
-                  <span className="text-slate-300">•</span>
-                  <span className="font-mono text-slate-700 font-medium text-sm">
-                    {weatherData.euCropRadar.precip.toFixed(1)}mm
-                  </span>
-                  <span className="font-bold text-[#059669] text-xs ml-1 bg-[#F0FDF4] border border-[#86EFAC] px-2 py-0.5 rounded-md">
-                    (온화 강우)
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="text-[10px] text-[#94A3B8] font-normal text-right mt-2 select-none">

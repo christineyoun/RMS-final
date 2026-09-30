@@ -1,6 +1,6 @@
 {
   "name": "Remix RMS Final",
-  "description": "",
+  "description": "농심 원자재 구매 데스크를 위한 글로벌 농산물 S&D, 시장 인텔리전스 및 거시경제 모니터링 터미널",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
