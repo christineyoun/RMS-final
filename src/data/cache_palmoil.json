@@ -1,0 +1,539 @@
+{
+  "priceMyr": 4649,
+  "cpoUsdMt": 1138.6,
+  "oleinUsd": 1167.5,
+  "updatedAt": "2026-09-29T08:57:21.308Z",
+  "source": "MDEX (FCPO) · RBD Olein (Investing.com)",
+  "cpoSourceUrl": "https://www.tradingview.com/symbols/MYX-FCPO1!/",
+  "oleinSourceUrl": "https://www.investing.com/commodities/rbd-palm-olein",
+  "historicalSeries": [
+    {
+      "date": "2025-09-29",
+      "centsPerBushel": 4015,
+      "usdPerMT": 983.32,
+      "cpoUsd": 983.32,
+      "oleinUsd": 1033.32,
+      "oleinUsdPerMt": 1033.32
+    },
+    {
+      "date": "2025-10-04",
+      "centsPerBushel": 4053,
+      "usdPerMT": 991.92,
+      "cpoUsd": 991.92,
+      "oleinUsd": 1044.92,
+      "oleinUsdPerMt": 1044.92
+    },
+    {
+      "date": "2025-10-10",
+      "centsPerBushel": 4080,
+      "usdPerMT": 997.83,
+      "cpoUsd": 997.83,
+      "oleinUsd": 1051.83,
+      "oleinUsdPerMt": 1051.83
+    },
+    {
+      "date": "2025-10-15",
+      "centsPerBushel": 4088,
+      "usdPerMT": 999.1,
+      "cpoUsd": 999.1,
+      "oleinUsd": 1052.1,
+      "oleinUsdPerMt": 1052.1
+    },
+    {
+      "date": "2025-10-21",
+      "centsPerBushel": 4079,
+      "usdPerMT": 996.24,
+      "cpoUsd": 996.24,
+      "oleinUsd": 1048.24,
+      "oleinUsdPerMt": 1048.24
+    },
+    {
+      "date": "2025-10-27",
+      "centsPerBushel": 4063,
+      "usdPerMT": 991.69,
+      "cpoUsd": 991.69,
+      "oleinUsd": 1042.69,
+      "oleinUsdPerMt": 1042.69
+    },
+    {
+      "date": "2025-11-01",
+      "centsPerBushel": 4053,
+      "usdPerMT": 988.65,
+      "cpoUsd": 988.65,
+      "oleinUsd": 1038.65,
+      "oleinUsdPerMt": 1038.65
+    },
+    {
+      "date": "2025-11-07",
+      "centsPerBushel": 4060,
+      "usdPerMT": 989.79,
+      "cpoUsd": 989.79,
+      "oleinUsd": 1040.79,
+      "oleinUsdPerMt": 1040.79
+    },
+    {
+      "date": "2025-11-12",
+      "centsPerBushel": 4087,
+      "usdPerMT": 995.84,
+      "cpoUsd": 995.84,
+      "oleinUsd": 1048.84,
+      "oleinUsdPerMt": 1048.84
+    },
+    {
+      "date": "2025-11-18",
+      "centsPerBushel": 4131,
+      "usdPerMT": 1006.08,
+      "cpoUsd": 1006.08,
+      "oleinUsd": 1063.08,
+      "oleinUsdPerMt": 1063.08
+    },
+    {
+      "date": "2025-11-24",
+      "centsPerBushel": 4179,
+      "usdPerMT": 1017.34,
+      "cpoUsd": 1017.34,
+      "oleinUsd": 1078.34,
+      "oleinUsdPerMt": 1078.34
+    },
+    {
+      "date": "2025-11-29",
+      "centsPerBushel": 4218,
+      "usdPerMT": 1026.45,
+      "cpoUsd": 1026.45,
+      "oleinUsd": 1092.45,
+      "oleinUsdPerMt": 1092.45
+    },
+    {
+      "date": "2025-12-05",
+      "centsPerBushel": 4240,
+      "usdPerMT": 1031.48,
+      "cpoUsd": 1031.48,
+      "oleinUsd": 1101.48,
+      "oleinUsdPerMt": 1101.48
+    },
+    {
+      "date": "2025-12-10",
+      "centsPerBushel": 4244,
+      "usdPerMT": 1032.19,
+      "cpoUsd": 1032.19,
+      "oleinUsd": 1104.19,
+      "oleinUsdPerMt": 1104.19
+    },
+    {
+      "date": "2025-12-16",
+      "centsPerBushel": 4237,
+      "usdPerMT": 1030.3,
+      "cpoUsd": 1030.3,
+      "oleinUsd": 1102.3,
+      "oleinUsdPerMt": 1102.3
+    },
+    {
+      "date": "2025-12-22",
+      "centsPerBushel": 4231,
+      "usdPerMT": 1028.72,
+      "cpoUsd": 1028.72,
+      "oleinUsd": 1098.72,
+      "oleinUsdPerMt": 1098.72
+    },
+    {
+      "date": "2025-12-27",
+      "centsPerBushel": 4238,
+      "usdPerMT": 1030.37,
+      "cpoUsd": 1030.37,
+      "oleinUsd": 1096.37,
+      "oleinUsdPerMt": 1096.37
+    },
+    {
+      "date": "2026-01-02",
+      "centsPerBushel": 4266,
+      "usdPerMT": 1037.19,
+      "cpoUsd": 1037.19,
+      "oleinUsd": 1097.19,
+      "oleinUsdPerMt": 1097.19
+    },
+    {
+      "date": "2026-01-07",
+      "centsPerBushel": 4312,
+      "usdPerMT": 1048.47,
+      "cpoUsd": 1048.47,
+      "oleinUsd": 1101.47,
+      "oleinUsdPerMt": 1101.47
+    },
+    {
+      "date": "2026-01-13",
+      "centsPerBushel": 4365,
+      "usdPerMT": 1061.52,
+      "cpoUsd": 1061.52,
+      "oleinUsd": 1106.52,
+      "oleinUsdPerMt": 1106.52
+    },
+    {
+      "date": "2026-01-19",
+      "centsPerBushel": 4413,
+      "usdPerMT": 1073.42,
+      "cpoUsd": 1073.42,
+      "oleinUsd": 1111.42,
+      "oleinUsdPerMt": 1111.42
+    },
+    {
+      "date": "2026-01-24",
+      "centsPerBushel": 4444,
+      "usdPerMT": 1081.27,
+      "cpoUsd": 1081.27,
+      "oleinUsd": 1114.27,
+      "oleinUsdPerMt": 1114.27
+    },
+    {
+      "date": "2026-01-30",
+      "centsPerBushel": 4456,
+      "usdPerMT": 1084.56,
+      "cpoUsd": 1084.56,
+      "oleinUsd": 1113.56,
+      "oleinUsdPerMt": 1113.56
+    },
+    {
+      "date": "2026-02-04",
+      "centsPerBushel": 4453,
+      "usdPerMT": 1084.26,
+      "cpoUsd": 1084.26,
+      "oleinUsd": 1111.26,
+      "oleinUsdPerMt": 1111.26
+    },
+    {
+      "date": "2026-02-10",
+      "centsPerBushel": 4447,
+      "usdPerMT": 1083.3,
+      "cpoUsd": 1083.3,
+      "oleinUsd": 1109.3,
+      "oleinUsdPerMt": 1109.3
+    },
+    {
+      "date": "2026-02-16",
+      "centsPerBushel": 4452,
+      "usdPerMT": 1085.06,
+      "cpoUsd": 1085.06,
+      "oleinUsd": 1112.06,
+      "oleinUsdPerMt": 1112.06
+    },
+    {
+      "date": "2026-02-21",
+      "centsPerBushel": 4474,
+      "usdPerMT": 1091.02,
+      "cpoUsd": 1091.02,
+      "oleinUsd": 1119.02,
+      "oleinUsdPerMt": 1119.02
+    },
+    {
+      "date": "2026-02-27",
+      "centsPerBushel": 4515,
+      "usdPerMT": 1101.67,
+      "cpoUsd": 1101.67,
+      "oleinUsd": 1130.67,
+      "oleinUsdPerMt": 1130.67
+    },
+    {
+      "date": "2026-03-04",
+      "centsPerBushel": 4566,
+      "usdPerMT": 1114.82,
+      "cpoUsd": 1114.82,
+      "oleinUsd": 1143.82,
+      "oleinUsdPerMt": 1143.82
+    },
+    {
+      "date": "2026-03-10",
+      "centsPerBushel": 4616,
+      "usdPerMT": 1127.76,
+      "cpoUsd": 1127.76,
+      "oleinUsd": 1155.76,
+      "oleinUsdPerMt": 1155.76
+    },
+    {
+      "date": "2026-03-16",
+      "centsPerBushel": 4650,
+      "usdPerMT": 1136.84,
+      "cpoUsd": 1136.84,
+      "oleinUsd": 1161.84,
+      "oleinUsdPerMt": 1161.84
+    },
+    {
+      "date": "2026-03-21",
+      "centsPerBushel": 4665,
+      "usdPerMT": 1141.3,
+      "cpoUsd": 1141.3,
+      "oleinUsd": 1163.3,
+      "oleinUsdPerMt": 1163.3
+    },
+    {
+      "date": "2026-03-27",
+      "centsPerBushel": 4662,
+      "usdPerMT": 1141.37,
+      "cpoUsd": 1141.37,
+      "oleinUsd": 1158.37,
+      "oleinUsdPerMt": 1158.37
+    },
+    {
+      "date": "2026-04-01",
+      "centsPerBushel": 4651,
+      "usdPerMT": 1139.49,
+      "cpoUsd": 1139.49,
+      "oleinUsd": 1154.49,
+      "oleinUsdPerMt": 1154.49
+    },
+    {
+      "date": "2026-04-07",
+      "centsPerBushel": 4647,
+      "usdPerMT": 1139.32,
+      "cpoUsd": 1139.32,
+      "oleinUsd": 1154.32,
+      "oleinUsdPerMt": 1154.32
+    },
+    {
+      "date": "2026-04-13",
+      "centsPerBushel": 4658,
+      "usdPerMT": 1142.81,
+      "cpoUsd": 1142.81,
+      "oleinUsd": 1157.81,
+      "oleinUsdPerMt": 1157.81
+    },
+    {
+      "date": "2026-04-18",
+      "centsPerBushel": 4688,
+      "usdPerMT": 1150.95,
+      "cpoUsd": 1150.95,
+      "oleinUsd": 1165.95,
+      "oleinUsdPerMt": 1165.95
+    },
+    {
+      "date": "2026-04-24",
+      "centsPerBushel": 4731,
+      "usdPerMT": 1162.28,
+      "cpoUsd": 1162.28,
+      "oleinUsd": 1177.28,
+      "oleinUsdPerMt": 1177.28
+    },
+    {
+      "date": "2026-04-29",
+      "centsPerBushel": 4776,
+      "usdPerMT": 1174.07,
+      "cpoUsd": 1174.07,
+      "oleinUsd": 1190.07,
+      "oleinUsdPerMt": 1190.07
+    },
+    {
+      "date": "2026-05-05",
+      "centsPerBushel": 4808,
+      "usdPerMT": 1182.64,
+      "cpoUsd": 1182.64,
+      "oleinUsd": 1204.64,
+      "oleinUsdPerMt": 1204.64
+    },
+    {
+      "date": "2026-05-11",
+      "centsPerBushel": 4820,
+      "usdPerMT": 1186.26,
+      "cpoUsd": 1186.26,
+      "oleinUsd": 1216.26,
+      "oleinUsdPerMt": 1216.26
+    },
+    {
+      "date": "2026-05-16",
+      "centsPerBushel": 4813,
+      "usdPerMT": 1185.14,
+      "cpoUsd": 1185.14,
+      "oleinUsd": 1222.14,
+      "oleinUsdPerMt": 1222.14
+    },
+    {
+      "date": "2026-05-22",
+      "centsPerBushel": 4795,
+      "usdPerMT": 1181.25,
+      "cpoUsd": 1181.25,
+      "oleinUsd": 1225.25,
+      "oleinUsdPerMt": 1225.25
+    },
+    {
+      "date": "2026-05-27",
+      "centsPerBushel": 4779,
+      "usdPerMT": 1177.79,
+      "cpoUsd": 1177.79,
+      "oleinUsd": 1226.79,
+      "oleinUsdPerMt": 1226.79
+    },
+    {
+      "date": "2026-06-02",
+      "centsPerBushel": 4776,
+      "usdPerMT": 1177.45,
+      "cpoUsd": 1177.45,
+      "oleinUsd": 1229.45,
+      "oleinUsdPerMt": 1229.45
+    },
+    {
+      "date": "2026-06-08",
+      "centsPerBushel": 4792,
+      "usdPerMT": 1181.74,
+      "cpoUsd": 1181.74,
+      "oleinUsd": 1234.74,
+      "oleinUsdPerMt": 1234.74
+    },
+    {
+      "date": "2026-06-13",
+      "centsPerBushel": 4823,
+      "usdPerMT": 1189.64,
+      "cpoUsd": 1189.64,
+      "oleinUsd": 1242.64,
+      "oleinUsdPerMt": 1242.64
+    },
+    {
+      "date": "2026-06-19",
+      "centsPerBushel": 4859,
+      "usdPerMT": 1198.71,
+      "cpoUsd": 1198.71,
+      "oleinUsd": 1250.71,
+      "oleinUsdPerMt": 1250.71
+    },
+    {
+      "date": "2026-06-24",
+      "centsPerBushel": 4886,
+      "usdPerMT": 1205.47,
+      "cpoUsd": 1205.47,
+      "oleinUsd": 1256.47,
+      "oleinUsdPerMt": 1256.47
+    },
+    {
+      "date": "2026-06-30",
+      "centsPerBushel": 4895,
+      "usdPerMT": 1207.71,
+      "cpoUsd": 1207.71,
+      "oleinUsd": 1258.71,
+      "oleinUsdPerMt": 1258.71
+    },
+    {
+      "date": "2026-07-06",
+      "centsPerBushel": 4883,
+      "usdPerMT": 1204.69,
+      "cpoUsd": 1204.69,
+      "oleinUsd": 1255.69,
+      "oleinUsdPerMt": 1255.69
+    },
+    {
+      "date": "2026-07-11",
+      "centsPerBushel": 4858,
+      "usdPerMT": 1198.38,
+      "cpoUsd": 1198.38,
+      "oleinUsd": 1251.38,
+      "oleinUsdPerMt": 1251.38
+    },
+    {
+      "date": "2026-07-17",
+      "centsPerBushel": 4830,
+      "usdPerMT": 1191.25,
+      "cpoUsd": 1191.25,
+      "oleinUsd": 1247.25,
+      "oleinUsdPerMt": 1247.25
+    },
+    {
+      "date": "2026-07-22",
+      "centsPerBushel": 4814,
+      "usdPerMT": 1187,
+      "cpoUsd": 1187,
+      "oleinUsd": 1247,
+      "oleinUsdPerMt": 1247
+    },
+    {
+      "date": "2026-07-28",
+      "centsPerBushel": 4815,
+      "usdPerMT": 1186.87,
+      "cpoUsd": 1186.87,
+      "oleinUsd": 1250.87,
+      "oleinUsdPerMt": 1250.87
+    },
+    {
+      "date": "2026-08-03",
+      "centsPerBushel": 4834,
+      "usdPerMT": 1191.11,
+      "cpoUsd": 1191.11,
+      "oleinUsd": 1259.11,
+      "oleinUsdPerMt": 1259.11
+    },
+    {
+      "date": "2026-08-08",
+      "centsPerBushel": 4862,
+      "usdPerMT": 1197.49,
+      "cpoUsd": 1197.49,
+      "oleinUsd": 1268.49,
+      "oleinUsdPerMt": 1268.49
+    },
+    {
+      "date": "2026-08-14",
+      "centsPerBushel": 4885,
+      "usdPerMT": 1202.57,
+      "cpoUsd": 1202.57,
+      "oleinUsd": 1274.57,
+      "oleinUsdPerMt": 1274.57
+    },
+    {
+      "date": "2026-08-19",
+      "centsPerBushel": 4893,
+      "usdPerMT": 1203.89,
+      "cpoUsd": 1203.89,
+      "oleinUsd": 1274.89,
+      "oleinUsdPerMt": 1274.89
+    },
+    {
+      "date": "2026-08-25",
+      "centsPerBushel": 4880,
+      "usdPerMT": 1200,
+      "cpoUsd": 1200,
+      "oleinUsd": 1268,
+      "oleinUsdPerMt": 1268
+    },
+    {
+      "date": "2026-08-31",
+      "centsPerBushel": 4851,
+      "usdPerMT": 1192.14,
+      "cpoUsd": 1192.14,
+      "oleinUsd": 1254.14,
+      "oleinUsdPerMt": 1254.14
+    },
+    {
+      "date": "2026-09-05",
+      "centsPerBushel": 4816,
+      "usdPerMT": 1182.77,
+      "cpoUsd": 1182.77,
+      "oleinUsd": 1237.77,
+      "oleinUsdPerMt": 1237.77
+    },
+    {
+      "date": "2026-09-11",
+      "centsPerBushel": 4790,
+      "usdPerMT": 1175.6,
+      "cpoUsd": 1175.6,
+      "oleinUsd": 1223.6,
+      "oleinUsdPerMt": 1223.6
+    },
+    {
+      "date": "2026-09-16",
+      "centsPerBushel": 4781,
+      "usdPerMT": 1172.58,
+      "cpoUsd": 1172.58,
+      "oleinUsd": 1213.58,
+      "oleinUsdPerMt": 1213.58
+    },
+    {
+      "date": "2026-09-22",
+      "centsPerBushel": 4792,
+      "usdPerMT": 1174.45,
+      "cpoUsd": 1174.45,
+      "oleinUsd": 1209.45,
+      "oleinUsdPerMt": 1209.45
+    },
+    {
+      "date": "2026-09-28",
+      "centsPerBushel": 4649,
+      "usdPerMT": 1138.6,
+      "cpoUsd": 1138.6,
+      "oleinUsd": 1167.5,
+      "oleinUsdPerMt": 1167.5
+    }
+  ]
+}

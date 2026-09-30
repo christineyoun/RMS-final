@@ -1,0 +1,1518 @@
+{
+  "updatedAt": "2026-09-30T00:33:40.191Z",
+  "source": "Thai Tapioca Starch Association (TTSA) Weekly Statistics",
+  "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price",
+  "weeklyPrices": [
+    {
+      "date": "2021-01-05",
+      "price": 475,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2021-01-12",
+      "price": 475,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2021-01-19",
+      "price": 475,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2021-01-26",
+      "price": 475,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2021-02-02",
+      "price": 475,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2021-02-09",
+      "price": 480,
+      "domesticThb": 13.6
+    },
+    {
+      "date": "2021-02-16",
+      "price": 480,
+      "domesticThb": 13.6
+    },
+    {
+      "date": "2021-02-23",
+      "price": 485,
+      "domesticThb": 13.7
+    },
+    {
+      "date": "2021-03-02",
+      "price": 485,
+      "domesticThb": 13.7
+    },
+    {
+      "date": "2021-03-09",
+      "price": 485,
+      "domesticThb": 13.8
+    },
+    {
+      "date": "2021-03-16",
+      "price": 485,
+      "domesticThb": 13.8
+    },
+    {
+      "date": "2021-03-23",
+      "price": 485,
+      "domesticThb": 13.8
+    },
+    {
+      "date": "2021-03-30",
+      "price": 485,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2021-04-06",
+      "price": 485,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2021-04-13",
+      "price": 485,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2021-04-20",
+      "price": 485,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2021-04-27",
+      "price": 485,
+      "domesticThb": 13.95
+    },
+    {
+      "date": "2021-05-04",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-05-11",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-05-18",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-05-25",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-06-01",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-06-08",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-06-15",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-06-22",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-06-29",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-07-06",
+      "price": 485,
+      "domesticThb": 14
+    },
+    {
+      "date": "2021-07-13",
+      "price": 485,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-07-20",
+      "price": 485,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-07-27",
+      "price": 485,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-08-03",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-08-10",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-08-17",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-08-24",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-08-31",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-09-07",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2021-09-14",
+      "price": 480,
+      "domesticThb": 14.2
+    },
+    {
+      "date": "2021-09-21",
+      "price": 480,
+      "domesticThb": 14.3
+    },
+    {
+      "date": "2021-09-28",
+      "price": 480,
+      "domesticThb": 14.3
+    },
+    {
+      "date": "2021-10-05",
+      "price": 480,
+      "domesticThb": 14.4
+    },
+    {
+      "date": "2021-10-12",
+      "price": 480,
+      "domesticThb": 14.4
+    },
+    {
+      "date": "2021-10-19",
+      "price": 480,
+      "domesticThb": 14.5
+    },
+    {
+      "date": "2021-10-26",
+      "price": 480,
+      "domesticThb": 14.5
+    },
+    {
+      "date": "2021-11-02",
+      "price": 480,
+      "domesticThb": 14.6
+    },
+    {
+      "date": "2021-11-09",
+      "price": 485,
+      "domesticThb": 14.7
+    },
+    {
+      "date": "2021-11-16",
+      "price": 490,
+      "domesticThb": 14.9
+    },
+    {
+      "date": "2021-11-23",
+      "price": 490,
+      "domesticThb": 15
+    },
+    {
+      "date": "2021-11-30",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2021-12-07",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2021-12-14",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2021-12-21",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2021-12-28",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-01-04",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-01-11",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-01-18",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-01-25",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-02-01",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-02-08",
+      "price": 490,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-02-15",
+      "price": 495,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-02-22",
+      "price": 495,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-03-01",
+      "price": 495,
+      "domesticThb": 15.1
+    },
+    {
+      "date": "2022-03-08",
+      "price": 495,
+      "domesticThb": 15.15
+    },
+    {
+      "date": "2022-03-15",
+      "price": 495,
+      "domesticThb": 15.2
+    },
+    {
+      "date": "2022-03-22",
+      "price": 495,
+      "domesticThb": 15.25
+    },
+    {
+      "date": "2022-03-29",
+      "price": 495,
+      "domesticThb": 15.35
+    },
+    {
+      "date": "2022-04-05",
+      "price": 500,
+      "domesticThb": 15.5
+    },
+    {
+      "date": "2022-04-12",
+      "price": 500,
+      "domesticThb": 15.6
+    },
+    {
+      "date": "2022-04-19",
+      "price": 505,
+      "domesticThb": 15.65
+    },
+    {
+      "date": "2022-04-26",
+      "price": 510,
+      "domesticThb": 16.1
+    },
+    {
+      "date": "2022-05-03",
+      "price": 515,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2022-05-10",
+      "price": 520,
+      "domesticThb": 16.8
+    },
+    {
+      "date": "2022-05-17",
+      "price": 525,
+      "domesticThb": 17
+    },
+    {
+      "date": "2022-05-24",
+      "price": 535,
+      "domesticThb": 17.3
+    },
+    {
+      "date": "2022-05-31",
+      "price": 540,
+      "domesticThb": 17.35
+    },
+    {
+      "date": "2022-06-07",
+      "price": 540,
+      "domesticThb": 17.4
+    },
+    {
+      "date": "2022-06-14",
+      "price": 540,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2022-06-21",
+      "price": 540,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2022-06-28",
+      "price": 540,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2022-07-05",
+      "price": 535,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2022-07-12",
+      "price": 530,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2022-07-19",
+      "price": 525,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2022-07-26",
+      "price": 520,
+      "domesticThb": 17.4
+    },
+    {
+      "date": "2022-08-02",
+      "price": 520,
+      "domesticThb": 17.3
+    },
+    {
+      "date": "2022-08-09",
+      "price": 520,
+      "domesticThb": 17.2
+    },
+    {
+      "date": "2022-08-16",
+      "price": 520,
+      "domesticThb": 17.2
+    },
+    {
+      "date": "2022-08-23",
+      "price": 520,
+      "domesticThb": 17.2
+    },
+    {
+      "date": "2022-08-30",
+      "price": 515,
+      "domesticThb": 17.2
+    },
+    {
+      "date": "2022-09-06",
+      "price": 510,
+      "domesticThb": 17.1
+    },
+    {
+      "date": "2022-09-13",
+      "price": 510,
+      "domesticThb": 17.1
+    },
+    {
+      "date": "2022-09-20",
+      "price": 510,
+      "domesticThb": 17.1
+    },
+    {
+      "date": "2022-09-27",
+      "price": 500,
+      "domesticThb": 17
+    },
+    {
+      "date": "2022-10-04",
+      "price": 500,
+      "domesticThb": 17
+    },
+    {
+      "date": "2022-10-11",
+      "price": 500,
+      "domesticThb": 17
+    },
+    {
+      "date": "2022-10-18",
+      "price": 495,
+      "domesticThb": 16.9
+    },
+    {
+      "date": "2022-10-25",
+      "price": 495,
+      "domesticThb": 16.9
+    },
+    {
+      "date": "2022-11-01",
+      "price": 490,
+      "domesticThb": 16.85
+    },
+    {
+      "date": "2022-11-08",
+      "price": 485,
+      "domesticThb": 16.8
+    },
+    {
+      "date": "2022-11-15",
+      "price": 485,
+      "domesticThb": 16.75
+    },
+    {
+      "date": "2022-11-22",
+      "price": 485,
+      "domesticThb": 16.75
+    },
+    {
+      "date": "2022-11-29",
+      "price": 490,
+      "domesticThb": 16.75
+    },
+    {
+      "date": "2022-12-06",
+      "price": 495,
+      "domesticThb": 16.7
+    },
+    {
+      "date": "2022-12-13",
+      "price": 495,
+      "domesticThb": 16.7
+    },
+    {
+      "date": "2022-12-20",
+      "price": 495,
+      "domesticThb": 16.6
+    },
+    {
+      "date": "2022-12-27",
+      "price": 495,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2023-01-03",
+      "price": 495,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2023-01-10",
+      "price": 495,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2023-01-17",
+      "price": 500,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2023-01-24",
+      "price": 510,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2023-01-31",
+      "price": 520,
+      "domesticThb": 16.6
+    },
+    {
+      "date": "2023-02-07",
+      "price": 525,
+      "domesticThb": 16.7
+    },
+    {
+      "date": "2023-02-14",
+      "price": 525,
+      "domesticThb": 16.9
+    },
+    {
+      "date": "2023-02-21",
+      "price": 525,
+      "domesticThb": 17.1
+    },
+    {
+      "date": "2023-02-28",
+      "price": 525,
+      "domesticThb": 17.15
+    },
+    {
+      "date": "2023-03-07",
+      "price": 530,
+      "domesticThb": 17.4
+    },
+    {
+      "date": "2023-03-14",
+      "price": 535,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2023-03-21",
+      "price": 545,
+      "domesticThb": 17.7
+    },
+    {
+      "date": "2023-03-28",
+      "price": 550,
+      "domesticThb": 17.8
+    },
+    {
+      "date": "2023-04-04",
+      "price": 550,
+      "domesticThb": 17.8
+    },
+    {
+      "date": "2023-04-11",
+      "price": 550,
+      "domesticThb": 17.8
+    },
+    {
+      "date": "2023-04-18",
+      "price": 550,
+      "domesticThb": 18
+    },
+    {
+      "date": "2023-04-25",
+      "price": 555,
+      "domesticThb": 18.2
+    },
+    {
+      "date": "2023-05-02",
+      "price": 560,
+      "domesticThb": 18.3
+    },
+    {
+      "date": "2023-05-09",
+      "price": 560,
+      "domesticThb": 18.3
+    },
+    {
+      "date": "2023-05-16",
+      "price": 570,
+      "domesticThb": 18.4
+    },
+    {
+      "date": "2023-05-23",
+      "price": 570,
+      "domesticThb": 18.4
+    },
+    {
+      "date": "2023-05-30",
+      "price": 570,
+      "domesticThb": 18.4
+    },
+    {
+      "date": "2023-06-06",
+      "price": 570,
+      "domesticThb": 18.4
+    },
+    {
+      "date": "2023-06-13",
+      "price": 570,
+      "domesticThb": 18.4
+    },
+    {
+      "date": "2023-06-20",
+      "price": 570,
+      "domesticThb": 18.4
+    },
+    {
+      "date": "2023-06-27",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-07-04",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-07-11",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-07-18",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-07-25",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-08-01",
+      "price": 570,
+      "domesticThb": 18.5,
+      "isSynthetic": true
+    },
+    {
+      "date": "2023-08-08",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-08-15",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-08-22",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-08-29",
+      "price": 570,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2023-09-05",
+      "price": 575,
+      "domesticThb": 18.6
+    },
+    {
+      "date": "2023-09-12",
+      "price": 575,
+      "domesticThb": 18.6
+    },
+    {
+      "date": "2023-09-19",
+      "price": 575,
+      "domesticThb": 18.6
+    },
+    {
+      "date": "2023-09-26",
+      "price": 575,
+      "domesticThb": 18.6
+    },
+    {
+      "date": "2023-10-03",
+      "price": 575,
+      "domesticThb": 18.6
+    },
+    {
+      "date": "2023-10-10",
+      "price": 580,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2023-10-17",
+      "price": 580,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2023-10-24",
+      "price": 580,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2023-10-31",
+      "price": 580,
+      "domesticThb": 18.8
+    },
+    {
+      "date": "2023-11-07",
+      "price": 580,
+      "domesticThb": 18.9
+    },
+    {
+      "date": "2023-11-14",
+      "price": 580,
+      "domesticThb": 19
+    },
+    {
+      "date": "2023-11-21",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2023-11-28",
+      "price": 590,
+      "domesticThb": 19.3
+    },
+    {
+      "date": "2023-12-05",
+      "price": 590,
+      "domesticThb": 19.3
+    },
+    {
+      "date": "2023-12-12",
+      "price": 590,
+      "domesticThb": 19.3
+    },
+    {
+      "date": "2023-12-19",
+      "price": 590,
+      "domesticThb": 19.3
+    },
+    {
+      "date": "2023-12-26",
+      "price": 590,
+      "domesticThb": 19.3
+    },
+    {
+      "date": "2024-01-02",
+      "price": 590,
+      "domesticThb": 19.3,
+      "isSynthetic": true
+    },
+    {
+      "date": "2024-01-09",
+      "price": 585,
+      "domesticThb": 19.15
+    },
+    {
+      "date": "2024-01-16",
+      "price": 580,
+      "domesticThb": 19.05
+    },
+    {
+      "date": "2024-01-23",
+      "price": 580,
+      "domesticThb": 19.05
+    },
+    {
+      "date": "2024-01-30",
+      "price": 580,
+      "domesticThb": 19.05
+    },
+    {
+      "date": "2024-02-06",
+      "price": 580,
+      "domesticThb": 19.05
+    },
+    {
+      "date": "2024-02-13",
+      "price": 580,
+      "domesticThb": 19.05
+    },
+    {
+      "date": "2024-02-20",
+      "price": 580,
+      "domesticThb": 19.05
+    },
+    {
+      "date": "2024-02-27",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2024-03-05",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2024-03-12",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2024-03-19",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2024-03-26",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2024-04-02",
+      "price": 580,
+      "domesticThb": 19.1
+    },
+    {
+      "date": "2024-04-09",
+      "price": 575,
+      "domesticThb": 19
+    },
+    {
+      "date": "2024-04-16",
+      "price": 575,
+      "domesticThb": 19
+    },
+    {
+      "date": "2024-04-23",
+      "price": 575,
+      "domesticThb": 19
+    },
+    {
+      "date": "2024-04-30",
+      "price": 565,
+      "domesticThb": 18.85
+    },
+    {
+      "date": "2024-05-07",
+      "price": 565,
+      "domesticThb": 18.85
+    },
+    {
+      "date": "2024-05-14",
+      "price": 555,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2024-05-21",
+      "price": 555,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2024-05-28",
+      "price": 555,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2024-06-04",
+      "price": 555,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2024-06-11",
+      "price": 555,
+      "domesticThb": 18.7
+    },
+    {
+      "date": "2024-06-18",
+      "price": 545,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2024-06-25",
+      "price": 535,
+      "domesticThb": 18.3
+    },
+    {
+      "date": "2024-07-02",
+      "price": 535,
+      "domesticThb": 18.3
+    },
+    {
+      "date": "2024-07-09",
+      "price": 530,
+      "domesticThb": 18.2
+    },
+    {
+      "date": "2024-07-16",
+      "price": 525,
+      "domesticThb": 18.1
+    },
+    {
+      "date": "2024-07-23",
+      "price": 525,
+      "domesticThb": 18
+    },
+    {
+      "date": "2024-07-30",
+      "price": 525,
+      "domesticThb": 17.9
+    },
+    {
+      "date": "2024-08-06",
+      "price": 525,
+      "domesticThb": 17.9
+    },
+    {
+      "date": "2024-08-13",
+      "price": 525,
+      "domesticThb": 17.75
+    },
+    {
+      "date": "2024-08-20",
+      "price": 535,
+      "domesticThb": 17.75
+    },
+    {
+      "date": "2024-08-27",
+      "price": 535,
+      "domesticThb": 17.5
+    },
+    {
+      "date": "2024-09-03",
+      "price": 535,
+      "domesticThb": 17.4
+    },
+    {
+      "date": "2024-09-10",
+      "price": 525,
+      "domesticThb": 17.2
+    },
+    {
+      "date": "2024-09-17",
+      "price": 520,
+      "domesticThb": 17
+    },
+    {
+      "date": "2024-09-24",
+      "price": 515,
+      "domesticThb": 16.75
+    },
+    {
+      "date": "2024-10-01",
+      "price": 510,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2024-10-08",
+      "price": 500,
+      "domesticThb": 16.25
+    },
+    {
+      "date": "2024-10-15",
+      "price": 490,
+      "domesticThb": 15.9
+    },
+    {
+      "date": "2024-10-22",
+      "price": 490,
+      "domesticThb": 15.7
+    },
+    {
+      "date": "2024-10-29",
+      "price": 490,
+      "domesticThb": 15.5
+    },
+    {
+      "date": "2024-11-05",
+      "price": 490,
+      "domesticThb": 15.2
+    },
+    {
+      "date": "2024-11-12",
+      "price": 475,
+      "domesticThb": 14.9
+    },
+    {
+      "date": "2024-11-19",
+      "price": 465,
+      "domesticThb": 14.7
+    },
+    {
+      "date": "2024-11-26",
+      "price": 465,
+      "domesticThb": 14.5
+    },
+    {
+      "date": "2024-12-03",
+      "price": 465,
+      "domesticThb": 14.5
+    },
+    {
+      "date": "2024-12-10",
+      "price": 450,
+      "domesticThb": 14.3
+    },
+    {
+      "date": "2024-12-17",
+      "price": 450,
+      "domesticThb": 14.3
+    },
+    {
+      "date": "2024-12-24",
+      "price": 440,
+      "domesticThb": 14.2
+    },
+    {
+      "date": "2024-12-31",
+      "price": 450,
+      "domesticThb": 14.3,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-01-07",
+      "price": 420,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2025-01-14",
+      "price": 420,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2025-01-21",
+      "price": 425,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-01-28",
+      "price": 430,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-02-04",
+      "price": 430,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-02-11",
+      "price": 430,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-02-18",
+      "price": 430,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-02-25",
+      "price": 435,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-03-04",
+      "price": 435,
+      "domesticThb": 14
+    },
+    {
+      "date": "2025-03-11",
+      "price": 430,
+      "domesticThb": 13.95
+    },
+    {
+      "date": "2025-03-18",
+      "price": 430,
+      "domesticThb": 13.85
+    },
+    {
+      "date": "2025-03-25",
+      "price": 425,
+      "domesticThb": 13.75
+    },
+    {
+      "date": "2025-04-01",
+      "price": 425,
+      "domesticThb": 13.75,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-04-08",
+      "price": 425,
+      "domesticThb": 13.75,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-04-15",
+      "price": 425,
+      "domesticThb": 13.75,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-04-22",
+      "price": 425,
+      "domesticThb": 13.75,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-04-29",
+      "price": 420,
+      "domesticThb": 13.15
+    },
+    {
+      "date": "2025-05-06",
+      "price": 425,
+      "domesticThb": 13.05
+    },
+    {
+      "date": "2025-05-13",
+      "price": 425,
+      "domesticThb": 13.05
+    },
+    {
+      "date": "2025-05-20",
+      "price": 425,
+      "domesticThb": 13.15
+    },
+    {
+      "date": "2025-05-27",
+      "price": 435,
+      "domesticThb": 13.3
+    },
+    {
+      "date": "2025-06-03",
+      "price": 435,
+      "domesticThb": 13.3,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-06-10",
+      "price": 430,
+      "domesticThb": 13.25
+    },
+    {
+      "date": "2025-06-17",
+      "price": 440,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-06-24",
+      "price": 440,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-07-01",
+      "price": 440,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-07-08",
+      "price": 445,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-07-15",
+      "price": 445,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-07-22",
+      "price": 450,
+      "domesticThb": 13.65
+    },
+    {
+      "date": "2025-07-29",
+      "price": 455,
+      "domesticThb": 13.8
+    },
+    {
+      "date": "2025-08-05",
+      "price": 450,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-08-12",
+      "price": 450,
+      "domesticThb": 13.5,
+      "isSynthetic": true
+    },
+    {
+      "date": "2025-08-19",
+      "price": 450,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-08-26",
+      "price": 450,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-09-02",
+      "price": 445,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-09-09",
+      "price": 450,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-09-16",
+      "price": 450,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-09-23",
+      "price": 450,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-09-30",
+      "price": 450,
+      "domesticThb": 13.4
+    },
+    {
+      "date": "2025-10-07",
+      "price": 450,
+      "domesticThb": 13.45
+    },
+    {
+      "date": "2025-10-14",
+      "price": 450,
+      "domesticThb": 13.45
+    },
+    {
+      "date": "2025-10-21",
+      "price": 455,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-10-28",
+      "price": 455,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-11-04",
+      "price": 455,
+      "domesticThb": 13.5
+    },
+    {
+      "date": "2025-11-11",
+      "price": 460,
+      "domesticThb": 13.6
+    },
+    {
+      "date": "2025-11-18",
+      "price": 460,
+      "domesticThb": 13.6
+    },
+    {
+      "date": "2025-11-25",
+      "price": 465,
+      "domesticThb": 13.7
+    },
+    {
+      "date": "2025-12-02",
+      "price": 470,
+      "domesticThb": 13.8
+    },
+    {
+      "date": "2025-12-09",
+      "price": 470,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2025-12-16",
+      "price": 470,
+      "domesticThb": 13.9
+    },
+    {
+      "date": "2025-12-23",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2025-12-30",
+      "price": 480,
+      "domesticThb": 14.1,
+      "isSynthetic": true
+    },
+    {
+      "date": "2026-01-06",
+      "price": 480,
+      "domesticThb": 14.1
+    },
+    {
+      "date": "2026-01-13",
+      "price": 480,
+      "domesticThb": 14.2
+    },
+    {
+      "date": "2026-01-20",
+      "price": 485,
+      "domesticThb": 14.2
+    },
+    {
+      "date": "2026-01-27",
+      "price": 490,
+      "domesticThb": 14.25
+    },
+    {
+      "date": "2026-02-03",
+      "price": 490,
+      "domesticThb": 14.3
+    },
+    {
+      "date": "2026-02-10",
+      "price": 490,
+      "domesticThb": 14.4
+    },
+    {
+      "date": "2026-02-17",
+      "price": 490,
+      "domesticThb": 14.4
+    },
+    {
+      "date": "2026-02-24",
+      "price": 495,
+      "domesticThb": 14.5
+    },
+    {
+      "date": "2026-03-03",
+      "price": 500,
+      "domesticThb": 14.7
+    },
+    {
+      "date": "2026-03-10",
+      "price": 500,
+      "domesticThb": 15
+    },
+    {
+      "date": "2026-03-17",
+      "price": 510,
+      "domesticThb": 15.2
+    },
+    {
+      "date": "2026-03-24",
+      "price": 515,
+      "domesticThb": 15.6
+    },
+    {
+      "date": "2026-03-31",
+      "price": 525,
+      "domesticThb": 16.2
+    },
+    {
+      "date": "2026-04-07",
+      "price": 540,
+      "domesticThb": 16.5
+    },
+    {
+      "date": "2026-04-14",
+      "price": 540,
+      "domesticThb": 16.5,
+      "isSynthetic": true
+    },
+    {
+      "date": "2026-04-21",
+      "price": 555,
+      "domesticThb": 16.7
+    },
+    {
+      "date": "2026-04-28",
+      "price": 565,
+      "domesticThb": 17.2
+    },
+    {
+      "date": "2026-05-05",
+      "price": 580,
+      "domesticThb": 17.9
+    },
+    {
+      "date": "2026-05-12",
+      "price": 605,
+      "domesticThb": 18.5
+    },
+    {
+      "date": "2026-05-19",
+      "price": 625,
+      "domesticThb": 19.5
+    },
+    {
+      "date": "2026-05-26",
+      "price": 650,
+      "domesticThb": 20
+    },
+    {
+      "date": "2026-06-02",
+      "price": 665,
+      "domesticThb": 20.7
+    },
+    {
+      "date": "2026-06-09",
+      "price": 685,
+      "domesticThb": 21.3
+    },
+    {
+      "date": "2026-06-16",
+      "price": 700,
+      "domesticThb": 21.7
+    },
+    {
+      "date": "2026-06-23",
+      "price": 700,
+      "domesticThb": 22
+    },
+    {
+      "date": "2026-06-30",
+      "price": 700,
+      "domesticThb": 22
+    },
+    {
+      "date": "2026-07-07",
+      "price": 700,
+      "domesticThb": 22.15
+    },
+    {
+      "date": "2026-07-14",
+      "price": 700,
+      "domesticThb": 22.15
+    },
+    {
+      "date": "2026-07-21",
+      "price": 700,
+      "domesticThb": 22.15
+    },
+    {
+      "date": "2026-07-28",
+      "price": 700,
+      "domesticThb": 21.7
+    },
+    {
+      "date": "2026-08-04",
+      "price": 705,
+      "domesticThb": 22.3
+    },
+    {
+      "date": "2026-08-11",
+      "price": 705,
+      "domesticThb": 22.3
+    },
+    {
+      "date": "2026-08-18",
+      "price": 705,
+      "domesticThb": 22.3
+    },
+    {
+      "date": "2026-08-25",
+      "price": 705,
+      "domesticThb": 22.3
+    },
+    {
+      "date": "2026-09-01",
+      "price": 705,
+      "domesticThb": 22.3
+    },
+    {
+      "date": "2026-09-08",
+      "price": 705,
+      "domesticThb": 22.3
+    },
+    {
+      "date": "2026-09-15",
+      "price": 700,
+      "domesticThb": 22.1
+    },
+    {
+      "date": "2026-09-22",
+      "price": 700,
+      "domesticThb": 22.1
+    },
+    {
+      "date": "2026-09-29",
+      "price": 700,
+      "domesticThb": 22.1
+    }
+  ]
+}

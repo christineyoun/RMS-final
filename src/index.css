@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans KR", sans-serif;
+    @apply font-sans antialiased text-slate-900;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes highlightPulse {
+  0% {
+    box-shadow: 0 0 0 4px rgba(223, 0, 41, 0.45);
+    border-color: #DF0029;
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(223, 0, 41, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(223, 0, 41, 0);
+  }
+}
+
+:target {
+  scroll-margin-top: 5rem;
+  animation: highlightPulse 2.2s ease-out;
+  border-color: #DF0029 !important;
+}
+
+.font-mono, .font-data {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4, h5, h6, .card-title, .section-title, .break-keep {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.pdf-section-card {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
+  html, body {
+    width: 210mm !important;
+    background: #ffffff !important;
+    font-size: 11px !important;
+  }
+
+  /* Remove web UI padding/margins */
+  .overview-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Force Page Breaks */
+  .overview-page-1 {
+    page-break-after: always !important;
+    break-after: page !important;
+    height: 270mm !important; /* Lock Page 1 height */
+    overflow: hidden !important;
+  }
+
+  .overview-page-2 {
+    page-break-before: always !important;
+    break-before: page !important;
+    height: 270mm !important; /* Lock Page 2 height */
+    overflow: hidden !important;
+  }
+
+  .macroeconomic-drivers-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-top: 0.5rem !important;
+  }
+
+  /* 1. Clear layout restrictions on main wrappers */
+  html, body, #root, main, .app-container, .CommodityDetail, .OverviewTerminal {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    word-break: keep-all !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Strict print hiding for UI chrome */
+  header,
+  aside,
+  .print-hide,
+  .pdf-hide,
+  button,
+  input,
+  select,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Tighten overall card spacing for PDF generation */
+  .pdf-container {
+    padding: 0.5rem !important;
+  }
+  .pdf-section-block,
+  .bg-white.rounded-xl {
+    padding: 0.75rem 1rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  .gap-4, .gap-6 {
+    gap: 0.5rem !important;
+  }
+  /* Ensure charts don't take up excessive vertical height on PDF */
+  .recharts-responsive-container {
+    height: 200px !important;
+  }
+
+  /* Prevent orphan headers at page bottoms */
+  h1, h2, h3, h4 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Only apply break-inside: avoid to small leaf items */
+  .news-card-item,
+  .origin-card,
+  tr,
+  table,
+  figure {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Maintain elastic multi-column WASDE telemetry grids in print */
+  .wasde-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .market-intelligence-section {
+    margin-top: 1.5rem !important;
+    padding-top: 0.75rem !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent responsive collapse on header metric cards in print */
+  .header-metrics-wrapper,
+  .pdf-header-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .header-metric-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 0% !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Target the WASDE + Origin Radar parent container */
+  .wasde-origin-radar-section,
+  .wasde-origin-radar-wrapper,
+  .wasde-section-container {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1rem !important;
+    clear: both !important;
+    break-before: page !important;
+    page-break-before: always !important;
+    margin-top: 2rem !important;
+    position: relative !important;
+  }
+
+  /* Keep internal citations glued inside the card */
+  .wasde-origin-radar-section *,
+  .wasde-origin-radar-wrapper * {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Base and PDF header metrics styles */
+.header-metrics-wrapper,
+.pdf-header-metrics,
+.pdf-export-mode .header-metrics-wrapper,
+.pdf-export-mode .pdf-header-metrics {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  gap: 12px !important;
+}
+
+.header-metric-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* PDF Export Mode forced desktop layout during html2canvas rendering */
+.pdf-export-mode {
+  width: 1200px !important;
+  min-width: 1200px !important;
+  max-width: 1200px !important;
+}
+
+.pdf-export-mode .header-metric-card {
+  padding: 0.5rem 0.75rem !important;
+}
+
+.pdf-export-mode .wasde-origin-radar-section,
+.pdf-export-mode .wasde-origin-radar-wrapper,
+.pdf-export-mode .wasde-section-container {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 1rem !important;
+}
+
+/* Global Amber / Orange / Caution Badge Consistency */
+.badge-amber,
+.badge-orange,
+.badge-caution {
+  background-color: #fff7ed !important;
+  border-color: #fed7aa !important;
+  color: #ec870c !important;
+}
+
+/* Global Tailwind Amber Overrides to Soft Orange Design Token */
+.text-amber-500,
+.text-amber-600,
+.text-amber-700,
+.text-amber-800 {
+  color: #EC870C !important;
+}
+
+.bg-amber-50,
+.bg-amber-100 {
+  background-color: #fff7ed !important;
+}
+
+.bg-amber-500,
+.bg-amber-600 {
+  background-color: #EC870C !important;
+}
+
+.border-amber-200,
+.border-amber-300 {
+  border-color: #fed7aa !important;
+}
+
+
