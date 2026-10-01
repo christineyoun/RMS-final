@@ -253,8 +253,11 @@ export interface LiveMarketUpdate {
   bdi?: number;
   wheatPrice: number;
   cornPrice: number;
+  cornWowChange?: number;
   soybeanPrice: number;
+  soybeanWowChange?: number;
   soybeanOilPrice: number;
+  soybeanOilWowChange?: number;
   palmOilPrice: number;
   sugarPrice: number;
   potatoStarchPrice: number;

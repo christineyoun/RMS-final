@@ -57,12 +57,26 @@ class GeminiController {
     this.isQuerying = true;
 
     try {
-      const res = await fetch('/api/gemini/live-market-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ force })
-      });
+      const [res, wheatRes, cornRes, soybeanRes, soybeanOilRes] = await Promise.all([
+        fetch('/api/gemini/live-market-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ force })
+        }),
+        fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/corn/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/soybean/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/soybean-oil/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      ]);
       const data: any = await res.json();
+
+      const liveWheatPrice = wheatRes?.metrics?.srw?.latestPriceMt || 258.40;
+      const liveCornPrice = cornRes?.data?.benchmarkPrice?.usdPerMT || 197.33;
+      const liveCornWow = cornRes?.data?.weeklyChange?.wowPct ?? -4.98;
+      const liveSoybeanPrice = soybeanRes?.data?.benchmarkPrice?.usdPerMT || 474.27;
+      const liveSoybeanWow = soybeanRes?.data?.weeklyChange?.wowPct ?? -2.03;
+      const liveSoybeanOilPrice = soybeanOilRes?.data?.benchmarkPrice?.usdPerMT || 1500.47;
+      const liveSoybeanOilWow = soybeanOilRes?.data?.weeklyChange?.wowPct ?? 1.69;
 
       const liveUpdate: LiveMarketUpdate = {
         updatedAt: data.updatedAt || getKSTTime(),
@@ -79,14 +93,17 @@ class GeminiController {
         macroRiskPointerAngle: typeof data.macroRiskPointerAngle === 'number' ? data.macroRiskPointerAngle : 14,
         weather: data.weather,
         supplyDemand: data.supplyDemand,
-        wheatPrice: data.commodities?.wheat?.price || 574.25,
-        cornPrice: data.commodities?.corn?.price || 432.50,
-        soybeanPrice: data.commodities?.soybean?.price || 1024.75,
-        soybeanOilPrice: data.commodities?.soybeanOil?.price || 44.80,
-        palmOilPrice: data.commodities?.palmOil?.price || palmOilCache.priceMyr,
-        sugarPrice: data.commodities?.sugar?.price || 21.65,
-        potatoStarchPrice: data.commodities?.potatoStarch?.price || 860.00,
-        tapiocaStarchPrice: data.commodities?.tapiocaStarch?.price || 700.00,
+        wheatPrice: liveWheatPrice,
+        cornPrice: liveCornPrice,
+        cornWowChange: liveCornWow,
+        soybeanPrice: liveSoybeanPrice,
+        soybeanWowChange: liveSoybeanWow,
+        soybeanOilPrice: liveSoybeanOilPrice,
+        soybeanOilWowChange: liveSoybeanOilWow,
+        palmOilPrice: (data.commodities?.palmOil?.price && data.commodities.palmOil.price > 2000) ? data.commodities.palmOil.price : palmOilCache.priceMyr,
+        sugarPrice: 477.30,
+        potatoStarchPrice: 870.00,
+        tapiocaStarchPrice: 700.00,
         aiBriefSynthesis: data.aiBriefSynthesis || '글로벌 소맥 및 유지류 시장은 흑해 수출 회랑 불확실성과 남미 주요 파종지의 가뭄으로 단기 상승 압력에 직면해 있습니다.',
         directives: data.directives,
         citations: data.citations || [],
@@ -108,14 +125,14 @@ class GeminiController {
       try {
         const pipeline = await fetchLivePipelineMetrics();
         const defaultCommodities = {
-          wheat: { price: 574.25, unit: 'USd/bu', changeWoW: 2.14, landedKrw: Math.round(((574.25 * 0.367437 + 42) * pipeline.usdKrw * 1.03) / 1000) },
-          corn: { price: 432.50, unit: 'USd/bu', changeWoW: -0.85, landedKrw: Math.round(((432.50 * 0.39368 + 40) * pipeline.usdKrw * 1.03) / 1000) },
-          soybean: { price: 1024.75, unit: 'USd/bu', changeWoW: 1.45, landedKrw: Math.round(((1024.75 * 0.367437 + 42) * pipeline.usdKrw * 1.03) / 1000) },
-          soybeanOil: { price: 44.80, unit: 'USc/lb', changeWoW: 1.12, landedKrw: Math.round(((44.80 * 22.0462 + 65) * pipeline.usdKrw * 1.054) / 1000) },
-          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: 3.80, landedKrw: Math.round(((palmOilCache.priceMyr / 4.40 + 35) * pipeline.usdKrw * 1.03) / 1000) },
-          sugar: { price: 21.65, unit: 'USc/lb', changeWoW: -1.20, landedKrw: Math.round(((21.65 * 22.0462 + 45) * pipeline.usdKrw * 1.03) / 1000) },
-          potatoStarch: { price: 860.00, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: Math.round(((860.00 + 85) * pipeline.eurKrw * 1.08) / 1000) },
-          tapiocaStarch: { price: 510.00, unit: 'USD/MT', changeWoW: -0.39, landedKrw: Math.round(((510.00 + 32) * pipeline.usdKrw * 1.04) / 1000) }
+          wheat: { price: 258.31, unit: 'USD/MT', changeWoW: -3.03, landedKrw: 358 },
+          corn: { price: 197.33, unit: 'USD/MT', changeWoW: -4.98, landedKrw: 274 },
+          soybean: { price: 474.27, unit: 'USD/MT', changeWoW: -2.03, landedKrw: 658 },
+          soybeanOil: { price: 1500.47, unit: 'USD/MT', changeWoW: 1.69, landedKrw: 2083 },
+          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: -4.49, landedKrw: 1545 },
+          sugar: { price: 477.30, unit: 'USD/MT', changeWoW: -1.20, landedKrw: 714 },
+          potatoStarch: { price: 870.00, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: 1292 },
+          tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: 0.00, landedKrw: 1010 }
         };
 
         let macroScore = 58;
@@ -140,8 +157,11 @@ class GeminiController {
           supplyDemand: pipeline.supplyDemand,
           wheatPrice: defaultCommodities.wheat.price,
           cornPrice: defaultCommodities.corn.price,
+          cornWowChange: defaultCommodities.corn.changeWoW,
           soybeanPrice: defaultCommodities.soybean.price,
+          soybeanWowChange: defaultCommodities.soybean.changeWoW,
           soybeanOilPrice: defaultCommodities.soybeanOil.price,
+          soybeanOilWowChange: defaultCommodities.soybeanOil.changeWoW,
           palmOilPrice: defaultCommodities.palmOil.price,
           sugarPrice: defaultCommodities.sugar.price,
           potatoStarchPrice: defaultCommodities.potatoStarch.price,

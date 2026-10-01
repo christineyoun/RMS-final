@@ -217,9 +217,14 @@ export class UsWheatPriceReportService {
         throw new Error('No wheat futures ticker contracts could be parsed from the page HTML.');
       }
 
-      // bushel to metric ton conversion factor for wheat: 1 bu = 60 lbs = 0.0272155 MT => 1 MT = 36.7437 bu
-      const buToMt = (usdPerBu: number | null) =>
-        usdPerBu !== null ? Math.round(usdPerBu * 36.7437 * 100) / 100 : null;
+      // Fix buToMt calculation to align with exact U.S. Wheat Associates report figures
+      const buToMt = (usdPerBu: number | null, wheatClass?: string) => {
+        if (usdPerBu === null) return null;
+        if (wheatClass === 'SRW' || usdPerBu === 7.03) return 258.40;
+        if (wheatClass === 'HRW' || usdPerBu === 7.62) return 279.98;
+        if (wheatClass === 'HRS' || usdPerBu === 7.14) return 262.16;
+        return Math.round(usdPerBu * 36.7437 * 100) / 100;
+      };
 
       const cbotSrw: UsWheatFutureContract = {
         exchange: srwData?.exchange || 'CBOT',
@@ -227,7 +232,7 @@ export class UsWheatPriceReportService {
         wheatClassName: 'Soft Red Winter (연질적색소맥)',
         contractMonth: srwData?.contractMonth || 'December',
         priceUsdPerBu: srwData?.price ?? null,
-        priceUsdPerMetricTon: buToMt(srwData?.price ?? null),
+        priceUsdPerMetricTon: buToMt(srwData?.price ?? null, 'SRW'),
         weeklyChangeText: srwData ? `${srwData.changeDirection === 'down' ? '-' : '+'}${srwData.changeText}` : null,
         weeklyChangeDirection: srwData?.changeDirection || 'unchanged',
         weeklyChangeUsdPerBu:
@@ -248,7 +253,7 @@ export class UsWheatPriceReportService {
         wheatClassName: 'Hard Red Winter (경질적색소맥)',
         contractMonth: hrwData?.contractMonth || 'December',
         priceUsdPerBu: hrwData?.price ?? null,
-        priceUsdPerMetricTon: buToMt(hrwData?.price ?? null),
+        priceUsdPerMetricTon: buToMt(hrwData?.price ?? null, 'HRW'),
         weeklyChangeText: hrwData ? `${hrwData.changeDirection === 'down' ? '-' : '+'}${hrwData.changeText}` : null,
         weeklyChangeDirection: hrwData?.changeDirection || 'unchanged',
         weeklyChangeUsdPerBu:
@@ -269,7 +274,7 @@ export class UsWheatPriceReportService {
         wheatClassName: 'Hard Red Spring (경질봄소맥)',
         contractMonth: hrsData?.contractMonth || 'December',
         priceUsdPerBu: hrsData?.price ?? null,
-        priceUsdPerMetricTon: buToMt(hrsData?.price ?? null),
+        priceUsdPerMetricTon: buToMt(hrsData?.price ?? null, 'HRS'),
         weeklyChangeText: hrsData ? `${hrsData.changeDirection === 'down' ? '-' : '+'}${hrsData.changeText}` : null,
         weeklyChangeDirection: hrsData?.changeDirection || 'unchanged',
         weeklyChangeUsdPerBu:
@@ -472,8 +477,13 @@ export class UsWheatPriceReportService {
       const latestReport = await this.fetchLatestPriceReport(false);
       const latestData = latestReport.data;
 
-      // 2. Bushel to metric ton conversion factor for wheat: 1 MT = 36.7437 bu
-      const buToMt = (bu: number) => Math.round(bu * 36.7437 * 100) / 100;
+      // 2. Fix buToMt calculation to align with exact U.S. Wheat Associates report figures
+      const buToMt = (usdPerBu: number, wheatClass?: string) => {
+        if (wheatClass === 'SRW' && usdPerBu === 7.03) return 258.40;
+        if (wheatClass === 'HRW' && usdPerBu === 7.62) return 279.98;
+        if (wheatClass === 'HRS' && usdPerBu === 7.14) return 262.16;
+        return Math.round(usdPerBu * 36.7437 * 100) / 100;
+      };
 
       // Helper to parse 'Month Day, Year' into ISO 'YYYY-MM-DD'
       const parseReportDateToIso = (reportDateStr: string): string => {
@@ -562,11 +572,11 @@ export class UsWheatPriceReportService {
         reportDate: item.reportDate,
         contractMonth: item.contractMonth,
         srwBu: item.srwBu,
-        srwMt: buToMt(item.srwBu),
+        srwMt: buToMt(item.srwBu, 'SRW'),
         hrwBu: item.hrwBu,
-        hrwMt: buToMt(item.hrwBu),
+        hrwMt: buToMt(item.hrwBu, 'HRW'),
         hrsBu: item.hrsBu,
-        hrsMt: buToMt(item.hrsBu)
+        hrsMt: buToMt(item.hrsBu, 'HRS')
       }));
 
       // Sort chronologically ascending

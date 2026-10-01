@@ -71,15 +71,15 @@ const DEFAULT_WHEAT_HISTORY_BASELINE: UsWheatPriceHistoryResponse = {
   secondaryUnit: 'USc/bu',
   count: 4,
   metrics: {
-    srw: { wheatClass: 'SRW', classNameKo: '연질적색겨울밀', classNameEn: 'Soft Red Winter', exchange: 'CBOT', contractMonth: 'December', latestPriceMt: 258.31, latestPriceBu: 703, wowChangePct: -3.03, wowChangeMt: -8.08, wowChangeBu: -22, momChangePct: 10.02, momChangeMt: 23.49, momChangeBu: 64 },
-    hrw: { wheatClass: 'HRW', classNameKo: '경질적색겨울밀', classNameEn: 'Hard Red Winter', exchange: 'KCBT', contractMonth: 'December', latestPriceMt: 279.99, latestPriceBu: 762, wowChangePct: -4.63, wowChangeMt: -13.59, wowChangeBu: -37, momChangePct: 7.63, momChangeMt: 19.84, momChangeBu: 54 },
-    hrs: { wheatClass: 'HRS', classNameKo: '경질적색봄밀', classNameEn: 'Hard Red Spring', exchange: 'MIAX', contractMonth: 'December', latestPriceMt: 262.35, latestPriceBu: 714, wowChangePct: -4.16, wowChangeMt: -11.39, wowChangeBu: -31, momChangePct: 3.48, momChangeMt: 8.83, momChangeBu: 24 },
+    srw: { wheatClass: 'SRW', classNameKo: '연질적색겨울밀', classNameEn: 'Soft Red Winter', exchange: 'CBOT', contractMonth: 'December', latestPriceMt: 258.40, latestPriceBu: 703.25, wowChangePct: -3.03, wowChangeMt: -8.08, wowChangeBu: -22, momChangePct: 10.02, momChangeMt: 23.49, momChangeBu: 64 },
+    hrw: { wheatClass: 'HRW', classNameKo: '경질적색겨울밀', classNameEn: 'Hard Red Winter', exchange: 'KCBT', contractMonth: 'December', latestPriceMt: 279.98, latestPriceBu: 762.00, wowChangePct: -4.63, wowChangeMt: -13.59, wowChangeBu: -37, momChangePct: 7.63, momChangeMt: 19.84, momChangeBu: 54 },
+    hrs: { wheatClass: 'HRS', classNameKo: '경질적색봄밀', classNameEn: 'Hard Red Spring', exchange: 'MIAX', contractMonth: 'December', latestPriceMt: 262.16, latestPriceBu: 713.50, wowChangePct: -4.16, wowChangeMt: -11.39, wowChangeBu: -31, momChangePct: 3.48, momChangeMt: 8.83, momChangeBu: 24 },
   },
   data: [
     { date: '2025-12-19', reportDate: '2025.12.19', contractMonth: 'December', srwMt: 240, hrwMt: 250, hrsMt: 260, srwBu: 650, hrwBu: 680, hrsBu: 710 },
     { date: '2026-03-21', reportDate: '2026.03.21', contractMonth: 'December', srwMt: 255, hrwMt: 270, hrsMt: 285, srwBu: 690, hrwBu: 730, hrsBu: 770 },
     { date: '2026-06-21', reportDate: '2026.06.21', contractMonth: 'December', srwMt: 250, hrwMt: 265, hrsMt: 275, srwBu: 680, hrwBu: 720, hrsBu: 750 },
-    { date: '2026-09-25', reportDate: '2026.09.25', contractMonth: 'December', srwMt: 258.31, hrwMt: 279.99, hrsMt: 262.35, srwBu: 703, hrwBu: 762, hrsBu: 714 },
+    { date: '2026-09-25', reportDate: '2026.09.25', contractMonth: 'December', srwMt: 258.40, hrwMt: 279.98, hrsMt: 262.16, srwBu: 703.25, hrwBu: 762, hrsBu: 713.50 },
   ],
 };
 
@@ -3011,14 +3011,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             {/* Benchmark Price */}
             <div id="scm-benchmark-price-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-3 flex flex-col justify-center min-w-0">
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-0.5">
-                {isWheat ? '기준 시세 (HRW)' : '기준 시세'}
+                {isWheat ? '기준 시세 (CBOT SRW)' : '기준 시세'}
               </span>
               <div className="flex items-baseline gap-1 min-w-0 flex-wrap sm:flex-nowrap">
                 <span className="text-sm sm:text-base font-bold font-mono text-slate-900 whitespace-nowrap">
-                  {isWheat && hrwData
+                  {isWheat && usWheatHistory?.metrics?.srw
                     ? (currency === 'KRW'
-                        ? `₩${Math.round(hrwData.latestPriceMt * exchangeRate).toLocaleString('en-US')}`
-                        : `${currencySymbol}${(hrwData.latestPriceMt * (currency === 'EUR' ? 1 / 1.08 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+                        ? `₩${Math.round(usWheatHistory.metrics.srw.latestPriceMt * exchangeRate).toLocaleString('en-US')}`
+                        : `${currencySymbol}${(usWheatHistory.metrics.srw.latestPriceMt * (currency === 'EUR' ? 1 / 1.08 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
                     : isCorn && cornAnalysis?.benchmarkPrice
                     ? (currency === 'KRW'
                         ? `₩${Math.round(cornAnalysis.benchmarkPrice.usdPerMT * exchangeRate).toLocaleString('en-US')}`
@@ -3057,9 +3057,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     : commodity.unit}
                 </span>
               </div>
-              {isWheat && hrwData && (
+              {isWheat && usWheatHistory?.metrics?.srw && (
                 <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  HRW {hrwData.contractMonth} · {hrwData.reportDate}
+                  CBOT SRW {formatContractMonth(usWheatHistory.metrics.srw.contractMonth)} · {usWheatHistory.reportDate}
                 </p>
               )}
               {isCorn && cornAnalysis?.benchmarkPrice && (

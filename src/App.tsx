@@ -77,18 +77,35 @@ export default function App() {
       setCommodities((prev) =>
         prev.map((c) => {
           let updatedPrice = c.price;
-          if (c.id === 'wheat' && liveData.wheatPrice) updatedPrice = liveData.wheatPrice;
-          else if (c.id === 'corn' && liveData.cornPrice) updatedPrice = liveData.cornPrice;
-          else if (c.id === 'soybean' && liveData.soybeanPrice) updatedPrice = liveData.soybeanPrice;
-          else if (c.id === 'soybean-oil' && liveData.soybeanOilPrice) updatedPrice = liveData.soybeanOilPrice;
-          else if (c.id === 'palm-oil' && liveData.palmOilPrice) updatedPrice = liveData.palmOilPrice;
-          else if (c.id === 'sugar' && liveData.sugarPrice) updatedPrice = liveData.sugarPrice;
-          else if (c.id === 'potato-starch' && liveData.potatoStarchPrice) updatedPrice = liveData.potatoStarchPrice;
-          else if (c.id === 'tapioca-starch' && liveData.tapiocaStarchPrice) updatedPrice = liveData.tapiocaStarchPrice;
+          let updatedChangeWoW = c.changeWoW;
+          let updatedChangeMoM = c.changeMoM;
+
+          if (c.id === 'wheat' && liveData.wheatPrice) {
+            updatedPrice = liveData.wheatPrice;
+          } else if (c.id === 'corn' && liveData.cornPrice) {
+            updatedPrice = liveData.cornPrice;
+            if (liveData.cornWowChange !== undefined) updatedChangeWoW = liveData.cornWowChange;
+          } else if (c.id === 'soybean' && liveData.soybeanPrice) {
+            updatedPrice = liveData.soybeanPrice;
+            if (liveData.soybeanWowChange !== undefined) updatedChangeWoW = liveData.soybeanWowChange;
+          } else if (c.id === 'soybean-oil' && liveData.soybeanOilPrice) {
+            updatedPrice = liveData.soybeanOilPrice;
+            if (liveData.soybeanOilWowChange !== undefined) updatedChangeWoW = liveData.soybeanOilWowChange;
+          } else if (c.id === 'palm-oil' && liveData.palmOilPrice) {
+            updatedPrice = liveData.palmOilPrice;
+          } else if (c.id === 'sugar' && liveData.sugarPrice) {
+            updatedPrice = liveData.sugarPrice;
+          } else if (c.id === 'potato-starch' && liveData.potatoStarchPrice) {
+            updatedPrice = liveData.potatoStarchPrice;
+          } else if (c.id === 'tapioca-starch' && liveData.tapiocaStarchPrice) {
+            updatedPrice = liveData.tapiocaStarchPrice;
+          }
 
           return {
             ...c,
-            price: updatedPrice
+            price: updatedPrice,
+            changeWoW: updatedChangeWoW,
+            changeMoM: updatedChangeMoM,
           };
         })
       );
@@ -171,13 +188,15 @@ export default function App() {
       if (c.id === 'palm-oil') {
         // If price is raw MYR (>2000), convert MYR -> USD/MT (1 USD = 4.0831 MYR)
         usdMt = c.price > 2000 ? c.price / 4.0831 : c.price;
+      } else if (c.id === 'potato-starch') {
+        usdMt = c.price * 1.145;
       } else if (c.id === 'tapioca-starch') {
         usdMt = c.price || 700;
       } else if (c.unit.includes('USd/bu')) {
         usdMt = c.ticker.includes('ZC') ? cornCentsPerBuToUsdPerMt(c.price) : grainCentsPerBuToUsdPerMt(c.price);
       } else if (c.unit.includes('USc/lb')) {
         usdMt = centsPerLbToUsdPerMt(c.price);
-      } else if (c.unit.includes('EUR/MT')) {
+      } else if (c.unit.includes('EUR/MT') || c.unit.includes('EUR / MT')) {
         usdMt = c.price * 1.08;
       } else if (c.unit.includes('USD/MT') || c.unit.includes('USD')) {
         usdMt = c.price;
@@ -188,10 +207,16 @@ export default function App() {
       let newUnit = 'USD / MT';
 
       if (currency === 'EUR') {
-        convertedPrice = usdMt / 1.08;
+        convertedPrice = c.id === 'potato-starch' ? c.price : usdMt / 1.08;
         newUnit = 'EUR / MT';
       } else if (currency === 'KRW') {
-        convertedPrice = usdMt * 1357.1; // 1,545,188 KRW / MT
+        if (c.id === 'palm-oil') {
+          convertedPrice = usdMt * 1357.1; // 1,545,188 KRW / MT
+        } else if (c.id === 'potato-starch') {
+          convertedPrice = c.price * 1388.5;
+        } else {
+          convertedPrice = usdMt * 1388.5;
+        }
         newUnit = 'KRW / MT';
       }
 
