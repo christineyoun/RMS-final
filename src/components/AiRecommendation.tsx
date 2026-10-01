@@ -36,11 +36,16 @@ export const getRecommendationColor = (text: string) => {
   }
 
   // Tier 2: EXTENDED LONG-TERM LOCK (Soft Green - 60~75d)
-  if (text.includes('60~75일') || text.includes('75일') || text.includes('유럽 수입 계약')) {
+  if (text.includes('60~75일') || text.includes('60일') || text.includes('75일') || text.includes('우호적') || text.includes('유럽 수입 계약')) {
     return 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
   }
 
-  // Tier 3: FLEXIBLE SPLIT-BUY / CAUTION (Soft Orange - 45~60d, 분할 구매, 스팟/선도)
+  // Tier 3: HYBRID SPOT/FORWARD / CAUTION (주의 / 중위험 / 스팟/선도)
+  if (text.includes('주의') || text.includes('중위험') || text.includes('스팟/선도') || text.includes('혼합')) {
+    return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
+  }
+
+  // Tier 4: FLEXIBLE SPLIT-BUY / CAUTION (Soft Orange - 45~60d, 분할 구매, 스팟/선도)
   return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
 };
 

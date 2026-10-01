@@ -14,29 +14,37 @@ export const getTimestamp = (): { yyyymmdd: string; hhmm: string } => {
   };
 };
 
-export const getGlobalOverviewPdfFilename = (): string => {
-  const { yyyymmdd, hhmm } = getTimestamp();
-  return `Nongshim_RMS_Global_Overview_${yyyymmdd}_${hhmm}.pdf`;
-};
-
 export const getCategoryReportPdfFilename = (category: string): string => {
   const { yyyymmdd, hhmm } = getTimestamp();
   const cat = (category || '').toLowerCase().trim();
 
   let categoryName = 'Global_Overview';
-  if (cat === 'grains' || cat === 'grain') {
-    categoryName = 'Grains_Report';
-  } else if (cat === 'oils' || cat === 'oil') {
-    categoryName = 'Oils_Report';
-  } else if (cat === 'starches' || cat === 'starch' || cat.includes('sweetener')) {
-    categoryName = 'Starches_Report';
-  } else if (cat === 'all' || cat === 'global_overview' || !cat) {
-    categoryName = 'Global_Overview';
-  } else {
-    categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-  }
+  if (cat === 'grains' || cat === 'grain') categoryName = 'Grains_Report';
+  else if (cat === 'oils' || cat === 'oil') categoryName = 'Oils_Report';
+  else if (cat === 'starches' || cat === 'starch' || cat.includes('sweetener')) categoryName = 'Starches_Report';
 
   return `Nongshim_RMS_${categoryName}_${yyyymmdd}_${hhmm}.pdf`;
+};
+
+// Inlines parent document style rules into clonedDoc to guarantee published production build rendering
+const inlineStylesForClone = (clonedDoc: Document) => {
+  const head = clonedDoc.head || clonedDoc.querySelector('head');
+  if (!head) return;
+
+  Array.from(document.styleSheets).forEach((sheet) => {
+    try {
+      const rules = sheet.cssRules || sheet.rules;
+      if (rules && rules.length > 0) {
+        const styleEl = clonedDoc.createElement('style');
+        styleEl.textContent = Array.from(rules)
+          .map((r) => r.cssText)
+          .join('\n');
+        head.appendChild(styleEl);
+      }
+    } catch {
+      // Ignore cross-origin stylesheet access restrictions if any
+    }
+  });
 };
 
 export const sanitizeOklchColorsForCanvas = (_clonedDoc: Document): void => {};
@@ -45,91 +53,96 @@ export const exportCategoryFilteredPdf = async (category: string = 'all'): Promi
   const page1El = document.querySelector('.overview-page-1') as HTMLElement | null;
   const page2El = document.querySelector('.overview-page-2') as HTMLElement | null;
 
-  if (page1El && page2El) {
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 200));
+  if (!page1El || !page2El) return;
 
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
-    const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-    const marginX = 10;
-    const marginY = 10;
-    const contentWidth = pageWidth - marginX * 2; // 190mm
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  });
 
-    const canvasOpts = {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#f8fafc',
-      width: 1200,
-      windowWidth: 1200,
-    };
+  const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
+  const marginX = 10;
+  const marginY = 10;
+  const contentWidth = pageWidth - marginX * 2; // 190mm
 
-    // Capture Page 1 (Hide Page 2 so Page 1 sits at y = 0)
-    const canvas1 = await html2canvas(page1El, {
-      ...canvasOpts,
-      onclone: (clonedDoc) => {
-        const p2 = clonedDoc.querySelector('.overview-page-2') as HTMLElement | null;
-        if (p2) p2.style.setProperty('display', 'none', 'important');
+  const canvasOpts = {
+    scale: 2,
+    useCORS: true,
+    logging: false,
+    backgroundColor: '#f8fafc',
+    width: 1200,
+    windowWidth: 1200,
+  };
 
-        const el = clonedDoc.querySelector('.overview-page-1') as HTMLElement | null;
-        if (el) {
-          el.style.width = '1200px';
-          el.style.minWidth = '1200px';
-          el.style.padding = '20px';
-          el.style.backgroundColor = '#f8fafc';
-          el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
-        }
-        clonedDoc.querySelectorAll('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside, .print\\:hidden').forEach((node) => {
-          (node as HTMLElement).style.setProperty('display', 'none', 'important');
-        });
-      },
-    });
+  // --- CANVAS 1 (Page 1) ---
+  const canvas1 = await html2canvas(page1El, {
+    ...canvasOpts,
+    onclone: (clonedDoc) => {
+      inlineStylesForClone(clonedDoc);
 
-    const imgData1 = canvas1.toDataURL('image/png');
-    const imgHeight1 = (canvas1.height * contentWidth) / canvas1.width;
-    pdf.addImage(imgData1, 'PNG', marginX, marginY, contentWidth, imgHeight1, undefined, 'FAST');
+      const p2 = clonedDoc.querySelector('.overview-page-2') as HTMLElement | null;
+      if (p2) p2.style.setProperty('display', 'none', 'important');
 
-    // Capture Page 2 (Hide Page 1 so Page 2 shifts up to y = 0)
-    const canvas2 = await html2canvas(page2El, {
-      ...canvasOpts,
-      onclone: (clonedDoc) => {
-        const p1 = clonedDoc.querySelector('.overview-page-1') as HTMLElement | null;
-        if (p1) p1.style.setProperty('display', 'none', 'important');
+      const el = clonedDoc.querySelector('.overview-page-1') as HTMLElement | null;
+      if (el) {
+        el.style.width = '1200px';
+        el.style.minWidth = '1200px';
+        el.style.padding = '20px';
+        el.style.backgroundColor = '#f8fafc';
+        el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
+      }
 
-        const el = clonedDoc.querySelector('.overview-page-2') as HTMLElement | null;
-        if (el) {
-          el.style.width = '1200px';
-          el.style.minWidth = '1200px';
-          el.style.padding = '20px';
-          el.style.backgroundColor = '#f8fafc';
-          el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
-        }
-        clonedDoc.querySelectorAll('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside, .print\\:hidden').forEach((node) => {
-          (node as HTMLElement).style.setProperty('display', 'none', 'important');
-        });
-      },
-    });
+      clonedDoc.querySelectorAll('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside').forEach((node) => {
+        (node as HTMLElement).style.setProperty('display', 'none', 'important');
+      });
+    },
+  });
 
-    const imgData2 = canvas2.toDataURL('image/png');
-    const imgHeight2 = (canvas2.height * contentWidth) / canvas2.width;
-    pdf.addPage();
-    pdf.addImage(imgData2, 'PNG', marginX, marginY, contentWidth, imgHeight2, undefined, 'FAST');
+  const imgData1 = canvas1.toDataURL('image/png');
+  const imgHeight1 = (canvas1.height * contentWidth) / canvas1.width;
+  pdf.addImage(imgData1, 'PNG', marginX, marginY, contentWidth, imgHeight1, undefined, 'FAST');
 
-    const filename = getCategoryReportPdfFilename(category);
-    try {
-      pdf.save(filename);
-    } catch {
-      const blobUrl = pdf.output('bloburl');
-      window.open(blobUrl, '_blank');
-    }
-    return;
+  // --- CANVAS 2 (Page 2) ---
+  const canvas2 = await html2canvas(page2El, {
+    ...canvasOpts,
+    onclone: (clonedDoc) => {
+      inlineStylesForClone(clonedDoc);
+
+      const p1 = clonedDoc.querySelector('.overview-page-1') as HTMLElement | null;
+      if (p1) p1.style.setProperty('display', 'none', 'important');
+
+      const el = clonedDoc.querySelector('.overview-page-2') as HTMLElement | null;
+      if (el) {
+        el.style.width = '1200px';
+        el.style.minWidth = '1200px';
+        el.style.padding = '20px';
+        el.style.backgroundColor = '#f8fafc';
+        el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
+      }
+
+      clonedDoc.querySelectorAll('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside').forEach((node) => {
+        (node as HTMLElement).style.setProperty('display', 'none', 'important');
+      });
+    },
+  });
+
+  const imgData2 = canvas2.toDataURL('image/png');
+  const imgHeight2 = (canvas2.height * contentWidth) / canvas2.width;
+  pdf.addPage();
+  pdf.addImage(imgData2, 'PNG', marginX, marginY, contentWidth, imgHeight2, undefined, 'FAST');
+
+  const filename = getCategoryReportPdfFilename(category);
+  try {
+    pdf.save(filename);
+  } catch {
+    const blobUrl = pdf.output('bloburl');
+    window.open(blobUrl, '_blank');
   }
 };
 

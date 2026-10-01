@@ -131,8 +131,8 @@ const getRecommendationColor = (text: string) => {
     return 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
   }
 
-  // Tier 3: HYBRID SPOT/FORWARD (Flexible Caution)
-  if (text.includes('스팟/선도') || text.includes('혼합')) {
+  // Tier 3: HYBRID SPOT/FORWARD / CAUTION (주의 / 중위험 / 스팟/선도)
+  if (text.includes('주의') || text.includes('중위험') || text.includes('스팟/선도') || text.includes('혼합')) {
     return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
   }
 
@@ -2812,6 +2812,27 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     setPalmCrosshairState(null);
   };
 
+  // Inlines parent document style rules into clonedDoc to guarantee published production build rendering
+  const inlineStylesForClone = (clonedDoc: Document) => {
+    const head = clonedDoc.head || clonedDoc.querySelector('head');
+    if (!head) return;
+
+    Array.from(document.styleSheets).forEach((sheet) => {
+      try {
+        const rules = sheet.cssRules || sheet.rules;
+        if (rules && rules.length > 0) {
+          const styleEl = clonedDoc.createElement('style');
+          styleEl.textContent = Array.from(rules)
+            .map((r) => r.cssText)
+            .join('\n');
+          head.appendChild(styleEl);
+        }
+      } catch {
+        // Ignore cross-origin stylesheet access restrictions if any
+      }
+    });
+  };
+
   const handleExportPdf = async () => {
     const p1El = document.getElementById('commodity-pdf-page-1') as HTMLElement | null;
     const p2El = document.getElementById('commodity-pdf-page-2') as HTMLElement | null;
@@ -2852,6 +2873,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       const canvas1 = await html2canvas(p1El, {
         ...canvasOpts,
         onclone: (clonedDoc) => {
+          inlineStylesForClone(clonedDoc);
+
           const p2 = clonedDoc.getElementById('commodity-pdf-page-2') as HTMLElement | null;
           if (p2) p2.style.setProperty('display', 'none', 'important');
 
@@ -2877,6 +2900,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       const canvas2 = await html2canvas(p2El, {
         ...canvasOpts,
         onclone: (clonedDoc) => {
+          inlineStylesForClone(clonedDoc);
+
           const p1 = clonedDoc.getElementById('commodity-pdf-page-1') as HTMLElement | null;
           if (p1) p1.style.setProperty('display', 'none', 'important');
 

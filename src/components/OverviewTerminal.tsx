@@ -1052,7 +1052,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       item.status.includes('건조') || item.status.includes('고온') 
                         ? 'bg-rose-50 text-rose-700 border-rose-200' 
                         : item.status.includes('흐림') || item.status.includes('주의')
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
                         : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     }`}>
                       {item.status}
@@ -1263,7 +1263,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                         : policyData?.badgeType === 'red'
                           ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                          : 'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
+                          : 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
                     }`}>
                       {policyData?.change || '중립적'}
                     </span>
@@ -1284,7 +1284,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                     : policyData?.badgeType === 'red'
                       ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                      : 'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
+                      : 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
                 }`}>
                   {policyData?.status || '통상 정책 점검'}
                 </span>
@@ -1329,7 +1329,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/80 text-[11px] rounded font-bold shrink-0">
+                <span className="px-2 py-0.5 bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold text-[11px] rounded shrink-0">
                   주시
                 </span>
                 <span className="text-xs font-bold text-slate-800 break-keep">
@@ -1377,7 +1377,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           issue.risk === 'High'
                             ? 'bg-rose-50 border-rose-200 text-[#DF0029]'
                             : issue.risk === 'Med'
-                            ? 'bg-amber-50 border-amber-200 text-amber-700'
+                            ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
                             : 'bg-emerald-50 border-emerald-200 text-emerald-700'
                         }`}
                       >
