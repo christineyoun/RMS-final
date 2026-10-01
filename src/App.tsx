@@ -8,6 +8,7 @@ import { COMMODITIES, MACRO_DRIVERS, MARKET_ISSUES } from './data/commoditiesDat
 import { Commodity, LiveMarketUpdate, Currency } from './types';
 import { geminiController } from './services/geminiController';
 import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './utils/commodityConversions';
+import { exportGlobalDashboardToPdf } from './utils/exportDashboardPdf';
 
 export default function App() {
   const [activeView, setActiveView] = useState<string>('main-dashboard');
@@ -19,6 +20,20 @@ export default function App() {
   const [lastSyncTime, setLastSyncTime] = useState<string>(getKSTTime());
   const [aiBriefText, setAiBriefText] = useState<string>('');
   const [modelVersion, setModelVersion] = useState<string>('gemini-flash-latest');
+
+  // Intercept Ctrl+P or Cmd+P and trigger html2canvas PDF export
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        e.stopPropagation();
+        exportGlobalDashboardToPdf();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, []);
 
   // Handle URL hash routing on initial load and popstate
   useEffect(() => {

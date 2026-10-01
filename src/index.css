@@ -1,5 +1,6 @@
-@import "tailwindcss";
+/* 1. CRITICAL: Font @import MUST be placed on Line 1 before Tailwind */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap');
+@import "tailwindcss";
 
 @layer base {
   body {
@@ -8,13 +9,16 @@
   }
 }
 
-/* Target print media overrides */
+/* 2. Global Print Media Overrides for Perfect PDF Output */
 @media print {
+  /* Force background colors and exact Noto Sans KR font */
   html, body, #root {
     background-color: #f8fafc !important;
+    font-family: 'Noto Sans KR', sans-serif !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+    width: 100% !important;
   }
 
   *, *::before, *::after {
@@ -23,14 +27,23 @@
     color-adjust: exact !important;
   }
 
-  /* Preserve card containers on page breaks */
-  article, section, .rounded-xl, .rounded-lg, .border {
+  /* Prevent grid collapse during print */
+  .grid {
+    display: grid !important;
+  }
+
+  .grid-cols-1.lg\:grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  }
+
+  /* Prevent card containers from splitting awkwardly across pages */
+  article, section, .news-card-item, .rounded-xl, .rounded-lg, .border {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
-  /* Hide interactive buttons in output */
-  button, nav, .no-print {
+  /* Hide interactive buttons and navigation in PDF */
+  button, nav, header, aside, .no-print, .pdf-hide, .print-hide {
     display: none !important;
   }
 }

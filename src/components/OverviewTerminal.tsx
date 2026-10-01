@@ -524,7 +524,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
   return (
     <div id="main-dashboard-view" className="OverviewTerminal overview-container flex flex-col w-full pb-16 space-y-4 print:space-y-0 print:pb-0 print:p-0">
-      {/* ==================== PAGE 1: EXECUTIVE BENCHMARK, WASDE & MACRO DRIVERS ==================== */}
+      {/* ==================== PAGE 1: EXECUTIVE BENCHMARK & WASDE ==================== */}
       <div className="overview-page-1 print:break-after-page flex flex-col space-y-4 print:space-y-2.5 w-full">
         {/* 1. Executive Header Bar */}
         <div className="w-full bg-white border border-slate-200 rounded-xl p-5 print:p-3 mb-2 print:mb-0 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6 print:gap-2 pdf-section-card break-inside-avoid">
@@ -1063,9 +1063,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             </div>
           </div>
         </section>
+      </div>
 
-        {/* 4. Macroeconomic Sourcing Drivers Section with smooth scroll targets (Inside Page 1) */}
-        <section className="macroeconomic-drivers-card bg-white p-4 print:p-2.5 rounded-lg shadow-sm border border-[#e5e7eb] space-y-3 print:space-y-1.5 pdf-section-card break-inside-avoid print:break-inside-avoid print:mt-2" id="macro-drivers-section">
+      {/* ==================== PAGE 2: MACRO DRIVERS, AI BRIEF & MARKET ISSUES ==================== */}
+      <div className="overview-page-2 print:break-before-page flex flex-col space-y-4 print:space-y-3.5 w-full">
+        {/* 1. Macroeconomic Sourcing Drivers Section */}
+        <section className="macroeconomic-drivers-card bg-white p-4 print:p-2.5 rounded-lg shadow-sm border border-[#e5e7eb] space-y-3 print:space-y-1.5 pdf-section-card break-inside-avoid print:break-inside-avoid" id="macro-drivers-section">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px] text-[#111827]">query_stats</span>
@@ -1298,11 +1301,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             <span>출처: Refinitiv · Bloomberg · TradingEconomics</span>
           </div>
         </section>
-      </div>
 
-      {/* ==================== PAGE 2: AI BRIEFS & DESK DIRECTIVES ==================== */}
-      <div className="overview-page-2 print:break-before-page flex flex-col space-y-4 print:space-y-3.5 w-full">
-        {/* 5. Lower Split Dashboard: AI Market Brief + Key Market Issues */}
+        {/* 2. AI Market Brief & Key Market Issues Split Grid */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 my-4">
           {/* Left Column (7 cols): AI Market Brief & Desk Directives */}
           <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
