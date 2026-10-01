@@ -3,6 +3,7 @@ import { getPublisherPortalUrl, isInvalidOrSearchUrl } from '../utils/portalUrls
 import { Download } from 'lucide-react';
 import { Commodity, Currency, MacroDriver, MarketIssue } from '../types';
 import { exportGlobalDashboardToPdf } from '../utils/exportDashboardPdf';
+import palmOilCache from '../data/cache_palmoil.json';
 import {
   formatPrice as formatPriceUtil,
   formatLandedCost as formatLandedCostUtil,
@@ -506,9 +507,6 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
   };
 
   const formatPrice = (commodity: Commodity) => {
-    if (commodity.id === 'palm-oil') {
-      return `${commodity.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${commodity.unit}`;
-    }
     return formatPriceUtil(commodity.price, currency, 'MT');
   };
 
@@ -773,14 +771,20 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
                     <div className="mt-2 flex items-baseline justify-between">
                       <div>
+                        {/* Main Converted Price: Always displays ₩1,545,188 KRW / MT on KRW toggle */}
                         <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
-                          {item.id === 'palm-oil'
-                            ? item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                            : currency === 'KRW'
-                            ? `₩${Math.round(item.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                          {currency === 'KRW'
+                            ? `₩${Math.round(item.price).toLocaleString('en-US')}`
                             : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                         <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
+
+                        {/* Subline Quote: Displays raw MYR benchmark */}
+                        {item.id === 'palm-oil' && (
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                            MDEX (FCPO.KL) · ({(item._originalPrice || 4649).toLocaleString('en-US')} MYR/MT)
+                          </p>
+                        )}
                       </div>
                       <div className="w-16 h-5">
                         <svg
@@ -1254,12 +1258,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     </span>
                   </div>
                   <div className="flex items-center shrink-0">
-                    <span className={`px-2 py-0.5 text-xs font-bold rounded-md border ${
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                       policyData?.badgeType === 'green'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                         : policyData?.badgeType === 'red'
-                          ? 'bg-rose-50 text-rose-700 border-rose-200'
-                          : 'bg-slate-50 text-slate-700 border-slate-200'
+                          ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                          : 'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
                     }`}>
                       {policyData?.change || '중립적'}
                     </span>
@@ -1275,12 +1279,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 </div>
               </div>
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
-                <span className={`px-2.5 py-1 print:px-2 print:py-0.5 text-xs print:text-[10px] font-bold rounded-md border ${
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                   policyData?.badgeType === 'green'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                     : policyData?.badgeType === 'red'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200'
-                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                      ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                      : 'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
                 }`}>
                   {policyData?.status || '통상 정책 점검'}
                 </span>

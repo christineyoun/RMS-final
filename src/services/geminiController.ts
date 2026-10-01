@@ -1,5 +1,6 @@
 import { LiveMarketUpdate } from '../types';
 import { fetchLivePipelineMetrics } from './externalPipeline';
+import palmOilCache from '../data/cache_palmoil.json';
 
 export const getKSTTime = () => {
   return new Date().toLocaleTimeString('en-US', {
@@ -82,7 +83,7 @@ class GeminiController {
         cornPrice: data.commodities?.corn?.price || 432.50,
         soybeanPrice: data.commodities?.soybean?.price || 1024.75,
         soybeanOilPrice: data.commodities?.soybeanOil?.price || 44.80,
-        palmOilPrice: data.commodities?.palmOil?.price || 4185,
+        palmOilPrice: data.commodities?.palmOil?.price || palmOilCache.priceMyr,
         sugarPrice: data.commodities?.sugar?.price || 21.65,
         potatoStarchPrice: data.commodities?.potatoStarch?.price || 860.00,
         tapiocaStarchPrice: data.commodities?.tapiocaStarch?.price || 700.00,
@@ -111,7 +112,7 @@ class GeminiController {
           corn: { price: 432.50, unit: 'USd/bu', changeWoW: -0.85, landedKrw: Math.round(((432.50 * 0.39368 + 40) * pipeline.usdKrw * 1.03) / 1000) },
           soybean: { price: 1024.75, unit: 'USd/bu', changeWoW: 1.45, landedKrw: Math.round(((1024.75 * 0.367437 + 42) * pipeline.usdKrw * 1.03) / 1000) },
           soybeanOil: { price: 44.80, unit: 'USc/lb', changeWoW: 1.12, landedKrw: Math.round(((44.80 * 22.0462 + 65) * pipeline.usdKrw * 1.054) / 1000) },
-          palmOil: { price: 4185, unit: 'MYR/MT', changeWoW: 3.80, landedKrw: Math.round(((4185 / 4.40 + 35) * pipeline.usdKrw * 1.03) / 1000) },
+          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: 3.80, landedKrw: Math.round(((palmOilCache.priceMyr / 4.40 + 35) * pipeline.usdKrw * 1.03) / 1000) },
           sugar: { price: 21.65, unit: 'USc/lb', changeWoW: -1.20, landedKrw: Math.round(((21.65 * 22.0462 + 45) * pipeline.usdKrw * 1.03) / 1000) },
           potatoStarch: { price: 860.00, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: Math.round(((860.00 + 85) * pipeline.eurKrw * 1.08) / 1000) },
           tapiocaStarch: { price: 510.00, unit: 'USD/MT', changeWoW: -0.39, landedKrw: Math.round(((510.00 + 32) * pipeline.usdKrw * 1.04) / 1000) }
@@ -188,8 +189,6 @@ class GeminiController {
       'driver-freight-val': `${update.scfi.toLocaleString()} pts`,
       'risk-score-val': `${update.macroRiskScore || 58}/100`,
 
-      'el-palmoil-price': update.palmOilPrice.toLocaleString(),
-      'el-palm-oil-price': update.palmOilPrice.toLocaleString(),
       'el-fx-usd-krw': `${update.usdKrw.toLocaleString()} ₩`,
       'el-fx-eur-krw': `EUR ${update.eurKrw.toLocaleString()}₩`,
       'el-energy-brent': `$${update.brent.toFixed(2)} /bbl`,

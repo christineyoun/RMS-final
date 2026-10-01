@@ -1,4 +1,5 @@
 import { getLiveExchangeRate, getAllFxRates } from '../services/currencyService';
+import palmOilCache from '../data/cache_palmoil.json';
 
 export interface CommodityPriceData {
   benchmarkQuote: number;       // Raw exchange price (USD/MT, EUR/MT, MYR/MT, or KRW/MT)
@@ -12,7 +13,7 @@ export const COMMODITY_CONFIGS: Record<string, CommodityPriceData> = {
   'corn':           { benchmarkQuote: 216,  currency: 'USD', exchangeRateToKRW: 1369, landedMultiplier: 1.05 },
   'soybean':        { benchmarkQuote: 495,  currency: 'USD', exchangeRateToKRW: 1369, landedMultiplier: 1.05 },
   'soybean-oil':    { benchmarkQuote: 920,  currency: 'USD', exchangeRateToKRW: 1388.5, landedMultiplier: 1.074457 },
-  'palm-oil':       { benchmarkQuote: 4185, currency: 'MYR', exchangeRateToKRW: 325,  landedMultiplier: 1.035 },
+  'palm-oil':       { benchmarkQuote: palmOilCache.priceMyr, currency: 'MYR', exchangeRateToKRW: 332.36, landedMultiplier: 1.035 },
   'sugar':          { benchmarkQuote: 477.30, currency: 'USD', exchangeRateToKRW: 1388.5, landedMultiplier: 1.07856 },
   'potato-starch':  { benchmarkQuote: 870,  currency: 'EUR', exchangeRateToKRW: 1520, landedMultiplier: 1.07 },
   'tapioca-starch': { benchmarkQuote: 700,  currency: 'USD', exchangeRateToKRW: 1388.5, landedMultiplier: 1.04 },

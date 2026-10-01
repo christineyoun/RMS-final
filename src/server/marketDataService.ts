@@ -4,6 +4,7 @@ import { CENTRAL_SOURCE_REGISTRY, getSourceDefinition } from './sourceRegistry';
 import { usdaFasService, UsdaWheatWorldSummary } from './usdaFasService';
 import { usWheatPriceReportService } from './usWheatService';
 import { centsPerLbToUsdPerMt } from '../utils/commodityConversions';
+import palmOilCache from '../data/cache_palmoil.json';
 
 export const getKSTFormattedTime = (): string => {
   return (
@@ -453,7 +454,7 @@ class ServerMarketDataService {
         indicator: 'BMD 팜유 선물가 (FCPO)',
         country: 'MYS',
         date: dateKST,
-        value: 4185,
+        value: palmOilCache.priceMyr,
         unit: 'MYR/MT',
         source: def.sourceName,
         sourceUrl: def.sourceUrl,
@@ -641,7 +642,7 @@ Output ONLY valid raw JSON in this exact structure without markdown:
           indicator: 'BMD 팜유 선물가 (FCPO)',
           country: 'MYS',
           date: dateKST,
-          value: Number(parsed.palmOil) || 4185,
+          value: Number(parsed.palmOil) || palmOilCache.priceMyr,
           unit: 'MYR/MT',
           source: def.sourceName,
           sourceUrl: def.sourceUrl,

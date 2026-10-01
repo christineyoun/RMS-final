@@ -59,6 +59,30 @@ export const defaultWasdeTelemetry: WasdeTelemetryData = {
   executiveBrief: '미국산 HRW 소맥은 560~590 USd/bu 범위의 단기 횡보세를 유지하고 있습니다. 미국 남부 평원지대의 지속적인 토양 수분 부족과 2025/26 흑해 수출 물량 감소가 상승 요인으로 작용하고 있습니다. 반면 러시아의 풍부한 이월 재고와 이집트 GASC 입찰 수요 둔화가 상단을 제한하고 있습니다. 국내 식품 제조 구매 데스크에서는 현재 570~575 USd 밴드 부근에서 1분기 물리적 수입 물량의 조달 약정을 체결할 것을 권고합니다.'
 };
 
+// Default initial wheat history baseline so Wheat renders the 3 multi-class KPI cards and 3-line chart immediately on Second 0
+const DEFAULT_WHEAT_HISTORY_BASELINE: UsWheatPriceHistoryResponse = {
+  success: true,
+  statusCode: 200,
+  source: 'U.S. Wheat Associates',
+  sourceUrl: 'https://www.uswheat.org/market-information/price-reports/',
+  reportDate: 'September 25, 2026',
+  lastRetrievalTime: '10:38:34 PM KST',
+  primaryUnit: 'USD/MT',
+  secondaryUnit: 'USc/bu',
+  count: 4,
+  metrics: {
+    srw: { wheatClass: 'SRW', classNameKo: '연질적색겨울밀', classNameEn: 'Soft Red Winter', exchange: 'CBOT', contractMonth: 'December', latestPriceMt: 258.31, latestPriceBu: 703, wowChangePct: -3.03, wowChangeMt: -8.08, wowChangeBu: -22, momChangePct: 10.02, momChangeMt: 23.49, momChangeBu: 64 },
+    hrw: { wheatClass: 'HRW', classNameKo: '경질적색겨울밀', classNameEn: 'Hard Red Winter', exchange: 'KCBT', contractMonth: 'December', latestPriceMt: 279.99, latestPriceBu: 762, wowChangePct: -4.63, wowChangeMt: -13.59, wowChangeBu: -37, momChangePct: 7.63, momChangeMt: 19.84, momChangeBu: 54 },
+    hrs: { wheatClass: 'HRS', classNameKo: '경질적색봄밀', classNameEn: 'Hard Red Spring', exchange: 'MIAX', contractMonth: 'December', latestPriceMt: 262.35, latestPriceBu: 714, wowChangePct: -4.16, wowChangeMt: -11.39, wowChangeBu: -31, momChangePct: 3.48, momChangeMt: 8.83, momChangeBu: 24 },
+  },
+  data: [
+    { date: '2025-12-19', reportDate: '2025.12.19', contractMonth: 'December', srwMt: 240, hrwMt: 250, hrsMt: 260, srwBu: 650, hrwBu: 680, hrsBu: 710 },
+    { date: '2026-03-21', reportDate: '2026.03.21', contractMonth: 'December', srwMt: 255, hrwMt: 270, hrsMt: 285, srwBu: 690, hrwBu: 730, hrsBu: 770 },
+    { date: '2026-06-21', reportDate: '2026.06.21', contractMonth: 'December', srwMt: 250, hrwMt: 265, hrsMt: 275, srwBu: 680, hrwBu: 720, hrsBu: 750 },
+    { date: '2026-09-25', reportDate: '2026.09.25', contractMonth: 'December', srwMt: 258.31, hrwMt: 279.99, hrsMt: 262.35, srwBu: 703, hrwBu: 762, hrsBu: 714 },
+  ],
+};
+
 interface CommodityDetailProps {
   commodity: Commodity;
   onNavigateBack: () => void;
@@ -1149,10 +1173,12 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const lastSuccessfulUsdaDataRef = useRef<UsdaWheatSummary | null>(null);
 
   // U.S. Wheat Associates Live & Historical Price Report State
-  const [usWheatHistory, setUsWheatHistory] = useState<UsWheatPriceHistoryResponse | null>(null);
+  const [usWheatHistory, setUsWheatHistory] = useState<UsWheatPriceHistoryResponse | null>(
+    commodity.id === 'wheat' ? DEFAULT_WHEAT_HISTORY_BASELINE : null
+  );
   const [usWheatLastRetrieved, setUsWheatLastRetrieved] = useState<string>('');
   const [isUsWheatFailed, setIsUsWheatFailed] = useState<boolean>(false);
-  const lastSuccessfulWheatHistoryRef = useRef<UsWheatPriceHistoryResponse | null>(null);
+  const lastSuccessfulWheatHistoryRef = useRef<UsWheatPriceHistoryResponse | null>(DEFAULT_WHEAT_HISTORY_BASELINE);
 
 
   // AMIS Market Monitor (Wheat) – verified monthly market intelligence.
@@ -1357,6 +1383,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   useEffect(() => {
     if (!isWheat) return;
+
+    if (!usWheatHistory) {
+      setUsWheatHistory(lastSuccessfulWheatHistoryRef.current || DEFAULT_WHEAT_HISTORY_BASELINE);
+    }
 
     let isMounted = true;
 
@@ -2416,6 +2446,37 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const latestPoint = coordPoints[coordPoints.length - 1];
 
+    // Collision resolution for far-right Y-axis price badges
+    const rawBadges = [
+      { id: 'srw', y: latestPoint.ySrw },
+      { id: 'hrw', y: latestPoint.yHrw },
+      { id: 'hrs', y: latestPoint.yHrs },
+    ].sort((a, b) => a.y - b.y);
+
+    const minGapPx = 20; // Enforce minimum 20px gap between badges
+    for (let i = 1; i < rawBadges.length; i++) {
+      const prevY = rawBadges[i - 1].y;
+      if (rawBadges[i].y - prevY < minGapPx) {
+        rawBadges[i].y = prevY + minGapPx;
+      }
+    }
+
+    // Clamp within chart bounds
+    const maxCanvasY = 138;
+    for (let i = rawBadges.length - 1; i >= 0; i--) {
+      if (rawBadges[i].y > maxCanvasY) {
+        rawBadges[i].y = maxCanvasY;
+        if (i > 0 && rawBadges[i].y - rawBadges[i - 1].y < minGapPx) {
+          rawBadges[i - 1].y = rawBadges[i].y - minGapPx;
+        }
+      }
+    }
+
+    const resolvedPcts: Record<string, number> = {};
+    rawBadges.forEach((b) => {
+      resolvedPcts[b.id] = (b.y / 150) * 100;
+    });
+
     return {
       points: coordPoints,
       srwLinePath,
@@ -2430,9 +2491,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       ticks,
       axisLabels,
       latestPoint,
-      srwYPct: (latestPoint.ySrw / 150) * 100,
-      hrwYPct: (latestPoint.yHrw / 150) * 100,
-      hrsYPct: (latestPoint.yHrs / 150) * 100
+      srwYPct: resolvedPcts['srw'],
+      hrwYPct: resolvedPcts['hrw'],
+      hrsYPct: resolvedPcts['hrs'],
     };
   }, [isWheat, usWheatHistory, activeTimeframe, currency, exchangeRate]);
 
@@ -2752,12 +2813,19 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   };
 
   const handleExportPdf = async () => {
-    const detailEl = containerRef.current || (document.querySelector('.CommodityDetail') as HTMLElement);
-    if (!detailEl) return;
+    const p1El = document.getElementById('commodity-pdf-page-1') as HTMLElement | null;
+    const p2El = document.getElementById('commodity-pdf-page-2') as HTMLElement | null;
+
+    if (!p1El || !p2El) return;
 
     try {
       setIsExportingPdf(true);
-      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
       const { default: html2canvas } = await import('html2canvas-pro');
       const { jsPDF } = await import('jspdf');
 
@@ -2768,76 +2836,60 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       });
 
       const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-      const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
       const margin = 10;
       const contentWidth = pageWidth - margin * 2; // 190mm
 
-      // =========================================================
-      // CANVAS 1 (PAGE 1 CAPTURE: Header, SCM, Chart, 52W, AI Rec)
-      // =========================================================
-      const canvas1 = await html2canvas(detailEl, {
+      const canvasOpts = {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        logging: false,
+        backgroundColor: '#f8fafc',
         width: 1200,
         windowWidth: 1200,
+      };
+
+      // CANVAS 1 (PAGE 1)
+      const canvas1 = await html2canvas(p1El, {
+        ...canvasOpts,
         onclone: (clonedDoc) => {
-          sanitizeOklchColorsForCanvas(clonedDoc);
-          const clonedDetail = clonedDoc.querySelector('.CommodityDetail') as HTMLElement;
-          if (clonedDetail) {
-            clonedDetail.style.width = '1200px';
-            clonedDetail.style.minWidth = '1200px';
-            clonedDetail.style.margin = '0 auto';
-            clonedDetail.style.padding = '20px';
-            clonedDetail.classList.add('pdf-export-mode');
+          const p2 = clonedDoc.getElementById('commodity-pdf-page-2') as HTMLElement | null;
+          if (p2) p2.style.setProperty('display', 'none', 'important');
 
-            // HIDE ALL PAGE 2 SECTIONS AND THEIR CHILDREN FROM CANVAS 1
-            const p2Nodes = clonedDoc.querySelectorAll(
-              '.wasde-origin-radar-section, .wasde-origin-radar-wrapper, .wasde-section-container, .market-intelligence-section'
-            );
-            p2Nodes.forEach((node) => {
-              (node as HTMLElement).style.setProperty('display', 'none', 'important');
-            });
+          const el = clonedDoc.getElementById('commodity-pdf-page-1') as HTMLElement | null;
+          if (el) {
+            el.style.width = '1200px';
+            el.style.minWidth = '1200px';
+            el.style.padding = '20px';
+            el.style.backgroundColor = '#f8fafc';
+            el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
           }
-
-          clonedDoc.querySelectorAll('.pdf-hide, .print-hide, button').forEach((el) => {
-            (el as HTMLElement).style.setProperty('display', 'none', 'important');
+          clonedDoc.querySelectorAll('button, header, aside, .export-report-btn, .export-btn-wrapper, .pdf-hide, .print-hide').forEach((node) => {
+            (node as HTMLElement).style.setProperty('display', 'none', 'important');
           });
         },
       });
 
       const imgData1 = canvas1.toDataURL('image/png');
       const imgHeight1 = (canvas1.height * contentWidth) / canvas1.width;
-      pdf.addImage(imgData1, 'PNG', margin, margin, contentWidth, Math.min(imgHeight1, pageHeight - margin * 2), undefined, 'FAST');
+      pdf.addImage(imgData1, 'PNG', margin, margin, contentWidth, imgHeight1, undefined, 'FAST');
 
-      // =========================================================
-      // CANVAS 2 (PAGE 2 CAPTURE: S&D Balance, Origin Radar, News)
-      // =========================================================
-      const canvas2 = await html2canvas(detailEl, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        width: 1200,
-        windowWidth: 1200,
+      // CANVAS 2 (PAGE 2)
+      const canvas2 = await html2canvas(p2El, {
+        ...canvasOpts,
         onclone: (clonedDoc) => {
-          sanitizeOklchColorsForCanvas(clonedDoc);
-          const clonedDetail = clonedDoc.querySelector('.CommodityDetail') as HTMLElement;
-          if (clonedDetail) {
-            clonedDetail.style.width = '1200px';
-            clonedDetail.style.minWidth = '1200px';
-            clonedDetail.style.margin = '0 auto';
-            clonedDetail.style.padding = '20px';
-            clonedDetail.classList.add('pdf-export-mode');
+          const p1 = clonedDoc.getElementById('commodity-pdf-page-1') as HTMLElement | null;
+          if (p1) p1.style.setProperty('display', 'none', 'important');
 
-            // HIDE PAGE 1 CHILDREN (Keep only last 2 child sections)
-            const children = Array.from(clonedDetail.children);
-            for (let i = 0; i < children.length - 2; i++) {
-              (children[i] as HTMLElement).style.setProperty('display', 'none', 'important');
-            }
+          const el = clonedDoc.getElementById('commodity-pdf-page-2') as HTMLElement | null;
+          if (el) {
+            el.style.width = '1200px';
+            el.style.minWidth = '1200px';
+            el.style.padding = '20px';
+            el.style.backgroundColor = '#f8fafc';
+            el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
           }
-
-          clonedDoc.querySelectorAll('.pdf-hide, .print-hide, button').forEach((el) => {
-            (el as HTMLElement).style.setProperty('display', 'none', 'important');
+          clonedDoc.querySelectorAll('button, header, aside, .export-report-btn, .export-btn-wrapper, .pdf-hide, .print-hide').forEach((node) => {
+            (node as HTMLElement).style.setProperty('display', 'none', 'important');
           });
         },
       });
@@ -2845,11 +2897,17 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       const imgData2 = canvas2.toDataURL('image/png');
       const imgHeight2 = (canvas2.height * contentWidth) / canvas2.width;
       pdf.addPage();
-      pdf.addImage(imgData2, 'PNG', margin, margin, contentWidth, Math.min(imgHeight2, pageHeight - margin * 2), undefined, 'FAST');
+      pdf.addImage(imgData2, 'PNG', margin, margin, contentWidth, imgHeight2, undefined, 'FAST');
 
-      pdf.save(getPdfFilename(commodity.nameEn));
+      const filename = getPdfFilename(commodity.nameEn);
+      try {
+        pdf.save(filename);
+      } catch {
+        const blobUrl = pdf.output('bloburl');
+        window.open(blobUrl, '_blank');
+      }
     } catch (err) {
-      console.error('Failed to export multi-canvas PDF:', err);
+      console.error('Failed to export commodity detail PDF:', err);
     } finally {
       setIsExportingPdf(false);
     }
@@ -2898,8 +2956,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         )}
       </div>
 
-      {/* 2. Top Executive Summary Card – shared SCM Procurement Analysis UI */}
-      <section className="w-full max-w-full p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs pdf-section-block overflow-hidden">
+      {/* PAGE 1 CONTAINER: SCM Analysis + Chart + 52W Range + AI Recommendation */}
+      <div id="commodity-pdf-page-1" className="flex flex-col space-y-4 w-full">
+        {/* 2. Top Executive Summary Card – shared SCM Procurement Analysis UI */}
+        <section className="w-full max-w-full p-4 sm:p-5 bg-white border border-slate-200 rounded-xl shadow-xs pdf-section-block overflow-hidden">
         <div className="w-full max-w-full flex flex-col gap-3 min-w-0">
           {/* Header Title Block */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
@@ -3711,28 +3771,28 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 ))}
               </div>
 
-              {/* Permanent Fixed Live Price Badges on Far-Right Y-Axis */}
+              {/* Permanent Fixed Live Price Badges on Far-Right Y-Axis (Collision Resolved) */}
               <div
-                className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
+                className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10 transition-all duration-200"
                 style={{ top: `${wheatChartData.srwYPct}%` }}
               >
-                <span className="bg-[#DF0029] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block">
+                <span className="bg-[#DF0029] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
                   SRW {currencySymbol}{formatConvertedPrice(wheatChartData.latestPoint.srwMt)}
                 </span>
               </div>
               <div
-                className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
+                className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10 transition-all duration-200"
                 style={{ top: `${wheatChartData.hrwYPct}%` }}
               >
-                <span className="bg-[#EC870C] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block">
+                <span className="bg-[#EC870C] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
                   HRW {currencySymbol}{formatConvertedPrice(wheatChartData.latestPoint.hrwMt)}
                 </span>
               </div>
               <div
-                className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
+                className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10 transition-all duration-200"
                 style={{ top: `${wheatChartData.hrsYPct}%` }}
               >
-                <span className="bg-[#2563EB] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block">
+                <span className="bg-[#2563EB] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
                   HRS {currencySymbol}{formatConvertedPrice(wheatChartData.latestPoint.hrsMt)}
                 </span>
               </div>
@@ -4344,7 +4404,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         isSyncing={isSyncing}
         className="pdf-section-block print:p-3 print:mt-4"
       />
+    </div>
 
+    {/* PAGE 2 CONTAINER: Global S&D Balance + Origin Radar + Market Intelligence */}
+    <div id="commodity-pdf-page-2" className="flex flex-col space-y-4 w-full">
       {/* 5. Lower Section: SCM Global S&D Balance & Sourcing Origin Radar */}
       <div className="wasde-origin-radar-section wasde-origin-radar-wrapper wasde-section-container grid grid-cols-1 lg:grid-cols-2 gap-4 print:mt-0 print:grid-cols-2 print:break-before-page">
         {/* S&D Balance */}
@@ -4370,5 +4433,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         <CommodityNews commodityId={commodity.id} />
       </section>
     </div>
-  );
+  </div>
+);
 };

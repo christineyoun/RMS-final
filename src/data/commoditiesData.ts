@@ -1,4 +1,5 @@
 import { Commodity, MacroDriver, MarketIssue } from '../types';
+import palmOilCache from './cache_palmoil.json';
 
 export const COMMODITIES: Commodity[] = [
   {
@@ -594,30 +595,25 @@ export const COMMODITIES: Commodity[] = [
     description: '면류 유탕 전용 말레이시아/인도네시아산 RBD 팜올레인',
     category: 'oils',
     categoryNameKo: '유지류 (Oils)',
-    price: 4185,
+    price: palmOilCache.priceMyr, // Dynamically loads latest cached MYR price
     unit: 'MYR/MT',
-    priceKrwEstimated: 1440.0,
-    landedKrwKg: 1440,
-    changeWoW: 3.80,
-    changeMoM: 6.12,
+    priceKrwEstimated: Math.round((palmOilCache.priceMyr / 4.0831) * 1357.1),
+    landedKrwKg: Math.round((palmOilCache.priceMyr / 4.0831) * 1357.1 / 1000),
+    changeWoW: -4.49,
+    changeMoM: -4.41,
     changeYoY: 13.88,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (MYR/KRW 312.20 기준)',
+    cifBusanDesc: '부산 CIF 추정 통관 원가 (MYR/KRW 기준)',
     ticker: 'BMD: FCPO',
     exchange: 'BMD',
-    sparkline: [4030, 4070, 4110, 4090, 4140, 4185],
+    sparkline: palmOilCache.historicalSeries
+      ? palmOilCache.historicalSeries.slice(-6).map((s: any) => s.centsPerBushel || s.usdPerMT)
+      : [4820, 4810, 4780, 4720, 4690, palmOilCache.priceMyr],
     chartData: [
-      { date: '2023년 11월', cashPrice: 3675, ma50: 3720, landedBaseline: 1260 },
-      { date: '2024년 1월', cashPrice: 3780, ma50: 3740, landedBaseline: 1300 },
-      { date: '2024년 3월', cashPrice: 4250, ma50: 3950, landedBaseline: 1460 },
-      { date: '2024년 5월', cashPrice: 3890, ma50: 4020, landedBaseline: 1340 },
-      { date: '2024년 7월', cashPrice: 3950, ma50: 3920, landedBaseline: 1360 },
-      { date: '2024년 9월', cashPrice: 3944, ma50: 3980, landedBaseline: 1355 },
-      { date: '2024년 11월 (현재)', cashPrice: 4185, ma50: 4050, landedBaseline: 1440 }
+      { date: '현재', cashPrice: palmOilCache.priceMyr, ma50: 4520, landedBaseline: 1545 }
     ],
     aiConfidence: 92,
     recommendedCoverage: '60~75일 선도 구매',
-    aiSynthesis:
-      '말레이시아 BMD 팜유 선물은 톤당 4,185 MYR 선에서 인도네시아 B40 바이오디젤 정책과 동남아 라니냐성 폭우에 따른 수확 지연 우려로 강한 하방 경직성을 유지하고 있습니다. 주요 산지의 타이트한 기말 재고와 식물성 유지 전반의 수급 불안이 단기 상방 압력으로 작용하는 반면, 인도와 중국의 단기 비축 완화가 급등을 제어하고 있습니다. 향후 1~3개월간 동남아 강우 집중도와 인도네시아 수출세 개정 여부에 따라 고점 횡보세가 이어질 전망입니다. 면류 유탕 유지 조달 데스크에서는 4,120~4,160 MYR 지지선 구간을 활용하여 60~75일 수준의 선제적 분할 매수를 권고합니다.',
+    aiSynthesis: `말레이시아 BMD 팜유 선물은 톤당 ${palmOilCache.priceMyr.toLocaleString()} MYR 선에서 인도네시아 B40 바이오디젤 정책과 동남아 라니냐성 폭우에 따른 수확 지연 우려로 강한 하방 경직성을 유지하고 있습니다.`,
     bullishFactors: [
       '인도네시아 B40 바이오디젤 의무 혼합 시행에 따른 수출 여력 축소',
       '동남아 라니냐성 집중 호우에 따른 FFB 수확 및 산지 운송 차질',

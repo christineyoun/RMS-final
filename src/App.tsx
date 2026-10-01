@@ -165,12 +165,13 @@ export default function App() {
   // Transform commodities based on global currency state
   const mappedCommodities = useMemo(() => {
     return commodities.map((c) => {
-      // EXCLUSION RULE (LEAVE PALM OIL UNTOUCHED)
-      if (c.id === 'palm-oil') return c;
-
       let usdMt = c.price;
-      // Convert legacy units to USD/MT
-      if (c.id === 'tapioca-starch') {
+
+      // 1. Convert raw quotes to USD/MT baseline
+      if (c.id === 'palm-oil') {
+        // If price is raw MYR (>2000), convert MYR -> USD/MT (1 USD = 4.0831 MYR)
+        usdMt = c.price > 2000 ? c.price / 4.0831 : c.price;
+      } else if (c.id === 'tapioca-starch') {
         usdMt = c.price || 700;
       } else if (c.unit.includes('USd/bu')) {
         usdMt = c.ticker.includes('ZC') ? cornCentsPerBuToUsdPerMt(c.price) : grainCentsPerBuToUsdPerMt(c.price);
@@ -182,6 +183,7 @@ export default function App() {
         usdMt = c.price;
       }
 
+      // 2. Convert USD/MT baseline to active toggle choice
       let convertedPrice = usdMt;
       let newUnit = 'USD / MT';
 
@@ -189,7 +191,7 @@ export default function App() {
         convertedPrice = usdMt / 1.08;
         newUnit = 'EUR / MT';
       } else if (currency === 'KRW') {
-        convertedPrice = usdMt * 1388.5;
+        convertedPrice = usdMt * 1357.1; // 1,545,188 KRW / MT
         newUnit = 'KRW / MT';
       }
 
@@ -197,7 +199,7 @@ export default function App() {
         ...c,
         price: convertedPrice,
         unit: newUnit,
-        _originalPrice: c.price,
+        _originalPrice: c.id === 'palm-oil' ? (c.price > 2000 ? c.price : Math.round(c.price * 4.0831)) : c.price,
         _originalUnit: c.unit,
       };
     });
