@@ -2957,10 +2957,18 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   {commodity.category.toUpperCase() === 'GRAIN' ? 'GRAINS' : commodity.category.toUpperCase()}
                 </span>
                 <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-mono font-medium rounded border border-slate-200 shrink-0">
-                  {isCorn ? 'CBOT: CC1' : isSugar ? 'ICE: SBC1' : commodity.ticker}
+                  {isWheat
+                    ? 'CBOT: SRW · KCBT: HRW · MIAX: HRS'
+                    : isPalmOil
+                    ? 'MDEX: FCPO · Spot: RBD Olein'
+                    : isCorn
+                    ? 'CBOT: CC1'
+                    : isSugar
+                    ? 'ICE: SBC1'
+                    : commodity.ticker}
                 </span>
               </div>
-              <h1 className="text-[15px] sm:text-base lg:text-[17px] font-bold text-slate-900 tracking-tight leading-snug break-keep whitespace-normal">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug break-keep whitespace-normal">
                 {commodity.nameKo} ({commodity.nameEn}) SCM 조달 분석
               </h1>
             </div>
@@ -2977,7 +2985,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 {isWheat ? '기준 시세 (CBOT SRW)' : '기준 시세'}
               </span>
               <div className="flex items-baseline gap-1 min-w-0 flex-wrap sm:flex-nowrap">
-                <span className="text-sm sm:text-base font-bold font-mono text-slate-900 whitespace-nowrap">
+                <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 whitespace-nowrap">
                   {isWheat && usWheatHistory?.metrics?.srw
                     ? (currency === 'KRW'
                         ? `₩${Math.round(usWheatHistory.metrics.srw.latestPriceMt * exchangeRate).toLocaleString('en-US')}`
@@ -3021,37 +3029,37 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 </span>
               </div>
               {isWheat && usWheatHistory?.metrics?.srw && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   CBOT SRW {formatContractMonth(usWheatHistory.metrics.srw.contractMonth)} · {usWheatHistory.reportDate}
                 </p>
               )}
               {isCorn && cornAnalysis?.benchmarkPrice && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   CBOT (ZC=F) · {cornAnalysis.benchmarkPrice.observationDate} ({cornAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
                 </p>
               )}
               {isSoybean && soybeanAnalysis?.benchmarkPrice && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   CBOT (ZS=F) · {soybeanAnalysis.benchmarkPrice.observationDate} ({soybeanAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
                 </p>
               )}
               {isSoybeanOil && soybeanOilAnalysis?.benchmarkPrice && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   CBOT (ZL=F) · {soybeanOilAnalysis.benchmarkPrice.observationDate} ({soybeanOilAnalysis.benchmarkPrice.rawPrice.toFixed(2)} {soybeanOilAnalysis.benchmarkPrice.rawUnit})
                 </p>
               )}
               {isSugar && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   ICE (SB=F) · {latestHistoricalData?.date || '2026-09-25'} ({latestHistoricalData?.centsPerBushel ? latestHistoricalData.centsPerBushel.toFixed(2) : (commodity.price && commodity.price < 100 ? commodity.price.toFixed(2) : '21.65')} USc/lb)
                 </p>
               )}
               {isPalmOil && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   MDEX (FCPO.KL) · {latestHistoricalData?.date || '2026-09-28'} ({latestHistoricalData?.centsPerBushel && latestHistoricalData.centsPerBushel > 1000 ? Math.round(latestHistoricalData.centsPerBushel).toLocaleString('en-US') : '4,185'} MYR/MT)
                 </p>
               )}
               {isTapiocaStarch && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   TTSA (FOB Bangkok) · {latestHistoricalData?.date || '2026-09-22'} (${latestHistoricalData?.usdPerMT ? latestHistoricalData.usdPerMT.toFixed(2) : '700.00'} USD/MT)
                 </p>
               )}
@@ -3062,7 +3070,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-0.5">
                 {isPotatoStarch ? '연간 변동 (YoY)' : isTapiocaStarch ? '3개월 변동' : '주간 변동 (WoW)'}
               </span>
-              <div className={`flex items-center gap-0.5 font-mono text-sm font-bold whitespace-nowrap ${
+              <div className={`flex items-center gap-0.5 font-mono text-base font-bold whitespace-nowrap ${
                 isPotatoStarch
                   ? 'text-[#DF0029]'
                   : isTapiocaStarch && tapioca3mChange
@@ -3081,7 +3089,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   ? (palmOilWeeklyChange.direction === 'up' ? 'text-[#059669]' : palmOilWeeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
                   : commodity.changeWoW >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
               }`}>
-                <span className="material-symbols-outlined text-[16px]">
+                <span className="material-symbols-outlined text-[18px]">
                   {isPotatoStarch
                     ? 'arrow_downward'
                     : isTapiocaStarch && tapioca3mChange
@@ -3121,14 +3129,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 </span>
               </div>
               {isPotatoStarch ? (
-                <div className="text-[9px] sm:text-[10px] text-slate-500 font-sans mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                <div className="text-xs text-slate-500 font-sans mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
                   <span className="font-semibold text-[#DF0029] block mb-0.5">’25년 실제 대비 ’26년 감소 전망</span>
-                  <span className="text-[8px] text-slate-400 block mt-0.5">주요 조달국 원료감자 생산량 기준</span>
+                  <span className="text-[10px] text-slate-400 block mt-0.5">주요 조달국 원료감자 생산량 기준</span>
                 </div>
               ) : (
                 <>
                   {isWheat && hrwData?.absoluteChangeMt != null && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${hrwData.absoluteChangeMt * exchangeRate > 0 ? '+' : ''}${Math.round(hrwData.absoluteChangeMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3137,7 +3145,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </p>
                   )}
                   {isCorn && cornAnalysis?.weeklyChange?.absoluteChangeUsdMt != null && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${cornAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(cornAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3146,7 +3154,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </p>
                   )}
                   {isSoybean && soybeanAnalysis?.weeklyChange?.absoluteChangeUsdMt != null && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${soybeanAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(soybeanAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3155,7 +3163,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </p>
                   )}
                   {isSoybeanOil && soybeanOilAnalysis?.weeklyChange?.absoluteChangeUsdMt != null && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3164,7 +3172,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </p>
                   )}
                   {isSugar && sugarWeeklyChange?.absChangeUsdMt != null && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${sugarWeeklyChange.absChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(sugarWeeklyChange.absChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3173,7 +3181,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </p>
                   )}
                   {isPalmOil && palmOilWeeklyChange?.absChangeUsdMt != null && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${palmOilWeeklyChange.absChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(palmOilWeeklyChange.absChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3182,7 +3190,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </p>
                   )}
                   {isTapiocaStarch && tapioca3mChange && (
-                    <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
                         ? `${tapioca3mChange.absoluteChange * exchangeRate > 0 ? '+' : ''}${Math.round(tapioca3mChange.absoluteChange * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
@@ -3197,34 +3205,34 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             {/* Desk Recommendation */}
             <div id="scm-desk-recommendation-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-3 flex flex-col justify-center min-w-0">
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">데스크 권고</span>
-              <span className={`inline-flex self-start items-center text-xs px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
+              <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
                 {activeDeskRecommendation}
               </span>
             </div>
           </div>
 
           {/* Row 2: common Procurement Risk strip across full width. */}
-          <div id="scm-procurement-risk-card" className="w-full bg-slate-50/80 border border-slate-200/70 rounded-lg px-3.5 py-2.5 flex flex-row items-center gap-3 min-w-0">
+          <div id="scm-procurement-risk-card" className="w-full bg-slate-50/80 border border-slate-200/70 rounded-lg px-3.5 py-2 flex flex-row items-center gap-2.5 min-w-0">
             {/* Left Label & Badge Group */}
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-bold text-slate-700 whitespace-nowrap">조달 리스크</span>
-              <span className={`inline-flex items-center justify-center text-[11px] font-bold px-2 py-0.5 rounded border leading-none tracking-tight whitespace-nowrap select-none h-5 ${
+              <span className="text-xs font-bold text-slate-800 whitespace-nowrap">조달 리스크</span>
+              <span className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded border leading-none tracking-tight whitespace-nowrap select-none ${
                 procurementRiskLevel === '경계'
                   ? 'text-red-700 bg-red-50 border-red-200'
                   : procurementRiskLevel === '주의'
                   ? 'text-[#EC870C] bg-[#fff7ed] border-[#fed7aa]'
                   : 'text-emerald-700 bg-emerald-50 border-emerald-200'
               }`}>
-                <span className="translate-y-[-0.5px]">{procurementRiskLevel}</span>
+                {procurementRiskLevel}
               </span>
             </div>
 
             {/* Right Summary Sentence */}
-            <p className="text-xs text-slate-700 font-sans leading-relaxed break-keep whitespace-normal min-w-0 flex-1 my-0">
+            <p className="text-xs text-slate-700 font-medium font-sans leading-relaxed break-keep whitespace-normal min-w-0 flex-1 my-0">
               {procurementRiskSummary}
             </p>
             {isWheat && isAmisFailed && (
-              <span className="text-[9px] text-[#DF0029] shrink-0">AMIS 최신 갱신 실패 · 이전 검증 데이터 유지</span>
+              <span className="text-[10px] text-[#DF0029] font-semibold shrink-0">AMIS 최신 갱신 실패 · 이전 검증 데이터 유지</span>
             )}
           </div>
         </div>

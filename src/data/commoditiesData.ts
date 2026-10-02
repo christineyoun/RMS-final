@@ -8,7 +8,7 @@ export const COMMODITIES: Commodity[] = [
     nameKo: '소맥',
     nameEn: 'Wheat',
     gradeEn: 'CBOT SRW BENCHMARK',
-    description: '제분용 미국산 SRW/HRW 및 호주/캐나다산 밀 원맥',
+    description: '제분용 미국산 SRW / HRW / HRS 벤치마크',
     category: 'grain',
     categoryNameKo: '곡물류 (Grains)',
     price: 258.40, // Standardized to CBOT SRW ($258.40 USD/MT)
