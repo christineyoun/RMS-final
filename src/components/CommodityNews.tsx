@@ -201,63 +201,51 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
             return (
               <article
                 key={item.id}
+                onClick={() => {
+                  if (targetUrl) {
+                    const win = window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                    if (!win) {
+                      window.location.href = targetUrl;
+                    }
+                  }
+                }}
                 className="news-card-item group p-4 bg-white border border-slate-200 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between min-w-0 cursor-pointer"
               >
                 <div>
-                  {/* Top Row: Pill Badges */}
-                  <div className="flex items-center justify-between mb-2 gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[11px] font-sans font-medium rounded border border-slate-200">
-                        {item.sourceName}
-                      </span>
+                  {/* Top Bar: Category (Left) & Explicit Affected Region Label (Right) */}
+                  <div className="flex items-center justify-between mb-2.5 gap-2">
+                    <div>
                       {item.category && (
                         <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded border border-blue-100">
                           {item.category}
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  {/* Title Link */}
-                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#DF0029] leading-snug break-keep cursor-pointer transition-colors mb-1.5">
-                    {targetUrl ? (
-                      <a
-                        href={targetUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="block w-full group-hover:text-[#DF0029] transition-colors"
-                      >
-                        {item.title}
-                      </a>
-                    ) : (
-                      <span className="block w-full text-slate-900 group-hover:text-[#DF0029] transition-colors">
-                        {item.title}
+                    {item.affectedRegion && (
+                      <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                        <span className="material-symbols-outlined text-[11px] text-slate-400">location_on</span>
+                        <span>영향 지역: {item.affectedRegion}</span>
                       </span>
                     )}
-                  </h4>
+                  </div>
 
-                  {/* Summary Paragraph */}
+                  {/* Title & Summary */}
+                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors leading-snug break-keep mb-1.5">
+                    {item.title}
+                  </h4>
                   {item.summary && (
-                    <p className="text-xs text-slate-600 leading-relaxed mt-1.5 break-keep line-clamp-2">
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
                       {item.summary}
                     </p>
                   )}
                 </div>
 
-                {/* Unified Footer Row: Date + Region (No duplicate source name) */}
-                <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-400 flex-wrap">
-                    <span>{item.publishedAt}</span>
-                    {item.affectedRegion && (
-                      <>
-                        <span>·</span>
-                        <span className="font-sans text-slate-500 text-[11px]">
-                          {item.affectedRegion}
-                        </span>
-                      </>
-                    )}
-                  </div>
+                {/* Footer Divider & Bottom Bar: Date (Left) & Source (Right) */}
+                <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                  <span className="text-[11px] font-medium text-slate-400">{formatPublicationDate(item.publishedAt)}</span>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[11px] font-medium rounded border border-slate-200">
+                    {item.sourceName}
+                  </span>
                 </div>
               </article>
             );
