@@ -71,11 +71,11 @@ class GeminiController {
       const data: any = await res.json();
 
       const liveWheatPrice = wheatRes?.metrics?.srw?.latestPriceMt || 258.40;
-      const liveCornPrice = cornRes?.data?.benchmarkPrice?.usdPerMT || 197.33;
+      const liveCornPrice = cornRes?.data?.benchmarkPrice?.usdPerMT || 197.63;
       const liveCornWow = cornRes?.data?.weeklyChange?.wowPct ?? -4.98;
       const liveSoybeanPrice = soybeanRes?.data?.benchmarkPrice?.usdPerMT || 474.27;
       const liveSoybeanWow = soybeanRes?.data?.weeklyChange?.wowPct ?? -2.03;
-      const liveSoybeanOilPrice = soybeanOilRes?.data?.benchmarkPrice?.usdPerMT || 1500.47;
+      const liveSoybeanOilPrice = soybeanOilRes?.data?.benchmarkPrice?.usdPerMT || 1486.80;
       const liveSoybeanOilWow = soybeanOilRes?.data?.weeklyChange?.wowPct ?? 1.69;
 
       const liveUpdate: LiveMarketUpdate = {
@@ -101,8 +101,8 @@ class GeminiController {
         soybeanOilPrice: liveSoybeanOilPrice,
         soybeanOilWowChange: liveSoybeanOilWow,
         palmOilPrice: (data.commodities?.palmOil?.price && data.commodities.palmOil.price > 2000) ? data.commodities.palmOil.price : palmOilCache.priceMyr,
-        sugarPrice: 477.30,
-        potatoStarchPrice: 870.00,
+        sugarPrice: 418.00,
+        potatoStarchPrice: 928.80,
         tapiocaStarchPrice: 700.00,
         aiBriefSynthesis: data.aiBriefSynthesis || '글로벌 소맥 및 유지류 시장은 흑해 수출 회랑 불확실성과 남미 주요 파종지의 가뭄으로 단기 상승 압력에 직면해 있습니다.',
         directives: data.directives,
@@ -125,13 +125,13 @@ class GeminiController {
       try {
         const pipeline = await fetchLivePipelineMetrics();
         const defaultCommodities = {
-          wheat: { price: 258.31, unit: 'USD/MT', changeWoW: -3.03, landedKrw: 358 },
-          corn: { price: 197.33, unit: 'USD/MT', changeWoW: -4.98, landedKrw: 274 },
+          wheat: { price: 258.40, unit: 'USD/MT', changeWoW: -3.03, landedKrw: 358 },
+          corn: { price: 197.63, unit: 'USD/MT', changeWoW: -4.98, landedKrw: 274 },
           soybean: { price: 474.27, unit: 'USD/MT', changeWoW: -2.03, landedKrw: 658 },
-          soybeanOil: { price: 1500.47, unit: 'USD/MT', changeWoW: 1.69, landedKrw: 2083 },
+          soybeanOil: { price: 1486.80, unit: 'USD/MT', changeWoW: 1.69, landedKrw: 2064 },
           palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: -4.49, landedKrw: 1545 },
-          sugar: { price: 477.30, unit: 'USD/MT', changeWoW: -1.20, landedKrw: 714 },
-          potatoStarch: { price: 870.00, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: 1292 },
+          sugar: { price: 418.00, unit: 'USD/MT', changeWoW: -1.20, landedKrw: 626 },
+          potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: 1290 },
           tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: 0.00, landedKrw: 1010 }
         };
 

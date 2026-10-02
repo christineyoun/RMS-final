@@ -97,24 +97,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate }) => {
                 );
               })}
             </div>
-
-            {/* Section 2 Header: 시장 영향 동인 */}
-            <div
-              onClick={() => onNavigate('main-dashboard', 'macro-drivers-section')}
-              className="flex items-center justify-between w-full px-1.5 mt-4 mb-1 cursor-pointer hover:bg-slate-50 rounded transition-colors group"
-            >
-              <div className="flex items-baseline whitespace-nowrap">
-                <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors">
-                  시장 영향 동인
-                </h3>
-                <span className="text-xs font-sans font-medium text-black tracking-tight ml-1">
-                  (Market Drivers)
-                </span>
-              </div>
-              <span className="inline-flex items-center justify-center text-[10px] font-sans font-medium text-slate-500 bg-slate-100/90 border border-slate-200/80 px-2 h-5 rounded-full shrink-0 whitespace-nowrap leading-none tracking-tight">
-                4대 지표
-              </span>
-            </div>
           </nav>
         </div>
       </div>
