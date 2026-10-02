@@ -554,10 +554,10 @@ export const COMMODITY_ORIGINS_MAP: Record<string, OriginItem[]> = {
   'tapioca-starch': [
     {
       region: '태국 (Korat / Isan)',
-      production: '생뿌리 생산 18.58M MT (전분 환산 ~4.6M MT · 경작지 106만 HA)',
-      exports: '천연 2.85M MT / 변성 1.15M MT (FOB 방콕 $700/MT)',
+      production: '4.6M MT',
+      exports: '수출 천연 2.85M MT / 변성 1.15M MT',
       endingStocks: '기말재고 1.2M MT',
-      riskAssessment: '산지 생뿌리 수급 안정 및 FOB 방콕 $700/MT 유지, 중국 수입 수요 지속',
+      riskAssessment: '생뿌리 18.58M MT (경작지 106만 HA) · 산지 수급 안정 및 FOB 방콕 $700/MT 유지',
       status: '정상',
       statusColor: 'green',
       sourceName: 'TTSA',
@@ -3087,7 +3087,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               )}
               {isTapiocaStarch && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  TTSA (TS) · {latestHistoricalData?.date || '2026-09-22'} (${latestHistoricalData?.usdPerMT ? latestHistoricalData.usdPerMT.toFixed(2) : '700.00'} USD/MT)
+                  TTSA (TS) · {latestHistoricalData?.date || '2026-09-29'}
                 </p>
               )}
             </div>
