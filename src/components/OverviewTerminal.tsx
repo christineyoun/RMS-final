@@ -1103,7 +1103,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://www.kebhana.com/cont/mall/mall15/mall1501/index.jsp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] flex items-center gap-1 font-semibold transition-colors"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1155,7 +1155,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://finance.yahoo.com/quote/BZ=F/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] font-medium hover:underline transition-colors"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1207,7 +1207,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://tradingeconomics.com/commodity/baltic"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] font-medium hover:underline transition-colors"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1264,7 +1264,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href={policyData?.sourceUrl || 'https://www.foodsecurityportal.org/tools/COVID-19-food-trade-policy-tracker'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] font-medium hover:underline flex items-center gap-0.5 transition-colors"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 동향 ↗
                 </a>

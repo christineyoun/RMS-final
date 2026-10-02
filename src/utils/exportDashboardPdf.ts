@@ -1,6 +1,3 @@
-import html2canvas from 'html2canvas-pro';
-import { jsPDF } from 'jspdf';
-
 export const getTimestamp = (): { yyyymmdd: string; hhmm: string } => {
   const now = new Date();
   const year = now.getFullYear();
@@ -59,6 +56,11 @@ export const exportCategoryFilteredPdf = async (category: string = 'all'): Promi
     await document.fonts.ready;
   }
   await new Promise((resolve) => setTimeout(resolve, 200));
+
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import('html2canvas-pro'),
+    import('jspdf'),
+  ]);
 
   const pdf = new jsPDF({
     orientation: 'portrait',

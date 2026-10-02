@@ -1,6 +1,4 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import html2canvas from 'html2canvas-pro';
-import { jsPDF } from 'jspdf';
 import { Globe } from 'lucide-react';
 import { Commodity, Currency, UsWheatPriceHistoryResponse, UsWheatHistoryDataPoint, UsWheatClassMetric, AmisWheatResponse, CornProcurementAnalysisData, EstimatedCornKoreaLandedCost, SoybeanProcurementAnalysisData, SoybeanOilProcurementAnalysisData } from '../types';
 import { formatPrice, formatStarchSweetenerBenchmark, COMMODITY_CONFIGS, getCalculatedMetrics } from '../utils/landedCostCalculator';

@@ -388,7 +388,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
             href="https://www.usda.gov/about-usda/general-information/staff-offices/office-chief-economist/commodity-markets/wasde-report"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors"
+            className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
           >
             Official WASDE Release ↗
           </a>

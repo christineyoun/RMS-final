@@ -179,7 +179,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
               href="https://ec.europa.eu/eurostat"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors"
+              className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
             >
               Eurostat ↗
             </a>
@@ -293,7 +293,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
               href="https://www.thaitapiocastarch.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors"
+              className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
             >
               TTSA ↗
             </a>
@@ -413,7 +413,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
             href="https://apps.fas.usda.gov/psdonline/app/index.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors"
+            className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
           >
             USDA PSD Online ↗
           </a>

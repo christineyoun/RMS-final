@@ -162,8 +162,6 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
     };
   }, [commodityId]);
 
-  const headerPortalUrl = getPublisherPortalUrl(commodityId);
-
   return (
     <div className="mt-6 bg-white rounded-xl border border-slate-200 p-5 shadow-sm pdf-section-card min-h-[220px] print:mt-8 print:pt-4 break-inside-avoid print:break-inside-avoid">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4 gap-2">
@@ -173,22 +171,11 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
             주요 이슈 및 시장 동향 (Market Intelligence)
           </h3>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {isLoading && (
-            <span className="text-xs text-[#DF0029] font-medium animate-pulse shrink-0">
-              최신 공식자료 검색 중...
-            </span>
-          )}
-          <a
-            href={headerPortalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-slate-500 hover:text-[#DF0029] flex items-center gap-1 font-medium transition-colors"
-          >
-            <span>발행기관 공식 허브</span>
-            <span aria-hidden="true" className="text-[10px]">↗</span>
-          </a>
-        </div>
+        {isLoading && (
+          <span className="text-xs text-[#DF0029] font-medium animate-pulse shrink-0">
+            최신 공식자료 검색 중...
+          </span>
+        )}
       </div>
 
       {articles.length > 0 ? (
