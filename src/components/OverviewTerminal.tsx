@@ -797,7 +797,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         {/* Subline Quote: Displays raw MYR benchmark */}
                         {item.id === 'palm-oil' && (
                           <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            MDEX (FCPO.KL) · ({(item._originalPrice || 4649).toLocaleString('en-US')} MYR/MT)
+                            MDEX (FCPO) · ({(item._originalPrice || 4649).toLocaleString('en-US')} MYR/MT)
                           </p>
                         )}
                       </div>

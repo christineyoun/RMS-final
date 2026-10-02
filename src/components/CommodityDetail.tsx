@@ -3062,32 +3062,32 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               )}
               {isCorn && cornAnalysis?.benchmarkPrice && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZC=F) · {cornAnalysis.benchmarkPrice.observationDate} ({cornAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
+                  CBOT (CC1) · {cornAnalysis.benchmarkPrice.observationDate} ({cornAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
                 </p>
               )}
               {isSoybean && soybeanAnalysis?.benchmarkPrice && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZS=F) · {soybeanAnalysis.benchmarkPrice.observationDate} ({soybeanAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
+                  CBOT (ZS) · {soybeanAnalysis.benchmarkPrice.observationDate} ({soybeanAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
                 </p>
               )}
               {isSoybeanOil && soybeanOilAnalysis?.benchmarkPrice && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZL=F) · {soybeanOilAnalysis.benchmarkPrice.observationDate} ({soybeanOilAnalysis.benchmarkPrice.rawPrice.toFixed(2)} {soybeanOilAnalysis.benchmarkPrice.rawUnit})
+                  CBOT (ZL) · {soybeanOilAnalysis.benchmarkPrice.observationDate} ({soybeanOilAnalysis.benchmarkPrice.rawPrice.toFixed(2)} {soybeanOilAnalysis.benchmarkPrice.rawUnit})
                 </p>
               )}
               {isSugar && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  ICE (SB=F) · {latestHistoricalData?.date || '2026-09-25'} ({latestHistoricalData?.centsPerBushel ? latestHistoricalData.centsPerBushel.toFixed(2) : (commodity.price && commodity.price < 100 ? commodity.price.toFixed(2) : '21.65')} USc/lb)
+                  ICE (SBC1) · {latestHistoricalData?.date || '2026-10-02'} ({latestHistoricalData?.centsPerBushel ? latestHistoricalData.centsPerBushel.toFixed(2) : '18.96'} USc/lb)
                 </p>
               )}
               {isPalmOil && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  MDEX (FCPO.KL) · {latestHistoricalData?.date || '2026-09-28'} ({latestHistoricalData?.centsPerBushel && latestHistoricalData.centsPerBushel > 1000 ? Math.round(latestHistoricalData.centsPerBushel).toLocaleString('en-US') : '4,185'} MYR/MT)
+                  MDEX (FCPO) · {latestHistoricalData?.date || '2026-09-28'} ({latestHistoricalData?.centsPerBushel && latestHistoricalData.centsPerBushel > 1000 ? Math.round(latestHistoricalData.centsPerBushel).toLocaleString('en-US') : '4,185'} MYR/MT)
                 </p>
               )}
               {isTapiocaStarch && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  TTSA (FOB Bangkok) · {latestHistoricalData?.date || '2026-09-22'} (${latestHistoricalData?.usdPerMT ? latestHistoricalData.usdPerMT.toFixed(2) : '700.00'} USD/MT)
+                  TTSA (TS) · {latestHistoricalData?.date || '2026-09-22'} (${latestHistoricalData?.usdPerMT ? latestHistoricalData.usdPerMT.toFixed(2) : '700.00'} USD/MT)
                 </p>
               )}
             </div>
