@@ -479,10 +479,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     (c) => c.category === 'starches' || c.category === 'sweeteners'
   );
 
-  const palmOilItem = commodities.find((c) => c.id === 'palm-oil');
-  const sugarItem = commodities.find((c) => c.id === 'sugar');
-  const palmOilLandedKrw = palmOilItem?.landedKrwKg || palmOilItem?.priceKrwEstimated || 1440;
-  const sugarLandedKrw = sugarItem?.landedKrwKg || sugarItem?.priceKrwEstimated || 640;
+  const sortedCommodities = [...commodities].sort((a, b) => b.changeWoW - a.changeWoW);
+  const topGainer = sortedCommodities[0];
+  const topLoser = sortedCommodities[sortedCommodities.length - 1];
 
   const effectiveUsdKrw = React.useMemo(() => {
     const parsed = parseFloat(fxData.rate.replace(/[^0-9.]/g, ''));
@@ -583,8 +582,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         <div className="bg-white border border-[#e5e7eb] rounded-lg px-4 py-2 print:py-1.5 shadow-sm flex flex-wrap items-center justify-between gap-3 print:gap-1.5 text-[#111827] text-xs pdf-section-card break-inside-avoid">
           <div className="flex items-center gap-2 shrink-0">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4F46E5]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DF0029]"></span>
             </span>
             <span className="material-symbols-outlined text-[16px] text-[#DF0029]">trending_up</span>
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#111827]">
@@ -592,37 +591,43 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-1.5 py-0.5 rounded text-[10px] shrink-0">
-                최대 상승
-              </span>
-              <span
-                onClick={() => onNavigate('commodity-palm-oil')}
-                className="font-semibold text-[#111827] hover:text-[#DF0029] cursor-pointer transition-colors"
-              >
-                팜유 (Palm Oil)
-              </span>
-              <span className="font-mono text-[11px] text-[#059669] font-semibold">+3.80% WoW</span>
-              <span className="text-[10px] text-[#6b7280]">
-                (추정 도착가 {formatTopMoverLandedCost(palmOilLandedKrw)})
-              </span>
-            </div>
+            {/* Top Gainer */}
+            {topGainer && (
+              <div className="flex items-center gap-1.5">
+                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-1.5 py-0.5 rounded text-[10px] shrink-0">
+                  최대 상승
+                </span>
+                <span
+                  onClick={() => onNavigate(topGainer.path)}
+                  className="font-semibold text-[#111827] hover:text-[#DF0029] cursor-pointer transition-colors"
+                >
+                  {topGainer.nameKo} ({topGainer.nameEn})
+                </span>
+                <span className="font-mono text-[11px] text-[#059669] font-semibold">
+                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW}%` : `${topGainer.changeWoW}%`} WoW
+                </span>
+              </div>
+            )}
+
             <span className="hidden md:inline text-[#e5e7eb]">|</span>
-            <div className="flex items-center gap-1.5">
-              <span className="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-[#DF0029] text-[10px] font-bold shrink-0">
-                최대 하락
-              </span>
-              <span
-                onClick={() => onNavigate('commodity-sugar')}
-                className="font-semibold text-[#111827] hover:text-[#DF0029] cursor-pointer transition-colors"
-              >
-                원당 (Sugar)
-              </span>
-              <span className="font-mono text-[11px] text-[#DF0029] font-bold">-1.20% WoW</span>
-              <span className="text-[10px] text-[#6b7280]">
-                (추정 도착가 {formatTopMoverLandedCost(sugarLandedKrw)})
-              </span>
-            </div>
+
+            {/* Top Loser */}
+            {topLoser && (
+              <div className="flex items-center gap-1.5">
+                <span className="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-[#DF0029] text-[10px] font-bold shrink-0">
+                  최대 하락
+                </span>
+                <span
+                  onClick={() => onNavigate(topLoser.path)}
+                  className="font-semibold text-[#111827] hover:text-[#DF0029] cursor-pointer transition-colors"
+                >
+                  {topLoser.nameKo} ({topLoser.nameEn})
+                </span>
+                <span className="font-mono text-[11px] text-[#DF0029] font-bold">
+                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW}%` : `${topLoser.changeWoW}%`} WoW
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -698,32 +703,19 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between text-[#6b7280]">
-                      <span className="text-[10px]">전월 대비 (MoM)</span>
-                      <span
-                        className={`font-mono text-[11px] ${
-                          item.changeMoM >= 0 ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'
-                        }`}
-                      >
-                        {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}
+                    <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
+                        <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
+                          {item.changeMoM >= 0 ? `+${item.changeMoM}%` : `${item.changeMoM}%`}
+                        </span>
+                      </div>
+                      
+                      <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
+                        <span>상세 분석</span>
+                        <span className="material-symbols-outlined text-[15px]">chevron_right</span>
                       </span>
                     </div>
-                  </div>
-
-                  <div className="p-2 bg-[#f9fafb] border border-[#e5e7eb] rounded flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-[#6b7280] font-bold">{getLandedLabel()}</span>
-                      <span
-                        className="font-mono text-xs text-[#111827] font-bold"
-                        id={item.id === 'wheat' ? 'landed-cost' : `el-${item.id}-landed`}
-                      >
-                        {formatLandedCost(item)}
-                      </span>
-                    </div>
-                    <span className="text-[#6b7280] group-hover:text-[#DF0029] text-[10px] flex items-center gap-0.5 font-bold">
-                      <span>상세 분석</span>
-                      <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                    </span>
                   </div>
                 </div>
               ))}
@@ -804,29 +796,19 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between text-[#6b7280]">
-                      <span className="text-[10px]">전월 대비 (MoM)</span>
-                      <span
-                        className={`font-mono text-[11px] ${
-                          item.changeMoM >= 0 ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'
-                        }`}
-                      >
-                        {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}
+                    <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
+                        <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
+                          {item.changeMoM >= 0 ? `+${item.changeMoM}%` : `${item.changeMoM}%`}
+                        </span>
+                      </div>
+                      
+                      <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
+                        <span>상세 분석</span>
+                        <span className="material-symbols-outlined text-[15px]">chevron_right</span>
                       </span>
                     </div>
-                  </div>
-
-                  <div className="p-2 bg-[#f9fafb] border border-[#e5e7eb] rounded flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-[#6b7280] font-bold">{getLandedLabel()}</span>
-                      <span className="font-mono text-xs text-[#111827] font-bold" id={`el-${item.id}-landed`}>
-                        {formatLandedCost(item)}
-                      </span>
-                    </div>
-                    <span className="text-[#6b7280] group-hover:text-[#DF0029] text-[10px] flex items-center gap-0.5 font-bold">
-                      <span>상세 분석</span>
-                      <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                    </span>
                   </div>
                 </div>
               ))}
@@ -915,29 +897,19 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                     </div>
 
-                    <div className="mt-1 flex items-center justify-between text-[#6b7280]">
-                      <span className="text-[10px]">전월 대비 (MoM)</span>
-                      <span
-                        className={`font-mono text-[11px] ${
-                          item.changeMoM >= 0 ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'
-                        }`}
-                      >
-                        {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}
+                    <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
+                        <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
+                          {item.changeMoM >= 0 ? `+${item.changeMoM}%` : `${item.changeMoM}%`}
+                        </span>
+                      </div>
+                      
+                      <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
+                        <span>상세 분석</span>
+                        <span className="material-symbols-outlined text-[15px]">chevron_right</span>
                       </span>
                     </div>
-                  </div>
-
-                  <div className="p-2 bg-[#f9fafb] border border-[#e5e7eb] rounded flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-[#6b7280] font-bold">{getLandedLabel()}</span>
-                      <span className="font-mono text-xs text-[#111827] font-bold" id={`el-${item.id}-landed`}>
-                        {formatLandedCost(item)}
-                      </span>
-                    </div>
-                    <span className="text-[#6b7280] group-hover:text-[#DF0029] text-[10px] flex items-center gap-0.5 font-bold">
-                      <span>상세 분석</span>
-                      <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                    </span>
                   </div>
                 </div>
               ))}
@@ -1089,7 +1061,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             {/* Card 1: FX (USD/KRW) */}
             <div
               id="driver-fx"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow scroll-mt-24"
+              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
                 <div className="flex items-center justify-between text-[#6b7280]">
@@ -1131,7 +1103,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://www.kebhana.com/cont/mall/mall15/mall1501/index.jsp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-semibold transition-colors"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] flex items-center gap-1 font-semibold transition-colors"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1141,7 +1113,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             {/* Card 2: Oil (Brent) */}
             <div
               id="driver-energy"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow scroll-mt-24"
+              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
                 <div className="flex items-center justify-between text-[#6b7280]">
@@ -1183,7 +1155,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://finance.yahoo.com/quote/BZ=F/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 font-medium hover:underline"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] font-medium hover:underline transition-colors"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1193,7 +1165,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             {/* Card 3: Freight (BDI / SCFI) */}
             <div
               id="driver-freight"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow scroll-mt-24"
+              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
                 <div className="flex items-center justify-between text-[#6b7280]">
@@ -1235,7 +1207,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://tradingeconomics.com/commodity/baltic"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 font-medium hover:underline"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] font-medium hover:underline transition-colors"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1245,7 +1217,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             {/* Card 4: Trade Policy */}
             <div
               id="driver-policy"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-shadow scroll-mt-24"
+              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
                 <div className="flex items-center justify-between text-[#6b7280]">
@@ -1292,7 +1264,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href={policyData?.sourceUrl || 'https://www.foodsecurityportal.org/tools/COVID-19-food-trade-policy-tracker'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 font-medium hover:underline flex items-center gap-0.5"
+                  className="text-xs text-slate-600 hover:text-[#DF0029] font-medium hover:underline flex items-center gap-0.5 transition-colors"
                 >
                   실시간 동향 ↗
                 </a>
@@ -1369,7 +1341,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 {localMarketIssues.map((issue) => (
                   <article
                     key={issue.id}
-                    className="p-3 bg-white border border-slate-200/80 rounded-lg hover:border-slate-300 transition-all flex flex-col justify-between space-y-2"
+                    className="group p-3 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
                       <span
@@ -1385,8 +1357,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </span>
                     </div>
 
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug break-keep">
-                      <a href={issue.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">
+                    <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors leading-snug break-keep">
+                      <a href={issue.url} target="_blank" rel="noopener noreferrer" className="group-hover:text-[#DF0029] transition-colors">
                         {issue.title}
                       </a>
                     </h4>

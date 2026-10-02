@@ -114,11 +114,11 @@ export const HeaderSearch = ({ onSelectAsset }: { onSelectAsset?: (asset: any) =
                 <button
                   key={item.ticker}
                   onClick={() => handleSelect(item)}
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 transition-colors text-left"
+                  className="group w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 transition-colors text-left"
                 >
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="font-semibold text-slate-800">{item.label}</span>
+                    <TrendingUp className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#DF0029] transition-colors" />
+                    <span className="font-semibold text-slate-800 group-hover:text-[#DF0029] transition-colors">{item.label}</span>
                   </div>
                   <span className="font-mono text-[11px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                     {item.ticker}
@@ -273,37 +273,30 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Single Live Sync Timestamp Badge */}
         <button
           onClick={handleAiRefresh}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-all shadow-2xs ${
             isSyncing
               ? 'bg-blue-50 border-blue-200 text-blue-700'
               : failedSourcesCount > 0
-              ? 'bg-rose-50 border-rose-200 text-[#DF0029] hover:bg-rose-100'
-              : 'border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100'
+              ? 'bg-rose-50 border-rose-300 text-[#DF0029] hover:bg-rose-100'
+              : 'bg-blue-50/50 border-blue-200/80 text-blue-700 hover:bg-blue-100/70 hover:border-blue-300'
           }`}
           title={
             failedSourcesCount > 0
-              ? `${failedSourcesCount}개 소스 갱신 실패 (이전 성공 데이터 유지 중, 클릭 시 재시도)`
-              : '클릭 시 중앙 소스 레지스트리 및 실시간 시장 데이터 즉시 갱신'
+              ? `${failedSourcesCount}개 소스 동기화 실패`
+              : '실시간 데이터 동기화'
           }
         >
           {isSyncing ? (
             <span className="flex items-center gap-1.5 font-sans">
               <span className="w-2 h-2 rounded-full inline-block bg-blue-600 animate-spin"></span>
-              <span className="font-semibold text-blue-700">데이터 갱신 중...</span>
-            </span>
-          ) : failedSourcesCount > 0 ? (
-            <span className="flex items-center gap-1.5 font-sans">
-              <span className="w-2 h-2 rounded-full inline-block bg-[#DF0029]"></span>
-              <span>일부 소스 갱신 실패</span>
-              <span>·</span>
-              <span className="font-mono text-rose-600 font-semibold">{formattedSyncTime}</span>
+              <span className="font-semibold text-blue-700">동기화 중...</span>
             </span>
           ) : (
             <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse shrink-0" />
               <span className="font-sans">실시간 동기화 (Live Sync)</span>
-              <span>·</span>
-              <span className="font-mono text-blue-700 font-semibold">{formattedSyncTime}</span>
+              <span className="text-blue-300">·</span>
+              <span className="font-mono font-semibold">{formattedSyncTime}</span>
             </span>
           )}
         </button>

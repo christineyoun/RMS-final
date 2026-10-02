@@ -175,7 +175,7 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {isLoading && (
-            <span className="text-xs text-indigo-600 font-medium animate-pulse shrink-0">
+            <span className="text-xs text-[#DF0029] font-medium animate-pulse shrink-0">
               최신 공식자료 검색 중...
             </span>
           )}
@@ -183,7 +183,7 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
             href={headerPortalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-slate-500 hover:text-indigo-600 flex items-center gap-1 font-medium transition-colors"
+            className="text-xs text-slate-500 hover:text-[#DF0029] flex items-center gap-1 font-medium transition-colors"
           >
             <span>발행기관 공식 허브</span>
             <span aria-hidden="true" className="text-[10px]">↗</span>
@@ -201,7 +201,7 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
             return (
               <article
                 key={item.id}
-                className="news-card-item p-4 bg-white border border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between min-w-0"
+                className="news-card-item group p-4 bg-white border border-slate-200 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between min-w-0 cursor-pointer"
               >
                 <div>
                   {/* Top Row: Pill Badges */}
@@ -219,19 +219,19 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
                   </div>
 
                   {/* Title Link */}
-                  <h4 className="text-sm font-bold text-slate-900 hover:text-blue-600 hover:underline leading-snug break-keep cursor-pointer transition-colors mb-1.5">
+                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#DF0029] leading-snug break-keep cursor-pointer transition-colors mb-1.5">
                     {targetUrl ? (
                       <a
                         href={targetUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="block w-full"
+                        className="block w-full group-hover:text-[#DF0029] transition-colors"
                       >
                         {item.title}
                       </a>
                     ) : (
-                      <span className="block w-full text-slate-900">
+                      <span className="block w-full text-slate-900 group-hover:text-[#DF0029] transition-colors">
                         {item.title}
                       </span>
                     )}
