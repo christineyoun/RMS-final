@@ -23,7 +23,7 @@ export class SoybeanOilIntelligenceService {
     shipmentPeriod: 'Prompt / Nearby Export Delivery',
     fobPriceUsdMt: 920.00,
     rawPrice: 41.73,
-    rawUnit: 'cents/lb',
+    rawUnit: 'USc/lb',
     observationDate: '2026-09-25',
     source: 'CIARA / USDA ERS Oil Crops / USDA AMS Cash Market',
     sourceUrl: 'https://www.ers.usda.gov/data-products/oil-crops-yearbook/'
@@ -149,7 +149,7 @@ export class SoybeanOilIntelligenceService {
       const result: SoybeanOilProcurementAnalysisData = {
         benchmarkPrice: {
           rawPrice,
-          rawUnit: 'cents/lb',
+          rawUnit: 'USc/lb',
           usdPerMT,
           observationDate,
           source: 'CBOT (ZL=F)'
@@ -216,7 +216,7 @@ export class SoybeanOilIntelligenceService {
       return {
         benchmarkPrice: {
           rawPrice: 67.84,
-          rawUnit: 'cents/lb',
+          rawUnit: 'USc/lb',
           usdPerMT: 1495.61,
           observationDate: '2026-09-25',
           source: 'CBOT (ZL=F)'

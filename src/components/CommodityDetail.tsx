@@ -3062,17 +3062,17 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               )}
               {isCorn && cornAnalysis?.benchmarkPrice && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (CC1) · {cornAnalysis.benchmarkPrice.observationDate} ({cornAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
+                  CBOT (CC1) · {cornAnalysis.benchmarkPrice.observationDate} ({cornAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USc/bu)
                 </p>
               )}
               {isSoybean && soybeanAnalysis?.benchmarkPrice && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZS) · {soybeanAnalysis.benchmarkPrice.observationDate} ({soybeanAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USd/bu)
+                  CBOT (ZS) · {soybeanAnalysis.benchmarkPrice.observationDate} ({soybeanAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USc/bu)
                 </p>
               )}
               {isSoybeanOil && soybeanOilAnalysis?.benchmarkPrice && (
                 <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZL) · {soybeanOilAnalysis.benchmarkPrice.observationDate} ({soybeanOilAnalysis.benchmarkPrice.rawPrice.toFixed(2)} {soybeanOilAnalysis.benchmarkPrice.rawUnit})
+                  CBOT (ZL) · {soybeanOilAnalysis.benchmarkPrice.observationDate} ({soybeanOilAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USc/lb)
                 </p>
               )}
               {isSugar && (
