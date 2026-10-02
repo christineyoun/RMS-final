@@ -612,16 +612,16 @@ export const EXTERNAL_CHART_URLS: Record<string, string> = {
 };
 
 export const SOURCE_LABELS: Record<string, string> = {
-  'corn': 'CBOT (ZC)',
+  'wheat': 'U.S. Wheat Associates',
+  'corn': 'CBOT (CC1)',
   'soybean': 'CBOT (ZS)',
   'soybean-oil': 'CBOT (ZL)',
-  'sugar': 'ICE (SB)',
-  'palm-oil': 'MDEX (FCPO) · MPOC',
-  'palmoil': 'MDEX (FCPO) · MPOC',
-  'palm_oil': 'MDEX (FCPO) · MPOC',
-  'wheat': 'U.S. Wheat Associates',
-  'potato-starch': 'EEX / EU Spot',
-  'tapioca-starch': 'TTSA Bangkok',
+  'palm-oil': 'MDEX (FCPO) / MPOB',
+  'palmoil': 'MDEX (FCPO) / MPOB',
+  'palm_oil': 'MDEX (FCPO) / MPOB',
+  'sugar': 'ICE (SBC1)',
+  'potato-starch': 'Eurostat Spot',
+  'tapioca-starch': 'TTSA FOB Bangkok',
 };
 
 export const getExchangeInfo = (commodityId: string) => {
@@ -771,9 +771,9 @@ const getTimeframeChartData = (
   const valRange = maxVal - minVal || 1;
 
   const width = 500;
-  const height = 150;
-  const padTop = 25;
-  const padBottom = 25;
+  const height = 200;
+  const padTop = 10;
+  const padBottom = 15;
   const usableHeight = height - padTop - padBottom;
 
   const chartPoints: ChartPoint[] = pointsData.map((pt, idx) => {
@@ -793,21 +793,9 @@ const getTimeframeChartData = (
     return { x, y };
   });
 
-  const buildSplinePath = (coords: { x: number; y: number }[]) => {
-    if (coords.length < 2) return '';
-    let path = `M ${coords[0].x},${coords[0].y}`;
-    for (let i = 0; i < coords.length - 1; i++) {
-      const curr = coords[i];
-      const next = coords[i + 1];
-      const cpX = Math.round((curr.x + next.x) / 2);
-      path += ` C ${cpX},${curr.y} ${cpX},${next.y} ${next.x},${next.y}`;
-    }
-    return path;
-  };
-
-  const linePath = buildSplinePath(chartPoints);
-  const areaPath = `${linePath} L ${width},150 L 0,150 Z`;
-  const maPath = buildSplinePath(maCoords);
+  const linePath = chartPoints.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
+  const areaPath = `${linePath} L ${width},200 L 0,200 Z`;
+  const maPath = maCoords.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
 
   // Compute nice Y-axis ticks using Nice Numbers algorithm
   const niceTickValues = getNiceYAxisTicks(minVal, maxVal, 5);
@@ -2090,7 +2078,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     });
 
     const width = 500;
-    const height = 150;
+    const height = 200;
 
     const getTs = (dStr: string) => new Date(dStr.replace(/\./g, '-')).getTime();
     const timestamps = pointsData.map(p => getTs(p.date)).filter(t => !isNaN(t));
@@ -2123,8 +2111,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const high = Math.max(...pointsData.map((pt) => pt.price));
     const avg = pointsData.reduce((sum, val) => sum + val.price, 0) / pointsData.length;
 
-    const padTop = 25;
-    const padBottom = 25;
+    const padTop = 10;
+    const padBottom = 15;
     const usableHeight = height - padTop - padBottom;
 
     const initialMin = low * 0.95;
@@ -2171,27 +2159,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       return { x, y };
     });
 
-    const buildSplinePath = (coords: { x: number; y: number }[]) => {
-      if (coords.length < 2) return '';
-      let path = `M ${coords[0].x},${coords[0].y}`;
-      for (let i = 0; i < coords.length - 1; i++) {
-        const curr = coords[i];
-        const next = coords[i + 1];
-        const cpX = Math.round((curr.x + next.x) / 2);
-        path += ` C ${cpX},${curr.y} ${cpX},${next.y} ${next.x},${next.y}`;
-      }
-      return path;
-    };
-
-    const linePath = buildSplinePath(chartPoints);
-    const areaPath = `${linePath} L ${width},150 L 0,150 Z`;
-    const maPath = buildSplinePath(maCoords);
+    const linePath = chartPoints.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
+    const areaPath = `${linePath} L ${width},200 L 0,200 Z`;
+    const maPath = maCoords.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
 
     // 3. Generate 5 nice Y-axis ticks between minVal and maxVal
     const tickStep = (maxVal - minVal) / 4;
     const ticks: ChartTick[] = [0, 1, 2, 3, 4].map(i => {
       const value = minVal + tickStep * i;
-      const y = 150 - 25 - ((value - minVal) / (maxVal - minVal)) * (150 - 50);
+      const y = height - padBottom - ((value - minVal) / (maxVal - minVal)) * usableHeight;
       return { value, y };
     });
 
@@ -2247,9 +2223,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const avg = allPrices.reduce((sum, val) => sum + val, 0) / N;
 
     const width = 500;
-    const height = 150;
-    const padTop = 25;
-    const padBottom = 25;
+    const height = 200;
+    const padTop = 10;
+    const padBottom = 15;
     const usableHeight = height - padTop - padBottom;
 
     const minVal = 25.0; 
@@ -2269,20 +2245,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       };
     });
 
-    const buildSplinePath = (coords: { x: number; y: number }[]) => {
-      if (coords.length < 2) return '';
-      let path = `M ${coords[0].x},${coords[0].y}`;
-      for (let i = 0; i < coords.length - 1; i++) {
-        const curr = coords[i];
-        const next = coords[i + 1];
-        const cpX = Math.round((curr.x + next.x) / 2);
-        path += ` C ${cpX},${curr.y} ${cpX},${next.y} ${next.x},${next.y}`;
-      }
-      return path;
-    };
-
-    const linePath = buildSplinePath(chartPoints);
-    const areaPath = `${linePath} L ${width},150 L 0,150 Z`;
+    const linePath = chartPoints.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
+    const areaPath = `${linePath} L ${width},200 L 0,200 Z`;
 
     const ticks = [26.0, 28.0, 30.0, 32.0, 34.0].map(val => {
       const y = Math.round(height - padBottom - ((val - minVal) / valRange) * usableHeight);
@@ -2533,8 +2497,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     ? chartData.points[chartData.points.length - 1]
     : null;
   const latestLivePrice = livePoint ? livePoint.price : effectiveBasePrice;
-  const liveY = livePoint ? livePoint.y : Math.round(150 - 25 - ((latestLivePrice - chartData.minVal) / (chartData.maxVal - chartData.minVal || 1)) * (150 - 15 - 25));
-  const liveYPct = (liveY / 150) * 100;
+  const liveY = livePoint ? livePoint.y : Math.round(200 - 15 - ((latestLivePrice - chartData.minVal) / (chartData.maxVal - chartData.minVal || 1)) * (200 - 10 - 15));
+  const liveYPct = (liveY / 200) * 100;
 
   const range52WeekStats = useMemo(() => {
     if (isWheat && usWheatHistory?.data?.length) {
@@ -2782,12 +2746,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       }
     }
 
-    const usableHeight = 150 - 15 - 25;
+    const singleSvgY = yRatio * 200;
+    const usableHeight = 200 - 10 - 15;
     const elevationPrice = Math.max(
       chartData.minVal,
       Math.min(
         chartData.maxVal,
-        chartData.maxVal - ((svgY - 15) / usableHeight) * (chartData.maxVal - chartData.minVal)
+        chartData.maxVal - ((singleSvgY - 10) / usableHeight) * (chartData.maxVal - chartData.minVal)
       )
     );
 
@@ -2994,7 +2959,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   {commodity.category.toUpperCase() === 'GRAIN' ? 'GRAINS' : commodity.category.toUpperCase()}
                 </span>
                 <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-mono font-medium rounded border border-slate-200 shrink-0">
-                  {commodity.ticker}
+                  {isCorn ? 'CBOT: CC1' : isSugar ? 'ICE: SBC1' : commodity.ticker}
                 </span>
               </div>
               <h1 className="text-[15px] sm:text-base lg:text-[17px] font-bold text-slate-900 tracking-tight leading-snug break-keep whitespace-normal">
@@ -4108,7 +4073,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               onMouseMove={handleChartMouseMove}
               onMouseLeave={handleChartMouseLeave}
             >
-              <svg className="w-full h-full text-[#DF0029] overflow-visible" fill="none" preserveAspectRatio="none" viewBox="0 0 500 150">
+              <svg className="w-full h-full text-[#DF0029] overflow-visible" fill="none" preserveAspectRatio="none" viewBox="0 0 500 200">
                 <defs>
                   <linearGradient id={`grad-${commodity.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#DF0029" stopOpacity="0.25" />
@@ -4147,7 +4112,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       x1={crosshairState.snappedX}
                       y1={0}
                       x2={crosshairState.snappedX}
-                      y2={150}
+                      y2={200}
                       stroke="#94a3b8"
                       strokeWidth="1"
                       strokeDasharray="3 3"
@@ -4193,7 +4158,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <span
                     key={`tick-label-${idx}`}
                     className="absolute right-0 text-[10px] text-slate-400 font-mono transform -translate-y-1/2 bg-transparent select-none whitespace-nowrap z-0"
-                    style={{ top: `${(tick.y / 150) * 100}%` }}
+                    style={{ top: `${(tick.y / 200) * 100}%` }}
                   >
                     {isPotatoStarch ? `${tick.value.toFixed(1)} MMT` : `${currencySymbol}${Math.round(tick.value).toLocaleString('en-US')} ${currencyLabel}`}
                   </span>
@@ -4204,7 +4169,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               {!isPotatoStarch ? (
                 <div
                   className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
-                  style={{ top: `${((liveY - 16) / 150) * 100}%` }}
+                  style={{ top: `${((liveY - 16) / 200) * 100}%` }}
                 >
                   <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
                     {formatChartPrice(latestLivePrice)}
