@@ -11,7 +11,7 @@ type FXListener = (rates: FXRates) => void;
 let cacheFxRates: FXRates = {
   USD_KRW: 1388.5,
   EUR_USD: 1.081,
-  USD_MYR: 4.0831,
+  USD_MYR: 4.0845,
 };
 
 const listeners: Set<FXListener> = new Set();
@@ -35,7 +35,7 @@ export function getAllFxRates(): FXRates {
 
 export function getLiveExchangeRate(pair: string = 'USD_MYR'): number {
   if (pair === 'USD_MYR' || pair === 'MYR') {
-    return cacheFxRates.USD_MYR || 4.0831;
+    return cacheFxRates.USD_MYR || 4.0845;
   }
   if (pair === 'USD_KRW' || pair === 'KRW') {
     return cacheFxRates.USD_KRW || 1388.5;

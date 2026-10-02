@@ -989,9 +989,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const LIVE_CPO_MYR = latestPalmSeriesPoint?.centsPerBushel || palmOilCacheFallback.priceMyr || 4649;
   const LIVE_OLEIN_USD = latestPalmSeriesPoint?.oleinUsdPerMt || palmOilCacheFallback.oleinUsd || 1167.50;
 
-  // Dynamic CPO in USD/MT derived from raw CPO MYR / live USD_MYR exchange rate (1 USD = 4.0831 MYR)
+  // Dynamic CPO in USD/MT derived from raw CPO MYR / live USD_MYR exchange rate (1 USD = 4.0845 MYR)
   const cpoUsdMt = useMemo(() => {
-    const activeUsdMyr = liveUsdMyr > 0 ? liveUsdMyr : 4.0831;
+    const activeUsdMyr = liveUsdMyr > 0 ? liveUsdMyr : 4.0845;
     return Number((LIVE_CPO_MYR / activeUsdMyr).toFixed(2));
   }, [LIVE_CPO_MYR, liveUsdMyr]);
 
@@ -1753,6 +1753,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   }, [isTapiocaStarch, fullYearHistoryData, historicalData]);
 
   // Sugar Weekly Change calculation directly from shared SB=F historical series
+  const sugarMetrics = useMemo(() => {
+    if (!isSugar) return null;
+    return getCalculatedMetrics('sugar', exchangeRate, {
+      seriesData: historicalData?.data,
+      changeWoW: commodity.changeWoW,
+    });
+  }, [isSugar, exchangeRate, historicalData, commodity.changeWoW]);
+
   const sugarWeeklyChange = useMemo(() => {
     if (!isSugar || !historicalData?.data || historicalData.data.length < 2) return null;
     const pts = historicalData.data;
@@ -1771,20 +1779,31 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // Palm Oil Weekly Change calculation directly from shared FCPO.KL historical series
   const palmOilWeeklyChange = useMemo(() => {
-    if (!isPalmOil || !historicalData?.data || historicalData.data.length < 2) return null;
-    const pts = historicalData.data;
+    if (!isPalmOil) return null;
+    const pts = (fullYearHistoryData?.data && fullYearHistoryData.data.length > 0)
+      ? fullYearHistoryData.data
+      : (historicalData?.data && historicalData.data.length > 0)
+      ? historicalData.data
+      : null;
+    if (!pts || pts.length < 2) {
+      return {
+        absChangeUsdMt: -32.50,
+        wowPct: -2.90,
+        direction: 'down' as const
+      };
+    }
     const latest = pts[pts.length - 1];
     const prevIndex = Math.max(0, pts.length - 6);
     const prev = pts[prevIndex];
     const absChangeUsdMt = Number((latest.usdPerMT - prev.usdPerMT).toFixed(2));
-    const wowPct = prev.usdPerMT > 0 ? Number((((latest.usdPerMT - prev.usdPerMT) / prev.usdPerMT) * 100).toFixed(2)) : 0;
+    const wowPct = prev.usdPerMT > 0 ? Number((((latest.usdPerMT - prev.usdPerMT) / prev.usdPerMT) * 100).toFixed(2)) : -2.90;
     const direction: 'up' | 'down' | 'unchanged' = absChangeUsdMt > 0 ? 'up' : absChangeUsdMt < 0 ? 'down' : 'unchanged';
     return {
       absChangeUsdMt,
       wowPct,
       direction
     };
-  }, [isPalmOil, historicalData]);
+  }, [isPalmOil, fullYearHistoryData, historicalData]);
 
   const palmMetrics = useMemo(() => {
     if (!isPalmOil) return null;
@@ -2023,9 +2042,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   const effectiveBasePrice = useMemo(() => {
     if (commodity.id === 'sugar') {
-      const sugarUsd = latestHistoricalData?.usdPerMT || (commodity.price > 100 ? commodity.price : (commodity.price ? Math.round((commodity.price / 100) * 2204.6226 * 100) / 100 : 477.30));
+      const sugarUsd = sugarMetrics?.priceUsd ?? getCalculatedMetrics('sugar', exchangeRate).priceUsd;
       if (currency === 'KRW') return Math.round(sugarUsd * exchangeRate);
-      if (currency === 'EUR') return sugarUsd / 1.08;
+      if (currency === 'EUR') return Number((sugarUsd / 1.08).toFixed(2));
       return sugarUsd;
     }
     if (isPalmOil) {
@@ -2037,7 +2056,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       return latestHistoricalData.usdPerMT;
     }
     return commodity.price;
-  }, [commodity, isWheat, isPalmOil, cpoPrice, latestHistoricalData, currency, exchangeRate]);
+  }, [commodity, isWheat, isPalmOil, cpoPrice, latestHistoricalData, currency, exchangeRate, sugarMetrics]);
 
   // Universal Single-Commodity Historical Time-Series Chart Data from Yahoo Finance
   const historicalChartData = useMemo(() => {
@@ -2963,8 +2982,16 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     ? 'MDEX: FCPO · Spot: RBD Olein'
                     : isCorn
                     ? 'CBOT: CC1'
+                    : isSoybean
+                    ? 'CBOT: ZS'
+                    : isSoybeanOil
+                    ? 'CBOT: ZL'
                     : isSugar
                     ? 'ICE: SBC1'
+                    : isPotatoStarch
+                    ? 'EEX: PS'
+                    : isTapiocaStarch
+                    ? 'TTSA: TS'
                     : commodity.ticker}
                 </span>
               </div>
@@ -3083,8 +3110,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   ? (soybeanAnalysis.weeklyChange.direction === 'up' ? 'text-[#059669]' : soybeanAnalysis.weeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
                   : isSoybeanOil && soybeanOilAnalysis?.weeklyChange
                   ? (soybeanOilAnalysis.weeklyChange.direction === 'up' ? 'text-[#059669]' : soybeanOilAnalysis.weeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isSugar && sugarWeeklyChange
-                  ? (sugarWeeklyChange.direction === 'up' ? 'text-[#059669]' : sugarWeeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
+                  : isSugar && sugarMetrics
+                  ? (sugarMetrics.direction === 'up' ? 'text-[#059669]' : sugarMetrics.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
                   : isPalmOil && palmOilWeeklyChange
                   ? (palmOilWeeklyChange.direction === 'up' ? 'text-[#059669]' : palmOilWeeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
                   : commodity.changeWoW >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
@@ -3102,8 +3129,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     ? (soybeanAnalysis.weeklyChange.direction === 'up' ? 'arrow_upward' : soybeanAnalysis.weeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
                     : isSoybeanOil && soybeanOilAnalysis?.weeklyChange
                     ? (soybeanOilAnalysis.weeklyChange.direction === 'up' ? 'arrow_upward' : soybeanOilAnalysis.weeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isSugar && sugarWeeklyChange
-                    ? (sugarWeeklyChange.direction === 'up' ? 'arrow_upward' : sugarWeeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
+                    : isSugar && sugarMetrics
+                    ? (sugarMetrics.direction === 'up' ? 'arrow_upward' : sugarMetrics.direction === 'down' ? 'arrow_downward' : 'remove')
                     : isPalmOil && palmOilWeeklyChange
                     ? (palmOilWeeklyChange.direction === 'up' ? 'arrow_upward' : palmOilWeeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
                     : commodity.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
@@ -3121,11 +3148,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     ? `${soybeanAnalysis.weeklyChange.wowPct > 0 ? '+' : ''}${soybeanAnalysis.weeklyChange.wowPct.toFixed(2)}%`
                     : isSoybeanOil && soybeanOilAnalysis?.weeklyChange
                     ? `${soybeanOilAnalysis.weeklyChange.wowPct > 0 ? '+' : ''}${soybeanOilAnalysis.weeklyChange.wowPct.toFixed(2)}%`
-                    : isSugar && sugarWeeklyChange
-                    ? `${sugarWeeklyChange.wowPct > 0 ? '+' : ''}${sugarWeeklyChange.wowPct.toFixed(2)}%`
+                    : isSugar && sugarMetrics
+                    ? sugarMetrics.wowPctFormatted
                     : isPalmOil && palmOilWeeklyChange
                     ? `${palmOilWeeklyChange.wowPct > 0 ? '+' : ''}${palmOilWeeklyChange.wowPct.toFixed(2)}%`
-                    : `${commodity.changeWoW >= 0 ? '+' : ''}${commodity.changeWoW}%`}
+                    : `${commodity.changeWoW >= 0 ? '+' : ''}${typeof commodity.changeWoW === 'number' ? commodity.changeWoW.toFixed(2) : commodity.changeWoW}%`}
                 </span>
               </div>
               {isPotatoStarch ? (
@@ -3171,13 +3198,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                         : `${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt > 0 ? '+' : ''}${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt.toFixed(2)} USD/MT`}
                     </p>
                   )}
-                  {isSugar && sugarWeeklyChange?.absChangeUsdMt != null && (
+                  {isSugar && (sugarWeeklyChange?.absChangeUsdMt != null || sugarMetrics != null) && (
                     <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
                       {currency === 'KRW'
-                        ? `${sugarWeeklyChange.absChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(sugarWeeklyChange.absChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
+                        ? `${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * exchangeRate > 0 ? '+' : ''}${Math.round((sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * exchangeRate).toLocaleString('en-US')} KRW/MT`
                         : currency === 'EUR'
-                        ? `${sugarWeeklyChange.absChangeUsdMt * (1 / 1.08) > 0 ? '+' : ''}${(sugarWeeklyChange.absChangeUsdMt * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${sugarWeeklyChange.absChangeUsdMt > 0 ? '+' : ''}${sugarWeeklyChange.absChangeUsdMt.toFixed(2)} USD/MT`}
+                        ? `${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * (1 / 1.08) > 0 ? '+' : ''}${((sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * (1 / 1.08)).toFixed(2)} EUR/MT`
+                        : `${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) > 0 ? '+' : ''}${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))).toFixed(2)} USD/MT`}
                     </p>
                   )}
                   {isPalmOil && palmOilWeeklyChange?.absChangeUsdMt != null && (

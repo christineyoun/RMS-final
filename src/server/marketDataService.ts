@@ -168,7 +168,7 @@ class ServerMarketDataService {
       const json: any = await res.json();
       const usdKrw = json.rates?.KRW;
       const usdEur = json.rates?.EUR || 0.925;
-      const usdMyr = json.rates?.MYR || 4.0831;
+      const usdMyr = json.rates?.MYR || 4.0845;
 
       if (typeof usdKrw !== 'number') {
         throw new Error('Invalid Frankfurter response: KRW rate missing');

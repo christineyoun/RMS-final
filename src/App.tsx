@@ -7,6 +7,7 @@ import { ExportReportModal } from './components/ExportReportModal';
 import { COMMODITIES, MACRO_DRIVERS, MARKET_ISSUES } from './data/commoditiesData';
 import { Commodity, LiveMarketUpdate, Currency } from './types';
 import { geminiController } from './services/geminiController';
+import { getLiveExchangeRate, subscribeFxRates, getAllFxRates, FXRates } from './services/currencyService';
 import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './utils/commodityConversions';
 import { exportGlobalDashboardToPdf } from './utils/exportDashboardPdf';
 
@@ -20,6 +21,11 @@ export default function App() {
   const [lastSyncTime, setLastSyncTime] = useState<string>(getKSTTime());
   const [aiBriefText, setAiBriefText] = useState<string>('');
   const [modelVersion, setModelVersion] = useState<string>('gemini-flash-latest');
+  const [fxRates, setFxRates] = useState<FXRates>(getAllFxRates());
+
+  useEffect(() => {
+    return subscribeFxRates(setFxRates);
+  }, []);
 
   // Intercept Ctrl+P or Cmd+P and trigger html2canvas PDF export
   useEffect(() => {
@@ -186,8 +192,8 @@ export default function App() {
 
       // 1. Convert raw quotes to USD/MT baseline
       if (c.id === 'palm-oil') {
-        // If price is raw MYR (>2000), convert MYR -> USD/MT (1 USD = 4.0831 MYR)
-        usdMt = c.price > 2000 ? c.price / 4.0831 : c.price;
+        const activeUsdMyr = fxRates.USD_MYR || getLiveExchangeRate('USD_MYR') || 4.0845;
+        usdMt = c.price > 2000 ? c.price / activeUsdMyr : c.price;
       } else if (c.id === 'potato-starch') {
         usdMt = c.price * 1.145;
       } else if (c.id === 'tapioca-starch') {
@@ -224,11 +230,11 @@ export default function App() {
         ...c,
         price: convertedPrice,
         unit: newUnit,
-        _originalPrice: c.id === 'palm-oil' ? (c.price > 2000 ? c.price : Math.round(c.price * 4.0831)) : c.price,
+        _originalPrice: c.id === 'palm-oil' ? (c.price > 2000 ? c.price : Math.round(c.price * (fxRates.USD_MYR || getLiveExchangeRate('USD_MYR') || 4.0845))) : c.price,
         _originalUnit: c.unit,
       };
     });
-  }, [commodities, currency]);
+  }, [commodities, currency, fxRates]);
 
   // Find currently selected commodity if in detail view
   const currentCommodity = mappedCommodities.find((c) => c.path === activeView);

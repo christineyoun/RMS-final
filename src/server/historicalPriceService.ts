@@ -340,7 +340,7 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
     else if (timeframe === '1Y' || timeframe === 'ALL') filtered = fullSeries;
     else filtered = fullSeries.slice(-36);
 
-    const usdMyrRate = getLiveExchangeRate('USD_MYR') || 4.0831;
+    const usdMyrRate = getLiveExchangeRate('USD_MYR') || 4.0845;
     const formattedFiltered = filtered.map((pt) => {
       const cpoUsd = pt.cpoUsd ?? (pt.centsPerBushel && usdMyrRate > 0 ? Number((pt.centsPerBushel / usdMyrRate).toFixed(2)) : pt.usdPerMT);
       const oleinUsd = pt.oleinUsd ?? pt.oleinUsdPerMt;

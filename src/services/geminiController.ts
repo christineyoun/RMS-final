@@ -1,6 +1,7 @@
 import { LiveMarketUpdate } from '../types';
 import { fetchLivePipelineMetrics } from './externalPipeline';
 import palmOilCache from '../data/cache_palmoil.json';
+import { getCalculatedMetrics } from '../lib/priceCalculator';
 
 export const getKSTTime = () => {
   return new Date().toLocaleTimeString('en-US', {
@@ -101,7 +102,7 @@ class GeminiController {
         soybeanOilPrice: liveSoybeanOilPrice,
         soybeanOilWowChange: liveSoybeanOilWow,
         palmOilPrice: (data.commodities?.palmOil?.price && data.commodities.palmOil.price > 2000) ? data.commodities.palmOil.price : palmOilCache.priceMyr,
-        sugarPrice: 418.00,
+        sugarPrice: getCalculatedMetrics('sugar').priceUsd,
         potatoStarchPrice: 928.80,
         tapiocaStarchPrice: 700.00,
         aiBriefSynthesis: data.aiBriefSynthesis || '글로벌 소맥 및 유지류 시장은 흑해 수출 회랑 불확실성과 남미 주요 파종지의 가뭄으로 단기 상승 압력에 직면해 있습니다.',
@@ -130,7 +131,7 @@ class GeminiController {
           soybean: { price: 474.27, unit: 'USD/MT', changeWoW: -2.03, landedKrw: 658 },
           soybeanOil: { price: 1486.80, unit: 'USD/MT', changeWoW: 1.69, landedKrw: 2064 },
           palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: -4.49, landedKrw: 1545 },
-          sugar: { price: 418.00, unit: 'USD/MT', changeWoW: -1.20, landedKrw: 626 },
+          sugar: { price: getCalculatedMetrics('sugar').priceUsd, unit: 'USD/MT', changeWoW: getCalculatedMetrics('sugar').wowPct, landedKrw: getCalculatedMetrics('sugar').baseKRW },
           potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: 1290 },
           tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: 0.00, landedKrw: 1010 }
         };

@@ -103,6 +103,29 @@ const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): s
     .join(' ');
 };
 
+const getCardEyebrow = (item: { id: string; gradeEn: string }) => {
+  switch (item.id) {
+    case 'wheat':
+      return 'CBOT: SRW BENCHMARK';
+    case 'corn':
+      return 'CBOT: CC1 BENCHMARK';
+    case 'soybean':
+      return 'CBOT: ZS BENCHMARK';
+    case 'soybean-oil':
+      return 'CBOT: ZL BENCHMARK';
+    case 'palm-oil':
+      return 'MDEX: FCPO BENCHMARK';
+    case 'sugar':
+      return 'ICE: SBC1 BENCHMARK';
+    case 'potato-starch':
+      return 'EEX: PS BENCHMARK';
+    case 'tapioca-starch':
+      return 'TTSA: TS BENCHMARK';
+    default:
+      return item.gradeEn;
+  }
+};
+
 interface OverviewTerminalProps {
   commodities: Commodity[];
   macroDrivers: MacroDriver[];
@@ -604,7 +627,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   {topGainer.nameKo} ({topGainer.nameEn})
                 </span>
                 <span className="font-mono text-[11px] text-[#059669] font-semibold">
-                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW}%` : `${topGainer.changeWoW}%`} WoW
+                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW.toFixed(2)}%` : `${topGainer.changeWoW.toFixed(2)}%`} WoW
                 </span>
               </div>
             )}
@@ -624,7 +647,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   {topLoser.nameKo} ({topLoser.nameEn})
                 </span>
                 <span className="font-mono text-[11px] text-[#DF0029] font-bold">
-                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW}%` : `${topLoser.changeWoW}%`} WoW
+                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW.toFixed(2)}%` : `${topLoser.changeWoW.toFixed(2)}%`} WoW
                 </span>
               </div>
             )}
@@ -651,7 +674,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <div className="flex items-start justify-between gap-2 min-w-0">
                       <div className="min-w-0 flex-1">
                         <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
-                          {item.gradeEn}
+                          {getCardEyebrow(item)}
                         </span>
                         <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                           {item.nameKo} ({item.nameEn})
@@ -667,7 +690,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span className="material-symbols-outlined text-[13px]">
                           {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
                         </span>
-                        {item.changeWoW >= 0 ? `+${item.changeWoW}% WoW` : `${item.changeWoW}% WoW`}
+                        {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
                       </span>
                     </div>
 
@@ -707,7 +730,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
                         <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                          {item.changeMoM >= 0 ? `+${item.changeMoM}%` : `${item.changeMoM}%`}
+                          {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
                         </span>
                       </div>
                       
@@ -741,7 +764,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <div className="flex items-start justify-between gap-2 min-w-0">
                       <div className="min-w-0 flex-1">
                         <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
-                          {item.gradeEn}
+                          {getCardEyebrow(item)}
                         </span>
                         <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                           {item.nameKo} ({item.nameEn})
@@ -757,7 +780,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span className="material-symbols-outlined text-[13px]">
                           {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
                         </span>
-                        {item.changeWoW >= 0 ? `+${item.changeWoW}% WoW` : `${item.changeWoW}% WoW`}
+                        {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
                       </span>
                     </div>
 
@@ -800,7 +823,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
                         <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                          {item.changeMoM >= 0 ? `+${item.changeMoM}%` : `${item.changeMoM}%`}
+                          {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
                         </span>
                       </div>
                       
@@ -824,95 +847,108 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <span className="text-[10px] text-[#6b7280] font-normal">ICE & FOB 아시아/유럽 벤치마크</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {starchCommodities.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => onNavigate(item.path)}
-                  className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 min-w-0">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
-                          {item.gradeEn}
-                        </span>
-                        <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
-                          {item.nameKo} ({item.nameEn})
-                        </h3>
-                      </div>
-                      <span
-                        className={`shrink-0 ${
-                          item.changeWoW > 0
-                            ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
-                            : item.changeWoW < 0
-                            ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
-                            : 'bg-[#f3f4f6] text-[#4b5563] border-[#e5e7eb] px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[13px]">
-                          {item.changeWoW > 0 ? 'arrow_upward' : item.changeWoW < 0 ? 'arrow_downward' : 'remove'}
-                        </span>
-                        {item.changeWoW > 0 ? `+${item.changeWoW}% WoW` : `${item.changeWoW}% WoW`}
-                      </span>
-                    </div>
+              {starchCommodities.map((item) => {
+                const itemMetrics = getCalculatedMetrics(item.id, effectiveUsdKrw);
+                const displayWoW = item.id === 'sugar' ? itemMetrics.wowPct : item.changeWoW;
+                const isWoWPositive = displayWoW > 0;
+                const isWoWNegative = displayWoW < 0;
 
-                    <div className="mt-2 flex items-baseline justify-between">
-                      <div>
-                        <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
-                          {formatStarchSweetenerBenchmark(item.id, currency)?.priceText ??
-                            (COMMODITY_CONFIGS[item.id]
-                              ? (currency === 'KRW'
-                                  ? `₩${getCalculatedMetrics(item.id).baseKRW.toLocaleString('en-US')}`
-                                  : `${currency === 'EUR' ? '€' : '$'}${COMMODITY_CONFIGS[item.id].benchmarkQuote.toLocaleString('en-US')}`)
-                              : `${currency === 'KRW' ? '₩' : currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
-                        </span>
-                        <span className="text-xs text-[#6b7280] ml-1">
-                          {formatStarchSweetenerBenchmark(item.id, currency)?.unitText ??
-                            (COMMODITY_CONFIGS[item.id]
-                              ? (currency === 'KRW' ? 'KRW / MT' : `${COMMODITY_CONFIGS[item.id].currency} / MT`)
-                              : item.unit)}
-                        </span>
-                      </div>
-                      <div className="w-16 h-5">
-                        <svg
-                          className={`w-full h-full ${
-                            item.changeWoW > 0
-                              ? 'text-[#10B981]'
-                              : item.changeWoW < 0
-                              ? 'text-[#EF4444]'
-                              : 'text-[#9ca3af]'
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => onNavigate(item.path)}
+                    className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
+                            {getCardEyebrow(item)}
+                          </span>
+                          <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                            {item.nameKo} ({item.nameEn})
+                          </h3>
+                        </div>
+                        <span
+                          className={`shrink-0 ${
+                            isWoWPositive
+                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
+                              : isWoWNegative
+                              ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
+                              : 'bg-[#f3f4f6] text-[#4b5563] border-[#e5e7eb] px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border'
                           }`}
-                          fill="none"
-                          preserveAspectRatio="none"
-                          viewBox="0 0 64 20"
                         >
-                          <path
-                            d={getSparklinePath(item.sparkline, item.changeWoW)}
-                            stroke={item.changeWoW > 0 ? '#10B981' : item.changeWoW < 0 ? '#EF4444' : '#9ca3af'}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.5"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
-                        <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                          {item.changeMoM >= 0 ? `+${item.changeMoM}%` : `${item.changeMoM}%`}
+                          <span className="material-symbols-outlined text-[13px]">
+                            {isWoWPositive ? 'arrow_upward' : isWoWNegative ? 'arrow_downward' : 'remove'}
+                          </span>
+                          {isWoWPositive ? `+${displayWoW.toFixed(2)}% WoW` : `${displayWoW.toFixed(2)}% WoW`}
                         </span>
                       </div>
-                      
-                      <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
-                        <span>상세 분석</span>
-                        <span className="material-symbols-outlined text-[15px]">chevron_right</span>
-                      </span>
+
+                      <div className="mt-2 flex items-baseline justify-between">
+                        <div>
+                          <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
+                            {item.id === 'sugar'
+                              ? (currency === 'KRW'
+                                  ? itemMetrics.priceKrwFormatted
+                                  : currency === 'EUR'
+                                  ? itemMetrics.priceEurFormatted
+                                  : itemMetrics.priceUsdFormatted)
+                              : formatStarchSweetenerBenchmark(item.id, currency)?.priceText ??
+                                (COMMODITY_CONFIGS[item.id]
+                                  ? (currency === 'KRW'
+                                      ? `₩${getCalculatedMetrics(item.id, effectiveUsdKrw).baseKRW.toLocaleString('en-US')}`
+                                      : `${currency === 'EUR' ? '€' : '$'}${COMMODITY_CONFIGS[item.id].benchmarkQuote.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
+                                  : `${currency === 'KRW' ? '₩' : currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
+                          </span>
+                          <span className="text-xs text-[#6b7280] ml-1">
+                            {formatStarchSweetenerBenchmark(item.id, currency)?.unitText ??
+                              (COMMODITY_CONFIGS[item.id]
+                                ? (currency === 'KRW' ? 'KRW / MT' : `${COMMODITY_CONFIGS[item.id].currency} / MT`)
+                                : item.unit)}
+                          </span>
+                        </div>
+                        <div className="w-16 h-5">
+                          <svg
+                            className={`w-full h-full ${
+                              displayWoW > 0
+                                ? 'text-[#10B981]'
+                                : displayWoW < 0
+                                ? 'text-[#EF4444]'
+                                : 'text-[#9ca3af]'
+                            }`}
+                            fill="none"
+                            preserveAspectRatio="none"
+                            viewBox="0 0 64 20"
+                          >
+                            <path
+                              d={getSparklinePath(item.sparkline, displayWoW)}
+                              stroke={displayWoW > 0 ? '#10B981' : displayWoW < 0 ? '#EF4444' : '#9ca3af'}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.5"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
+                          <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
+                            {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
+                          </span>
+                        </div>
+                        
+                        <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
+                          <span>상세 분석</span>
+                          <span className="material-symbols-outlined text-[15px]">chevron_right</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
