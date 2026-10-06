@@ -1,9 +1,9 @@
-import {
+import type {
   UsdaAmsSoybeanFobExport,
   SoybeanKoreaOceanFreight,
   EstimatedSoybeanKoreaLandedCost
-} from '../types';
-import { procurementConfig } from '../config/procurementConfig';
+} from '../types.ts';
+import { procurementConfig } from '../config/procurementConfig.ts';
 
 export class UsdaAmsSoybeanService {
   private static instance: UsdaAmsSoybeanService;

@@ -1,4 +1,4 @@
-import { DataSourceDefinition } from '../types';
+import type { DataSourceDefinition } from '../types.ts';
 
 /**
  * CENTRAL SOURCE REGISTRY

@@ -9,8 +9,8 @@
  * 5. Russia / Black Sea: USDA FAS PSD (Primary) & AMIS Trade/Logistics (Supporting)
  */
 
-import { AmisService, amisService } from './amisService';
-import { UsdaFasService, usdaFasService } from './usdaFasService';
+import { AmisService, amisService } from './amisService.ts';
+import { UsdaFasService, usdaFasService } from './usdaFasService.ts';
 
 export interface OriginItemDetail {
   originKey: 'usa' | 'australia' | 'canada' | 'eu' | 'russia';

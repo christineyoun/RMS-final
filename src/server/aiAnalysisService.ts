@@ -1,17 +1,17 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { getPublisherPortalUrl } from '../utils/portalUrls';
-import { cornIntelligenceService } from './cornIntelligenceService';
-import { soybeanIntelligenceService } from './soybeanIntelligenceService';
-import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService';
-import { usWheatPriceReportService } from './usWheatService';
-import { usdaFasService } from './usdaFasService';
-import { amisService } from './amisService';
-import { jrcService } from './jrcService';
-import { ttsaService } from './ttsaService';
-import { originRadarService } from './originRadarService';
-import { marketIntelligenceService } from './marketIntelligenceService';
-import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService';
-import { serverMarketDataService } from './marketDataService';
+import { getPublisherPortalUrl } from '../utils/portalUrls.ts';
+import { cornIntelligenceService } from './cornIntelligenceService.ts';
+import { soybeanIntelligenceService } from './soybeanIntelligenceService.ts';
+import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService.ts';
+import { usWheatPriceReportService } from './usWheatService.ts';
+import { usdaFasService } from './usdaFasService.ts';
+import { amisService } from './amisService.ts';
+import { jrcService } from './jrcService.ts';
+import { ttsaService } from './ttsaService.ts';
+import { originRadarService } from './originRadarService.ts';
+import { marketIntelligenceService } from './marketIntelligenceService.ts';
+import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
+import { serverMarketDataService } from './marketDataService.ts';
 
 export interface AiAnalysisData {
   confidenceScore: number;

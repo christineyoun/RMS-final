@@ -82,6 +82,15 @@ export default function App() {
       // Update commodity prices reactively
       setCommodities((prev) =>
         prev.map((c) => {
+          if (c.id === 'wheat' && liveData.wheatMetrics) {
+            return {
+              ...c,
+              price: liveData.wheatMetrics.srw.latestPriceMt,
+              changeWoW: liveData.wheatMetrics.srw.wowChangePct, // -3.03% or live
+              changeMoM: liveData.wheatMetrics.srw.momChangePct, // +10.06%
+            };
+          }
+
           let updatedPrice = c.price;
           let updatedChangeWoW = c.changeWoW;
           let updatedChangeMoM = c.changeMoM;

@@ -1,6 +1,6 @@
 import { PDFParse } from 'pdf-parse';
-import { AmisWheatIntelligence, AmisWheatResponse } from '../types';
-import { getKSTFormattedTime } from './marketDataService';
+import type { AmisWheatIntelligence, AmisWheatResponse } from '../types.ts';
+import { getKSTFormattedTime } from './marketDataService.ts';
 
 export class AmisService {
   private static instance: AmisService;

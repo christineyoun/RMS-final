@@ -1,4 +1,4 @@
-import {
+import type {
   NormalizedMarketData,
   UsWheatClassMetric,
   UsWheatHistoryDataPoint,
@@ -6,11 +6,11 @@ import {
   UsWheatHrwFobExport,
   UsWheatKoreaFreight,
   EstimatedKoreaLandedCost
-} from '../types';
-import { procurementConfig } from '../config/procurementConfig';
+} from '../types.ts';
+import { procurementConfig } from '../config/procurementConfig.ts';
 import { PDFParse } from 'pdf-parse';
-import { getKSTDateString, getKSTFormattedTime } from './marketDataService';
-import { getSourceDefinition } from './sourceRegistry';
+import { getKSTDateString, getKSTFormattedTime } from './marketDataService.ts';
+import { getSourceDefinition } from './sourceRegistry.ts';
 
 export interface UsWheatFutureContract {
   exchange: string; // e.g. "CBOT", "KCBT", "MIAX" or "MGE"

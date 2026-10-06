@@ -72,6 +72,53 @@ class GeminiController {
       const data: any = await res.json();
 
       const liveWheatPrice = wheatRes?.metrics?.srw?.latestPriceMt || 258.40;
+      const liveWheatMetrics = wheatRes?.metrics || {
+        srw: {
+          wheatClass: 'SRW',
+          classNameKo: '연질적맥',
+          classNameEn: 'Soft Red Winter',
+          exchange: 'CBOT',
+          contractMonth: 'DEC 26',
+          latestPriceMt: 258.40,
+          latestPriceBu: 703.25,
+          wowChangeMt: -8.08,
+          wowChangeBu: -22.00,
+          wowChangePct: -3.03,
+          momChangeMt: 23.61,
+          momChangeBu: 64.25,
+          momChangePct: 10.06
+        },
+        hrw: {
+          wheatClass: 'HRW',
+          classNameKo: '경질적맥',
+          classNameEn: 'Hard Red Winter',
+          exchange: 'KCBT',
+          contractMonth: 'DEC 26',
+          latestPriceMt: 242.87,
+          latestPriceBu: 661.00,
+          wowChangeMt: -11.02,
+          wowChangeBu: -30.00,
+          wowChangePct: -4.33,
+          momChangeMt: 17.45,
+          momChangeBu: 47.50,
+          momChangePct: 7.74
+        },
+        hrs: {
+          wheatClass: 'HRS',
+          classNameKo: '경질춘맥',
+          classNameEn: 'Hard Red Spring',
+          exchange: 'MGEX',
+          contractMonth: 'DEC 26',
+          latestPriceMt: 268.42,
+          latestPriceBu: 730.50,
+          wowChangeMt: -5.51,
+          wowChangeBu: -15.00,
+          wowChangePct: -2.00,
+          momChangeMt: 18.46,
+          momChangeBu: 50.25,
+          momChangePct: 7.37
+        }
+      };
       const liveCornPrice = cornRes?.data?.benchmarkPrice?.usdPerMT || 197.63;
       const liveCornWow = cornRes?.data?.weeklyChange?.wowPct ?? -4.98;
       const liveSoybeanPrice = soybeanRes?.data?.benchmarkPrice?.usdPerMT || 474.27;
@@ -95,6 +142,7 @@ class GeminiController {
         weather: data.weather,
         supplyDemand: data.supplyDemand,
         wheatPrice: liveWheatPrice,
+        wheatMetrics: liveWheatMetrics,
         cornPrice: liveCornPrice,
         cornWowChange: liveCornWow,
         soybeanPrice: liveSoybeanPrice,

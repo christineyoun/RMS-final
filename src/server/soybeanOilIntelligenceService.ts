@@ -1,13 +1,13 @@
-import {
+import type {
   SoybeanOilProcurementAnalysisData,
   EstimatedSoybeanOilKoreaLandedCost,
   UsdaAmsSoybeanOilFobExport,
   SoybeanOilKoreaOceanFreight
-} from '../types';
-import { fetchHistoricalData } from './historicalPriceService';
-import { procurementConfig } from '../config/procurementConfig';
-import { usdaFasService } from './usdaFasService';
-import { amisService } from './amisService';
+} from '../types.ts';
+import { fetchHistoricalData } from './historicalPriceService.ts';
+import { procurementConfig } from '../config/procurementConfig.ts';
+import { usdaFasService } from './usdaFasService.ts';
+import { amisService } from './amisService.ts';
 
 export class SoybeanOilIntelligenceService {
   private static instance: SoybeanOilIntelligenceService;

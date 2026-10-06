@@ -1,10 +1,10 @@
-import {
+import type {
   UsdaAmsCornFobExport,
   CornKoreaOceanFreight,
   EstimatedCornKoreaLandedCost
-} from '../types';
-import { procurementConfig } from '../config/procurementConfig';
-import { getKSTFormattedTime } from './marketDataService';
+} from '../types.ts';
+import { procurementConfig } from '../config/procurementConfig.ts';
+import { getKSTFormattedTime } from './marketDataService.ts';
 
 export class UsdaAmsCornService {
   private static instance: UsdaAmsCornService;

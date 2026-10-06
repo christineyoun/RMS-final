@@ -3004,234 +3004,70 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             </p>
           </div>
 
-          {/* Row 1: 3 compact KPI cards. Forced single horizontal row in print mode */}
+          {/* Row 1: 3 enlarged KPI cards with active currency monetary change */}
           <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 print:grid-cols-3 gap-3 w-full items-stretch min-w-0 header-metrics-wrapper pdf-header-metrics">
-            {/* Benchmark Price */}
-            <div id="scm-benchmark-price-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-3 flex flex-col justify-center min-w-0">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-0.5">
+            {/* Card 1: Benchmark Price */}
+            <div id="scm-benchmark-price-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">
                 {isWheat ? '기준 시세 (CBOT SRW)' : '기준 시세'}
               </span>
               <div className="flex items-baseline gap-1 min-w-0 flex-wrap sm:flex-nowrap">
                 <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 whitespace-nowrap">
-                  {isWheat && usWheatHistory?.metrics?.srw
-                    ? (currency === 'KRW'
-                        ? `₩${Math.round(usWheatHistory.metrics.srw.latestPriceMt * exchangeRate).toLocaleString('en-US')}`
-                        : `${currencySymbol}${(usWheatHistory.metrics.srw.latestPriceMt * (currency === 'EUR' ? 1 / 1.08 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-                    : isCorn && cornAnalysis?.benchmarkPrice
-                    ? (currency === 'KRW'
-                        ? `₩${Math.round(cornAnalysis.benchmarkPrice.usdPerMT * exchangeRate).toLocaleString('en-US')}`
-                        : `${currencySymbol}${(cornAnalysis.benchmarkPrice.usdPerMT * (currency === 'EUR' ? 1 / 1.08 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-                    : isSoybean && soybeanAnalysis?.benchmarkPrice
-                    ? (currency === 'KRW'
-                        ? `₩${Math.round(soybeanAnalysis.benchmarkPrice.usdPerMT * exchangeRate).toLocaleString('en-US')}`
-                        : `${currencySymbol}${(soybeanAnalysis.benchmarkPrice.usdPerMT * (currency === 'EUR' ? 1 / 1.08 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-                    : isSoybeanOil && soybeanOilAnalysis?.benchmarkPrice
-                    ? (currency === 'KRW'
-                        ? `₩${Math.round(soybeanOilAnalysis.benchmarkPrice.usdPerMT * exchangeRate).toLocaleString('en-US')}`
-                        : `${currencySymbol}${(soybeanOilAnalysis.benchmarkPrice.usdPerMT * (currency === 'EUR' ? 1 / 1.08 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-                    : isSugar || isPalmOil || isTapiocaStarch
-                    ? (currency === 'KRW'
-                        ? `₩${Math.round(effectiveBasePrice).toLocaleString('en-US')}`
-                        : `${currencySymbol}${effectiveBasePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-                    : formatStarchSweetenerBenchmark(commodity.id, currency)
-                    ? formatStarchSweetenerBenchmark(commodity.id, currency)!.priceText
-                    : COMMODITY_CONFIGS[commodity.id]
-                    ? (currency === 'KRW'
-                        ? `₩${getCalculatedMetrics(commodity.id).baseKRW.toLocaleString('en-US')}`
-                        : COMMODITY_CONFIGS[commodity.id].benchmarkQuote.toLocaleString('en-US'))
-                    : (currency === 'KRW' && commodity.id !== 'palm-oil'
-                        ? `₩${Math.round(effectiveBasePrice).toLocaleString('en-US')}`
-                        : `${commodity.id !== 'palm-oil' ? currencySymbol : ''}${effectiveBasePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
+                  {currencySymbol}{formatConvertedPrice(effectiveBasePrice)}
                 </span>
                 <span className="text-[10px] font-normal text-slate-500 font-mono whitespace-nowrap">
-                  {isWheat || isCorn || isSoybean || isSoybeanOil || isSugar || isPalmOil || isTapiocaStarch
-                    ? currencyLabel
-                    : formatStarchSweetenerBenchmark(commodity.id, currency)
-                    ? formatStarchSweetenerBenchmark(commodity.id, currency)!.unitText
-                    : COMMODITY_CONFIGS[commodity.id]
-                    ? (currency === 'KRW' ? 'KRW / MT' : `${COMMODITY_CONFIGS[commodity.id].currency} / MT`)
-                    : commodity.id !== 'palm-oil'
-                    ? (currency === 'USD' ? 'USD / MT' : currency === 'EUR' ? 'EUR / MT' : 'KRW / MT')
-                    : commodity.unit}
+                  {currencyLabel}
                 </span>
               </div>
-              {isWheat && usWheatHistory?.metrics?.srw && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT SRW {formatContractMonth(usWheatHistory.metrics.srw.contractMonth)} · {usWheatHistory.reportDate}
-                </p>
-              )}
-              {isCorn && cornAnalysis?.benchmarkPrice && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (CC1) · {cornAnalysis.benchmarkPrice.observationDate} ({cornAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USc/bu)
-                </p>
-              )}
-              {isSoybean && soybeanAnalysis?.benchmarkPrice && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZS) · {soybeanAnalysis.benchmarkPrice.observationDate} ({soybeanAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USc/bu)
-                </p>
-              )}
-              {isSoybeanOil && soybeanOilAnalysis?.benchmarkPrice && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  CBOT (ZL) · {soybeanOilAnalysis.benchmarkPrice.observationDate} ({soybeanOilAnalysis.benchmarkPrice.rawPrice.toFixed(2)} USc/lb)
-                </p>
-              )}
-              {isSugar && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  ICE (SBC1) · {latestHistoricalData?.date || '2026-10-02'} ({latestHistoricalData?.centsPerBushel ? latestHistoricalData.centsPerBushel.toFixed(2) : '18.96'} USc/lb)
-                </p>
-              )}
-              {isPalmOil && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  MDEX (FCPO) · {latestHistoricalData?.date || '2026-09-28'} ({latestHistoricalData?.centsPerBushel && latestHistoricalData.centsPerBushel > 1000 ? Math.round(latestHistoricalData.centsPerBushel).toLocaleString('en-US') : '4,185'} MYR/MT)
-                </p>
-              )}
-              {isTapiocaStarch && (
-                <p className="text-xs text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  TTSA (TS) · {latestHistoricalData?.date || '2026-09-29'}
-                </p>
-              )}
+              <p className="text-[11px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                {SOURCE_LABELS[commodity.id] || commodity.ticker} · {commodity.gradeEn}
+              </p>
             </div>
 
-            {/* Weekly Change */}
-            <div id="scm-weekly-change-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-3 flex flex-col justify-center min-w-0">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-0.5">
-                {isPotatoStarch ? '연간 변동 (YoY)' : isTapiocaStarch ? '3개월 변동' : '주간 변동 (WoW)'}
+            {/* Card 2: WoW & MoM Side-by-Side with Exact Amount Below */}
+            <div id="scm-weekly-change-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">
+                시세 변동률 (WoW / MoM)
               </span>
-              <div className={`flex items-center gap-0.5 font-mono text-base font-bold whitespace-nowrap ${
-                isPotatoStarch
-                  ? 'text-[#DF0029]'
-                  : isTapiocaStarch && tapioca3mChange
-                  ? (tapioca3mChange.direction === 'up' ? 'text-[#059669]' : tapioca3mChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isWheat && hrwData
-                  ? (hrwData.direction === 'up' ? 'text-[#059669]' : hrwData.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isCorn && cornAnalysis?.weeklyChange
-                  ? (cornAnalysis.weeklyChange.direction === 'up' ? 'text-[#059669]' : cornAnalysis.weeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isSoybean && soybeanAnalysis?.weeklyChange
-                  ? (soybeanAnalysis.weeklyChange.direction === 'up' ? 'text-[#059669]' : soybeanAnalysis.weeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isSoybeanOil && soybeanOilAnalysis?.weeklyChange
-                  ? (soybeanOilAnalysis.weeklyChange.direction === 'up' ? 'text-[#059669]' : soybeanOilAnalysis.weeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isSugar && sugarMetrics
-                  ? (sugarMetrics.direction === 'up' ? 'text-[#059669]' : sugarMetrics.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : isPalmOil && palmOilWeeklyChange
-                  ? (palmOilWeeklyChange.direction === 'up' ? 'text-[#059669]' : palmOilWeeklyChange.direction === 'down' ? 'text-[#DF0029]' : 'text-slate-500')
-                  : commodity.changeWoW >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-              }`}>
-                <span className="material-symbols-outlined text-[18px]">
-                  {isPotatoStarch
-                    ? 'arrow_downward'
-                    : isTapiocaStarch && tapioca3mChange
-                    ? (tapioca3mChange.direction === 'up' ? 'arrow_upward' : tapioca3mChange.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isWheat && hrwData
-                    ? (hrwData.direction === 'up' ? 'arrow_upward' : hrwData.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isCorn && cornAnalysis?.weeklyChange
-                    ? (cornAnalysis.weeklyChange.direction === 'up' ? 'arrow_upward' : cornAnalysis.weeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isSoybean && soybeanAnalysis?.weeklyChange
-                    ? (soybeanAnalysis.weeklyChange.direction === 'up' ? 'arrow_upward' : soybeanAnalysis.weeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isSoybeanOil && soybeanOilAnalysis?.weeklyChange
-                    ? (soybeanOilAnalysis.weeklyChange.direction === 'up' ? 'arrow_upward' : soybeanOilAnalysis.weeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isSugar && sugarMetrics
-                    ? (sugarMetrics.direction === 'up' ? 'arrow_upward' : sugarMetrics.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : isPalmOil && palmOilWeeklyChange
-                    ? (palmOilWeeklyChange.direction === 'up' ? 'arrow_upward' : palmOilWeeklyChange.direction === 'down' ? 'arrow_downward' : 'remove')
-                    : commodity.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                </span>
-                <span>
-                  {isPotatoStarch
-                    ? '-8.00%'
-                    : isTapiocaStarch && tapioca3mChange
-                    ? `${tapioca3mChange.pctChange > 0 ? '+' : ''}${tapioca3mChange.pctChange.toFixed(2)}%`
-                    : isWheat && hrwData
-                    ? (hrwData.wowPct == null ? '-' : `${hrwData.wowPct > 0 ? '+' : ''}${hrwData.wowPct.toFixed(2)}%`)
-                    : isCorn && cornAnalysis?.weeklyChange
-                    ? `${cornAnalysis.weeklyChange.wowPct > 0 ? '+' : ''}${cornAnalysis.weeklyChange.wowPct.toFixed(2)}%`
-                    : isSoybean && soybeanAnalysis?.weeklyChange
-                    ? `${soybeanAnalysis.weeklyChange.wowPct > 0 ? '+' : ''}${soybeanAnalysis.weeklyChange.wowPct.toFixed(2)}%`
-                    : isSoybeanOil && soybeanOilAnalysis?.weeklyChange
-                    ? `${soybeanOilAnalysis.weeklyChange.wowPct > 0 ? '+' : ''}${soybeanOilAnalysis.weeklyChange.wowPct.toFixed(2)}%`
-                    : isSugar && sugarMetrics
-                    ? sugarMetrics.wowPctFormatted
-                    : isPalmOil && palmOilWeeklyChange
-                    ? `${palmOilWeeklyChange.wowPct > 0 ? '+' : ''}${palmOilWeeklyChange.wowPct.toFixed(2)}%`
-                    : `${commodity.changeWoW >= 0 ? '+' : ''}${typeof commodity.changeWoW === 'number' ? commodity.changeWoW.toFixed(2) : commodity.changeWoW}%`}
-                </span>
-              </div>
-              {isPotatoStarch ? (
-                <div className="text-xs text-slate-500 font-sans mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
-                  <span className="font-semibold text-[#DF0029] block mb-0.5">’25년 실제 대비 ’26년 감소 전망</span>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">주요 조달국 원료감자 생산량 기준</span>
+
+              <div className="grid grid-cols-2 gap-2 items-center pt-0.5">
+                {/* Left: WoW */}
+                <div className="border-r border-slate-200/80 pr-2">
+                  <span className="text-[10px] font-medium text-slate-400 block font-sans">주간 (WoW)</span>
+                  <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
+                    commodity.changeWoW >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                  }`}>
+                    <span className="material-symbols-outlined text-[14px]">
+                      {commodity.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                    </span>
+                    <span>{commodity.changeWoW >= 0 ? `+${commodity.changeWoW.toFixed(2)}%` : `${commodity.changeWoW.toFixed(2)}%`}</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
+                    {commodity.changeWoW >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(effectiveBasePrice * (commodity.changeWoW / 100)))}
+                  </span>
                 </div>
-              ) : (
-                <>
-                  {isWheat && hrwData?.absoluteChangeMt != null && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${hrwData.absoluteChangeMt * exchangeRate > 0 ? '+' : ''}${Math.round(hrwData.absoluteChangeMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${hrwData.absoluteChangeMt * (1 / 1.08) > 0 ? '+' : ''}${(hrwData.absoluteChangeMt * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${hrwData.absoluteChangeMt > 0 ? '+' : ''}${hrwData.absoluteChangeMt.toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                  {isCorn && cornAnalysis?.weeklyChange?.absoluteChangeUsdMt != null && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${cornAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(cornAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${cornAnalysis.weeklyChange.absoluteChangeUsdMt * (1 / 1.08) > 0 ? '+' : ''}${(cornAnalysis.weeklyChange.absoluteChangeUsdMt * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${cornAnalysis.weeklyChange.absoluteChangeUsdMt > 0 ? '+' : ''}${cornAnalysis.weeklyChange.absoluteChangeUsdMt.toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                  {isSoybean && soybeanAnalysis?.weeklyChange?.absoluteChangeUsdMt != null && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${soybeanAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(soybeanAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${soybeanAnalysis.weeklyChange.absoluteChangeUsdMt * (1 / 1.08) > 0 ? '+' : ''}${(soybeanAnalysis.weeklyChange.absoluteChangeUsdMt * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${soybeanAnalysis.weeklyChange.absoluteChangeUsdMt > 0 ? '+' : ''}${soybeanAnalysis.weeklyChange.absoluteChangeUsdMt.toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                  {isSoybeanOil && soybeanOilAnalysis?.weeklyChange?.absoluteChangeUsdMt != null && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt * (1 / 1.08) > 0 ? '+' : ''}${(soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt > 0 ? '+' : ''}${soybeanOilAnalysis.weeklyChange.absoluteChangeUsdMt.toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                  {isSugar && (sugarWeeklyChange?.absChangeUsdMt != null || sugarMetrics != null) && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * exchangeRate > 0 ? '+' : ''}${Math.round((sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * (1 / 1.08) > 0 ? '+' : ''}${((sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))) > 0 ? '+' : ''}${(sugarWeeklyChange?.absChangeUsdMt ?? (sugarMetrics!.priceUsd * (sugarMetrics!.wowPct / 100))).toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                  {isPalmOil && palmOilWeeklyChange?.absChangeUsdMt != null && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${palmOilWeeklyChange.absChangeUsdMt * exchangeRate > 0 ? '+' : ''}${Math.round(palmOilWeeklyChange.absChangeUsdMt * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${palmOilWeeklyChange.absChangeUsdMt * (1 / 1.08) > 0 ? '+' : ''}${(palmOilWeeklyChange.absChangeUsdMt * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${palmOilWeeklyChange.absChangeUsdMt > 0 ? '+' : ''}${palmOilWeeklyChange.absChangeUsdMt.toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                  {isTapiocaStarch && tapioca3mChange && (
-                    <p className="text-xs text-slate-500 font-mono mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
-                      {currency === 'KRW'
-                        ? `${tapioca3mChange.absoluteChange * exchangeRate > 0 ? '+' : ''}${Math.round(tapioca3mChange.absoluteChange * exchangeRate).toLocaleString('en-US')} KRW/MT`
-                        : currency === 'EUR'
-                        ? `${tapioca3mChange.absoluteChange * (1 / 1.08) > 0 ? '+' : ''}${(tapioca3mChange.absoluteChange * (1 / 1.08)).toFixed(2)} EUR/MT`
-                        : `${tapioca3mChange.absoluteChange > 0 ? '+' : ''}${tapioca3mChange.absoluteChange.toFixed(2)} USD/MT`}
-                    </p>
-                  )}
-                </>
-              )}
+
+                {/* Right: MoM */}
+                <div className="pl-1">
+                  <span className="text-[10px] font-medium text-slate-400 block font-sans">전월 (MoM)</span>
+                  <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
+                    commodity.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                  }`}>
+                    <span className="material-symbols-outlined text-[14px]">
+                      {commodity.changeMoM >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                    </span>
+                    <span>{commodity.changeMoM >= 0 ? `+${commodity.changeMoM.toFixed(2)}%` : `${commodity.changeMoM.toFixed(2)}%`}</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
+                    {commodity.changeMoM >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(effectiveBasePrice * (commodity.changeMoM / 100)))}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Desk Recommendation */}
-            <div id="scm-desk-recommendation-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-3 flex flex-col justify-center min-w-0">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">데스크 권고</span>
+            {/* Card 3: Desk Recommendation */}
+            <div id="scm-desk-recommendation-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1.5">데스크 권고</span>
               <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
                 {activeDeskRecommendation}
               </span>

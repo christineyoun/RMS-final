@@ -1,6 +1,6 @@
-import { NormalizedMarketData } from '../types';
-import { getKSTDateString, getKSTFormattedTime } from './marketDataService';
-import { getSourceDefinition } from './sourceRegistry';
+import type { NormalizedMarketData } from '../types.ts';
+import { getKSTDateString, getKSTFormattedTime } from './marketDataService.ts';
+import { getSourceDefinition } from './sourceRegistry.ts';
 
 export interface UsdaPsdRawRecord {
   commodityCode: string;

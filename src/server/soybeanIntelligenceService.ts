@@ -1,11 +1,11 @@
-import {
+import type {
   SoybeanProcurementAnalysisData,
   EstimatedSoybeanKoreaLandedCost
-} from '../types';
-import { fetchHistoricalData } from './historicalPriceService';
-import { usdaAmsSoybeanService } from './usdaAmsSoybeanService';
-import { usdaFasService } from './usdaFasService';
-import { amisService } from './amisService';
+} from '../types.ts';
+import { fetchHistoricalData } from './historicalPriceService.ts';
+import { usdaAmsSoybeanService } from './usdaAmsSoybeanService.ts';
+import { usdaFasService } from './usdaFasService.ts';
+import { amisService } from './amisService.ts';
 
 export class SoybeanIntelligenceService {
   private static instance: SoybeanIntelligenceService;

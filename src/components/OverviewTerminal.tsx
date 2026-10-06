@@ -613,41 +613,49 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               오늘의 주요 원자재 변동률 (Portfolio Top Movers)
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
             {/* Top Gainer */}
             {topGainer && (
-              <div className="flex items-center gap-1.5">
-                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-1.5 py-0.5 rounded text-[10px] shrink-0">
+              <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-1.5 py-0.5 rounded text-[10px] leading-none shrink-0 inline-flex items-center">
                   최대 상승
                 </span>
                 <span
                   onClick={() => onNavigate(topGainer.path)}
-                  className="font-semibold text-[#111827] hover:text-[#DF0029] cursor-pointer transition-colors"
+                  className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-none"
                 >
                   {topGainer.nameKo} ({topGainer.nameEn})
                 </span>
-                <span className="font-mono text-[11px] text-[#059669] font-semibold">
-                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW.toFixed(2)}%` : `${topGainer.changeWoW.toFixed(2)}%`} WoW
+                <span className="text-[12px] font-bold font-mono text-[#059669] leading-none">
+                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW.toFixed(2)}%` : `${topGainer.changeWoW.toFixed(2)}%`}
+                </span>
+                <span className="text-[12px] font-bold font-mono text-[#059669] leading-none">
+                  WoW
                 </span>
               </div>
             )}
 
-            <span className="hidden md:inline text-[#e5e7eb]">|</span>
+            <span className="hidden md:inline-flex items-center text-[#e5e7eb] text-[12px] leading-none select-none font-normal">
+              |
+            </span>
 
             {/* Top Loser */}
             {topLoser && (
-              <div className="flex items-center gap-1.5">
-                <span className="px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-[#DF0029] text-[10px] font-bold shrink-0">
+              <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <span className="bg-red-50 border border-red-200 text-[#DF0029] font-bold px-1.5 py-0.5 rounded text-[10px] leading-none shrink-0 inline-flex items-center">
                   최대 하락
                 </span>
                 <span
                   onClick={() => onNavigate(topLoser.path)}
-                  className="font-semibold text-[#111827] hover:text-[#DF0029] cursor-pointer transition-colors"
+                  className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-none"
                 >
                   {topLoser.nameKo} ({topLoser.nameEn})
                 </span>
-                <span className="font-mono text-[11px] text-[#DF0029] font-bold">
-                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW.toFixed(2)}%` : `${topLoser.changeWoW.toFixed(2)}%`} WoW
+                <span className="text-[12px] font-bold font-mono text-[#e11d48] leading-none">
+                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW.toFixed(2)}%` : `${topLoser.changeWoW.toFixed(2)}%`}
+                </span>
+                <span className="text-[12px] font-bold font-mono text-[#e11d48] leading-none">
+                  WoW
                 </span>
               </div>
             )}
@@ -754,72 +762,80 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <span className="text-[10px] text-[#6b7280] font-normal">CBOT & BMD 벤치마크</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {oilCommodities.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => onNavigate(item.path)}
-                  className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 min-w-0">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
-                          {getCardEyebrow(item)}
-                        </span>
-                        <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
-                          {item.nameKo} ({item.nameEn})
-                        </h3>
-                      </div>
-                      <span
-                        className={`shrink-0 ${
-                          item.changeWoW >= 0
-                            ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
-                            : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[13px]">
-                          {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                        </span>
-                        {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
-                      </span>
-                    </div>
+              {oilCommodities.map((item) => {
+                const isSoybeanOil = item.id === 'soybean-oil';
 
-                    <div className="mt-2 flex items-baseline justify-between">
-                      <div>
-                        {/* Main Converted Price: Always displays ₩1,545,188 KRW / MT on KRW toggle */}
-                        <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
-                          {currency === 'KRW'
-                            ? `₩${Math.round(item.price).toLocaleString('en-US')}`
-                            : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                        </span>
-                        <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
-
-                        {/* Subline Quote: Displays raw MYR benchmark */}
-                        {item.id === 'palm-oil' && (
-                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            MDEX (FCPO) · ({(item._originalPrice || 4649).toLocaleString('en-US')} MYR/MT)
-                          </p>
-                        )}
-                      </div>
-                      <div className="w-16 h-5">
-                        <svg
-                          className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
-                          fill="none"
-                          preserveAspectRatio="none"
-                          viewBox="0 0 64 20"
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => onNavigate(item.path)}
+                    className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between"
+                  >
+                    <div 
+                      style={
+                        isSoybeanOil 
+                          ? { flex: '1 1 0%', display: 'flex', flexDirection: 'column', justifyContent: 'center', margin: 'auto 0' } 
+                          : { flex: '1 1 0%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }
+                      }
+                    >
+                      <div className="flex items-start justify-between gap-2 min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
+                            {getCardEyebrow(item)}
+                          </span>
+                          <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                            {item.nameKo} ({item.nameEn})
+                          </h3>
+                        </div>
+                        <span
+                          className={`shrink-0 ${
+                            item.changeWoW >= 0
+                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
+                              : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
+                          }`}
                         >
-                          <path
-                            d={getSparklinePath(item.sparkline, item.changeWoW)}
-                            stroke={item.changeWoW < 0 ? '#EF4444' : '#10B981'}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.5"
-                          />
-                        </svg>
+                          <span className="material-symbols-outlined text-[13px]">
+                            {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                          </span>
+                          {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex items-baseline justify-between">
+                        <div>
+                          <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
+                            {currency === 'KRW'
+                              ? `₩${Math.round(item.price).toLocaleString('en-US')}`
+                              : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          </span>
+                          <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
+
+                          {item.id === 'palm-oil' && (
+                            <p className="text-[10px] text-slate-400 font-mono mt-0.5 leading-none">
+                              MDEX (FCPO) · ({(item._originalPrice || 4649).toLocaleString('en-US')} MYR/MT)
+                            </p>
+                          )}
+                        </div>
+                        <div className="w-16 h-5">
+                          <svg
+                            className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                            fill="none"
+                            preserveAspectRatio="none"
+                            viewBox="0 0 64 20"
+                          >
+                            <path
+                              d={getSparklinePath(item.sparkline, item.changeWoW)}
+                              stroke={item.changeWoW < 0 ? '#EF4444' : '#10B981'}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.5"
+                            />
+                          </svg>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
+                    <div className="mt-2.5 pt-2 border-t border-[#f1f5f9] flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
                         <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
@@ -833,8 +849,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </span>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

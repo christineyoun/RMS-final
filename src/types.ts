@@ -252,6 +252,12 @@ export interface LiveMarketUpdate {
   scfi: number;
   bdi?: number;
   wheatPrice: number;
+  wheatMetrics?: {
+    srw: UsWheatClassMetric;
+    hrw: UsWheatClassMetric;
+    hrs: UsWheatClassMetric;
+    [key: string]: any;
+  } | null;
   cornPrice: number;
   cornWowChange?: number;
   soybeanPrice: number;

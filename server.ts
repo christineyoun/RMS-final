@@ -1,7 +1,8 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
-import { createGeminiApiMiddleware } from './src/server/geminiApi';
+import { createGeminiApiMiddleware } from './src/server/geminiApi.ts';
 
 async function startServer() {
   const app = express();
@@ -20,9 +21,14 @@ async function startServer() {
     console.log('Dev: Mounted Vite middleware.');
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const indexPath = path.join(distPath, 'index.html');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(500).send('Application build not found (dist/index.html missing). Please run npm run build.');
+      }
     });
     console.log('Production: Serving static assets from dist/.');
   }

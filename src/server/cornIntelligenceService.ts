@@ -1,11 +1,11 @@
-import {
+import type {
   CornProcurementAnalysisData,
   EstimatedCornKoreaLandedCost
-} from '../types';
-import { fetchHistoricalData } from './historicalPriceService';
-import { usdaAmsCornService } from './usdaAmsCornService';
-import { usdaFasService } from './usdaFasService';
-import { amisService } from './amisService';
+} from '../types.ts';
+import { fetchHistoricalData } from './historicalPriceService.ts';
+import { usdaAmsCornService } from './usdaAmsCornService.ts';
+import { usdaFasService } from './usdaFasService.ts';
+import { amisService } from './amisService.ts';
 
 export class CornIntelligenceService {
   private static instance: CornIntelligenceService;

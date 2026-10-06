@@ -141,7 +141,7 @@ export function isGoogleNewsSourceLabel(name?: string): boolean {
   );
 }
 
-import { getPublisherPortalUrl, isInvalidOrSearchUrl } from '../utils/portalUrls';
+import { getPublisherPortalUrl, isInvalidOrSearchUrl } from '../utils/portalUrls.ts';
 
 export { getPublisherPortalUrl, isInvalidOrSearchUrl };
 

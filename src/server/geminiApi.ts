@@ -43,21 +43,21 @@ export function updateSavedBaselinePrice(newPrice: number, newOleinUsd?: number)
     console.warn('[Cache] Failed to persist new live price to disk:', e);
   }
 }
-import { serverMarketDataService } from './marketDataService';
-import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, getCommodityBaseline } from './usdaFasService';
-import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService';
-import { usWheatPriceReportService } from './usWheatService';
-import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService';
-import { amisService } from './amisService';
-import { wheatIntelligenceService } from './wheatIntelligenceService';
-import { originRadarService } from './originRadarService';
-import { usdaAmsCornService } from './usdaAmsCornService';
-import { cornIntelligenceService } from './cornIntelligenceService';
-import { soybeanIntelligenceService } from './soybeanIntelligenceService';
-import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService';
-import { marketIntelligenceService } from './marketIntelligenceService';
-import { NormalizedMarketData } from '../types';
-import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from '../utils/commodityConversions';
+import { serverMarketDataService } from './marketDataService.ts';
+import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, getCommodityBaseline } from './usdaFasService.ts';
+import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
+import { usWheatPriceReportService } from './usWheatService.ts';
+import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
+import { amisService } from './amisService.ts';
+import { wheatIntelligenceService } from './wheatIntelligenceService.ts';
+import { originRadarService } from './originRadarService.ts';
+import { usdaAmsCornService } from './usdaAmsCornService.ts';
+import { cornIntelligenceService } from './cornIntelligenceService.ts';
+import { soybeanIntelligenceService } from './soybeanIntelligenceService.ts';
+import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService.ts';
+import { marketIntelligenceService } from './marketIntelligenceService.ts';
+import type { NormalizedMarketData } from '../types.ts';
+import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from '../utils/commodityConversions.ts';
 
 dotenv.config();
 

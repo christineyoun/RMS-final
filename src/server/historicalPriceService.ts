@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { ttsaService } from './ttsaService';
-import { LBS_PER_METRIC_TON, CORN_BUSHELS_PER_MT, WHEAT_SOY_BUSHELS_PER_MT, centsPerLbToUsdPerMt } from '../utils/commodityConversions';
-import { updateSavedBaselinePrice } from './geminiApi';
-import { getLiveExchangeRate } from '../services/currencyService';
+import { ttsaService } from './ttsaService.ts';
+import { LBS_PER_METRIC_TON, CORN_BUSHELS_PER_MT, WHEAT_SOY_BUSHELS_PER_MT, centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
+import { updateSavedBaselinePrice } from './geminiApi.ts';
+import { getLiveExchangeRate } from '../services/currencyService.ts';
 
 const PALM_CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 const TRADINGVIEW_FCPO_URL = 'https://www.tradingview.com/symbols/MYX-FCPO1!/';

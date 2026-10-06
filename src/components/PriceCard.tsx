@@ -72,9 +72,9 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
   return (
     <div
       onClick={() => onNavigate?.(item.path)}
-      className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
+      className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full"
     >
-      <div>
+      <div className="flex-1 flex flex-col justify-center my-auto">
         <div className="flex items-start justify-between">
           <div>
             <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
@@ -127,17 +127,17 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
             </svg>
           </div>
         </div>
+      </div>
 
-        <div className="mt-1 flex items-center justify-between text-[#6b7280]">
-          <span className="text-[10px]">전월 대비 (MoM)</span>
-          <span
-            className={`font-mono text-[11px] ${
-              item.changeMoM >= 0 ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'
-            }`}
-          >
-            {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}
-          </span>
-        </div>
+      <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between text-[#6b7280]">
+        <span className="text-[10px]">전월 대비 (MoM)</span>
+        <span
+          className={`font-mono text-[11px] ${
+            item.changeMoM >= 0 ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'
+          }`}
+        >
+          {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}
+        </span>
       </div>
     </div>
   );

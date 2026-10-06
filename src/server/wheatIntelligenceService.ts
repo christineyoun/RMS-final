@@ -10,11 +10,11 @@
  * the service falls back to the verified U.S. Wheat + AMIS inputs only.
  */
 import { GoogleGenAI } from '@google/genai';
-import { usWheatPriceReportService } from './usWheatService';
-import { amisService } from './amisService';
-import { usdaFasService } from './usdaFasService';
-import { originRadarService } from './originRadarService';
-import { marketIntelligenceService } from './marketIntelligenceService';
+import { usWheatPriceReportService } from './usWheatService.ts';
+import { amisService } from './amisService.ts';
+import { usdaFasService } from './usdaFasService.ts';
+import { originRadarService } from './originRadarService.ts';
+import { marketIntelligenceService } from './marketIntelligenceService.ts';
 
 export interface MarketFactorEvidence {
   text: string;

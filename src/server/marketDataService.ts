@@ -1,10 +1,11 @@
 import { GoogleGenAI } from '@google/genai';
-import { DataSourceDefinition, NormalizedMarketData, MarketDataSyncPayload } from '../types';
-import { CENTRAL_SOURCE_REGISTRY, getSourceDefinition } from './sourceRegistry';
-import { usdaFasService, UsdaWheatWorldSummary } from './usdaFasService';
-import { usWheatPriceReportService } from './usWheatService';
-import { centsPerLbToUsdPerMt } from '../utils/commodityConversions';
-import palmOilCache from '../data/cache_palmoil.json';
+import type { DataSourceDefinition, NormalizedMarketData, MarketDataSyncPayload } from '../types.ts';
+import { CENTRAL_SOURCE_REGISTRY, getSourceDefinition } from './sourceRegistry.ts';
+import { usdaFasService } from './usdaFasService.ts';
+import type { UsdaWheatWorldSummary } from './usdaFasService.ts';
+import { usWheatPriceReportService } from './usWheatService.ts';
+import { centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
+import palmOilCache from '../data/cache_palmoil.json' with { type: 'json' };
 
 export const getKSTFormattedTime = (): string => {
   return (
