@@ -41,8 +41,7 @@ export const ASSET_ITEMS = [
   { label: '타피오카 전분 (Tapioca Starch)', ticker: 'TS_USD', category: 'Starches', type: 'commodity', path: 'commodity-tapioca-starch', id: 'tapioca-starch' },
   { label: '원/달러 환율 (USD/KRW)', ticker: 'FX_USDKRW', category: 'Macro', type: 'macro', targetId: 'driver-fx' },
   { label: '국제 유가 (Brent Crude)', ticker: 'BRENT', category: 'Macro', type: 'macro', targetId: 'driver-energy' },
-  { label: '발틱 건화물 운임 지수 (BDI)', ticker: 'BDI', category: 'Logistics', type: 'macro', targetId: 'driver-freight' },
-  { label: '상하이 컨테이너 운임 지수 (SCFI)', ticker: 'SCFI', category: 'Logistics', type: 'macro', targetId: 'external-pipeline-section' },
+  { label: '상하이 컨테이너 운임 지수 (SCFI)', ticker: 'SCFI', category: 'Logistics', type: 'macro', targetId: 'driver-freight' },
 ];
 
 export const HeaderSearch = ({ onSelectAsset }: { onSelectAsset?: (asset: any) => void }) => {

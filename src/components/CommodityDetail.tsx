@@ -866,8 +866,24 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   useEffect(() => {
     setActiveTimeframe('6M');
   }, [commodity.id]);
+  const [fxRates, setFxRates] = useState<FXRates>(getAllFxRates());
+
+  useEffect(() => {
+    const unsubscribe = subscribeFxRates((updated) => {
+      setFxRates(updated);
+    });
+    fetchLiveFxRates();
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isSyncing) {
+      fetchLiveFxRates();
+    }
+  }, [isSyncing]);
+
   const selectedCurrency = currency;
-  const exchangeRate = selectedCurrency === 'KRW' ? 1388.5 : selectedCurrency === 'EUR' ? 1 / 1.08 : 1;
+  const exchangeRate = selectedCurrency === 'KRW' ? (fxRates.USD_KRW || 1388.5) : selectedCurrency === 'EUR' ? (1 / (fxRates.EUR_USD || 1.08)) : 1;
   const currencySymbol = selectedCurrency === 'KRW' ? '₩' : selectedCurrency === 'EUR' ? '€' : '$';
   const currencyLabel = currency === 'KRW' ? 'KRW/MT' : currency === 'EUR' ? 'EUR/MT' : 'USD/MT';
 
@@ -878,14 +894,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     usdSourcePrefix: string = 'USDA AMS'
   ): string => {
     if (selectedCurrency === 'KRW') {
-      const krwRate = 1388.5;
+      const krwRate = fxRates.USD_KRW || 1388.5;
       const fobKrw = Math.round(fobUsd * krwRate).toLocaleString('en-US');
       const freightKrw = Math.round(freightUsd * krwRate).toLocaleString('en-US');
       const portKrw = Math.round(portUsd * krwRate).toLocaleString('en-US');
       return `환율 ₩${Math.round(krwRate)}/USD 적용 · FOB ₩${fobKrw} + 해상운임 ₩${freightKrw} + 항만비 ₩${portKrw}`;
     }
     if (selectedCurrency === 'EUR') {
-      const eurUsdRate = 1.08;
+      const eurUsdRate = fxRates.EUR_USD || 1.08;
       const fobEur = (fobUsd / eurUsdRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const freightEur = (freightUsd / eurUsdRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const portEur = (portUsd / eurUsdRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -957,21 +973,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   } | null>(null);
   const lastSuccessfulFullYearHistoryRef = useRef<any>(null);
 
-  const [fxRates, setFxRates] = useState<FXRates>(getAllFxRates());
 
-  useEffect(() => {
-    const unsubscribe = subscribeFxRates((updated) => {
-      setFxRates(updated);
-    });
-    fetchLiveFxRates();
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (isSyncing) {
-      fetchLiveFxRates();
-    }
-  }, [isSyncing]);
 
   const liveUsdMyr = fxRates.USD_MYR || getLiveExchangeRate('USD_MYR');
   const liveUsdKrw = fxRates.USD_KRW || exchangeRate || getLiveExchangeRate('KRW');
@@ -997,16 +999,16 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // Convert according to active currency selector
   const cpoPrice = useMemo(() => {
-    if (currency === 'KRW') return Math.round(cpoUsdMt * liveUsdKrw);
-    if (currency === 'EUR') return Number((cpoUsdMt * liveEurUsd).toFixed(2));
+    if (currency === 'KRW') return Math.round(cpoUsdMt * (currency === 'KRW' ? exchangeRate : 1));
+    if (currency === 'EUR') return Number((cpoUsdMt / 1.08).toFixed(2));
     return cpoUsdMt;
-  }, [currency, cpoUsdMt, liveUsdKrw, liveEurUsd]);
+  }, [currency, cpoUsdMt, exchangeRate]);
 
   const oleinPrice = useMemo(() => {
-    if (currency === 'KRW') return Math.round(LIVE_OLEIN_USD * liveUsdKrw);
-    if (currency === 'EUR') return Number((LIVE_OLEIN_USD * liveEurUsd).toFixed(2));
+    if (currency === 'KRW') return Math.round(LIVE_OLEIN_USD * (currency === 'KRW' ? exchangeRate : 1));
+    if (currency === 'EUR') return Number((LIVE_OLEIN_USD / 1.08).toFixed(2));
     return LIVE_OLEIN_USD;
-  }, [currency, LIVE_OLEIN_USD, liveUsdKrw, liveEurUsd]);
+  }, [currency, LIVE_OLEIN_USD, exchangeRate]);
 
   const currentSpread = oleinPrice - cpoPrice;
   const spreadPrice = currentSpread;
@@ -2041,22 +2043,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     : null;
 
   const effectiveBasePrice = useMemo(() => {
-    if (commodity.id === 'sugar') {
-      const sugarUsd = sugarMetrics?.priceUsd ?? getCalculatedMetrics('sugar', exchangeRate).priceUsd;
-      if (currency === 'KRW') return Math.round(sugarUsd * exchangeRate);
-      if (currency === 'EUR') return Number((sugarUsd / 1.08).toFixed(2));
-      return sugarUsd;
-    }
-    if (isPalmOil) {
-      return cpoPrice;
-    }
-    if (!isWheat && latestHistoricalData?.usdPerMT) {
-      if (currency === 'KRW') return Math.round(latestHistoricalData.usdPerMT * exchangeRate);
-      if (currency === 'EUR') return latestHistoricalData.usdPerMT / 1.08;
-      return latestHistoricalData.usdPerMT;
+    if (isWheat && usWheatHistory?.metrics?.srw?.latestPriceMt) {
+      const rawUsd = usWheatHistory.metrics.srw.latestPriceMt;
+      if (currency === 'KRW') return Math.round(rawUsd * exchangeRate);
+      if (currency === 'EUR') return Number((rawUsd / 1.08).toFixed(2));
+      return rawUsd;
     }
     return commodity.price;
-  }, [commodity, isWheat, isPalmOil, cpoPrice, latestHistoricalData, currency, exchangeRate, sugarMetrics]);
+  }, [commodity.price, isWheat, usWheatHistory, currency, exchangeRate]);
 
   // Universal Single-Commodity Historical Time-Series Chart Data from Yahoo Finance
   const historicalChartData = useMemo(() => {

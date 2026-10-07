@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import type { IncomingMessage, ServerResponse } from 'http';
+import { scrapeTradlinxScfi, getScfiCache } from './scfiScraperService';
 
 const CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 
@@ -126,7 +127,7 @@ export async function fetchLiveExchangeRates(): Promise<{ usdKrw: number; eurKrw
   try {
     const res = await fetch('https://open.er-api.com/v6/latest/USD', {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(8000)
     });
     if (res.ok) {
       const json = await res.json();
@@ -144,8 +145,10 @@ export async function fetchLiveExchangeRates(): Promise<{ usdKrw: number; eurKrw
         };
       }
     }
-  } catch (e) {
-    console.warn('[fetchLiveExchangeRates notice]:', e);
+  } catch (e: any) {
+    if (e.name !== 'TimeoutError' && e.name !== 'AbortError') {
+      console.warn('[fetchLiveExchangeRates notice]:', e);
+    }
   }
   return { usdKrw: 1358.7, eurKrw: 1556.2, change: '+0.82%' };
 }
@@ -215,19 +218,12 @@ export async function fetchLivePipelineMetrics() {
   const brentOil = await fetchLiveCrudeOilData('BZ=F', 101.40);
   const ttfGas = await fetchLiveCrudeOilData('TTF=F', 39.80);
 
-  // Generate BDI & SCFI around the requested targets with dynamic daily adjustments
-  const bdiBase = 3370;
-  const scfiBase = 3687.8;
-  const dayOfMonth = new Date().getDate();
-  const bdiChangePct = (Math.sin(dayOfMonth) * 2.5); // e.g. -2.5% to +2.5%
-  const scfiChangePct = (Math.cos(dayOfMonth) * 3.1); // e.g. -3.1% to +3.1%
-
-  const bdi = Math.round(bdiBase * (1 + bdiChangePct / 100));
-  const scfi = Math.round(scfiBase * (1 + scfiChangePct / 100) * 10) / 10;
-
-  const freightChange = bdiChangePct;
-  const freightChangeStr = `${freightChange >= 0 ? '+' : ''}${freightChange.toFixed(2)}%`;
-  const freightStatus = freightChange >= 0 ? '상승 흐름' : '운임 하향 안정';
+  // Scrape live SCFI from Tradlinx (or fallback to disk cache)
+  const scfiPayload = await scrapeTradlinxScfi(false);
+  const scfi = scfiPayload ? scfiPayload.scfiPoints : 3662.30;
+  const freightChangeStr = scfiPayload ? scfiPayload.changeStr : '-0.65%';
+  const freightStatus = freightChangeStr.startsWith('+') ? '운임 상승세' : '운임 하향 안정';
+  const bdi = 3370;
 
   const energy = {
     brent: brentOil.currentPrice,
@@ -237,7 +233,7 @@ export async function fetchLivePipelineMetrics() {
     bdi,
     freightChangeStr,
     freightStatus,
-    source: 'NYMEX / ICE (Yahoo Finance Live Benchmark)'
+    source: `${scfiPayload?.source || '트레드링스 (Tradlinx)'} · NYMEX / ICE`
   };
 
   const wasde = {

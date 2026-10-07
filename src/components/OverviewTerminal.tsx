@@ -36,7 +36,7 @@ const DEFAULT_MACRO_FALLBACKS = {
   },
   freight: {
     rate: '3,445.0 pts',
-    secondary: 'BDI Index',
+    secondary: 'SCFI Index',
     change: '-1.77%',
     status: '운임 하향 안정',
     badgeType: 'green' as const,
@@ -451,35 +451,34 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
         // 3. Safeguard Freight State Setter
         const energyData = data.energy;
-        if (energyData && energyData.scfi !== undefined && energyData.bdi !== undefined) {
-          const scfiVal = Number(energyData.scfi);
-          const bdiVal = Number(energyData.bdi);
+        if (energyData && energyData.scfi !== undefined) {
+          const scfiVal = energyData.scfi !== null ? Number(energyData.scfi) : null;
           const changeStr = energyData.freightChangeStr || DEFAULT_MACRO_FALLBACKS.freight.change;
           const statusStr = energyData.freightStatus || DEFAULT_MACRO_FALLBACKS.freight.status;
           const isFavorable = !changeStr.startsWith('+');
 
           setFreightData({
-            rate: `SCFI ${scfiVal.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} pts`,
-            secondary: `BDI ${bdiVal.toLocaleString()} pt`,
+            rate: scfiVal ? `SCFI ${scfiVal.toLocaleString()} pts` : '연동 대기',
+            secondary: scfiVal ? `SCFI ${scfiVal.toLocaleString()} pt` : '연동 대기',
             change: changeStr,
             status: statusStr,
             badgeType: isFavorable ? 'green' : 'red',
-            note: '상하이-유럽/미서안 및 발틱 건화물 지수 동향'
+            note: '상하이-유럽/미서안 컨테이너 운임 지수 동향'
           });
         } else {
-          const rawBdi = data.energy?.bdi ?? data.bdi ?? data.energy?.scfi ?? data.scfi;
-          if (rawBdi !== undefined && rawBdi !== null) {
-            const currentPoints = Number(rawBdi);
+          const rawScfi = data.energy?.scfi ?? data.scfi;
+          if (rawScfi !== undefined && rawScfi !== null) {
+            const currentPoints = Number(rawScfi);
             if (!isNaN(currentPoints) && currentPoints > 0) {
-              const prevClose = 1635;
+              const prevClose = 3713.0;
               const pctChange = ((currentPoints - prevClose) / prevClose) * 100;
               const sign = pctChange >= 0 ? '+' : '';
               const changeStr = !isNaN(pctChange) ? `${sign}${pctChange.toFixed(2)}%` : DEFAULT_MACRO_FALLBACKS.freight.change;
               const isFavorable = pctChange <= 0;
 
               setFreightData((prev) => ({
-                rate: `SCFI ${currentPoints.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} pts`,
-                secondary: `BDI 3,370 pt`,
+                rate: `SCFI ${currentPoints.toLocaleString()} pts`,
+                secondary: `SCFI ${currentPoints.toLocaleString()} pt`,
                 change: changeStr || prev?.change || DEFAULT_MACRO_FALLBACKS.freight.change,
                 status: isFavorable ? '운임 하향 안정' : '운임 상승세',
                 badgeType: isFavorable ? 'green' : 'red',
@@ -885,10 +884,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {starchCommodities.map((item) => {
-                const itemMetrics = getCalculatedMetrics(item.id, effectiveUsdKrw);
-                const displayWoW = item.id === 'sugar' ? itemMetrics.wowPct : item.changeWoW;
-                const isWoWPositive = displayWoW > 0;
-                const isWoWNegative = displayWoW < 0;
+                const isWoWPositive = item.changeWoW > 0;
+                const isWoWNegative = item.changeWoW < 0;
 
                 return (
                   <div
@@ -918,25 +915,18 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="material-symbols-outlined text-[13px]">
                             {isWoWPositive ? 'arrow_upward' : isWoWNegative ? 'arrow_downward' : 'remove'}
                           </span>
-                          {isWoWPositive ? `+${displayWoW.toFixed(2)}% WoW` : `${displayWoW.toFixed(2)}% WoW`}
+                          {isWoWPositive ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
                         </span>
                       </div>
 
                       <div className="mt-2 flex items-baseline justify-between">
                         <div>
                           <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
-                            {item.id === 'sugar'
-                              ? (currency === 'KRW'
-                                  ? itemMetrics.priceKrwFormatted
-                                  : currency === 'EUR'
-                                  ? itemMetrics.priceEurFormatted
-                                  : itemMetrics.priceUsdFormatted)
-                              : formatStarchSweetenerBenchmark(item.id, currency)?.priceText ??
-                                (COMMODITY_CONFIGS[item.id]
-                                  ? (currency === 'KRW'
-                                      ? `₩${getCalculatedMetrics(item.id, effectiveUsdKrw).baseKRW.toLocaleString('en-US')}`
-                                      : `${currency === 'EUR' ? '€' : '$'}${COMMODITY_CONFIGS[item.id].benchmarkQuote.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
-                                  : `${currency === 'KRW' ? '₩' : currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
+                            {currency === 'KRW'
+                              ? `₩${Math.round(item.price).toLocaleString('en-US')}`
+                              : currency === 'EUR'
+                              ? `€${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : `$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                           </span>
                           <span className="text-xs text-[#6b7280] ml-1">
                             {formatStarchSweetenerBenchmark(item.id, currency)?.unitText ??
@@ -948,9 +938,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <div className="w-16 h-5">
                           <svg
                             className={`w-full h-full ${
-                              displayWoW > 0
+                              item.changeWoW > 0
                                 ? 'text-[#059669]'
-                                : displayWoW < 0
+                                : item.changeWoW < 0
                                 ? 'text-[#DF0029]'
                                 : 'text-[#9ca3af]'
                             }`}
@@ -959,8 +949,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                             viewBox="0 0 64 20"
                           >
                             <path
-                              d={getSparklinePath(item.sparkline, displayWoW)}
-                              stroke={displayWoW > 0 ? '#059669' : displayWoW < 0 ? '#DF0029' : '#9ca3af'}
+                              d={getSparklinePath(item.sparkline, item.changeWoW)}
+                              stroke={item.changeWoW > 0 ? '#059669' : item.changeWoW < 0 ? '#DF0029' : '#9ca3af'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="1.5"
@@ -1247,7 +1237,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       directions_boat
                     </span>
                     <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors truncate">
-                      해상운임 지수 (SCFI · BDI)
+                      해상운임 지수 (SCFI)
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -1263,9 +1253,6 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-freight-val">
                     {freightData?.rate || DEFAULT_MACRO_FALLBACKS.freight.rate}
                   </div>
-                  <span className="font-mono text-xs text-slate-400 font-normal">
-                    {freightData?.secondary || DEFAULT_MACRO_FALLBACKS.freight.secondary}
-                  </span>
                 </div>
               </div>
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
@@ -1277,12 +1264,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   {freightData?.status || ((freightData?.change || DEFAULT_MACRO_FALLBACKS.freight.change).startsWith('+') ? '운임 급등 위험' : '운임 하향 안정')}
                 </span>
                 <a
-                  href="https://tradingeconomics.com/commodity/baltic"
+                  href="https://www.tradlinx.com/ko/freight-index"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
-                  실시간 시세 ↗
+                  트레드링스 시세 ↗
                 </a>
               </div>
             </div>

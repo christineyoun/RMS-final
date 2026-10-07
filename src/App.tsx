@@ -203,16 +203,15 @@ export default function App() {
       if (c.id === 'palm-oil') {
         const activeUsdMyr = fxRates.USD_MYR || getLiveExchangeRate('USD_MYR') || 4.0845;
         usdMt = c.price > 2000 ? c.price / activeUsdMyr : c.price;
-      } else if (c.id === 'potato-starch') {
-        usdMt = c.price * 1.145;
+      } else if (c.id === 'potato-starch' || c.unit.includes('EUR/MT') || c.unit.includes('EUR / MT')) {
+        const activeEurUsd = fxRates.EUR_USD || getLiveExchangeRate('EUR') || 1.08;
+        usdMt = c.price * activeEurUsd;
       } else if (c.id === 'tapioca-starch') {
         usdMt = c.price || 700;
       } else if (c.unit.includes('USd/bu')) {
         usdMt = c.ticker.includes('ZC') ? cornCentsPerBuToUsdPerMt(c.price) : grainCentsPerBuToUsdPerMt(c.price);
       } else if (c.unit.includes('USc/lb')) {
         usdMt = centsPerLbToUsdPerMt(c.price);
-      } else if (c.unit.includes('EUR/MT') || c.unit.includes('EUR / MT')) {
-        usdMt = c.price * 1.08;
       } else if (c.unit.includes('USD/MT') || c.unit.includes('USD')) {
         usdMt = c.price;
       }
@@ -221,16 +220,17 @@ export default function App() {
       let convertedPrice = usdMt;
       let newUnit = 'USD / MT';
 
+      const activeUsdKrw = fxRates.USD_KRW || getLiveExchangeRate('KRW') || 1388.5;
+      const activeEurUsd = fxRates.EUR_USD || getLiveExchangeRate('EUR') || 1.08;
+
       if (currency === 'EUR') {
-        convertedPrice = c.id === 'potato-starch' ? c.price : usdMt / 1.08;
+        convertedPrice = c.id === 'potato-starch' ? c.price : usdMt / activeEurUsd;
         newUnit = 'EUR / MT';
       } else if (currency === 'KRW') {
         if (c.id === 'palm-oil') {
-          convertedPrice = usdMt * 1357.1; // 1,545,188 KRW / MT
-        } else if (c.id === 'potato-starch') {
-          convertedPrice = c.price * 1388.5;
+          convertedPrice = usdMt * (fxRates.USD_KRW || 1357.1);
         } else {
-          convertedPrice = usdMt * 1388.5;
+          convertedPrice = usdMt * activeUsdKrw;
         }
         newUnit = 'KRW / MT';
       }
