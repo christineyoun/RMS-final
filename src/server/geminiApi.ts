@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { scrapeTradlinxScfi, getScfiCache } from './scfiScraperService';
+import { scrapeTradlinxScfi, getScfiCache } from './scfiScraperService.ts';
 
 const CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 
