@@ -3084,7 +3084,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   ? 'text-red-700 bg-red-50 border-red-200'
                   : procurementRiskLevel === '주의'
                   ? 'text-[#EC870C] bg-[#fff7ed] border-[#fed7aa]'
-                  : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  : 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded shrink-0'
               }`}>
                 {procurementRiskLevel}
               </span>

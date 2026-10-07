@@ -124,12 +124,12 @@ export const OriginRadar: React.FC<OriginRadarProps> = ({
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-semibold border ${
+                      className={`rounded text-[10px] font-sans border ${
                         isGreen
-                          ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                          ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-1.5 py-0.5 rounded'
                           : isYellow
-                          ? 'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
-                          : 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                          ? 'px-1.5 py-0.5 font-semibold bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]'
+                          : 'px-1.5 py-0.5 font-semibold bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
                       }`}
                     >
                       {origin.status}

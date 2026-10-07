@@ -87,8 +87,8 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
           <span
             className={`px-1.5 py-0.5 font-mono text-[11px] rounded flex items-center gap-0.5 border ${
               item.changeWoW >= 0
-                ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#10B981] font-semibold'
-                : 'bg-red-50 border-red-200 text-[#EF4444] font-bold'
+                ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669] font-semibold'
+                : 'bg-red-50 border-red-200/80 text-[#DF0029] font-bold'
             }`}
           >
             {item.changeWoW >= 0 ? `+${item.changeWoW}% WoW` : `${item.changeWoW}% WoW`}
@@ -112,14 +112,14 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
 
           <div className="w-16 h-5">
             <svg
-              className={`w-full h-full ${isNegative ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+              className={`w-full h-full ${isNegative ? 'text-[#DF0029]' : 'text-[#059669]'}`}
               fill="none"
               preserveAspectRatio="none"
               viewBox="0 0 64 20"
             >
               <path
                 d={sparklinePath}
-                stroke={isNegative ? '#EF4444' : '#10B981'}
+                stroke={isNegative ? '#DF0029' : '#059669'}
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="1.5"
@@ -133,7 +133,7 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
         <span className="text-[10px]">전월 대비 (MoM)</span>
         <span
           className={`font-mono text-[11px] ${
-            item.changeMoM >= 0 ? 'text-[#10B981] font-semibold' : 'text-[#EF4444] font-semibold'
+            item.changeMoM >= 0 ? 'text-[#059669] font-semibold' : 'text-[#DF0029] font-semibold'
           }`}
         >
           {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}

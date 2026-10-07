@@ -104,6 +104,33 @@ const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): s
     .join(' ');
 };
 
+const formatDateStandard = (dateInput: string) => {
+  if (!dateInput) return '';
+  const trimmed = String(dateInput).trim();
+
+  // Convert "09월 19일" or "9월 19일" -> "2026.09.19"
+  const krMatch = trimmed.match(/(\d{1,2})월\s*(\d{1,2})일/);
+  if (krMatch) {
+    const m = krMatch[1].padStart(2, '0');
+    const d = krMatch[2].padStart(2, '0');
+    return `2026.${m}.${d}`;
+  }
+
+  if (/^\d{4}[.-]\d{2}[.-]\d{2}$/.test(trimmed)) {
+    return trimmed.replace(/-/g, '.');
+  }
+
+  const parsed = new Date(trimmed);
+  if (!isNaN(parsed.getTime())) {
+    const y = parsed.getFullYear();
+    const m = String(parsed.getMonth() + 1).padStart(2, '0');
+    const d = String(parsed.getDate()).padStart(2, '0');
+    return `${y}.${m}.${d}`;
+  }
+
+  return trimmed;
+};
+
 const getCardEyebrow = (item: { id: string; gradeEn: string }) => {
   switch (item.id) {
     case 'wheat':
@@ -603,60 +630,53 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         </div>
 
         {/* 2. Portfolio Top Movers Strip */}
-        <div className="bg-white border border-[#e5e7eb] rounded-lg px-4 py-2 print:py-1.5 shadow-sm flex flex-wrap items-center justify-between gap-3 print:gap-1.5 text-[#111827] text-xs pdf-section-card break-inside-avoid">
+        <div className="bg-white border border-[#e5e7eb] rounded-lg px-4 py-2.5 shadow-sm flex items-center justify-between gap-4 text-[#111827] text-xs whitespace-nowrap overflow-x-auto pdf-section-card break-inside-avoid">
           <div className="flex items-center gap-2 shrink-0">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DF0029]"></span>
             </span>
             <span className="material-symbols-outlined text-[16px] text-[#DF0029]">trending_up</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#111827]">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#111827]">
               오늘의 주요 원자재 변동률 (Portfolio Top Movers)
             </span>
           </div>
-          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
+
+          <div className="flex items-center gap-3 shrink-0 flex-nowrap">
             {/* Top Gainer */}
             {topGainer && (
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-1.5 py-0.5 rounded text-[10px] leading-none shrink-0 inline-flex items-center">
+                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
                   최대 상승
                 </span>
                 <span
                   onClick={() => onNavigate(topGainer.path)}
-                  className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-none"
+                  className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-normal inline-flex items-center"
                 >
                   {topGainer.nameKo} ({topGainer.nameEn})
                 </span>
-                <span className="text-[12px] font-bold font-mono text-[#059669] leading-none">
-                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW.toFixed(2)}%` : `${topGainer.changeWoW.toFixed(2)}%`}
-                </span>
-                <span className="text-[12px] font-bold font-mono text-[#059669] leading-none">
-                  WoW
+                <span className="text-[12px] font-bold text-[#059669] leading-normal inline-flex items-center">
+                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW.toFixed(2)}%` : `${topGainer.changeWoW.toFixed(2)}%`} WoW
                 </span>
               </div>
             )}
 
-            <span className="hidden md:inline-flex items-center text-[#e5e7eb] text-[12px] leading-none select-none font-normal">
-              |
-            </span>
+            <span className="text-[#cbd5e1] text-[12px] select-none px-1">|</span>
 
             {/* Top Loser */}
             {topLoser && (
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span className="bg-red-50 border border-red-200 text-[#DF0029] font-bold px-1.5 py-0.5 rounded text-[10px] leading-none shrink-0 inline-flex items-center">
+                <span className="bg-red-50 border border-red-200 text-[#DF0029] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
                   최대 하락
                 </span>
                 <span
                   onClick={() => onNavigate(topLoser.path)}
-                  className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-none"
+                  className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-normal inline-flex items-center"
                 >
                   {topLoser.nameKo} ({topLoser.nameEn})
                 </span>
-                <span className="text-[12px] font-bold font-mono text-[#e11d48] leading-none">
-                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW.toFixed(2)}%` : `${topLoser.changeWoW.toFixed(2)}%`}
-                </span>
-                <span className="text-[12px] font-bold font-mono text-[#e11d48] leading-none">
-                  WoW
+                <span className="text-[12px] font-bold text-[#e11d48] leading-normal inline-flex items-center">
+                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW.toFixed(2)}%` : `${topLoser.changeWoW.toFixed(2)}%`} WoW
                 </span>
               </div>
             )}
@@ -692,8 +712,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <span
                         className={`shrink-0 ${
                           item.changeWoW >= 0
-                            ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
-                            : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
+                            ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                            : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                         }`}
                       >
                         <span className="material-symbols-outlined text-[13px]">
@@ -719,14 +739,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                       <div className="w-16 h-5">
                         <svg
-                          className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                          className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#DF0029]' : 'text-[#059669]'}`}
                           fill="none"
                           preserveAspectRatio="none"
                           viewBox="0 0 64 20"
                         >
                           <path
                             d={getSparklinePath(item.sparkline, item.changeWoW)}
-                            stroke={item.changeWoW < 0 ? '#EF4444' : '#10B981'}
+                            stroke={item.changeWoW < 0 ? '#DF0029' : '#059669'}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth="1.5"
@@ -791,8 +811,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span
                           className={`shrink-0 ${
                             item.changeWoW >= 0
-                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
-                              : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
+                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                           }`}
                         >
                           <span className="material-symbols-outlined text-[13px]">
@@ -819,14 +839,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </div>
                         <div className="w-16 h-5">
                           <svg
-                            className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#EF4444]' : 'text-[#10B981]'}`}
+                            className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#DF0029]' : 'text-[#059669]'}`}
                             fill="none"
                             preserveAspectRatio="none"
                             viewBox="0 0 64 20"
                           >
                             <path
                               d={getSparklinePath(item.sparkline, item.changeWoW)}
-                              stroke={item.changeWoW < 0 ? '#EF4444' : '#10B981'}
+                              stroke={item.changeWoW < 0 ? '#DF0029' : '#059669'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="1.5"
@@ -889,9 +909,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span
                           className={`shrink-0 ${
                             isWoWPositive
-                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#10B981] font-semibold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded'
+                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : isWoWNegative
-                              ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#EF4444] border-red-200'
+                              ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                               : 'bg-[#f3f4f6] text-[#4b5563] border-[#e5e7eb] px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border'
                           }`}
                         >
@@ -929,9 +949,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <svg
                             className={`w-full h-full ${
                               displayWoW > 0
-                                ? 'text-[#10B981]'
+                                ? 'text-[#059669]'
                                 : displayWoW < 0
-                                ? 'text-[#EF4444]'
+                                ? 'text-[#DF0029]'
                                 : 'text-[#9ca3af]'
                             }`}
                             fill="none"
@@ -940,7 +960,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           >
                             <path
                               d={getSparklinePath(item.sparkline, displayWoW)}
-                              stroke={displayWoW > 0 ? '#10B981' : displayWoW < 0 ? '#EF4444' : '#9ca3af'}
+                              stroke={displayWoW > 0 ? '#059669' : displayWoW < 0 ? '#DF0029' : '#9ca3af'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="1.5"
@@ -1073,12 +1093,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <span className="text-slate-300">·</span>
                     <span className="font-mono text-slate-500 text-[11px]">{item.rain}mm</span>
                     
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                    <span className={`rounded-full text-[10px] font-medium border ${
                       item.status.includes('건조') || item.status.includes('고온') 
-                        ? 'bg-rose-50 text-rose-700 border-rose-200' 
+                        ? 'bg-rose-50 text-rose-700 border-rose-200 px-2 py-0.5' 
                         : item.status.includes('흐림') || item.status.includes('주의')
-                        ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
-                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2 py-0.5'
+                        : 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded'
                     }`}>
                       {item.status}
                     </span>
@@ -1363,7 +1383,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[11px] rounded font-semibold shrink-0">
+                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded shrink-0">
                   우호적 조건
                 </span>
                 <span className="text-xs font-bold text-slate-800 break-keep">
@@ -1403,7 +1423,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                             ? 'bg-rose-50 border-rose-200 text-[#DF0029]'
                             : issue.risk === 'Med'
                             ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
-                            : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            : 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-1.5 py-0.5 rounded shrink-0'
                         }`}
                       >
                         {issue.risk === 'High' ? '고위험' : issue.risk === 'Med' ? '중위험' : '저위험'}
@@ -1416,10 +1436,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </a>
                     </h4>
 
-                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
                       <div className="flex items-center gap-1.5">
-                        <span>{issue.date}</span>
-                        <span>·</span>
+                        <span className="text-[11px] font-medium text-slate-400">
+                          {formatDateStandard(issue.dateStr || issue.date)}
+                        </span>
+                        <span className="text-slate-300">·</span>
                         <span className={`font-sans font-semibold text-[10px] ${
                           issue.direction === 'Bullish' || issue.direction === '상승'
                             ? 'text-[#DF0029]'
