@@ -13,6 +13,7 @@ import {
   getCalculatedMetrics
 } from '../utils/landedCostCalculator';
 import AiMarketBrief from './AiMarketBrief';
+import { formatDateStandard } from '../utils/formatters';
 
 const GREEN_BADGE_STYLE = 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
 
@@ -313,8 +314,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               id: `live-issue-${idx}`,
               title: item.title,
               risk: item.riskLevel === '고위험' ? 'High' : item.riskLevel === '중위험' ? 'Med' : 'Low',
-              direction: item.impactDirection === '상승' ? 'Bullish' : 'Bearish',
-              date: item.dateStr,
+              direction: item.impactDirection === '상승' ? 'Bullish' : item.impactDirection === '하락' ? 'Bearish' : 'Neutral',
+              date: formatDateStandard(item.dateStr || item.date),
               source: item.publisher,
               url: item.sourceUrl
             }));
@@ -1419,8 +1420,18 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <div className="flex items-center gap-1.5">
                         <span>{issue.date}</span>
                         <span>·</span>
-                        <span className={`font-sans font-bold text-[10px] ${issue.direction === 'Bullish' || issue.direction === '상승' ? 'text-[#DF0029]' : 'text-emerald-600'}`}>
-                          ↑ {issue.direction === 'Bullish' || issue.direction === '상승' ? '상승' : '하락'}
+                        <span className={`font-sans font-semibold text-[10px] ${
+                          issue.direction === 'Bullish' || issue.direction === '상승'
+                            ? 'text-[#DF0029]'
+                            : issue.direction === 'Bearish' || issue.direction === '하락'
+                            ? 'text-[#059669]'
+                            : 'text-slate-500'
+                        }`}>
+                          {issue.direction === 'Bullish' || issue.direction === '상승'
+                            ? '↑ 상승'
+                            : issue.direction === 'Bearish' || issue.direction === '하락'
+                            ? '↓ 하락'
+                            : '→ 보합'}
                         </span>
                       </div>
                       <span className="font-sans text-slate-500 font-medium text-[11px]">{issue.source}</span>
