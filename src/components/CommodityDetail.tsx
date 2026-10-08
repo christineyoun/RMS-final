@@ -596,15 +596,14 @@ export const COMMODITY_ORIGINS_MAP: Record<string, OriginItem[]> = {
 };
 
 export const EXTERNAL_CHART_URLS: Record<string, string> = {
+  'palm-oil': 'https://www.investing.com/commodities/palm-oil',
+  'palmoil': 'https://www.investing.com/commodities/palm-oil',
+  'palm_oil': 'https://www.investing.com/commodities/palm-oil',
+  'wheat': 'https://uswheat.org/market-information/price-report/',
+  'corn': 'https://finance.yahoo.com/quote/ZC=F/',
   'soybean': 'https://finance.yahoo.com/quote/ZS=F/',
   'soybean-oil': 'https://finance.yahoo.com/quote/ZL=F/',
-  'corn': 'https://finance.yahoo.com/quote/ZC=F/',
   'sugar': 'https://finance.yahoo.com/quote/SB=F/',
-  'palm-oil': 'https://www.tradingview.com/symbols/MYX-FCPO1!/',
-  'palmoil': 'https://www.tradingview.com/symbols/MYX-FCPO1!/',
-  'palm_oil': 'https://www.tradingview.com/symbols/MYX-FCPO1!/',
-  // Keep existing working links for wheat and starches untouched:
-  'wheat': 'https://uswheat.org/market-information/price-report/',
   'potato-starch': 'https://tradingeconomics.com/commodity/potatoes',
   'tapioca-starch': 'https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price',
 };
@@ -3133,7 +3132,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="flex items-center gap-1.5 text-xs text-gray-400 font-sans">
                   <span>출처:</span>
                   <a 
-                    href="https://www.tradingview.com/symbols/MYX-FCPO1!/" 
+                    href="https://www.investing.com/commodities/palm-oil" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="hover:underline flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
@@ -3827,6 +3826,50 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     />
                   </g>
                 )}
+                {/* Connection lines & point dots at far-right endpoint for CPO & Olein badges */}
+                {palmChartData.points.length > 0 && (() => {
+                  const lastPt = palmChartData.points[palmChartData.points.length - 1];
+                  return (
+                    <g>
+                      {/* Olein endpoint dot and dashed line */}
+                      <circle
+                        cx={500}
+                        cy={lastPt.yOlein}
+                        r="3.5"
+                        fill="#2563EB"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                      <line
+                        x1={500}
+                        y1={lastPt.yOlein}
+                        x2={500}
+                        y2={Math.max(0, lastPt.yOlein - 16)}
+                        stroke="#2563EB"
+                        strokeWidth="1"
+                        strokeDasharray="2 2"
+                      />
+                      {/* CPO endpoint dot and dashed line */}
+                      <circle
+                        cx={500}
+                        cy={lastPt.yCpo}
+                        r="3.5"
+                        fill="#DF0029"
+                        stroke="#ffffff"
+                        strokeWidth="1.5"
+                      />
+                      <line
+                        x1={500}
+                        y1={lastPt.yCpo}
+                        x2={500}
+                        y2={Math.max(0, lastPt.yCpo - 16)}
+                        stroke="#DF0029"
+                        strokeWidth="1"
+                        strokeDasharray="2 2"
+                      />
+                    </g>
+                  );
+                })()}
               </svg>
 
               {/* Stacked Right Y-Axis Numeric Tick Labels */}
@@ -3845,20 +3888,29 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               {/* Permanent Fixed Live Price Badges on Far-Right Y-Axis */}
               {palmChartData.points.length > 0 && (
                 <>
+                  {/* Olein Badge */}
                   <div
-                    className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
-                    style={{ top: `${(palmChartData.points[palmChartData.points.length - 1].yCpo / 150) * 100}%` }}
+                    className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
+                    style={{
+                      top: `${(palmChartData.points[palmChartData.points.length - 1].yOlein / 150) * 100}%`,
+                      transform: 'translateY(-120%)'
+                    }}
                   >
-                    <span className="bg-[#DF0029] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block">
-                      CPO {currencySymbol}{formatPalmPrice(cpoPrice)}
+                    <span className="bg-[#2563EB] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
+                      Olein {currencySymbol}{formatPalmPrice(oleinPrice)}
                     </span>
                   </div>
+
+                  {/* CPO Badge */}
                   <div
-                    className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
-                    style={{ top: `${(palmChartData.points[palmChartData.points.length - 1].yOlein / 150) * 100}%` }}
+                    className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
+                    style={{
+                      top: `${(palmChartData.points[palmChartData.points.length - 1].yCpo / 150) * 100}%`,
+                      transform: 'translateY(-120%)'
+                    }}
                   >
-                    <span className="bg-[#2563EB] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block">
-                      Olein {currencySymbol}{formatPalmPrice(oleinPrice)}
+                    <span className="bg-[#DF0029] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
+                      CPO {currencySymbol}{formatPalmPrice(cpoPrice)}
                     </span>
                   </div>
                 </>
@@ -4042,8 +4094,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               {/* Permanent Fixed Live Price Badge or Latest Production */}
               {!isPotatoStarch ? (
                 <div
-                  className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
-                  style={{ top: `${((liveY - 16) / 200) * 100}%` }}
+                  className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
+                  style={{
+                    top: `${(liveY / 200) * 100}%`,
+                    transform: 'translateY(-120%)'
+                  }}
                 >
                   <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
                     {formatChartPrice(latestLivePrice)}
@@ -4051,8 +4106,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 </div>
               ) : (
                 <div
-                  className="absolute right-0 pointer-events-none transform -translate-y-1/2 z-10"
-                  style={{ top: `${((34.0 - 27.60) / (34.0 - 25.0)) * 100}%` }}
+                  className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
+                  style={{
+                    top: `${((34.0 - 27.60) / (34.0 - 25.0)) * 100}%`,
+                    transform: 'translateY(-120%)'
+                  }}
                 >
                   <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
                     27.60 MMT
