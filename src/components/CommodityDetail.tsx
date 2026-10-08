@@ -848,8 +848,41 @@ const getTimeframeChartData = (
   };
 };
 
+const filterSeriesByTimeframe = (series: Array<{ date?: string; reportDate?: string; [key: string]: any }>, timeframe: '1M' | '3M' | '6M' | '1Y' | '2Y' | '3Y' | '5Y' | 'ALL' | string) => {
+  if (!series || series.length === 0) return [];
+  
+  const parseMs = (dStr: any) => {
+    if (!dStr) return 0;
+    const clean = String(dStr).replace(/\./g, '-').trim();
+    const ms = new Date(clean).getTime();
+    return isNaN(ms) ? 0 : ms;
+  };
 
+  const getItemTime = (item: any) => {
+    return parseMs(item.date || item.reportDate);
+  };
 
+  const validSeries = series.filter((item) => getItemTime(item) > 0);
+  if (validSeries.length === 0) return series;
+
+  const sorted = [...validSeries].sort((a, b) => getItemTime(a) - getItemTime(b));
+  const maxTime = getItemTime(sorted[sorted.length - 1]);
+
+  let daysBack = 365;
+  if (timeframe === '1M') daysBack = 30;
+  else if (timeframe === '3M') daysBack = 90;
+  else if (timeframe === '6M') daysBack = 180;
+  else if (timeframe === '1Y') daysBack = 365;
+  else if (timeframe === '2Y') daysBack = 730;
+  else if (timeframe === '3Y') daysBack = 1095;
+  else if (timeframe === '5Y') daysBack = 1825;
+  else if (timeframe === 'ALL') return sorted;
+
+  const cutoffTime = maxTime - (daysBack * 24 * 60 * 60 * 1000);
+  const filtered = sorted.filter((item) => getItemTime(item) >= cutoffTime);
+
+  return filtered.length > 0 ? filtered : sorted;
+};
 
 export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   commodity,
@@ -1040,42 +1073,42 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const convRate = currency === 'KRW' ? liveUsdKrw : currency === 'EUR' ? liveEurUsd : 1;
 
-    // Strictly use verified scraped series or persistent local cache fallback (cache_palmoil.json)
-    const fallbackSeries = palmOilCacheFallback.historicalSeries || [];
-    let rawSourceSeries: Array<{ date: string; centsPerBushel?: number; usdPerMT?: number; cpoUsd?: number; oleinUsd?: number; oleinUsdPerMt?: number }> = [];
+    // Strictly use persistent 1-year verified cache fallback to bypass server pre-slicing
+    const fullBaseSeries = (palmOilCacheFallback && Array.isArray(palmOilCacheFallback.historicalSeries) && palmOilCacheFallback.historicalSeries.length > 0)
+      ? palmOilCacheFallback.historicalSeries
+      : [];
 
-    if (historicalData?.data && historicalData.data.length > 0) {
-      rawSourceSeries = historicalData.data;
-    } else {
-      if (activeTimeframe === '1M') rawSourceSeries = fallbackSeries.slice(-11);
-      else if (activeTimeframe === '3M') rawSourceSeries = fallbackSeries.slice(-22);
-      else if (activeTimeframe === '6M') rawSourceSeries = fallbackSeries.slice(-36);
-      else rawSourceSeries = fallbackSeries;
-    }
+    const rawSourceSeries = filterSeriesByTimeframe(fullBaseSeries, activeTimeframe as '1M' | '3M' | '6M' | '1Y');
 
     const pointsData = rawSourceSeries.map((p) => {
-      const pointCpoUsd = p.cpoUsd ?? (
-        (p.centsPerBushel && liveUsdMyr > 0)
-          ? (p.centsPerBushel / liveUsdMyr)
-          : (Number.isFinite(p.usdPerMT) ? (p.usdPerMT as number) : cpoUsdMt)
-      );
-      const pointOleinUsd = p.oleinUsd ?? (
-        Number.isFinite(p.oleinUsdPerMt) ? (p.oleinUsdPerMt as number) : LIVE_OLEIN_USD
-      );
+      // Read raw FCPO MYR settlement price directly from JSON
+      const rawMyr = p.cpoMyr || p.centsPerBushel || p.priceMyr || 4553;
 
+      // Safe exchange rate guard (fallback rate 4.0845)
+      const activeUsdMyr = (liveUsdMyr && liveUsdMyr > 0) ? liveUsdMyr : 4.0845;
+      const pointCpoUsd = p.cpoUsd ? p.cpoUsd : Number((rawMyr / activeUsdMyr).toFixed(2));
+
+      // Preserve Olein USD/MT benchmark
+      const pointOleinUsd = Number.isFinite(p.oleinUsdPerMt)
+        ? p.oleinUsdPerMt
+        : (Number.isFinite(p.oleinUsd) ? p.oleinUsd : LIVE_OLEIN_USD);
+
+      // Convert for active currency toggle (KRW, USD, EUR)
       const cpoPrice = pointCpoUsd * convRate;
       const oleinPrice = pointOleinUsd * convRate;
       const spreadUsd = Number((pointOleinUsd - pointCpoUsd).toFixed(2));
       const spreadPrice = oleinPrice - cpoPrice;
 
       return {
-        date: p.date.replace(/-/g, '.'),
+        date: String(p.date).replace(/-/g, '.'),
         cpoPrice,
         oleinPrice,
         cpoUsd: pointCpoUsd,
         oleinUsd: pointOleinUsd,
         spreadUsd,
         spreadPrice,
+        rawCpoMyr: rawMyr,
+        rawOleinUsd: pointOleinUsd,
         rawCpo: pointCpoUsd,
         rawOlein: pointOleinUsd,
       };
@@ -1112,12 +1145,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const buildSplinePath = (pts: { x: number; y: number }[]) => {
       if (pts.length < 2) return '';
-      let path = `M ${pts[0].x},${pts[0].y}`;
-      for (let i = 0; i < pts.length - 1; i++) {
-        const cpX = Math.round((pts[i].x + pts[i + 1].x) / 2);
-        path += ` C ${cpX},${pts[i].y} ${cpX},${pts[i + 1].y} ${pts[i + 1].x},${pts[i + 1].y}`;
-      }
-      return path;
+      return pts.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
     };
 
     const cpoLinePath = buildSplinePath(coords.map(c => ({ x: c.x, y: c.yCpo })));
@@ -2059,17 +2087,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
 
     const allPoints = historicalData.data;
-    const totalCount = allPoints.length;
 
-    // Filter by timeframe: 1M (22 trading days), 3M (65 trading days), 6M (130 trading days), 1Y (all)
-    let sliceCount = 65;
-    if (activeTimeframe === '1M') sliceCount = 22;
-    else if (activeTimeframe === '3M') sliceCount = 65;
-    else if (activeTimeframe === '6M') sliceCount = 130;
-    else sliceCount = totalCount;
-
-    const isTapioca = commodity.id === 'tapioca-starch';
-    const filtered = isTapioca ? allPoints : allPoints.slice(Math.max(0, totalCount - sliceCount));
+    // Filter strictly by activeTimeframe calendar bounds
+    const filtered = filterSeriesByTimeframe(allPoints, activeTimeframe);
     if (filtered.length === 0) return null;
 
     const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
@@ -2313,16 +2333,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
 
     const allPoints = usWheatHistory.data;
-    const totalCount = allPoints.length;
 
-    // Filter by timeframe: 1M (5 weeks), 3M (14 weeks), 6M (26 weeks), 1Y/ALL (all 29 weeks)
-    let sliceCount = 14;
-    if (activeTimeframe === '1M') sliceCount = 5;
-    else if (activeTimeframe === '3M') sliceCount = 14;
-    else if (activeTimeframe === '6M') sliceCount = 26;
-    else sliceCount = totalCount;
-
-    const filtered = allPoints.slice(Math.max(0, totalCount - sliceCount));
+    // Filter strictly by activeTimeframe calendar bounds
+    const filtered = filterSeriesByTimeframe(allPoints, activeTimeframe);
     if (filtered.length === 0) return null;
 
     // Convert wheat prices according to the active currency selector
@@ -2383,16 +2396,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       };
     });
 
-    const buildSplinePath = (coords: { x: number; y: number }[]) => {
-      if (coords.length < 2) return '';
-      let path = `M ${coords[0].x},${coords[0].y}`;
-      for (let i = 0; i < coords.length - 1; i++) {
-        const curr = coords[i];
-        const next = coords[i + 1];
-        const cpX = Math.round((curr.x + next.x) / 2);
-        path += ` C ${cpX},${curr.y} ${cpX},${next.y} ${next.x},${next.y}`;
-      }
-      return path;
+    const buildSplinePath = (pts: { x: number; y: number }[]) => {
+      if (pts.length < 2) return '';
+      return pts.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
     };
 
     const srwLinePath = buildSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.ySrw })));
@@ -3177,6 +3183,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 const activeData = palmChartData.points;
                 const firstPoint = activeData[0]?.cpoPrice || 1;
                 const lastPoint = activeData[activeData.length - 1]?.cpoPrice || 1;
+                actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
+              } else if (!isWheat && historicalChartData?.points && historicalChartData.points.length > 0) {
+                const activeData = historicalChartData.points;
+                const firstPoint = activeData[0]?.price || 1;
+                const lastPoint = activeData[activeData.length - 1]?.price || 1;
                 actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
               } else if (!isWheat && historicalData?.data && historicalData.data.length > 0) {
                 const firstPoint = historicalData.data[0]?.usdPerMT || 1;

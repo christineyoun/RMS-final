@@ -47,6 +47,7 @@ export function updateSavedBaselinePrice(newPrice: number, newOleinUsd?: number)
 import { serverMarketDataService } from './marketDataService.ts';
 import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, getCommodityBaseline } from './usdaFasService.ts';
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
+import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
 import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
 import { amisService } from './amisService.ts';
@@ -314,6 +315,7 @@ export async function getLiveMarketData(forceRefresh: boolean = false) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (forceRefresh) {
     await scrapeLivePalmOilPrices(true);
+    await syncAndRollPalmOleinData();
   }
   const pipeline = await fetchLivePipelineMetrics();
   const defaultCommodities = {
@@ -1155,6 +1157,9 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
 
     if (url.startsWith('/api/pipeline/telemetry')) {
       try {
+        if (url.includes('force=true')) {
+          await syncAndRollPalmOleinData();
+        }
         const pipelineData = await fetchLivePipelineMetrics();
         res.setHeader('Content-Type', 'application/json');
         res.statusCode = 200;

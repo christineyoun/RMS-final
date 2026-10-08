@@ -104,33 +104,6 @@ const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): s
     .join(' ');
 };
 
-const formatDateStandard = (dateInput: string) => {
-  if (!dateInput) return '';
-  const trimmed = String(dateInput).trim();
-
-  // Convert "09월 19일" or "9월 19일" -> "2026.09.19"
-  const krMatch = trimmed.match(/(\d{1,2})월\s*(\d{1,2})일/);
-  if (krMatch) {
-    const m = krMatch[1].padStart(2, '0');
-    const d = krMatch[2].padStart(2, '0');
-    return `2026.${m}.${d}`;
-  }
-
-  if (/^\d{4}[.-]\d{2}[.-]\d{2}$/.test(trimmed)) {
-    return trimmed.replace(/-/g, '.');
-  }
-
-  const parsed = new Date(trimmed);
-  if (!isNaN(parsed.getTime())) {
-    const y = parsed.getFullYear();
-    const m = String(parsed.getMonth() + 1).padStart(2, '0');
-    const d = String(parsed.getDate()).padStart(2, '0');
-    return `${y}.${m}.${d}`;
-  }
-
-  return trimmed;
-};
-
 const getCardEyebrow = (item: { id: string; gradeEn: string }) => {
   switch (item.id) {
     case 'wheat':
@@ -832,7 +805,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
                           {item.id === 'palm-oil' && (
                             <p className="text-[10px] text-slate-400 font-mono mt-0.5 leading-none">
-                              MDEX (FCPO) · ({(item._originalPrice || 4649).toLocaleString('en-US')} MYR/MT)
+                              MDEX (FCPO) · ({(item._originalPrice || palmOilCache.priceMyr || 4539).toLocaleString('en-US')} MYR/MT)
                             </p>
                           )}
                         </div>

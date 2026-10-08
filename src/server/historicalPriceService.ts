@@ -4,6 +4,7 @@ import { ttsaService } from './ttsaService.ts';
 import { LBS_PER_METRIC_TON, CORN_BUSHELS_PER_MT, WHEAT_SOY_BUSHELS_PER_MT, centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
 import { updateSavedBaselinePrice } from './geminiApi.ts';
 import { getLiveExchangeRate } from '../services/currencyService.ts';
+import { scrapeInvestingOleinHistory } from './palmOleinScraperService.ts';
 
 const PALM_CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 const TRADINGVIEW_FCPO_URL = 'https://www.tradingview.com/symbols/MYX-FCPO1!/';
@@ -141,6 +142,11 @@ export async function scrapeLivePalmOilPrices(forceRefresh: boolean = false): Pr
   } catch (err) {
     console.warn('[PalmOilScraper] Investing.com RBD Olein scrape notice:', (err as Error)?.message || err);
   }
+
+  // Also attempt background sync of 1Y historical series table from Investing.com
+  scrapeInvestingOleinHistory().catch((err) =>
+    console.warn('[PalmOilScraper] 1Y Olein history background sync notice:', err)
+  );
 
   // Validate scraped values strictly before updating the cache
   const isCpoValid = scrapedCpoMyr !== null && scrapedCpoMyr >= 3000 && scrapedCpoMyr <= 7500;
@@ -334,11 +340,22 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
 
     // Slice verified historical series by timeframe without synthetic generation
     let filtered = fullSeries;
-    if (timeframe === '1M') filtered = fullSeries.slice(-11);
-    else if (timeframe === '3M') filtered = fullSeries.slice(-22);
-    else if (timeframe === '6M') filtered = fullSeries.slice(-36);
-    else if (timeframe === '1Y' || timeframe === 'ALL') filtered = fullSeries;
-    else filtered = fullSeries.slice(-36);
+    const nowMs = Date.now();
+    if (timeframe === '1M') {
+      const cutoff = nowMs - 30 * 24 * 60 * 60 * 1000;
+      const matched = fullSeries.filter(pt => new Date(pt.date).getTime() >= cutoff);
+      filtered = matched.length > 0 ? matched : fullSeries.slice(-22);
+    } else if (timeframe === '3M') {
+      const cutoff = nowMs - 90 * 24 * 60 * 60 * 1000;
+      const matched = fullSeries.filter(pt => new Date(pt.date).getTime() >= cutoff);
+      filtered = matched.length > 0 ? matched : fullSeries.slice(-66);
+    } else if (timeframe === '6M') {
+      const cutoff = nowMs - 180 * 24 * 60 * 60 * 1000;
+      const matched = fullSeries.filter(pt => new Date(pt.date).getTime() >= cutoff);
+      filtered = matched.length > 0 ? matched : fullSeries.slice(-130);
+    } else if (timeframe === '1Y' || timeframe === 'ALL') {
+      filtered = fullSeries;
+    }
 
     const usdMyrRate = getLiveExchangeRate('USD_MYR') || 4.0845;
     const formattedFiltered = filtered.map((pt) => {
