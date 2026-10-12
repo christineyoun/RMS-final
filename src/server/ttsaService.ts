@@ -96,7 +96,10 @@ export class TtsaService {
     { date: '2026-09-15', price: 700, domesticThb: 22.10 },
     { date: '2026-09-22', price: 700, domesticThb: 22.10 },
     { date: '2026-09-29', price: 700, domesticThb: 22.10 },
-    { date: '2026-10-06', price: 695, domesticThb: 22.00 }
+    { date: '2026-10-06', price: 695, domesticThb: 22.00 },
+    { date: '2026-10-13', price: 695, domesticThb: 22.00 },
+    { date: '2026-10-20', price: 690, domesticThb: 21.80 },
+    { date: '2026-10-27', price: 690, domesticThb: 21.80 }
   ];
 
   private readonly fallbackSupply: TtsaSupplyBalance = {

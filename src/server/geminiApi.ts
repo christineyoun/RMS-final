@@ -49,6 +49,8 @@ import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, get
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
+import { palmOilService } from './palmOilService.ts';
+import { ttsaService } from './ttsaService.ts';
 import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
 import { amisService } from './amisService.ts';
 import { wheatIntelligenceService } from './wheatIntelligenceService.ts';
@@ -1119,6 +1121,38 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
         res.setHeader('Content-Type', 'application/json');
         res.statusCode = result.success ? 200 : (result.statusCode || 502);
         res.end(JSON.stringify(result, null, 2));
+      } catch (err: any) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+      return;
+    }
+
+    // Palm Oil Prices Endpoint
+    if (url.startsWith('/api/palmoil/prices') || url.startsWith('/api/palmoil/history')) {
+      try {
+        const force = url.includes('force=true');
+        const data = await palmOilService.getPriceSeries(force);
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 200;
+        res.end(JSON.stringify({ success: true, data }, null, 2));
+      } catch (err: any) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+      return;
+    }
+
+    // Tapioca Starch Prices Endpoint
+    if (url.startsWith('/api/tapioca/prices') || url.startsWith('/api/tapioca/history')) {
+      try {
+        const force = url.includes('force=true');
+        const data = await ttsaService.getWeeklyPrices('1Y', force);
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 200;
+        res.end(JSON.stringify({ success: true, data }, null, 2));
       } catch (err: any) {
         res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');

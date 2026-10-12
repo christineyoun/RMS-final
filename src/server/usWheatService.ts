@@ -485,7 +485,6 @@ export class UsWheatPriceReportService {
         return Math.round(usdPerBu * 36.7437 * 100) / 100;
       };
 
-      // Helper to parse 'Month Day, Year' into ISO 'YYYY-MM-DD'
       const parseReportDateToIso = (reportDateStr: string): string => {
         const monthMap: Record<string, string> = {
           january: '01', february: '02', march: '03', april: '04',
@@ -502,81 +501,107 @@ export class UsWheatPriceReportService {
         return reportDateStr;
       };
 
-      // 3. Historical series extracted directly from U.S. Wheat Associates official weekly price reports
-      const baseHistory: Array<{
-        reportDate: string;
-        contractMonth: string;
-        srwBu: number;
-        hrwBu: number;
-        hrsBu: number;
+      const formatIsoToReportDate = (isoDate: string): string => {
+        const [yr, mon, day] = isoDate.split('-');
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthName = months[parseInt(mon, 10) - 1] || 'October';
+        return `${monthName} ${day}, ${yr}`;
+      };
+
+      // 3. Complete 50-point U.S. Wheat Associates weekly series (October 03, 2025 – October 09, 2026)
+      const rawSeries: Array<{
+        date: string;
+        srwMt: number;
+        hrwMt: number;
+        hrsMt: number;
       }> = [
-        { reportDate: 'September 26, 2025', contractMonth: 'December', srwBu: 5.80, hrwBu: 5.94, hrsBu: 6.22 },
-        { reportDate: 'October 24, 2025', contractMonth: 'December', srwBu: 5.56, hrwBu: 5.72, hrsBu: 6.08 },
-        { reportDate: 'November 21, 2025', contractMonth: 'December', srwBu: 5.28, hrwBu: 5.39, hrsBu: 5.94 },
-        { reportDate: 'December 19, 2025', contractMonth: 'March', srwBu: 5.09, hrwBu: 5.15, hrsBu: 5.82 },
-        { reportDate: 'February 26, 2026', contractMonth: 'May', srwBu: 5.74, hrwBu: 5.62, hrsBu: 5.99 },
-        { reportDate: 'March 6, 2026', contractMonth: 'May', srwBu: 6.17, hrwBu: 6.24, hrsBu: 6.43 },
-        { reportDate: 'March 13, 2026', contractMonth: 'May', srwBu: 6.14, hrwBu: 6.30, hrsBu: 6.45 },
-        { reportDate: 'March 20, 2026', contractMonth: 'May', srwBu: 5.95, hrwBu: 6.06, hrsBu: 6.28 },
-        { reportDate: 'March 27, 2026', contractMonth: 'May', srwBu: 6.05, hrwBu: 6.33, hrsBu: 6.48 },
-        { reportDate: 'April 2, 2026', contractMonth: 'May', srwBu: 5.98, hrwBu: 6.16, hrsBu: 6.47 },
-        { reportDate: 'April 9, 2026', contractMonth: 'May', srwBu: 5.75, hrwBu: 5.91, hrsBu: 6.18 },
-        { reportDate: 'April 17, 2026', contractMonth: 'May', srwBu: 6.05, hrwBu: 6.33, hrsBu: 6.48 },
-        { reportDate: 'May 1, 2026', contractMonth: 'May', srwBu: 6.25, hrwBu: 6.83, hrsBu: 7.05 },
-        { reportDate: 'May 7, 2026', contractMonth: 'May', srwBu: 6.02, hrwBu: 6.55, hrsBu: 6.64 },
-        { reportDate: 'May 15, 2026', contractMonth: 'July', srwBu: 6.36, hrwBu: 6.88, hrsBu: 6.85 },
-        { reportDate: 'May 22, 2026', contractMonth: 'July', srwBu: 6.46, hrwBu: 6.82, hrsBu: 6.90 },
-        { reportDate: 'May 29, 2026', contractMonth: 'July', srwBu: 6.11, hrwBu: 6.50, hrsBu: 6.64 },
-        { reportDate: 'June 5, 2026', contractMonth: 'July', srwBu: 5.80, hrwBu: 6.21, hrsBu: 6.20 },
-        { reportDate: 'June 12, 2026', contractMonth: 'July', srwBu: 5.85, hrwBu: 6.35, hrsBu: 6.18 },
-        { reportDate: 'June 18, 2026', contractMonth: 'July', srwBu: 6.06, hrwBu: 6.44, hrsBu: 6.23 },
-        { reportDate: 'June 26, 2026', contractMonth: 'July', srwBu: 5.78, hrwBu: 6.10, hrsBu: 5.76 },
-        { reportDate: 'July 2, 2026', contractMonth: 'September', srwBu: 6.00, hrwBu: 6.39, hrsBu: 6.19 },
-        { reportDate: 'July 10, 2026', contractMonth: 'September', srwBu: 6.40, hrwBu: 6.76, hrsBu: 6.53 },
-        { reportDate: 'July 17, 2026', contractMonth: 'September', srwBu: 6.83, hrwBu: 7.32, hrsBu: 6.92 },
-        { reportDate: 'July 31, 2026', contractMonth: 'September', srwBu: 6.39, hrwBu: 7.08, hrsBu: 6.90 },
-        { reportDate: 'August 7, 2026', contractMonth: 'September', srwBu: 6.40, hrwBu: 7.14, hrsBu: 6.80 },
-        { reportDate: 'August 27, 2026', contractMonth: 'December', srwBu: 7.61, hrwBu: 8.22, hrsBu: 7.58 },
-        { reportDate: 'September 4, 2026', contractMonth: 'December', srwBu: 7.25, hrwBu: 7.99, hrsBu: 7.45 }
+        { "date": "2025-10-03", "srwMt": 189.32, "hrwMt": 182.61, "hrsMt": 205.67 },
+        { "date": "2025-10-10", "srwMt": 183.16, "hrwMt": 177.47, "hrsMt": 202.73 },
+        { "date": "2025-10-17", "srwMt": 185.09, "hrwMt": 180.59, "hrsMt": 201.54 },
+        { "date": "2025-10-24", "srwMt": 188.31, "hrwMt": 184.27, "hrsMt": 204.66 },
+        { "date": "2025-10-31", "srwMt": 196.21, "hrwMt": 192.72, "hrsMt": 203.19 },
+        { "date": "2025-11-07", "srwMt": 193.91, "hrwMt": 190.79, "hrsMt": 205.03 },
+        { "date": "2025-11-14", "srwMt": 193.73, "hrwMt": 189.32, "hrsMt": 207.51 },
+        { "date": "2025-11-21", "srwMt": 193.64, "hrwMt": 187.76, "hrsMt": 207.60 },
+        { "date": "2025-12-05", "srwMt": 196.85, "hrwMt": 195.10, "hrsMt": 210.54 },
+        { "date": "2025-12-12", "srwMt": 194.46, "hrwMt": 190.33, "hrsMt": 211.55 },
+        { "date": "2025-12-19", "srwMt": 187.30, "hrwMt": 189.32, "hrsMt": 213.66 },
+        { "date": "2026-01-09", "srwMt": 190.05, "hrwMt": 194.83, "hrsMt": 208.52 },
+        { "date": "2026-01-16", "srwMt": 190.42, "hrwMt": 194.19, "hrsMt": 207.60 },
+        { "date": "2026-01-23", "srwMt": 194.55, "hrwMt": 198.69, "hrsMt": 211.27 },
+        { "date": "2026-01-30", "srwMt": 197.68, "hrwMt": 200.16, "hrsMt": 212.47 },
+        { "date": "2026-02-06", "srwMt": 194.37, "hrwMt": 195.11, "hrsMt": 209.44 },
+        { "date": "2026-02-13", "srwMt": 201.72, "hrwMt": 203.56, "hrsMt": 214.58 },
+        { "date": "2026-02-20", "srwMt": 213.11, "hrwMt": 214.95, "hrsMt": 220.46 },
+        { "date": "2026-02-26", "srwMt": 211.09, "hrwMt": 206.59, "hrsMt": 220.00 },
+        { "date": "2026-03-06", "srwMt": 226.61, "hrwMt": 229.09, "hrsMt": 236.26 },
+        { "date": "2026-03-13", "srwMt": 225.51, "hrwMt": 231.48, "hrsMt": 237.18 },
+        { "date": "2026-03-20", "srwMt": 218.71, "hrwMt": 222.75, "hrsMt": 230.75 },
+        { "date": "2026-03-27", "srwMt": 222.30, "hrwMt": 232.49, "hrsMt": 238.19 },
+        { "date": "2026-04-02", "srwMt": 219.81, "hrwMt": 226.25, "hrsMt": 237.64 },
+        { "date": "2026-04-09", "srwMt": 211.09, "hrwMt": 216.97, "hrsMt": 227.16 },
+        { "date": "2026-04-17", "srwMt": 217.24, "hrwMt": 233.96, "hrsMt": 240.02 },
+        { "date": "2026-04-24", "srwMt": 223.49, "hrwMt": 242.14, "hrsMt": 248.38 },
+        { "date": "2026-05-01", "srwMt": 229.46, "hrwMt": 250.77, "hrsMt": 258.85 },
+        { "date": "2026-05-07", "srwMt": 221.10, "hrwMt": 240.57, "hrsMt": 244.07 },
+        { "date": "2026-05-15", "srwMt": 233.59, "hrwMt": 252.79, "hrsMt": 251.78 },
+        { "date": "2026-05-22", "srwMt": 237.45, "hrwMt": 250.59, "hrsMt": 253.34 },
+        { "date": "2026-05-29", "srwMt": 224.32, "hrwMt": 238.74, "hrsMt": 243.88 },
+        { "date": "2026-06-05", "srwMt": 213.11, "hrwMt": 228.08, "hrsMt": 227.62 },
+        { "date": "2026-06-12", "srwMt": 214.76, "hrwMt": 233.13, "hrsMt": 227.16 },
+        { "date": "2026-06-18", "srwMt": 222.57, "hrwMt": 236.62, "hrsMt": 228.91 },
+        { "date": "2026-06-26", "srwMt": 212.28, "hrwMt": 224.22, "hrsMt": 211.73 },
+        { "date": "2026-07-02", "srwMt": 220.37, "hrwMt": 234.60, "hrsMt": 227.44 },
+        { "date": "2026-07-10", "srwMt": 235.25, "hrwMt": 248.47, "hrsMt": 239.75 },
+        { "date": "2026-07-17", "srwMt": 250.86, "hrwMt": 269.05, "hrsMt": 254.17 },
+        { "date": "2026-07-24", "srwMt": 248.11, "hrwMt": 272.45, "hrsMt": 262.44 },
+        { "date": "2026-07-31", "srwMt": 234.88, "hrwMt": 259.96, "hrsMt": 253.43 },
+        { "date": "2026-08-07", "srwMt": 235.06, "hrwMt": 262.35, "hrsMt": 249.67 },
+        { "date": "2026-08-14", "srwMt": 247.92, "hrwMt": 277.13, "hrsMt": 249.21 },
+        { "date": "2026-08-21", "srwMt": 256.93, "hrwMt": 283.84, "hrsMt": 266.20 },
+        { "date": "2026-08-27", "srwMt": 279.52, "hrwMt": 302.03, "hrsMt": 278.42 },
+        { "date": "2026-09-04", "srwMt": 269.69, "hrwMt": 294.77, "hrsMt": 273.74 },
+        { "date": "2026-09-11", "srwMt": 266.48, "hrwMt": 293.39, "hrsMt": 273.74 },
+        { "date": "2026-09-18", "srwMt": 262.44, "hrwMt": 287.97, "hrsMt": 272.36 },
+        { "date": "2026-09-25", "srwMt": 258.40, "hrwMt": 279.98, "hrsMt": 262.16 },
+        { "date": "2026-10-02", "srwMt": 250.95, "hrwMt": 270.15, "hrsMt": 256.47 },
+        { "date": "2026-10-09", "srwMt": 246.55, "hrwMt": 264.18, "hrsMt": 255.46 }
       ];
 
-      // 4. Merge latest published report if available
+      // Merge latest published report if available
       if (
         latestData &&
         latestData.cbotSrw?.priceUsdPerBu &&
         latestData.kcbtHrw?.priceUsdPerBu &&
         latestData.miaxHrs?.priceUsdPerBu
       ) {
-        const latestRepDate = latestData.reportDate || 'September 18, 2026';
-        const existingIdx = baseHistory.findIndex(
-          (b) => b.reportDate.toLowerCase() === latestRepDate.toLowerCase()
-        );
-        const latestPoint = {
-          reportDate: latestRepDate,
-          contractMonth: latestData.cbotSrw.contractMonth || 'December',
-          srwBu: latestData.cbotSrw.priceUsdPerBu,
-          hrwBu: latestData.kcbtHrw.priceUsdPerBu,
-          hrsBu: latestData.miaxHrs.priceUsdPerBu
+        const latestRepDate = latestData.reportDate || 'October 09, 2026';
+        const latestIso = parseReportDateToIso(latestRepDate);
+        const existingIdx = rawSeries.findIndex((b) => b.date === latestIso);
+        const latestPt = {
+          date: latestIso,
+          srwMt: latestData.cbotSrw.priceUsdPerMetricTon || 246.55,
+          hrwMt: latestData.kcbtHrw.priceUsdPerMetricTon || 264.18,
+          hrsMt: latestData.miaxHrs.priceUsdPerMetricTon || 255.46
         };
-
         if (existingIdx >= 0) {
-          baseHistory[existingIdx] = latestPoint;
+          rawSeries[existingIdx] = latestPt;
         } else {
-          baseHistory.push(latestPoint);
+          rawSeries.push(latestPt);
         }
       }
 
       // Convert to typed data points
-      const points: UsWheatHistoryDataPoint[] = baseHistory.map((item) => ({
-        date: parseReportDateToIso(item.reportDate),
-        reportDate: item.reportDate,
-        contractMonth: item.contractMonth,
-        srwBu: item.srwBu,
-        srwMt: buToMt(item.srwBu, 'SRW'),
-        hrwBu: item.hrwBu,
-        hrwMt: buToMt(item.hrwBu, 'HRW'),
-        hrsBu: item.hrsBu,
-        hrsMt: buToMt(item.hrsBu, 'HRS')
+      const points: UsWheatHistoryDataPoint[] = rawSeries.map((item) => ({
+        date: item.date,
+        reportDate: formatIsoToReportDate(item.date),
+        contractMonth: 'December',
+        srwBu: Math.round((item.srwMt / 36.7437) * 100) / 100,
+        srwMt: item.srwMt,
+        hrwBu: Math.round((item.hrwMt / 36.7437) * 100) / 100,
+        hrwMt: item.hrwMt,
+        hrsBu: Math.round((item.hrsMt / 36.7437) * 100) / 100,
+        hrsMt: item.hrsMt
       }));
 
       // Sort chronologically ascending

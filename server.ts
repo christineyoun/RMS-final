@@ -6,7 +6,7 @@ import { createGeminiApiMiddleware } from './src/server/geminiApi.ts';
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = 3000;
 
   // Mount Gemini API and other custom backend routes
   app.use(createGeminiApiMiddleware());

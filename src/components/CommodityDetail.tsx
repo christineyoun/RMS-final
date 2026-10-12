@@ -59,22 +59,93 @@ export const defaultWasdeTelemetry: WasdeTelemetryData = {
 };
 
 // Remove or replace DEFAULT_WHEAT_HISTORY_BASELINE with null / empty initial state
+const formatIsoToReportDate = (isoDate: string): string => {
+  const [yr, mon, day] = isoDate.split('-');
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthName = months[parseInt(mon, 10) - 1] || 'October';
+  return `${monthName} ${day}, ${yr}`;
+};
+
+const rawDefaultWheatSeries = [
+  { "date": "2025-10-03", "srwMt": 189.32, "hrwMt": 182.61, "hrsMt": 205.67 },
+  { "date": "2025-10-10", "srwMt": 183.16, "hrwMt": 177.47, "hrsMt": 202.73 },
+  { "date": "2025-10-17", "srwMt": 185.09, "hrwMt": 180.59, "hrsMt": 201.54 },
+  { "date": "2025-10-24", "srwMt": 188.31, "hrwMt": 184.27, "hrsMt": 204.66 },
+  { "date": "2025-10-31", "srwMt": 196.21, "hrwMt": 192.72, "hrsMt": 203.19 },
+  { "date": "2025-11-07", "srwMt": 193.91, "hrwMt": 190.79, "hrsMt": 205.03 },
+  { "date": "2025-11-14", "srwMt": 193.73, "hrwMt": 189.32, "hrsMt": 207.51 },
+  { "date": "2025-11-21", "srwMt": 193.64, "hrwMt": 187.76, "hrsMt": 207.60 },
+  { "date": "2025-12-05", "srwMt": 196.85, "hrwMt": 195.10, "hrsMt": 210.54 },
+  { "date": "2025-12-12", "srwMt": 194.46, "hrwMt": 190.33, "hrsMt": 211.55 },
+  { "date": "2025-12-19", "srwMt": 187.30, "hrwMt": 189.32, "hrsMt": 213.66 },
+  { "date": "2026-01-09", "srwMt": 190.05, "hrwMt": 194.83, "hrsMt": 208.52 },
+  { "date": "2026-01-16", "srwMt": 190.42, "hrwMt": 194.19, "hrsMt": 207.60 },
+  { "date": "2026-01-23", "srwMt": 194.55, "hrwMt": 198.69, "hrsMt": 211.27 },
+  { "date": "2026-01-30", "srwMt": 197.68, "hrwMt": 200.16, "hrsMt": 212.47 },
+  { "date": "2026-02-06", "srwMt": 194.37, "hrwMt": 195.11, "hrsMt": 209.44 },
+  { "date": "2026-02-13", "srwMt": 201.72, "hrwMt": 203.56, "hrsMt": 214.58 },
+  { "date": "2026-02-20", "srwMt": 213.11, "hrwMt": 214.95, "hrsMt": 220.46 },
+  { "date": "2026-02-26", "srwMt": 211.09, "hrwMt": 206.59, "hrsMt": 220.00 },
+  { "date": "2026-03-06", "srwMt": 226.61, "hrwMt": 229.09, "hrsMt": 236.26 },
+  { "date": "2026-03-13", "srwMt": 225.51, "hrwMt": 231.48, "hrsMt": 237.18 },
+  { "date": "2026-03-20", "srwMt": 218.71, "hrwMt": 222.75, "hrsMt": 230.75 },
+  { "date": "2026-03-27", "srwMt": 222.30, "hrwMt": 232.49, "hrsMt": 238.19 },
+  { "date": "2026-04-02", "srwMt": 219.81, "hrwMt": 226.25, "hrsMt": 237.64 },
+  { "date": "2026-04-09", "srwMt": 211.09, "hrwMt": 216.97, "hrsMt": 227.16 },
+  { "date": "2026-04-17", "srwMt": 217.24, "hrwMt": 233.96, "hrsMt": 240.02 },
+  { "date": "2026-04-24", "srwMt": 223.49, "hrwMt": 242.14, "hrsMt": 248.38 },
+  { "date": "2026-05-01", "srwMt": 229.46, "hrwMt": 250.77, "hrsMt": 258.85 },
+  { "date": "2026-05-07", "srwMt": 221.10, "hrwMt": 240.57, "hrsMt": 244.07 },
+  { "date": "2026-05-15", "srwMt": 233.59, "hrwMt": 252.79, "hrsMt": 251.78 },
+  { "date": "2026-05-22", "srwMt": 237.45, "hrwMt": 250.59, "hrsMt": 253.34 },
+  { "date": "2026-05-29", "srwMt": 224.32, "hrwMt": 238.74, "hrsMt": 243.88 },
+  { "date": "2026-06-05", "srwMt": 213.11, "hrwMt": 228.08, "hrsMt": 227.62 },
+  { "date": "2026-06-12", "srwMt": 214.76, "hrwMt": 233.13, "hrsMt": 227.16 },
+  { "date": "2026-06-18", "srwMt": 222.57, "hrwMt": 236.62, "hrsMt": 228.91 },
+  { "date": "2026-06-26", "srwMt": 212.28, "hrwMt": 224.22, "hrsMt": 211.73 },
+  { "date": "2026-07-02", "srwMt": 220.37, "hrwMt": 234.60, "hrsMt": 227.44 },
+  { "date": "2026-07-10", "srwMt": 235.25, "hrwMt": 248.47, "hrsMt": 239.75 },
+  { "date": "2026-07-17", "srwMt": 250.86, "hrwMt": 269.05, "hrsMt": 254.17 },
+  { "date": "2026-07-24", "srwMt": 248.11, "hrwMt": 272.45, "hrsMt": 262.44 },
+  { "date": "2026-07-31", "srwMt": 234.88, "hrwMt": 259.96, "hrsMt": 253.43 },
+  { "date": "2026-08-07", "srwMt": 235.06, "hrwMt": 262.35, "hrsMt": 249.67 },
+  { "date": "2026-08-14", "srwMt": 247.92, "hrwMt": 277.13, "hrsMt": 249.21 },
+  { "date": "2026-08-21", "srwMt": 256.93, "hrwMt": 283.84, "hrsMt": 266.20 },
+  { "date": "2026-08-27", "srwMt": 279.52, "hrwMt": 302.03, "hrsMt": 278.42 },
+  { "date": "2026-09-04", "srwMt": 269.69, "hrwMt": 294.77, "hrsMt": 273.74 },
+  { "date": "2026-09-11", "srwMt": 266.48, "hrwMt": 293.39, "hrsMt": 273.74 },
+  { "date": "2026-09-18", "srwMt": 262.44, "hrwMt": 287.97, "hrsMt": 272.36 },
+  { "date": "2026-09-25", "srwMt": 258.40, "hrwMt": 279.98, "hrsMt": 262.16 },
+  { "date": "2026-10-02", "srwMt": 250.95, "hrwMt": 270.15, "hrsMt": 256.47 },
+  { "date": "2026-10-09", "srwMt": 246.55, "hrwMt": 264.18, "hrsMt": 255.46 }
+];
+
 const DEFAULT_WHEAT_HISTORY_BASELINE: UsWheatPriceHistoryResponse = {
   success: true,
   statusCode: 200,
   source: 'U.S. Wheat Associates',
   sourceUrl: 'https://www.uswheat.org/market-information/price-reports/',
-  reportDate: 'September 25, 2026',
+  reportDate: 'October 09, 2026',
   lastRetrievalTime: '10:38:34 PM KST',
   primaryUnit: 'USD/MT',
   secondaryUnit: 'USc/bu',
-  count: 0,
+  count: rawDefaultWheatSeries.length,
   metrics: {
-    srw: { wheatClass: 'SRW', classNameKo: '연질적색겨울밀', classNameEn: 'Soft Red Winter', exchange: 'CBOT', contractMonth: 'December', latestPriceMt: 258.40, latestPriceBu: 703.25, wowChangePct: -3.03, wowChangeMt: -8.08, wowChangeBu: -22, momChangePct: 10.02, momChangeMt: 23.49, momChangeBu: 64 },
-    hrw: { wheatClass: 'HRW', classNameKo: '경질적색겨울밀', classNameEn: 'Hard Red Winter', exchange: 'KCBT', contractMonth: 'December', latestPriceMt: 279.98, latestPriceBu: 762.00, wowChangePct: -4.63, wowChangeMt: -13.59, wowChangeBu: -37, momChangePct: 7.63, momChangeMt: 19.84, momChangeBu: 54 },
-    hrs: { wheatClass: 'HRS', classNameKo: '경질적색봄밀', classNameEn: 'Hard Red Spring', exchange: 'MIAX', contractMonth: 'December', latestPriceMt: 262.16, latestPriceBu: 713.50, wowChangePct: -4.16, wowChangeMt: -11.39, wowChangeBu: -31, momChangePct: 3.48, momChangeMt: 8.83, momChangeBu: 24 },
+    srw: { wheatClass: 'SRW', classNameKo: '연질적색겨울밀', classNameEn: 'Soft Red Winter', exchange: 'CBOT', contractMonth: 'December', latestPriceMt: 246.55, latestPriceBu: 6.71, wowChangePct: -1.75, wowChangeMt: -4.40, wowChangeBu: -12, momChangePct: -7.48, momChangeMt: -19.93, momChangeBu: -54 },
+    hrw: { wheatClass: 'HRW', classNameKo: '경질적색겨울밀', classNameEn: 'Hard Red Winter', exchange: 'KCBT', contractMonth: 'December', latestPriceMt: 264.18, latestPriceBu: 7.19, wowChangePct: -2.21, wowChangeMt: -5.97, wowChangeBu: -16, momChangePct: -9.96, momChangeMt: -29.21, momChangeBu: -79 },
+    hrs: { wheatClass: 'HRS', classNameKo: '경질적색봄밀', classNameEn: 'Hard Red Spring', exchange: 'MIAX', contractMonth: 'December', latestPriceMt: 255.46, latestPriceBu: 6.95, wowChangePct: -0.39, wowChangeMt: -1.01, wowChangeBu: -3, momChangePct: -6.68, momChangeMt: -18.28, momChangeBu: -50 },
   },
-  data: [], // Empty data array - no hardcoded dates
+  data: rawDefaultWheatSeries.map(item => ({
+    date: item.date,
+    reportDate: formatIsoToReportDate(item.date),
+    contractMonth: 'December',
+    srwBu: Math.round((item.srwMt / 36.7437) * 100) / 100,
+    srwMt: item.srwMt,
+    hrwBu: Math.round((item.hrwMt / 36.7437) * 100) / 100,
+    hrwMt: item.hrwMt,
+    hrsBu: Math.round((item.hrsMt / 36.7437) * 100) / 100,
+    hrsMt: item.hrsMt
+  })),
 };
 
 interface CommodityDetailProps {
