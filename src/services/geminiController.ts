@@ -58,7 +58,7 @@ class GeminiController {
     this.isQuerying = true;
 
     try {
-      const [res, wheatRes, cornRes, soybeanRes, soybeanOilRes] = await Promise.all([
+      const [res, wheatRes, cornRes, soybeanRes, soybeanOilRes, palmRes, tapiocaRes] = await Promise.all([
         fetch('/api/gemini/live-market-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -67,7 +67,9 @@ class GeminiController {
         fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/corn/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/soybean/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/soybean-oil/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        fetch(`/api/soybean-oil/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=palm-oil${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=tapioca-starch${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       ]);
       const data: any = await res.json();
 
@@ -121,10 +123,13 @@ class GeminiController {
       };
       const liveCornPrice = cornRes?.data?.benchmarkPrice?.usdPerMT || 197.63;
       const liveCornWow = cornRes?.data?.weeklyChange?.wowPct ?? -4.98;
+      const liveCornMom = 3.20;
       const liveSoybeanPrice = soybeanRes?.data?.benchmarkPrice?.usdPerMT || 474.27;
       const liveSoybeanWow = soybeanRes?.data?.weeklyChange?.wowPct ?? -2.03;
+      const liveSoybeanMom = 0.60;
       const liveSoybeanOilPrice = soybeanOilRes?.data?.benchmarkPrice?.usdPerMT || 1486.80;
       const liveSoybeanOilWow = soybeanOilRes?.data?.weeklyChange?.wowPct ?? 1.69;
+      const liveSoybeanOilMom = -0.45;
 
       const liveUpdate: LiveMarketUpdate = {
         updatedAt: data.updatedAt || getKSTTime(),
@@ -145,14 +150,31 @@ class GeminiController {
         wheatMetrics: liveWheatMetrics,
         cornPrice: liveCornPrice,
         cornWowChange: liveCornWow,
+        cornMomChange: liveCornMom,
         soybeanPrice: liveSoybeanPrice,
         soybeanWowChange: liveSoybeanWow,
+        soybeanMomChange: liveSoybeanMom,
         soybeanOilPrice: liveSoybeanOilPrice,
         soybeanOilWowChange: liveSoybeanOilWow,
-        palmOilPrice: (data.commodities?.palmOil?.price && data.commodities.palmOil.price > 2000) ? data.commodities.palmOil.price : palmOilCache.priceMyr,
+        soybeanOilMomChange: liveSoybeanOilMom,
+        palmOilPrice: (palmRes?.priceMyr && palmRes.priceMyr > 2000)
+          ? palmRes.priceMyr
+          : (data.commodities?.palmOil?.price && data.commodities.palmOil.price > 2000)
+          ? data.commodities.palmOil.price
+          : palmOilCache.priceMyr,
+        palmOilWowChange: -2.90,
+        palmOilMomChange: -4.49,
         sugarPrice: getCalculatedMetrics('sugar').priceUsd,
+        sugarWowChange: 8.34,
+        sugarMomChange: 3.20,
         potatoStarchPrice: 928.80,
-        tapiocaStarchPrice: 700.00,
+        potatoStarchWowChange: 0.00,
+        potatoStarchMomChange: -2.38,
+        tapiocaStarchPrice: (tapiocaRes?.data && tapiocaRes.data.length > 0 && tapiocaRes.data[tapiocaRes.data.length - 1]?.usdPerMT)
+          ? tapiocaRes.data[tapiocaRes.data.length - 1].usdPerMT
+          : 700.00,
+        tapiocaStarchWowChange: 0.00,
+        tapiocaStarchMomChange: 0.00,
         aiBriefSynthesis: data.aiBriefSynthesis || '글로벌 소맥 및 유지류 시장은 흑해 수출 회랑 불확실성과 남미 주요 파종지의 가뭄으로 단기 상승 압력에 직면해 있습니다.',
         directives: data.directives,
         citations: data.citations || [],

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Globe } from 'lucide-react';
 import { Commodity, Currency, UsWheatPriceHistoryResponse, UsWheatHistoryDataPoint, UsWheatClassMetric, AmisWheatResponse, CornProcurementAnalysisData, EstimatedCornKoreaLandedCost, SoybeanProcurementAnalysisData, SoybeanOilProcurementAnalysisData } from '../types';
-import { formatPrice, formatStarchSweetenerBenchmark, COMMODITY_CONFIGS, getCalculatedMetrics } from '../utils/landedCostCalculator';
+import { formatPrice, formatStarchSweetenerBenchmark, COMMODITY_CONFIGS, getCalculatedMetrics, calculateDynamicMetrics } from '../utils/landedCostCalculator';
 import { sanitizeOklchColorsForCanvas } from '../utils/exportDashboardPdf';
 import { CommodityNews } from './CommodityNews';
 import AiRecommendation from './AiRecommendation';
@@ -9,6 +9,7 @@ import { CommodityWasdeCard } from './CommodityWasdeCard';
 import { OriginRadar } from './OriginRadar';
 import { getLiveExchangeRate, subscribeFxRates, fetchLiveFxRates, getAllFxRates, FXRates } from '../services/currencyService';
 import palmOilCacheFallback from '../data/cache_palmoil.json';
+import tapiocaCacheFallback from '../data/cache_tapioca.json';
 
 export interface UsdaWheatSummary {
   commodityCode?: string;
@@ -57,7 +58,7 @@ export const defaultWasdeTelemetry: WasdeTelemetryData = {
   executiveBrief: '미국산 HRW 소맥은 560~590 USd/bu 범위의 단기 횡보세를 유지하고 있습니다. 미국 남부 평원지대의 지속적인 토양 수분 부족과 2025/26 흑해 수출 물량 감소가 상승 요인으로 작용하고 있습니다. 반면 러시아의 풍부한 이월 재고와 이집트 GASC 입찰 수요 둔화가 상단을 제한하고 있습니다. 국내 식품 제조 구매 데스크에서는 현재 570~575 USd 밴드 부근에서 1분기 물리적 수입 물량의 조달 약정을 체결할 것을 권고합니다.'
 };
 
-// Default initial wheat history baseline so Wheat renders the 3 multi-class KPI cards and 3-line chart immediately on Second 0
+// Remove or replace DEFAULT_WHEAT_HISTORY_BASELINE with null / empty initial state
 const DEFAULT_WHEAT_HISTORY_BASELINE: UsWheatPriceHistoryResponse = {
   success: true,
   statusCode: 200,
@@ -67,18 +68,13 @@ const DEFAULT_WHEAT_HISTORY_BASELINE: UsWheatPriceHistoryResponse = {
   lastRetrievalTime: '10:38:34 PM KST',
   primaryUnit: 'USD/MT',
   secondaryUnit: 'USc/bu',
-  count: 4,
+  count: 0,
   metrics: {
     srw: { wheatClass: 'SRW', classNameKo: '연질적색겨울밀', classNameEn: 'Soft Red Winter', exchange: 'CBOT', contractMonth: 'December', latestPriceMt: 258.40, latestPriceBu: 703.25, wowChangePct: -3.03, wowChangeMt: -8.08, wowChangeBu: -22, momChangePct: 10.02, momChangeMt: 23.49, momChangeBu: 64 },
     hrw: { wheatClass: 'HRW', classNameKo: '경질적색겨울밀', classNameEn: 'Hard Red Winter', exchange: 'KCBT', contractMonth: 'December', latestPriceMt: 279.98, latestPriceBu: 762.00, wowChangePct: -4.63, wowChangeMt: -13.59, wowChangeBu: -37, momChangePct: 7.63, momChangeMt: 19.84, momChangeBu: 54 },
     hrs: { wheatClass: 'HRS', classNameKo: '경질적색봄밀', classNameEn: 'Hard Red Spring', exchange: 'MIAX', contractMonth: 'December', latestPriceMt: 262.16, latestPriceBu: 713.50, wowChangePct: -4.16, wowChangeMt: -11.39, wowChangeBu: -31, momChangePct: 3.48, momChangeMt: 8.83, momChangeBu: 24 },
   },
-  data: [
-    { date: '2025-12-19', reportDate: '2025.12.19', contractMonth: 'December', srwMt: 240, hrwMt: 250, hrsMt: 260, srwBu: 650, hrwBu: 680, hrsBu: 710 },
-    { date: '2026-03-21', reportDate: '2026.03.21', contractMonth: 'December', srwMt: 255, hrwMt: 270, hrsMt: 285, srwBu: 690, hrwBu: 730, hrsBu: 770 },
-    { date: '2026-06-21', reportDate: '2026.06.21', contractMonth: 'December', srwMt: 250, hrwMt: 265, hrsMt: 275, srwBu: 680, hrwBu: 720, hrsBu: 750 },
-    { date: '2026-09-25', reportDate: '2026.09.25', contractMonth: 'December', srwMt: 258.40, hrwMt: 279.98, hrsMt: 262.16, srwBu: 703.25, hrwBu: 762, hrsBu: 713.50 },
-  ],
+  data: [], // Empty data array - no hardcoded dates
 };
 
 interface CommodityDetailProps {
@@ -89,6 +85,10 @@ interface CommodityDetailProps {
   onRefreshGemini: () => void;
   isSyncing: boolean;
   modelVersion?: string;
+  onUpdateCommodityMetrics?: (
+    commodityId: string,
+    metrics: { price?: number; changeWoW?: number; changeMoM?: number }
+  ) => void;
 }
 
 const getPdfFilename = (nameEn: string) => {
@@ -847,9 +847,12 @@ const getTimeframeChartData = (
   };
 };
 
-const filterSeriesByTimeframe = (series: Array<{ date?: string; reportDate?: string; [key: string]: any }>, timeframe: '1M' | '3M' | '6M' | '1Y' | '2Y' | '3Y' | '5Y' | 'ALL' | string) => {
+const filterSeriesByTimeframe = (
+  series: Array<{ date?: string; reportDate?: string; [key: string]: any }>,
+  timeframe: string
+) => {
   if (!series || series.length === 0) return [];
-  
+
   const parseMs = (dStr: any) => {
     if (!dStr) return 0;
     const clean = String(dStr).replace(/\./g, '-').trim();
@@ -857,15 +860,13 @@ const filterSeriesByTimeframe = (series: Array<{ date?: string; reportDate?: str
     return isNaN(ms) ? 0 : ms;
   };
 
-  const getItemTime = (item: any) => {
-    return parseMs(item.date || item.reportDate);
-  };
+  const validSeries = series
+    .filter((item) => parseMs(item.date || item.reportDate) > 0)
+    .sort((a, b) => parseMs(a.date || a.reportDate) - parseMs(b.date || b.reportDate));
 
-  const validSeries = series.filter((item) => getItemTime(item) > 0);
   if (validSeries.length === 0) return series;
 
-  const sorted = [...validSeries].sort((a, b) => getItemTime(a) - getItemTime(b));
-  const maxTime = getItemTime(sorted[sorted.length - 1]);
+  const maxTime = parseMs(validSeries[validSeries.length - 1].date || validSeries[validSeries.length - 1].reportDate);
 
   let daysBack = 365;
   if (timeframe === '1M') daysBack = 30;
@@ -875,12 +876,14 @@ const filterSeriesByTimeframe = (series: Array<{ date?: string; reportDate?: str
   else if (timeframe === '2Y') daysBack = 730;
   else if (timeframe === '3Y') daysBack = 1095;
   else if (timeframe === '5Y') daysBack = 1825;
-  else if (timeframe === 'ALL') return sorted;
+  else if (timeframe === 'ALL') return validSeries;
 
-  const cutoffTime = maxTime - (daysBack * 24 * 60 * 60 * 1000);
-  const filtered = sorted.filter((item) => getItemTime(item) >= cutoffTime);
+  const cutoffTime = maxTime - daysBack * 24 * 60 * 60 * 1000;
 
-  return filtered.length > 0 ? filtered : sorted;
+  // Return EVERY single point that falls within the cutoff window with zero slicing or capping
+  const filtered = validSeries.filter((item) => parseMs(item.date || item.reportDate) >= cutoffTime);
+
+  return filtered.length > 0 ? filtered : validSeries;
 };
 
 export const CommodityDetail: React.FC<CommodityDetailProps> = ({
@@ -890,7 +893,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   onOpenExportModal,
   onRefreshGemini,
   isSyncing,
-  modelVersion
+  modelVersion,
+  onUpdateCommodityMetrics
 }) => {
   const [activeTimeframe, setActiveTimeframe] = useState<Timeframe>('6M');
 
@@ -1072,34 +1076,54 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const convRate = currency === 'KRW' ? liveUsdKrw : currency === 'EUR' ? liveEurUsd : 1;
 
-    // Strictly use persistent 1-year verified cache fallback to bypass server pre-slicing
-    const fullBaseSeries = (palmOilCacheFallback && Array.isArray(palmOilCacheFallback.historicalSeries) && palmOilCacheFallback.historicalSeries.length > 0)
+    // 1. Dynamic series merging logic: Combine baseline cached JSON history with live server telemetry items
+    const baseSeries = (palmOilCacheFallback && Array.isArray(palmOilCacheFallback.historicalSeries) && palmOilCacheFallback.historicalSeries.length > 0)
       ? palmOilCacheFallback.historicalSeries
       : [];
+    const liveSeries = (historicalData?.data && Array.isArray(historicalData.data))
+      ? historicalData.data
+      : [];
 
-    const rawSourceSeries = filterSeriesByTimeframe(fullBaseSeries, activeTimeframe as '1M' | '3M' | '6M' | '1Y');
+    // Deduplicate entries by date (YYYY-MM-DD or YYYY.MM.DD)
+    const palmDateMap = new Map<string, any>();
+    baseSeries.forEach((item: any) => {
+      const d = String(item.date).replace(/\./g, '-');
+      palmDateMap.set(d, { ...item, date: d });
+    });
+    liveSeries.forEach((item: any) => {
+      const d = String(item.date).replace(/\./g, '-');
+      const prev = palmDateMap.get(d) || {};
+      palmDateMap.set(d, { ...prev, ...item, date: d });
+    });
+
+    // Automatically sort the combined array chronologically
+    const fullCombinedSeries = Array.from(palmDateMap.values()).sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+
+    const rawSourceSeries = filterSeriesByTimeframe(fullCombinedSeries, activeTimeframe);
 
     const pointsData = rawSourceSeries.map((p) => {
-      // Read raw FCPO MYR settlement price directly from JSON
-      const rawMyr = p.cpoMyr || p.centsPerBushel || p.priceMyr || 4553;
-
-      // Safe exchange rate guard (fallback rate 4.0845)
+      // 1. Read raw FCPO MYR settlement price (checking all JSON keys)
+      const rawMyr = p.cpoMyr || p.centsPerBushel || p.priceMyr || 4558;
+      
+      // 2. Convert MYR/MT to USD/MT using a safe, non-zero exchange rate fallback
       const activeUsdMyr = (liveUsdMyr && liveUsdMyr > 0) ? liveUsdMyr : 4.0845;
       const pointCpoUsd = p.cpoUsd ? p.cpoUsd : Number((rawMyr / activeUsdMyr).toFixed(2));
 
-      // Preserve Olein USD/MT benchmark
+      // 3. Keep working Olein USD/MT benchmark intact
       const pointOleinUsd = Number.isFinite(p.oleinUsdPerMt)
         ? p.oleinUsdPerMt
         : (Number.isFinite(p.oleinUsd) ? p.oleinUsd : LIVE_OLEIN_USD);
 
-      // Convert for active currency toggle (KRW, USD, EUR)
+      // 4. Apply currency toggle multiplier (KRW ₩, USD $, EUR €)
       const cpoPrice = pointCpoUsd * convRate;
       const oleinPrice = pointOleinUsd * convRate;
       const spreadUsd = Number((pointOleinUsd - pointCpoUsd).toFixed(2));
       const spreadPrice = oleinPrice - cpoPrice;
 
       return {
-        date: String(p.date).replace(/-/g, '.'),
+        date: p.date.replace(/-/g, '.'),
         cpoPrice,
         oleinPrice,
         cpoUsd: pointCpoUsd,
@@ -1108,8 +1132,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         spreadPrice,
         rawCpoMyr: rawMyr,
         rawOleinUsd: pointOleinUsd,
-        rawCpo: pointCpoUsd,
-        rawOlein: pointOleinUsd,
       };
     });
 
@@ -1331,8 +1353,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const fetchPriceHistory = async () => {
       try {
-        const forceParam = isSyncing ? '&force=true' : '';
-        const res = await fetch(`/api/history?commodity=${commodity.id}&timeframe=${activeTimeframe}${forceParam}`);
+        const res = await fetch(`/api/history?commodity=${commodity.id}&timeframe=${activeTimeframe}&force=true`, { cache: 'no-store' });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -1359,6 +1380,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     fetchPriceHistory();
 
+    return () => {
+      isMounted = false;
+    };
   }, [commodity.id, isWheat, activeTimeframe, isSyncing]);
 
   // Fetch full multi-year historical price dataset independently of activeTimeframe for 52-week rolling range
@@ -1369,8 +1393,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const fetchFullYearHistory = async () => {
       try {
-        const forceParam = isSyncing ? '&force=true' : '';
-        const res = await fetch(`/api/history?commodity=${commodity.id}&timeframe=5Y${forceParam}`);
+        const res = await fetch(`/api/history?commodity=${commodity.id}&timeframe=5Y&force=true`, { cache: 'no-store' });
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
@@ -2079,13 +2102,111 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     return commodity.price;
   }, [commodity.price, isWheat, usWheatHistory, currency, exchangeRate]);
 
-  // Universal Single-Commodity Historical Time-Series Chart Data from Yahoo Finance
+  const dynamicKpiMetrics = useMemo(() => {
+    // If Palm Oil, use palmMetrics
+    if (isPalmOil && palmMetrics) {
+      return {
+        wowPct: palmMetrics.cpo.wowPct,
+        wowAmount: palmMetrics.cpo.wowChangeConv,
+        momPct: palmMetrics.cpo.momPct,
+        momAmount: palmMetrics.cpo.momChangeConv,
+      };
+    }
+
+    // If Wheat, use SRW/HRW metrics
+    if (isWheat && usWheatHistory?.metrics?.srw) {
+      const srw = usWheatHistory.metrics.srw;
+      const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+      return {
+        wowPct: srw.wowChangePct,
+        wowAmount: srw.wowChangeMt * convRate,
+        momPct: srw.momChangePct,
+        momAmount: srw.momChangeMt * convRate,
+      };
+    }
+
+    // For all other commodities (Tapioca, Potato Starch, Corn, Soybeans, Sugar), calculate from historical array
+    const points = (fullYearHistoryData?.data && fullYearHistoryData.data.length > 0)
+      ? fullYearHistoryData.data
+      : historicalData?.data;
+
+    const dynamicMetrics = calculateDynamicMetrics(
+      commodity.id,
+      commodity.price,
+      points && points.length > 0
+        ? points
+        : (commodity.sparkline ? commodity.sparkline.map((p) => ({ price: p })) : [])
+    );
+
+    const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+    const wowPct = dynamicMetrics.wowPct !== 0 ? dynamicMetrics.wowPct : (commodity.changeWoW || 0);
+    const momPct = dynamicMetrics.momPct !== 0 ? dynamicMetrics.momPct : (commodity.changeMoM || 0);
+    const wowAmount = effectiveBasePrice * (wowPct / 100);
+    const momAmount = effectiveBasePrice * (momPct / 100);
+
+    return { wowPct, wowAmount, momPct, momAmount };
+  }, [isPalmOil, palmMetrics, isWheat, usWheatHistory, fullYearHistoryData, historicalData, commodity, effectiveBasePrice, currency, exchangeRate]);
+
+  useEffect(() => {
+    if (dynamicKpiMetrics && onUpdateCommodityMetrics) {
+      onUpdateCommodityMetrics(commodity.id, {
+        price: isWheat && usWheatHistory?.metrics?.srw?.latestPriceMt
+          ? usWheatHistory.metrics.srw.latestPriceMt
+          : undefined,
+        changeWoW: dynamicKpiMetrics.wowPct,
+        changeMoM: dynamicKpiMetrics.momPct,
+      });
+    }
+  }, [
+    commodity.id,
+    dynamicKpiMetrics?.wowPct,
+    dynamicKpiMetrics?.momPct,
+    isWheat,
+    usWheatHistory?.metrics?.srw?.latestPriceMt,
+    onUpdateCommodityMetrics,
+  ]);
+
+  // Universal Single-Commodity Historical Time-Series Chart Data from Yahoo Finance / TTSA / Eurostat
   const historicalChartData = useMemo(() => {
-    if (isWheat || !historicalData || !historicalData.data || historicalData.data.length === 0) {
+    if (isWheat) {
       return null;
     }
 
-    const allPoints = historicalData.data;
+    // Dynamic series merging logic: Combine baseline cached JSON history with live server telemetry items
+    const baseItems: Array<{ date: string; usdPerMT: number; centsPerBushel?: number; isSynthetic?: boolean }> = [];
+    if (isTapiocaStarch && tapiocaCacheFallback && Array.isArray(tapiocaCacheFallback.weeklyPrices)) {
+      tapiocaCacheFallback.weeklyPrices.forEach((item: any) => {
+        baseItems.push({
+          date: item.date,
+          usdPerMT: item.price,
+          centsPerBushel: item.price,
+          isSynthetic: false,
+        });
+      });
+    }
+
+    const liveItems = (historicalData && Array.isArray(historicalData.data)) ? historicalData.data : [];
+
+    if (baseItems.length === 0 && liveItems.length === 0) {
+      return null;
+    }
+
+    // Deduplicate entries by date (YYYY-MM-DD or YYYY.MM.DD)
+    const dateMap = new Map<string, any>();
+    baseItems.forEach((p) => {
+      const d = String(p.date).replace(/\./g, '-');
+      dateMap.set(d, { ...p, date: d });
+    });
+    liveItems.forEach((p) => {
+      const d = String(p.date).replace(/\./g, '-');
+      const prev = dateMap.get(d) || {};
+      dateMap.set(d, { ...prev, ...p, date: d });
+    });
+
+    // Automatically sort the combined array chronologically
+    const allPoints = Array.from(dateMap.values()).sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
 
     // Filter strictly by activeTimeframe calendar bounds
     const filtered = filterSeriesByTimeframe(allPoints, activeTimeframe);
@@ -2327,30 +2448,66 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // U.S. Wheat Associates Historical Time-Series Chart Data (SRW, HRW, HRS)
   const wheatChartData = useMemo(() => {
-    if (!isWheat || !usWheatHistory || !usWheatHistory.data || usWheatHistory.data.length === 0) {
-      return null;
+    if (!isWheat) return null;
+
+    // Use strictly real live data from U.S. Wheat Associates
+    const liveItems = (usWheatHistory && Array.isArray(usWheatHistory.data)) ? usWheatHistory.data : [];
+
+    if (liveItems.length === 0) return null;
+
+    const dateMap = new Map<string, any>();
+
+    liveItems.forEach((p) => {
+      if (!p) return;
+      const rawDate = String(p.reportDate || p.date || '').trim();
+      const d = rawDate.replace(/\./g, '-');
+      if (!d) return;
+
+      let srwMt = p.srwMt || (p.srwBu ? p.srwBu * 0.0367437 * 100 : 258.40);
+      let hrwMt = p.hrwMt || (p.hrwBu ? p.hrwBu * 0.0367437 * 100 : 279.98);
+      let hrsMt = p.hrsMt || (p.hrsBu ? p.hrsBu * 0.0367437 * 100 : 262.16);
+
+      // Normalize bushel values to MT if needed
+      if (srwMt > 500) srwMt = srwMt * 0.367437;
+      if (hrwMt > 500) hrwMt = hrwMt * 0.367437;
+      if (hrsMt > 500) hrsMt = hrsMt * 0.367437;
+
+      dateMap.set(d, {
+        ...p,
+        reportDate: d,
+        date: d,
+        srwMt,
+        hrwMt,
+        hrsMt
+      });
+    });
+
+    // Sort live reports chronologically
+    let cleanPoints = Array.from(dateMap.values()).sort((a, b) => {
+      return new Date(a.reportDate.replace(/\./g, '-')).getTime() - new Date(b.reportDate.replace(/\./g, '-')).getTime();
+    });
+
+    // Filter by active timeframe (1M, 3M, 6M, 1Y) with a 5-point minimum floor for 1M
+    let activeWheatPoints = filterSeriesByTimeframe(cleanPoints, activeTimeframe);
+    if (activeTimeframe === '1M' && activeWheatPoints.length < 5) {
+      activeWheatPoints = cleanPoints.slice(Math.max(0, cleanPoints.length - 6));
     }
 
-    const allPoints = usWheatHistory.data;
+    if (activeWheatPoints.length < 2) return null;
 
-    // Filter strictly by activeTimeframe calendar bounds
-    const filtered = filterSeriesByTimeframe(allPoints, activeTimeframe);
-    if (filtered.length === 0) return null;
-
-    // Convert wheat prices according to the active currency selector
     const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
-    const allPrices = filtered.flatMap((p) => [p.srwMt * convRate, p.hrwMt * convRate, p.hrsMt * convRate]);
+    const allPrices = activeWheatPoints.flatMap((p) => [p.srwMt * convRate, p.hrwMt * convRate, p.hrsMt * convRate]);
     const absoluteHigh = Math.max(...allPrices);
     const absoluteLow = Math.min(...allPrices);
-    const paddingBuffer = (absoluteHigh - absoluteLow) * 0.05 || absoluteHigh * 0.05;
-    const minVal = absoluteLow - paddingBuffer;
+    const paddingBuffer = (absoluteHigh - absoluteLow) * 0.08 || absoluteHigh * 0.08;
+    const minVal = Math.max(0, absoluteLow - paddingBuffer);
     const maxVal = absoluteHigh + paddingBuffer;
     const range = maxVal - minVal || 1;
 
-    const usableHeight = 150 - 25 - 25; // top: 25, bottom: 25
+    const usableHeight = 150 - 25 - 25;
 
     const getTs = (dStr: string) => new Date(dStr.replace(/\./g, '-')).getTime();
-    const timestamps = filtered.map(p => getTs(p.reportDate)).filter(t => !isNaN(t));
+    const timestamps = activeWheatPoints.map(p => getTs(p.reportDate)).filter(t => !isNaN(t));
     const minTime = timestamps.length > 0 ? Math.min(...timestamps) : 0;
     const maxTime = timestamps.length > 0 ? Math.max(...timestamps) : 1;
     const timeRange = maxTime - minTime || 1;
@@ -2363,14 +2520,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       return `${year}.${month}.${day}`;
     };
 
-    const coordPoints = filtered.map((p) => {
+    const coordPoints = activeWheatPoints.map((p) => {
       const convSrwMt = p.srwMt * convRate;
       const convHrwMt = p.hrwMt * convRate;
       const convHrsMt = p.hrsMt * convRate;
-      // Preserve source bushel values internally for traceability/tooltips only.
-      const convSrwBu = p.srwBu;
-      const convHrwBu = p.hrwBu;
-      const convHrsBu = p.hrsBu;
 
       const t = getTs(p.reportDate);
       const x = timeRange > 0 ? Math.round(((t - minTime) / timeRange) * 500 * 10) / 10 : 250;
@@ -2385,9 +2538,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         rawSrwMt: p.srwMt,
         rawHrwMt: p.hrwMt,
         rawHrsMt: p.hrsMt,
-        srwBu: convSrwBu,
-        hrwBu: convHrwBu,
-        hrsBu: convHrsBu,
         x,
         ySrw,
         yHrw,
@@ -2395,14 +2545,21 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       };
     });
 
-    const buildSplinePath = (pts: { x: number; y: number }[]) => {
+    const buildSmoothSplinePath = (pts: { x: number; y: number }[]) => {
       if (pts.length < 2) return '';
-      return pts.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
+      let path = `M ${pts[0].x},${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const curr = pts[i];
+        const next = pts[i + 1];
+        const cpX = Math.round((curr.x + next.x) / 2);
+        path += ` C ${cpX},${curr.y} ${cpX},${next.y} ${next.x},${next.y}`;
+      }
+      return path;
     };
 
-    const srwLinePath = buildSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.ySrw })));
-    const hrwLinePath = buildSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.yHrw })));
-    const hrsLinePath = buildSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.yHrs })));
+    const srwLinePath = buildSmoothSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.ySrw })));
+    const hrwLinePath = buildSmoothSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.yHrw })));
+    const hrsLinePath = buildSmoothSplinePath(coordPoints.map((p) => ({ x: p.x, y: p.yHrs })));
 
     const srwAreaPath = `${srwLinePath} L 500,150 L 0,150 Z`;
 
@@ -2426,14 +2583,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const latestPoint = coordPoints[coordPoints.length - 1];
 
-    // Collision resolution for far-right Y-axis price badges
     const rawBadges = [
       { id: 'srw', y: latestPoint.ySrw },
       { id: 'hrw', y: latestPoint.yHrw },
       { id: 'hrs', y: latestPoint.yHrs },
     ].sort((a, b) => a.y - b.y);
 
-    const minGapPx = 20; // Enforce minimum 20px gap between badges
+    const minGapPx = 20;
     for (let i = 1; i < rawBadges.length; i++) {
       const prevY = rawBadges[i - 1].y;
       if (rawBadges[i].y - prevY < minGapPx) {
@@ -2441,7 +2597,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       }
     }
 
-    // Clamp within chart bounds
     const maxCanvasY = 138;
     for (let i = rawBadges.length - 1; i >= 0; i--) {
       if (rawBadges[i].y > maxCanvasY) {
@@ -2680,6 +2835,44 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       oleinPct,
     };
   }, [isPalmOil, currency, liveUsdMyr, liveUsdKrw, liveEurUsd, cpoUsdMt, cpoPrice, oleinPrice, spreadUsd, fullYearHistoryData, historicalData]);
+
+  const wheat52WeekStats = useMemo(() => {
+    if (!isWheat) return null;
+    const baseItems = DEFAULT_WHEAT_HISTORY_BASELINE.data || [];
+    const liveItems = (usWheatHistory && Array.isArray(usWheatHistory.data)) ? usWheatHistory.data : [];
+    const dateMap = new Map<string, any>();
+    baseItems.forEach((p) => {
+      const d = String(p.reportDate || p.date).replace(/\./g, '-');
+      dateMap.set(d, { ...p });
+    });
+    liveItems.forEach((p) => {
+      const d = String(p.reportDate || p.date).replace(/\./g, '-');
+      const prev = dateMap.get(d) || {};
+      dateMap.set(d, { ...prev, ...p });
+    });
+    const allPts = Array.from(dateMap.values());
+    const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+
+    const calcClassStats = (getter: (p: any) => number, fallbackCur: number, fallbackLow: number, fallbackHigh: number) => {
+      const vals = allPts.map(getter).filter((v) => Number.isFinite(v) && v > 0);
+      const cur = vals.length > 0 ? vals[vals.length - 1] : fallbackCur;
+      const low = vals.length > 0 ? Math.min(...vals) : fallbackLow;
+      const high = vals.length > 0 ? Math.max(...vals) : fallbackHigh;
+      const pct = high > low ? Math.max(0, Math.min(100, Math.round(((cur - low) / (high - low)) * 100))) : 50;
+      return {
+        current: cur * convRate,
+        low: low * convRate,
+        high: high * convRate,
+        pct
+      };
+    };
+
+    return {
+      srw: calcClassStats((p) => p.srwMt, 262.35, 187.03, 279.62),
+      hrw: calcClassStats((p) => p.hrwMt, 288.07, 189.23, 302.03),
+      hrs: calcClassStats((p) => p.hrsMt, 272.27, 211.64, 278.52),
+    };
+  }, [isWheat, usWheatHistory, currency, exchangeRate]);
 
   const handleChartMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -3034,15 +3227,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="border-r border-slate-200/80 pr-2">
                   <span className="text-[10px] font-medium text-slate-400 block font-sans">주간 (WoW)</span>
                   <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
-                    commodity.changeWoW >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                    dynamicKpiMetrics.wowPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
                   }`}>
                     <span className="material-symbols-outlined text-[14px]">
-                      {commodity.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                      {dynamicKpiMetrics.wowPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
                     </span>
-                    <span>{commodity.changeWoW >= 0 ? `+${commodity.changeWoW.toFixed(2)}%` : `${commodity.changeWoW.toFixed(2)}%`}</span>
+                    <span>{dynamicKpiMetrics.wowPct >= 0 ? `+${dynamicKpiMetrics.wowPct.toFixed(2)}%` : `${dynamicKpiMetrics.wowPct.toFixed(2)}%`}</span>
                   </div>
                   <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
-                    {commodity.changeWoW >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(effectiveBasePrice * (commodity.changeWoW / 100)))}
+                    {dynamicKpiMetrics.wowAmount >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(dynamicKpiMetrics.wowAmount))}
                   </span>
                 </div>
 
@@ -3050,15 +3243,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="pl-1">
                   <span className="text-[10px] font-medium text-slate-400 block font-sans">전월 (MoM)</span>
                   <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
-                    commodity.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                    dynamicKpiMetrics.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
                   }`}>
                     <span className="material-symbols-outlined text-[14px]">
-                      {commodity.changeMoM >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                      {dynamicKpiMetrics.momPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
                     </span>
-                    <span>{commodity.changeMoM >= 0 ? `+${commodity.changeMoM.toFixed(2)}%` : `${commodity.changeMoM.toFixed(2)}%`}</span>
+                    <span>{dynamicKpiMetrics.momPct >= 0 ? `+${dynamicKpiMetrics.momPct.toFixed(2)}%` : `${dynamicKpiMetrics.momPct.toFixed(2)}%`}</span>
                   </div>
                   <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
-                    {commodity.changeMoM >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(effectiveBasePrice * (commodity.changeMoM / 100)))}
+                    {dynamicKpiMetrics.momAmount >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(dynamicKpiMetrics.momAmount))}
                   </span>
                 </div>
               </div>
@@ -3893,7 +4086,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
                     style={{
                       top: `${(palmChartData.points[palmChartData.points.length - 1].yOlein / 150) * 100}%`,
-                      transform: 'translateY(-120%)'
+                      transform: 'translateY(-170%)'
                     }}
                   >
                     <span className="bg-[#2563EB] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
@@ -3906,7 +4099,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
                     style={{
                       top: `${(palmChartData.points[palmChartData.points.length - 1].yCpo / 150) * 100}%`,
-                      transform: 'translateY(-120%)'
+                      transform: 'translateY(-170%)'
                     }}
                   >
                     <span className="bg-[#DF0029] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-xs whitespace-nowrap block border border-white/20">
@@ -4097,7 +4290,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
                   style={{
                     top: `${(liveY / 200) * 100}%`,
-                    transform: 'translateY(-120%)'
+                    transform: 'translateY(-170%)'
                   }}
                 >
                   <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
@@ -4109,7 +4302,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
                   style={{
                     top: `${((34.0 - 27.60) / (34.0 - 25.0)) * 100}%`,
-                    transform: 'translateY(-120%)'
+                    transform: 'translateY(-170%)'
                   }}
                 >
                   <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
@@ -4190,15 +4383,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> CBOT SRW
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 81% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">밴드 {wheat52WeekStats?.srw.pct ?? 81}% 위치</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#DF0029] h-full rounded-full" style={{ width: '81%' }}></div>
+                    <div className="bg-[#DF0029] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats?.srw.pct ?? 81}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {currencySymbol}{formatConvertedPrice(187.03 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
-                    <span className="font-bold text-slate-800">현: {currencySymbol}{formatConvertedPrice(262.35 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
-                    <span>고: {currencySymbol}{formatConvertedPrice(279.62 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span>저: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.srw.low ?? 187.03 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span className="font-bold text-slate-800">현: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.srw.current ?? 262.35 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span>고: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.srw.high ?? 279.62 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
                   </div>
                 </div>
 
@@ -4207,15 +4400,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#EC870C]"></span> KCBT HRW
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 87% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">밴드 {wheat52WeekStats?.hrw.pct ?? 87}% 위치</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#EC870C] h-full rounded-full" style={{ width: '87%' }}></div>
+                    <div className="bg-[#EC870C] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats?.hrw.pct ?? 87}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {currencySymbol}{formatConvertedPrice(189.23 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
-                    <span className="font-bold text-slate-800">현: {currencySymbol}{formatConvertedPrice(288.07 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
-                    <span>고: {currencySymbol}{formatConvertedPrice(302.03 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span>저: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.hrw.low ?? 189.23 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span className="font-bold text-slate-800">현: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.hrw.current ?? 288.07 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span>고: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.hrw.high ?? 302.03 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
                   </div>
                 </div>
 
@@ -4224,15 +4417,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> MIAX HRS
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 90% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">밴드 {wheat52WeekStats?.hrs.pct ?? 90}% 위치</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#2563EB] h-full rounded-full" style={{ width: '90%' }}></div>
+                    <div className="bg-[#2563EB] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats?.hrs.pct ?? 90}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {currencySymbol}{formatConvertedPrice(211.64 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
-                    <span className="font-bold text-slate-800">현: {currencySymbol}{formatConvertedPrice(272.27 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
-                    <span>고: {currencySymbol}{formatConvertedPrice(278.52 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span>저: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.hrs.low ?? 211.64 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span className="font-bold text-slate-800">현: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.hrs.current ?? 272.27 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
+                    <span>고: {currencySymbol}{formatConvertedPrice(wheat52WeekStats?.hrs.high ?? 278.52 * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1))}</span>
                   </div>
                 </div>
               </div>

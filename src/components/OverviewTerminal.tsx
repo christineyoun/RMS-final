@@ -701,10 +701,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           className="font-mono text-xl font-bold text-[#111827]"
                           id={item.id === 'wheat' ? 'ticker-price' : `el-${item.id}-price`}
                         >
-                          {item.id === 'palm-oil'
-                            ? item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                            : currency === 'KRW'
-                            ? `₩${Math.round(item.price).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+                          {currency === 'KRW'
+                            ? `₩${Math.round(item.price).toLocaleString('en-US')}`
                             : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </span>
                         <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
@@ -757,6 +755,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {oilCommodities.map((item) => {
                 const isSoybeanOil = item.id === 'soybean-oil';
+                const isWoWPositive = item.changeWoW >= 0;
 
                 return (
                   <div
@@ -782,13 +781,13 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </div>
                         <span
                           className={`shrink-0 ${
-                            item.changeWoW >= 0
+                            isWoWPositive
                               ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                           }`}
                         >
                           <span className="material-symbols-outlined text-[13px]">
-                            {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                            {isWoWPositive ? 'arrow_upward' : 'arrow_downward'}
                           </span>
                           {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
                         </span>
@@ -888,7 +887,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="material-symbols-outlined text-[13px]">
                             {isWoWPositive ? 'arrow_upward' : isWoWNegative ? 'arrow_downward' : 'remove'}
                           </span>
-                          {isWoWPositive ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
+                          {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
                         </span>
                       </div>
 
@@ -902,10 +901,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                               : `$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                           </span>
                           <span className="text-xs text-[#6b7280] ml-1">
-                            {formatStarchSweetenerBenchmark(item.id, currency)?.unitText ??
-                              (COMMODITY_CONFIGS[item.id]
-                                ? (currency === 'KRW' ? 'KRW / MT' : `${COMMODITY_CONFIGS[item.id].currency} / MT`)
-                                : item.unit)}
+                            {item.unit}
                           </span>
                         </div>
                         <div className="w-16 h-5">

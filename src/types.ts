@@ -48,6 +48,7 @@ export interface Commodity {
   landedKrwKg: number;
 
   sparkline?: number[];
+  sparklineHistory?: Array<{ usdPerMT?: number; price?: number; date?: string } | number>;
   aiSynthesis?: string;
   recommendedCoverage?: string;
 
@@ -260,14 +261,25 @@ export interface LiveMarketUpdate {
   } | null;
   cornPrice: number;
   cornWowChange?: number;
+  cornMomChange?: number;
   soybeanPrice: number;
   soybeanWowChange?: number;
+  soybeanMomChange?: number;
   soybeanOilPrice: number;
   soybeanOilWowChange?: number;
+  soybeanOilMomChange?: number;
   palmOilPrice: number;
+  palmOilWowChange?: number;
+  palmOilMomChange?: number;
   sugarPrice: number;
+  sugarWowChange?: number;
+  sugarMomChange?: number;
   potatoStarchPrice: number;
+  potatoStarchWowChange?: number;
+  potatoStarchMomChange?: number;
   tapiocaStarchPrice: number;
+  tapiocaStarchWowChange?: number;
+  tapiocaStarchMomChange?: number;
   aiBriefSynthesis: string;
   directives?: Array<{
     type: 'action' | 'watch' | 'favorable' | string;

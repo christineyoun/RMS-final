@@ -1,6 +1,5 @@
 import React from 'react';
-import PriceCard, { CommodityItem } from './PriceCard';
-import { formatStarchSweetenerBenchmark } from '../utils/landedCostCalculator';
+import { CommodityItem } from './PriceCard';
 import { Currency } from '../types';
 
 export interface CommodityCardProps {
@@ -55,24 +54,28 @@ export const CommodityCard: React.FC<CommodityCardProps> = ({
                 : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200'
             }
           >
-            {item.changeWoW >= 0 ? `+${item.changeWoW}%` : `${item.changeWoW}%`}
+            {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
           </span>
         </div>
 
         <div className="mt-2 flex items-baseline justify-between">
           <div>
             <span className="font-mono text-xl font-bold text-[#111827]">
-              {formatStarchSweetenerBenchmark(item.id, currency as Currency)?.priceText ??
-                (item.id === 'palm-oil'
-                  ? item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                  : currency === 'KRW'
-                  ? `₩${Math.round(item.price).toLocaleString('en-US')}`
-                  : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)}
+              {currency === 'KRW'
+                ? `₩${Math.round(item.price).toLocaleString('en-US')}`
+                : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
             </span>
-            <span className="text-xs text-[#6b7280] ml-1">
-              {formatStarchSweetenerBenchmark(item.id, currency as Currency)?.unitText ?? item.unit}
-            </span>
+            <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
           </div>
+
+          {item.changeMoM !== undefined && (
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] text-[#6b7280]">전월 대비</span>
+              <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
+                {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header, getKSTTime } from './components/Header';
 import { OverviewTerminal } from './components/OverviewTerminal';
@@ -10,6 +10,9 @@ import { geminiController } from './services/geminiController';
 import { getLiveExchangeRate, subscribeFxRates, getAllFxRates, FXRates } from './services/currencyService';
 import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './utils/commodityConversions';
 import { exportGlobalDashboardToPdf } from './utils/exportDashboardPdf';
+import { calculateDynamicMetrics } from './utils/landedCostCalculator';
+import tapiocaCacheFallback from './data/cache_tapioca.json';
+import palmOilCacheFallback from './data/cache_palmoil.json';
 
 export default function App() {
   const [activeView, setActiveView] = useState<string>('main-dashboard');
@@ -97,23 +100,38 @@ export default function App() {
 
           if (c.id === 'wheat' && liveData.wheatPrice) {
             updatedPrice = liveData.wheatPrice;
+            if (liveData.wheatMetrics?.srw) {
+              updatedChangeWoW = liveData.wheatMetrics.srw.wowChangePct;
+              updatedChangeMoM = liveData.wheatMetrics.srw.momChangePct;
+            }
           } else if (c.id === 'corn' && liveData.cornPrice) {
             updatedPrice = liveData.cornPrice;
             if (liveData.cornWowChange !== undefined) updatedChangeWoW = liveData.cornWowChange;
+            if (liveData.cornMomChange !== undefined) updatedChangeMoM = liveData.cornMomChange;
           } else if (c.id === 'soybean' && liveData.soybeanPrice) {
             updatedPrice = liveData.soybeanPrice;
             if (liveData.soybeanWowChange !== undefined) updatedChangeWoW = liveData.soybeanWowChange;
+            if (liveData.soybeanMomChange !== undefined) updatedChangeMoM = liveData.soybeanMomChange;
           } else if (c.id === 'soybean-oil' && liveData.soybeanOilPrice) {
             updatedPrice = liveData.soybeanOilPrice;
             if (liveData.soybeanOilWowChange !== undefined) updatedChangeWoW = liveData.soybeanOilWowChange;
+            if (liveData.soybeanOilMomChange !== undefined) updatedChangeMoM = liveData.soybeanOilMomChange;
           } else if (c.id === 'palm-oil' && liveData.palmOilPrice) {
             updatedPrice = liveData.palmOilPrice;
+            if (liveData.palmOilWowChange !== undefined) updatedChangeWoW = liveData.palmOilWowChange;
+            if (liveData.palmOilMomChange !== undefined) updatedChangeMoM = liveData.palmOilMomChange;
           } else if (c.id === 'sugar' && liveData.sugarPrice) {
             updatedPrice = liveData.sugarPrice;
+            if (liveData.sugarWowChange !== undefined) updatedChangeWoW = liveData.sugarWowChange;
+            if (liveData.sugarMomChange !== undefined) updatedChangeMoM = liveData.sugarMomChange;
           } else if (c.id === 'potato-starch' && liveData.potatoStarchPrice) {
             updatedPrice = liveData.potatoStarchPrice;
+            if (liveData.potatoStarchWowChange !== undefined) updatedChangeWoW = liveData.potatoStarchWowChange;
+            if (liveData.potatoStarchMomChange !== undefined) updatedChangeMoM = liveData.potatoStarchMomChange;
           } else if (c.id === 'tapioca-starch' && liveData.tapiocaStarchPrice) {
             updatedPrice = liveData.tapiocaStarchPrice;
+            if (liveData.tapiocaStarchWowChange !== undefined) updatedChangeWoW = liveData.tapiocaStarchWowChange;
+            if (liveData.tapiocaStarchMomChange !== undefined) updatedChangeMoM = liveData.tapiocaStarchMomChange;
           }
 
           return {
@@ -194,6 +212,29 @@ export default function App() {
     setIsSyncing(false);
   };
 
+  const handleUpdateCommodityMetrics = useCallback(
+    (commodityId: string, metrics: { price?: number; changeWoW?: number; changeMoM?: number }) => {
+      setCommodities((prev) =>
+        prev.map((c) => {
+          if (c.id === commodityId) {
+            const updatedPrice = metrics.price !== undefined && metrics.price > 0 ? metrics.price : c.price;
+            const updatedWoW = metrics.changeWoW !== undefined ? metrics.changeWoW : c.changeWoW;
+            const updatedMoM = metrics.changeMoM !== undefined ? metrics.changeMoM : c.changeMoM;
+            
+            return {
+              ...c,
+              price: updatedPrice,
+              changeWoW: updatedWoW,
+              changeMoM: updatedMoM,
+            };
+          }
+          return c;
+        })
+      );
+    },
+    []
+  );
+
   // Transform commodities based on global currency state
   const mappedCommodities = useMemo(() => {
     return commodities.map((c) => {
@@ -235,10 +276,28 @@ export default function App() {
         newUnit = 'KRW / MT';
       }
 
+      // 3. CENTRAL DYNAMIC METRIC CALCULATION FOR STARCHES & OILS ON FIRST LOAD
+      let computedWoW = c.changeWoW;
+      let computedMoM = c.changeMoM;
+
+      if (c.id === 'tapioca-starch' && tapiocaCacheFallback?.weeklyPrices) {
+        const series = tapiocaCacheFallback.weeklyPrices.map(p => ({ usdPerMT: p.price, date: p.date }));
+        const metrics = calculateDynamicMetrics('tapioca-starch', c.price, series);
+        if (metrics.wowPct !== 0) computedWoW = metrics.wowPct;
+        if (metrics.momPct !== 0) computedMoM = metrics.momPct;
+      } else if (c.id === 'palm-oil' && palmOilCacheFallback?.historicalSeries) {
+        const series = palmOilCacheFallback.historicalSeries.map(p => ({ usdPerMT: p.usdPerMT, date: p.date }));
+        const metrics = calculateDynamicMetrics('palm-oil', c.price, series);
+        if (metrics.wowPct !== 0) computedWoW = metrics.wowPct;
+        if (metrics.momPct !== 0) computedMoM = metrics.momPct;
+      }
+
       return {
         ...c,
         price: convertedPrice,
         unit: newUnit,
+        changeWoW: computedWoW,
+        changeMoM: computedMoM,
         _originalPrice: c.id === 'palm-oil' ? (c.price > 2000 ? c.price : Math.round(c.price * (fxRates.USD_MYR || getLiveExchangeRate('USD_MYR') || 4.0845))) : c.price,
         _originalUnit: c.unit,
       };
@@ -291,6 +350,7 @@ export default function App() {
               onRefreshGemini={handleRefreshGemini}
               isSyncing={isSyncing}
               modelVersion={modelVersion}
+              onUpdateCommodityMetrics={handleUpdateCommodityMetrics}
             />
           )}
         </div>

@@ -196,7 +196,15 @@ export const Header: React.FC<HeaderProps> = ({
     try {
       await Promise.allSettled([
         onRefreshGemini ? onRefreshGemini() : Promise.resolve(),
-        clientMarketDataService.refresh()
+        clientMarketDataService.refresh(),
+        fetch('/api/market-data/refresh', { method: 'POST', cache: 'no-store' }).catch(() => null),
+        fetch('/api/history?commodity=palm-oil&force=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/history?commodity=tapioca-starch&force=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/history?commodity=corn&force=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/history?commodity=soybean&force=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/history?commodity=soybean-oil&force=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/history?commodity=sugar&force=true', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/uswheat/price-history?force=true', { cache: 'no-store' }).catch(() => null),
       ]);
     } catch (e) {
       console.error('Market data manual refresh error:', e);

@@ -6,6 +6,8 @@ import type { UsdaWheatWorldSummary } from './usdaFasService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
 import { centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
 import palmOilCache from '../data/cache_palmoil.json' with { type: 'json' };
+import { scrapeLivePalmOilPrices } from './historicalPriceService.ts';
+import { ttsaService } from './ttsaService.ts';
 
 export const getKSTFormattedTime = (): string => {
   return (
@@ -894,6 +896,16 @@ Output ONLY valid raw JSON in this exact structure without markdown:
 
       // 6. Fetch U.S. Wheat Associates Price Report
       await this.fetchUsWheatPriceReport(force);
+
+      // 7. Scrape Palm Oil (FCPO / RBD Olein) live settlement
+      await scrapeLivePalmOilPrices(force).catch((err) =>
+        console.warn('[MarketDataService] Palm oil live sync notice:', err?.message || err)
+      );
+
+      // 8. Scrape Thai Tapioca Starch Association (TTSA) weekly benchmark
+      await ttsaService.getWeeklyPrices('6M', force).catch((err) =>
+        console.warn('[MarketDataService] TTSA live sync notice:', err?.message || err)
+      );
 
       return this.getCurrentPayload();
     } finally {

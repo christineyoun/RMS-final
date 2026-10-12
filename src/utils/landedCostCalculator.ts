@@ -267,3 +267,32 @@ export const calculateHrwKoreaLandedCost = (
     missingInputs: []
   };
 };
+
+/**
+ * Shared dynamic WoW and MoM KPI calculator across the application.
+ * Calculates dynamic WoW and MoM percentage changes from time series arrays.
+ */
+export function calculateDynamicMetrics(
+  commodityId: string,
+  basePrice: number,
+  timeSeries?: Array<{ usdPerMT?: number; price?: number; date?: string } | number>
+) {
+  if (!timeSeries || timeSeries.length < 2) {
+    return { wowPct: 0, momPct: 0 };
+  }
+
+  const getPrice = (item: any): number => {
+    if (typeof item === 'number') return item;
+    return item?.usdPerMT ?? item?.price ?? basePrice;
+  };
+
+  const latest = getPrice(timeSeries[timeSeries.length - 1]);
+  const weekAgo = getPrice(timeSeries[Math.max(0, timeSeries.length - 2)]);
+  const monthAgo = getPrice(timeSeries[Math.max(0, timeSeries.length - 5)]);
+
+  const wowPct = weekAgo !== 0 ? Number((((latest - weekAgo) / weekAgo) * 100).toFixed(2)) : 0;
+  const momPct = monthAgo !== 0 ? Number((((latest - monthAgo) / monthAgo) * 100).toFixed(2)) : 0;
+
+  return { wowPct, momPct };
+}
+

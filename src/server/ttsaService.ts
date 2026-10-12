@@ -94,7 +94,9 @@ export class TtsaService {
     { date: '2026-09-01', price: 705, domesticThb: 22.30 },
     { date: '2026-09-08', price: 705, domesticThb: 22.30 },
     { date: '2026-09-15', price: 700, domesticThb: 22.10 },
-    { date: '2026-09-22', price: 700, domesticThb: 22.10 }
+    { date: '2026-09-22', price: 700, domesticThb: 22.10 },
+    { date: '2026-09-29', price: 700, domesticThb: 22.10 },
+    { date: '2026-10-06', price: 695, domesticThb: 22.00 }
   ];
 
   private readonly fallbackSupply: TtsaSupplyBalance = {
@@ -109,10 +111,10 @@ export class TtsaService {
     nativeStarchExportYoY: 4.2, 
     modifiedStarchExportVolume: 1.15, 
     modifiedStarchExportYoY: -1.5, 
-    latestFobBangkokPrice: 700,
-    priceWoW: 0.00,
+    latestFobBangkokPrice: 695,
+    priceWoW: -0.71,
     sourceDates: {
-      priceDate: '2026-09-22',
+      priceDate: '2026-10-06',
       statisticsDate: '2026-09-11'
     }
   };
