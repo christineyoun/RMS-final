@@ -49,8 +49,6 @@ import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, get
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
-import { palmOilService } from './palmOilService.ts';
-import { ttsaService } from './ttsaService.ts';
 import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
 import { amisService } from './amisService.ts';
 import { wheatIntelligenceService } from './wheatIntelligenceService.ts';
@@ -60,6 +58,7 @@ import { cornIntelligenceService } from './cornIntelligenceService.ts';
 import { soybeanIntelligenceService } from './soybeanIntelligenceService.ts';
 import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService.ts';
 import { marketIntelligenceService } from './marketIntelligenceService.ts';
+import { rmsAiService } from './rmsAiService.ts';
 import type { NormalizedMarketData } from '../types.ts';
 import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from '../utils/commodityConversions.ts';
 
@@ -963,6 +962,27 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
       return;
     }
 
+    // RMS AI & Risk Management Strategy Route
+    if (url.startsWith('/api/rms/strategy')) {
+      try {
+        const parsedUrl = new URL(url, 'http://localhost');
+        const commodityId = parsedUrl.searchParams.get('commodityId') || 'wheat';
+        const commodityName = parsedUrl.searchParams.get('commodityName') || 'U.S. Wheat';
+        const price = parseFloat(parsedUrl.searchParams.get('price') || '246.55');
+        const unit = parsedUrl.searchParams.get('unit') || 'USD/MT';
+        
+        const evaluation = await rmsAiService.evaluateStrategy(commodityId, commodityName, price, [price * 0.85, price * 0.9, price * 0.95, price], unit);
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 200;
+        res.end(JSON.stringify({ success: true, data: evaluation }, null, 2));
+      } catch (err: any) {
+        res.statusCode = 500;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+      return;
+    }
+
     // Live Origin Logistics & Shipment Risk API via Gemini Search Engine Grounding
     if (url.startsWith('/api/origins/live')) {
       try {
@@ -1129,38 +1149,6 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
       return;
     }
 
-    // Palm Oil Prices Endpoint
-    if (url.startsWith('/api/palmoil/prices') || url.startsWith('/api/palmoil/history')) {
-      try {
-        const force = url.includes('force=true');
-        const data = await palmOilService.getPriceSeries(force);
-        res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: true, data }, null, 2));
-      } catch (err: any) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-      return;
-    }
-
-    // Tapioca Starch Prices Endpoint
-    if (url.startsWith('/api/tapioca/prices') || url.startsWith('/api/tapioca/history')) {
-      try {
-        const force = url.includes('force=true');
-        const data = await ttsaService.getWeeklyPrices('1Y', force);
-        res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: true, data }, null, 2));
-      } catch (err: any) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-      return;
-    }
-
     if (url.startsWith('/api/scm/live-policy')) {
       try {
         const policyData = await getLiveTradePolicyAlert();
@@ -1177,7 +1165,8 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
 
     if (url.startsWith('/api/scm/live-market-issues')) {
       try {
-        const issuesData = await fetchLiveMarketIssues();
+        const force = url.includes('force=true');
+        const issuesData = await fetchLiveMarketIssues(force);
         res.setHeader('Content-Type', 'application/json');
         res.statusCode = 200;
         res.end(JSON.stringify(issuesData));

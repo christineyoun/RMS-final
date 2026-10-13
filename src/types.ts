@@ -44,7 +44,7 @@ export interface Commodity {
   description?: string;
   price: number;
   unit: string;
-  changeWoW: number;
+  changeWoW?: number | null;
   landedKrwKg: number;
 
   sparkline?: number[];
@@ -64,7 +64,7 @@ export interface Commodity {
   path?: string;
   categoryNameKo?: string;
   priceKrwEstimated?: number;
-  changeMoM?: number;
+  changeMoM?: number | null;
   changeYoY?: number;
   cifBusanDesc?: string;
   exchange?: string;

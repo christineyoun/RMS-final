@@ -822,7 +822,7 @@ export class UsdaFasService {
    */
   public async fetchWorldPsd(
     rawCommodityCode: string = '0410000',
-    marketYear: string = '2026'
+    marketYear: string = String(new Date().getFullYear())
   ): Promise<UsdaPsdFetchResult> {
     const commodityCode = resolveCommodityCode(rawCommodityCode);
     const { key: apiKey, source: apiKeySource } = this.getApiKeyInfo();
@@ -1021,7 +1021,7 @@ export class UsdaFasService {
   public async fetchCountryPsd(
     rawCommodityCode: string = '0440000',
     countryCode: string = 'US',
-    marketYear: string = '2026'
+    marketYear: string = String(new Date().getFullYear())
   ): Promise<UsdaPsdFetchResult> {
     const commodityCode = resolveCommodityCode(rawCommodityCode);
     const countryKey = countryCode.trim().toUpperCase();

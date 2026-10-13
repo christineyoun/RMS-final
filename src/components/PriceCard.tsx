@@ -9,8 +9,8 @@ export interface CommodityItem {
   gradeEn: string;
   price: number;
   unit: string;
-  changeWoW: number;
-  changeMoM: number;
+  changeWoW?: number | null;
+  changeMoM?: number | null;
   path: string;
   category: 'grain' | 'oilseed' | 'sugar';
   sparkline?: number[];
@@ -22,12 +22,12 @@ interface PriceCardProps {
   onNavigate?: (path: string) => void;
 }
 
-const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): string => {
+const getSparklinePath = (sparkline: number[] | undefined, changeWoW?: number | null): string => {
   let points: number[] = sparkline && sparkline.length >= 2 ? [...sparkline] : [];
   if (points.length < 2) {
-    if (changeWoW < 0) {
+    if (changeWoW != null && changeWoW < 0) {
       points = [12, 11, 9, 8, 7, 4];
-    } else if (changeWoW > 0) {
+    } else if (changeWoW != null && changeWoW > 0) {
       points = [4, 7, 8, 10, 11, 13];
     } else {
       points = [10, 10, 10, 10, 10, 10];
@@ -35,10 +35,10 @@ const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): s
   }
 
   // Force directional consistency with WoW metric:
-  if (changeWoW < 0 && points[points.length - 1] >= points[0]) {
+  if (changeWoW != null && changeWoW < 0 && points[points.length - 1] >= points[0]) {
     const diff = Math.abs(points[points.length - 1] - points[0]) + 3;
     points[points.length - 1] = points[0] - diff;
-  } else if (changeWoW > 0 && points[points.length - 1] <= points[0]) {
+  } else if (changeWoW != null && changeWoW > 0 && points[points.length - 1] <= points[0]) {
     const diff = Math.abs(points[0] - points[points.length - 1]) + 3;
     points[points.length - 1] = points[0] + diff;
   }
@@ -67,7 +67,7 @@ const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): s
 
 export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', onNavigate }) => {
   const sparklinePath = getSparklinePath(item.sparkline, item.changeWoW);
-  const isNegative = item.changeWoW < 0;
+  const isNegative = item.changeWoW != null && item.changeWoW < 0;
 
   return (
     <div
@@ -86,12 +86,16 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
           </div>
           <span
             className={`px-1.5 py-0.5 font-mono text-[11px] rounded flex items-center gap-0.5 border ${
-              item.changeWoW >= 0
+              item.changeWoW == null
+                ? 'bg-slate-50 border-slate-200 text-slate-400 font-semibold'
+                : item.changeWoW >= 0
                 ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669] font-semibold'
                 : 'bg-red-50 border-red-200/80 text-[#DF0029] font-bold'
             }`}
           >
-            {item.changeWoW >= 0 ? `+${item.changeWoW}% WoW` : `${item.changeWoW}% WoW`}
+            {item.changeWoW != null
+              ? (item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`)
+              : '--%'}
           </span>
         </div>
 
@@ -133,10 +137,16 @@ export const PriceCard: React.FC<PriceCardProps> = ({ item, currency = 'USD', on
         <span className="text-[10px]">전월 대비 (MoM)</span>
         <span
           className={`font-mono text-[11px] ${
-            item.changeMoM >= 0 ? 'text-[#059669] font-semibold' : 'text-[#DF0029] font-semibold'
+            item.changeMoM == null
+              ? 'text-slate-400 font-semibold'
+              : item.changeMoM >= 0
+              ? 'text-[#059669] font-semibold'
+              : 'text-[#DF0029] font-semibold'
           }`}
         >
-          {item.changeMoM >= 0 ? `+${item.changeMoM}% MoM` : `${item.changeMoM}% MoM`}
+          {item.changeMoM != null
+            ? (item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}% MoM` : `${item.changeMoM.toFixed(2)}% MoM`)
+            : '--%'}
         </span>
       </div>
     </div>

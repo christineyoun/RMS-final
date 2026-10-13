@@ -1,6 +1,6 @@
-import { Commodity, Currency } from '../types';
-import { COMMODITY_CONFIGS, getCalculatedMetrics } from '../lib/priceCalculator';
-import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './commodityConversions';
+import type { Commodity, Currency } from '../types.ts';
+import { COMMODITY_CONFIGS, getCalculatedMetrics } from '../lib/priceCalculator.ts';
+import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './commodityConversions.ts';
 
 export { COMMODITY_CONFIGS, getCalculatedMetrics };
 
@@ -218,17 +218,10 @@ export const formatLandedCostString = (
 };
 
 
-/**
- * U.S. HRW Wheat Estimated Korea Landed Cost Calculator
- * 
- * Formula: Estimated Korea Landed Cost = FOB Cash Price + Ocean Freight + Port Cost
- * Excludes: Insurance, USD/KRW conversion, Inland transportation, VAT, Customs duty, Financing cost.
- * Result unit: USD/MT.
- */
 export interface HrwLandedCostInputs {
-  hrwFobCashPriceUsdMt: number | null;
-  oceanFreightUsdMt: number | null;
-  portCostAssumptionUsdMt: number | null;
+  hrwFobCashPriceUsdMt?: number | null;
+  oceanFreightUsdMt?: number | null;
+  [key: string]: any;
 }
 
 export interface HrwLandedCostResult {
@@ -244,55 +237,128 @@ export const calculateHrwKoreaLandedCost = (
   const missingInputs: string[] = [];
   if (inputs.hrwFobCashPriceUsdMt == null) missingInputs.push('fob');
   if (inputs.oceanFreightUsdMt == null) missingInputs.push('freight');
-  if (inputs.portCostAssumptionUsdMt == null) missingInputs.push('portCost');
 
   if (missingInputs.length > 0) {
     const fobStr = inputs.hrwFobCashPriceUsdMt != null ? `FOB ${inputs.hrwFobCashPriceUsdMt.toFixed(2)}` : 'FOB 미확인';
     const freightStr = inputs.oceanFreightUsdMt != null ? `Freight ${inputs.oceanFreightUsdMt.toFixed(2)}` : 'Freight 미확인';
-    const portStr = inputs.portCostAssumptionUsdMt != null ? `Port ${inputs.portCostAssumptionUsdMt.toFixed(2)}` : 'Port (미설정)';
     return {
       isAvailable: false,
       landedCostUsdMt: null,
-      compactBreakdown: `${fobStr} + ${freightStr} + ${portStr}`,
+      compactBreakdown: `${fobStr} + ${freightStr}`,
       missingInputs
     };
   }
 
   const landedCost =
-    Math.round((inputs.hrwFobCashPriceUsdMt! + inputs.oceanFreightUsdMt! + inputs.portCostAssumptionUsdMt!) * 100) / 100;
+    Math.round((inputs.hrwFobCashPriceUsdMt! + inputs.oceanFreightUsdMt!) * 100) / 100;
   return {
     isAvailable: true,
     landedCostUsdMt: landedCost,
-    compactBreakdown: `FOB ${inputs.hrwFobCashPriceUsdMt!.toFixed(2)} + Freight ${inputs.oceanFreightUsdMt!.toFixed(2)} + Port ${inputs.portCostAssumptionUsdMt!.toFixed(2)}`,
+    compactBreakdown: `FOB ${inputs.hrwFobCashPriceUsdMt!.toFixed(2)} + Freight ${inputs.oceanFreightUsdMt!.toFixed(2)}`,
     missingInputs: []
   };
 };
 
+export interface DynamicMetricsResult {
+  wowPct: number | null;
+  momPct: number | null;
+}
+
 /**
  * Shared dynamic WoW and MoM KPI calculator across the application.
  * Calculates dynamic WoW and MoM percentage changes from time series arrays.
+ * Handles both date-based matching (approx 7 days and 30 days) and step-based fallback.
+ * Returns null whenever data is missing or empty.
  */
 export function calculateDynamicMetrics(
   commodityId: string,
   basePrice: number,
-  timeSeries?: Array<{ usdPerMT?: number; price?: number; date?: string } | number>
-) {
+  timeSeries?: Array<{ usdPerMT?: number; price?: number; date?: string; cpoUsd?: number; centsPerBushel?: number } | number> | null
+): DynamicMetricsResult {
   if (!timeSeries || timeSeries.length < 2) {
-    return { wowPct: 0, momPct: 0 };
+    return { wowPct: null, momPct: null };
   }
 
   const getPrice = (item: any): number => {
     if (typeof item === 'number') return item;
-    return item?.usdPerMT ?? item?.price ?? basePrice;
+    if (!item) return basePrice;
+    return item?.usdPerMT ?? item?.cpoUsd ?? item?.price ?? basePrice;
   };
 
-  const latest = getPrice(timeSeries[timeSeries.length - 1]);
-  const weekAgo = getPrice(timeSeries[Math.max(0, timeSeries.length - 2)]);
-  const monthAgo = getPrice(timeSeries[Math.max(0, timeSeries.length - 5)]);
+  const getDateMs = (item: any): number => {
+    if (typeof item === 'object' && item?.date) {
+      const ms = new Date(String(item.date).replace(/\./g, '-')).getTime();
+      return isNaN(ms) ? 0 : ms;
+    }
+    return 0;
+  };
 
-  const wowPct = weekAgo !== 0 ? Number((((latest - weekAgo) / weekAgo) * 100).toFixed(2)) : 0;
-  const momPct = monthAgo !== 0 ? Number((((latest - monthAgo) / monthAgo) * 100).toFixed(2)) : 0;
+  const latest = timeSeries[timeSeries.length - 1];
+  const latestPrice = getPrice(latest);
+  const latestMs = getDateMs(latest);
+
+  let weekPrice = 0;
+  let monthPrice = 0;
+
+  if (latestMs > 0) {
+    const targetWeek = latestMs - 7 * 86400000;
+    const targetMonth = latestMs - 30 * 86400000;
+    let minWDiff = Infinity;
+    let minMDiff = Infinity;
+
+    for (let i = 0; i < timeSeries.length - 1; i++) {
+      const ms = getDateMs(timeSeries[i]);
+      if (ms > 0) {
+        const wDiff = Math.abs(ms - targetWeek);
+        if (wDiff < minWDiff) {
+          minWDiff = wDiff;
+          weekPrice = getPrice(timeSeries[i]);
+        }
+        const mDiff = Math.abs(ms - targetMonth);
+        if (mDiff < minMDiff) {
+          minMDiff = mDiff;
+          monthPrice = getPrice(timeSeries[i]);
+        }
+      }
+    }
+  }
+
+  // Fallback to index-based if date matching didn't yield positive values
+  if (!weekPrice) {
+    const isDaily = timeSeries.length > 30;
+    const weekIdx = isDaily ? Math.max(0, timeSeries.length - 6) : Math.max(0, timeSeries.length - 2);
+    weekPrice = getPrice(timeSeries[weekIdx]);
+  }
+  if (!monthPrice) {
+    const isDaily = timeSeries.length > 30;
+    const monthIdx = isDaily ? Math.max(0, timeSeries.length - 23) : Math.max(0, timeSeries.length - 5);
+    monthPrice = getPrice(timeSeries[monthIdx]);
+  }
+
+  const wowPct = (weekPrice > 0 && latestPrice > 0)
+    ? Number((((latestPrice - weekPrice) / weekPrice) * 100).toFixed(2))
+    : null;
+  const momPct = (monthPrice > 0 && latestPrice > 0)
+    ? Number((((latestPrice - monthPrice) / monthPrice) * 100).toFixed(2))
+    : null;
 
   return { wowPct, momPct };
 }
+
+/**
+ * Universal percent change formatter.
+ * Renders cleanly with + / - signs or default placeholder '--%' when null / undefined.
+ */
+export const formatPercentChange = (
+  val: number | null | undefined,
+  suffix: string = '',
+  placeholder: string = '--%'
+): string => {
+  if (val === null || val === undefined || isNaN(val)) {
+    return placeholder;
+  }
+  const sign = val >= 0 ? '+' : '';
+  const numStr = val.toFixed(2);
+  return suffix ? `${sign}${numStr}% ${suffix}` : `${sign}${numStr}%`;
+};
 

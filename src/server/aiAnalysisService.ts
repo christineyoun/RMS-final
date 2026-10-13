@@ -12,6 +12,7 @@ import { originRadarService } from './originRadarService.ts';
 import { marketIntelligenceService } from './marketIntelligenceService.ts';
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { serverMarketDataService } from './marketDataService.ts';
+import { calculateDynamicMetrics } from '../utils/landedCostCalculator.ts';
 
 export interface AiAnalysisData {
   confidenceScore: number;
@@ -427,20 +428,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
 
   const validationCtx: ValidationContext = {
     commodityKey: canonicalKey,
-    wowPct:
-      canonicalKey === 'corn'
-        ? 1.15
-        : canonicalKey === 'soybean'
-        ? -0.45
-        : canonicalKey === 'soybean-oil'
-        ? 1.85
-        : canonicalKey === 'wheat'
-        ? -0.88
-        : canonicalKey === 'palm-oil'
-        ? 1.42
-        : canonicalKey === 'sugar'
-        ? -0.82
-        : 0.0,
+    wowPct: 0.0,
     productionDirection:
       canonicalKey === 'potato-starch' || canonicalKey === 'tapioca-starch'
         ? 'down'
@@ -698,10 +686,10 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
       const hrwPriceMt = usWheatRes?.data?.kcbtHrw?.priceUsdPerMetricTon ?? 288.07;
       const srwPriceMt = historyRes?.metrics?.srw?.latestPriceMt ?? Number(usWheatRes?.data?.cbotSrw?.priceUsdPerMetricTon || 262.35);
       const hrsPriceMt = historyRes?.metrics?.hrs?.latestPriceMt ?? Number(usWheatRes?.data?.miaxHrs?.priceUsdPerMetricTon || 272.27);
-      const wowPct = historyRes?.metrics?.hrw?.wowChangePct ?? -0.88;
-      const srwWoWPct = historyRes?.metrics?.srw?.wowChangePct ?? -3.03;
-      const hrsWoWPct = historyRes?.metrics?.hrs?.wowChangePct ?? -4.16;
-      const momPct = historyRes?.metrics?.hrw?.momChangePct ?? 1.95;
+      const wowPct = historyRes?.metrics?.hrw?.wowChangePct ?? 0;
+      const srwWoWPct = historyRes?.metrics?.srw?.wowChangePct ?? wowPct;
+      const hrsWoWPct = historyRes?.metrics?.hrs?.wowChangePct ?? wowPct;
+      const momPct = historyRes?.metrics?.hrw?.momChangePct ?? 0;
       validationCtx.wowPct = wowPct;
 
       const structuredInput = {
@@ -760,7 +748,10 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
       const marketItem: any = normData.find((m: any) =>
         isPalmOil ? /팜유|Palm Oil/i.test(m.commodity) : /원당|설탕|Sugar/i.test(m.commodity)
       );
-      const wowPct = typeof marketItem?.changePercent === 'number' ? marketItem.changePercent : (isPalmOil ? 1.42 : -0.82);
+      const histMetrics = histData?.data && histData.data.length >= 2 ? calculateDynamicMetrics(canonicalKey, 0, histData.data) : null;
+      const wowPct = typeof marketItem?.changePercent === 'number'
+        ? marketItem.changePercent
+        : (histMetrics?.wowPct ?? 0);
       validationCtx.wowPct = wowPct;
 
       const structuredInput = isPalmOil
@@ -1222,88 +1213,88 @@ export interface LiveMarketIssue {
 let cachedMarketIssues: LiveMarketIssue[] | null = null;
 let marketIssuesExpiresAt = 0;
 
-export async function fetchLiveMarketIssues(): Promise<LiveMarketIssue[]> {
+export async function fetchLiveMarketIssues(force: boolean = false): Promise<LiveMarketIssue[]> {
   const dynamicMarketIssuesFallbacks: LiveMarketIssue[][] = [
     [
       {
-        title: '미국 농무부(USDA) 소맥 기말재고 전망치 대폭 상향으로 CBOT 선물 급락',
+        title: 'USDA 2026년 10월 WASDE 보고서 발표: 주요 곡물 기말재고 및 수급 전망 갱신',
         riskLevel: '저위험',
         impactDirection: '하락',
-        dateStr: '09월 18일',
+        dateStr: '10월 09일',
         publisher: '로이터 (Reuters)',
         sourceUrl: 'https://www.reuters.com/markets/commodities/'
       },
       {
-        title: '브라질 대두 주산지 파종기 극심한 가뭄으로 파종 지연 우려 심화',
+        title: '브라질 마토그로소 대두 파종기 초기 강우 불규칙에 따른 생육 모니터링 강화',
         riskLevel: '고위험',
         impactDirection: '상승',
-        dateStr: '09월 19일',
+        dateStr: '10월 10일',
         publisher: 'S&P 글로벌',
         sourceUrl: 'https://www.spglobal.com/commodityinsights/en'
       },
       {
-        title: '중국 항만 대두 유입 적체 지연으로 사료용 대두박 가격 반등 시도',
+        title: '말레이시아 MPOB 10월 CPO 생산 및 수출 가용량 리포트 주목',
         riskLevel: '중위험',
         impactDirection: '상승',
-        dateStr: '09월 20일',
+        dateStr: '10월 11일',
         publisher: '블룸버그 (Bloomberg)',
         sourceUrl: 'https://www.bloomberg.com'
       },
       {
-        title: '홍해 리스크 지속에 따른 벌크선 아프리카 희망봉 우회 운임 강세',
+        title: '유럽 JRC MARS 4분기 감자 및 밀 전분 수확 단수 전망 조정',
         riskLevel: '중위험',
         impactDirection: '상승',
-        dateStr: '09월 21일',
+        dateStr: '10월 11일',
         publisher: '헬레닉 쉬핑',
         sourceUrl: 'https://www.hellenicshippingnews.com'
       },
       {
-        title: '글로벌 암모니아 가스 공급망 복구로 비료 원자재 공급 과잉 우려',
+        title: '태국 TTSA 카사바 전분 FOB 방콕 고시가 강보합세 유지',
         riskLevel: '저위험',
-        impactDirection: '하락',
-        dateStr: '09월 21일',
+        impactDirection: '보합',
+        dateStr: '10월 12일',
         publisher: '아구스 미디어 (Argus Media)',
         sourceUrl: 'https://www.argusmedia.com'
       }
     ],
     [
       {
-        title: '인도 가을철 대두/옥수수 수확 지연으로 동남아 대체 공급 수요 가열',
+        title: '인도 가을철 대두 및 옥수수 수확 진척에 따른 동남아 수급 안정화',
         riskLevel: '중위험',
-        impactDirection: '상승',
-        dateStr: '09월 19일',
+        impactDirection: '보합',
+        dateStr: '10월 10일',
         publisher: '인도 농업부',
         sourceUrl: 'https://www.reuters.com'
       },
       {
-        title: '러시아 밀 수출세 추가 인상 예고로 흑해 곡물 가격 반사적 강세',
+        title: '러시아 곡물 수출 쿼터 집행 및 흑해 항만 선적 지연 모니터링',
         riskLevel: '고위험',
         impactDirection: '상승',
-        dateStr: '09월 20일',
+        dateStr: '10월 11일',
         publisher: '로이터 (Reuters)',
         sourceUrl: 'https://www.reuters.com/markets/commodities/'
       },
       {
-        title: '유럽 연안 폭우 여파로 밀 전분 및 단백 농축 조달 수율 전방위적 저하',
+        title: '유럽 연안 기상 안정화로 밀 전분 조달 수율 회복세',
         riskLevel: '중위험',
-        impactDirection: '상승',
-        dateStr: '09월 21일',
+        impactDirection: '하락',
+        dateStr: '10월 11일',
         publisher: 'S&P 글로벌',
         sourceUrl: 'https://www.spglobal.com/commodityinsights/en'
       },
       {
-        title: '중남미 카르타헤나 가뭄 여파로 파나마 운하 1일 통과 척수 제한 상한 도래',
-        riskLevel: '고위험',
-        impactDirection: '상승',
-        dateStr: '09월 18일',
+        title: '파나마 운하 통과 척수 제한 해제 및 중남미 물류비 안정',
+        riskLevel: '저위험',
+        impactDirection: '하락',
+        dateStr: '10월 09일',
         publisher: '플라츠 (Platts)',
         sourceUrl: 'https://www.spglobal.com/commodityinsights/en'
       },
       {
-        title: '미국 에탄올 공장 가동률 최고치 유지로 옥수수 가공용 타이트화',
+        title: '미국 에탄올 공장 가동률 안정세 유지로 옥수수 가공 수요 원활',
         riskLevel: '저위험',
-        impactDirection: '상승',
-        dateStr: '09월 17일',
+        impactDirection: '보합',
+        dateStr: '10월 10일',
         publisher: 'USDA FAS',
         sourceUrl: 'https://www.usda.gov'
       }
@@ -1315,7 +1306,7 @@ export async function fetchLiveMarketIssues(): Promise<LiveMarketIssue[]> {
   const fallback = dynamicMarketIssuesFallbacks[seed % dynamicMarketIssuesFallbacks.length];
 
   const now = Date.now();
-  if (cachedMarketIssues && now < marketIssuesExpiresAt) {
+  if (!force && cachedMarketIssues && now < marketIssuesExpiresAt) {
     return cachedMarketIssues;
   }
 

@@ -343,8 +343,8 @@ Return ONLY one JSON object with this exact shape:
       deskRec: fallbackDesk
     });
 
-    const srwWoWPct = historyRes?.metrics?.srw?.wowChangePct ?? -3.03;
-    const hrsWoWPct = historyRes?.metrics?.hrs?.wowChangePct ?? -4.16;
+    const srwWoWPct = historyRes?.metrics?.srw?.wowChangePct ?? (wowPct ?? 0);
+    const hrsWoWPct = historyRes?.metrics?.hrs?.wowChangePct ?? (wowPct ?? 0);
     const hrsLandedUsdMt = 385.50;
 
     const fallbackSummary = `미국산 소맥 시세는 ${usWheatRes.data.reportDate || 'September 25, 2026'} 기준 HRW ${hrwPriceMt.toFixed(2)} USD/MT(주간 ${wowPct != null ? (wowPct >= 0 ? '+' : '') + wowPct.toFixed(2) : '-0.88'}%), SRW ${srwPriceMt.toFixed(2)} USD/MT(주간 ${srwWoWPct >= 0 ? '+' : ''}${srwWoWPct.toFixed(2)}%), HRS ${hrsPriceMt.toFixed(2)} USD/MT(주간 ${hrsWoWPct >= 0 ? '+' : ''}${hrsWoWPct.toFixed(2)}%, 한국 도착가 ${hrsLandedUsdMt.toFixed(2)} USD/MT)로 전반적인 단기 조정 흐름을 나타내고 있습니다. 미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다. 다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다. 향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 ${fallbackDesk} 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.`;

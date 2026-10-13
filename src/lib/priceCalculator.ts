@@ -1,6 +1,6 @@
-import { getLiveExchangeRate, getAllFxRates } from '../services/currencyService';
-import palmOilCache from '../data/cache_palmoil.json';
-import { centsPerLbToUsdPerMt } from '../utils/commodityConversions';
+import { getLiveExchangeRate, getAllFxRates } from '../services/currencyService.ts';
+import palmOilCache from '../data/cache_palmoil.json' with { type: 'json' };
+import { centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
 
 export interface CommodityPriceData {
   benchmarkQuote: number;       // Raw exchange price (USD/MT, EUR/MT, MYR/MT, or KRW/MT)
@@ -55,7 +55,7 @@ export interface CalculatedMetricsResult {
   baseQuoteFormatted: string;
   baseKRW: number;
   landedKRWFormatted: string;
-  wowPct: number;
+  wowPct: number | null;
   wowPctFormatted: string;
   direction: 'up' | 'down' | 'unchanged';
 }
@@ -100,8 +100,8 @@ export function getCalculatedMetrics(
   }
 
   // Calculate WoW percentage
-  let wowPct = options?.changeWoW ?? (commodityKey === 'sugar' ? 8.34 : 0);
-  if (options?.seriesData && options.seriesData.length >= 2) {
+  let wowPct: number | null = options?.changeWoW ?? null;
+  if (wowPct === null && options?.seriesData && options.seriesData.length >= 2) {
     const pts = options.seriesData;
     const latest = pts[pts.length - 1];
     const prevIdx = Math.max(0, pts.length - 6);
@@ -117,7 +117,8 @@ export function getCalculatedMetrics(
   const priceEur = Number((priceUsd / 1.08).toFixed(2));
   const landedKRW = Math.round(priceKrw * config.landedMultiplier);
 
-  const direction: 'up' | 'down' | 'unchanged' = wowPct > 0 ? 'up' : wowPct < 0 ? 'down' : 'unchanged';
+  const direction: 'up' | 'down' | 'unchanged' =
+    wowPct != null ? (wowPct > 0 ? 'up' : wowPct < 0 ? 'down' : 'unchanged') : 'unchanged';
 
   return {
     priceUsd,
@@ -130,7 +131,7 @@ export function getCalculatedMetrics(
     baseKRW: priceKrw,
     landedKRWFormatted: `₩${landedKRW.toLocaleString('en-US')} / MT`,
     wowPct,
-    wowPctFormatted: `${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(2)}%`,
+    wowPctFormatted: wowPct != null ? `${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(2)}%` : '--%',
     direction,
   };
 }

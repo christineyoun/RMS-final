@@ -49,12 +49,16 @@ export const CommodityCard: React.FC<CommodityCardProps> = ({
           </div>
           <span
             className={
-              item.changeWoW >= 0
+              item.changeWoW == null
+                ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-semibold flex items-center gap-0.5 border bg-slate-50 text-slate-400 border-slate-200'
+                : item.changeWoW >= 0
                 ? `${GREEN_BADGE_STYLE} font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5`
                 : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200'
             }
           >
-            {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
+            {item.changeWoW != null
+              ? (item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`)
+              : '--%'}
           </span>
         </div>
 
@@ -68,14 +72,20 @@ export const CommodityCard: React.FC<CommodityCardProps> = ({
             <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
           </div>
 
-          {item.changeMoM !== undefined && (
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] text-[#6b7280]">전월 대비</span>
-              <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-[#6b7280]">전월 대비</span>
+            <span className={`font-mono text-[11px] font-bold ${
+              item.changeMoM == null
+                ? 'text-slate-400'
+                : item.changeMoM >= 0
+                ? 'text-[#059669]'
+                : 'text-[#DF0029]'
+            }`}>
+              {item.changeMoM != null
+                ? (item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`)
+                : '--%'}
+            </span>
+          </div>
         </div>
       </div>
 

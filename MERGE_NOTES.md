@@ -62,10 +62,8 @@
 ```text
 GEMINI_API_KEY
 USDA_FAS_API_KEY
-PORT_COST_USD_PER_MT
 ```
 
-- `PORT_COST_USD_PER_MT`가 비어 있으면 Wheat 추정 국내 도착가는 `연동 대기`로 표시됩니다.
 - USDA FAS key가 없거나 실패하면 서비스는 코드에 private key를 하드코딩하지 않습니다.
 
 ## 검증 완료 항목

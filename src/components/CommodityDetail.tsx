@@ -10,6 +10,7 @@ import { OriginRadar } from './OriginRadar';
 import { getLiveExchangeRate, subscribeFxRates, fetchLiveFxRates, getAllFxRates, FXRates } from '../services/currencyService';
 import palmOilCacheFallback from '../data/cache_palmoil.json';
 import tapiocaCacheFallback from '../data/cache_tapioca.json';
+import { rawDefaultWheatSeries } from '../data/wheatHistory';
 
 export interface UsdaWheatSummary {
   commodityCode?: string;
@@ -66,59 +67,7 @@ const formatIsoToReportDate = (isoDate: string): string => {
   return `${monthName} ${day}, ${yr}`;
 };
 
-const rawDefaultWheatSeries = [
-  { "date": "2025-10-03", "srwMt": 189.32, "hrwMt": 182.61, "hrsMt": 205.67 },
-  { "date": "2025-10-10", "srwMt": 183.16, "hrwMt": 177.47, "hrsMt": 202.73 },
-  { "date": "2025-10-17", "srwMt": 185.09, "hrwMt": 180.59, "hrsMt": 201.54 },
-  { "date": "2025-10-24", "srwMt": 188.31, "hrwMt": 184.27, "hrsMt": 204.66 },
-  { "date": "2025-10-31", "srwMt": 196.21, "hrwMt": 192.72, "hrsMt": 203.19 },
-  { "date": "2025-11-07", "srwMt": 193.91, "hrwMt": 190.79, "hrsMt": 205.03 },
-  { "date": "2025-11-14", "srwMt": 193.73, "hrwMt": 189.32, "hrsMt": 207.51 },
-  { "date": "2025-11-21", "srwMt": 193.64, "hrwMt": 187.76, "hrsMt": 207.60 },
-  { "date": "2025-12-05", "srwMt": 196.85, "hrwMt": 195.10, "hrsMt": 210.54 },
-  { "date": "2025-12-12", "srwMt": 194.46, "hrwMt": 190.33, "hrsMt": 211.55 },
-  { "date": "2025-12-19", "srwMt": 187.30, "hrwMt": 189.32, "hrsMt": 213.66 },
-  { "date": "2026-01-09", "srwMt": 190.05, "hrwMt": 194.83, "hrsMt": 208.52 },
-  { "date": "2026-01-16", "srwMt": 190.42, "hrwMt": 194.19, "hrsMt": 207.60 },
-  { "date": "2026-01-23", "srwMt": 194.55, "hrwMt": 198.69, "hrsMt": 211.27 },
-  { "date": "2026-01-30", "srwMt": 197.68, "hrwMt": 200.16, "hrsMt": 212.47 },
-  { "date": "2026-02-06", "srwMt": 194.37, "hrwMt": 195.11, "hrsMt": 209.44 },
-  { "date": "2026-02-13", "srwMt": 201.72, "hrwMt": 203.56, "hrsMt": 214.58 },
-  { "date": "2026-02-20", "srwMt": 213.11, "hrwMt": 214.95, "hrsMt": 220.46 },
-  { "date": "2026-02-26", "srwMt": 211.09, "hrwMt": 206.59, "hrsMt": 220.00 },
-  { "date": "2026-03-06", "srwMt": 226.61, "hrwMt": 229.09, "hrsMt": 236.26 },
-  { "date": "2026-03-13", "srwMt": 225.51, "hrwMt": 231.48, "hrsMt": 237.18 },
-  { "date": "2026-03-20", "srwMt": 218.71, "hrwMt": 222.75, "hrsMt": 230.75 },
-  { "date": "2026-03-27", "srwMt": 222.30, "hrwMt": 232.49, "hrsMt": 238.19 },
-  { "date": "2026-04-02", "srwMt": 219.81, "hrwMt": 226.25, "hrsMt": 237.64 },
-  { "date": "2026-04-09", "srwMt": 211.09, "hrwMt": 216.97, "hrsMt": 227.16 },
-  { "date": "2026-04-17", "srwMt": 217.24, "hrwMt": 233.96, "hrsMt": 240.02 },
-  { "date": "2026-04-24", "srwMt": 223.49, "hrwMt": 242.14, "hrsMt": 248.38 },
-  { "date": "2026-05-01", "srwMt": 229.46, "hrwMt": 250.77, "hrsMt": 258.85 },
-  { "date": "2026-05-07", "srwMt": 221.10, "hrwMt": 240.57, "hrsMt": 244.07 },
-  { "date": "2026-05-15", "srwMt": 233.59, "hrwMt": 252.79, "hrsMt": 251.78 },
-  { "date": "2026-05-22", "srwMt": 237.45, "hrwMt": 250.59, "hrsMt": 253.34 },
-  { "date": "2026-05-29", "srwMt": 224.32, "hrwMt": 238.74, "hrsMt": 243.88 },
-  { "date": "2026-06-05", "srwMt": 213.11, "hrwMt": 228.08, "hrsMt": 227.62 },
-  { "date": "2026-06-12", "srwMt": 214.76, "hrwMt": 233.13, "hrsMt": 227.16 },
-  { "date": "2026-06-18", "srwMt": 222.57, "hrwMt": 236.62, "hrsMt": 228.91 },
-  { "date": "2026-06-26", "srwMt": 212.28, "hrwMt": 224.22, "hrsMt": 211.73 },
-  { "date": "2026-07-02", "srwMt": 220.37, "hrwMt": 234.60, "hrsMt": 227.44 },
-  { "date": "2026-07-10", "srwMt": 235.25, "hrwMt": 248.47, "hrsMt": 239.75 },
-  { "date": "2026-07-17", "srwMt": 250.86, "hrwMt": 269.05, "hrsMt": 254.17 },
-  { "date": "2026-07-24", "srwMt": 248.11, "hrwMt": 272.45, "hrsMt": 262.44 },
-  { "date": "2026-07-31", "srwMt": 234.88, "hrwMt": 259.96, "hrsMt": 253.43 },
-  { "date": "2026-08-07", "srwMt": 235.06, "hrwMt": 262.35, "hrsMt": 249.67 },
-  { "date": "2026-08-14", "srwMt": 247.92, "hrwMt": 277.13, "hrsMt": 249.21 },
-  { "date": "2026-08-21", "srwMt": 256.93, "hrwMt": 283.84, "hrsMt": 266.20 },
-  { "date": "2026-08-27", "srwMt": 279.52, "hrwMt": 302.03, "hrsMt": 278.42 },
-  { "date": "2026-09-04", "srwMt": 269.69, "hrwMt": 294.77, "hrsMt": 273.74 },
-  { "date": "2026-09-11", "srwMt": 266.48, "hrwMt": 293.39, "hrsMt": 273.74 },
-  { "date": "2026-09-18", "srwMt": 262.44, "hrwMt": 287.97, "hrsMt": 272.36 },
-  { "date": "2026-09-25", "srwMt": 258.40, "hrwMt": 279.98, "hrsMt": 262.16 },
-  { "date": "2026-10-02", "srwMt": 250.95, "hrwMt": 270.15, "hrsMt": 256.47 },
-  { "date": "2026-10-09", "srwMt": 246.55, "hrwMt": 264.18, "hrsMt": 255.46 }
-];
+
 
 const DEFAULT_WHEAT_HISTORY_BASELINE: UsWheatPriceHistoryResponse = {
   success: true,
@@ -997,24 +946,21 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const formatLandedBreakdownFootnote = (
     fobUsd: number,
     freightUsd: number,
-    portUsd: number,
     usdSourcePrefix: string = 'USDA AMS'
   ): string => {
     if (selectedCurrency === 'KRW') {
       const krwRate = fxRates.USD_KRW || 1388.5;
       const fobKrw = Math.round(fobUsd * krwRate).toLocaleString('en-US');
       const freightKrw = Math.round(freightUsd * krwRate).toLocaleString('en-US');
-      const portKrw = Math.round(portUsd * krwRate).toLocaleString('en-US');
-      return `환율 ₩${Math.round(krwRate)}/USD 적용 · FOB ₩${fobKrw} + 해상운임 ₩${freightKrw} + 항만비 ₩${portKrw}`;
+      return `환율 ₩${Math.round(krwRate)}/USD 적용 · FOB ₩${fobKrw} + 해상운임 ₩${freightKrw}`;
     }
     if (selectedCurrency === 'EUR') {
       const eurUsdRate = fxRates.EUR_USD || 1.08;
       const fobEur = (fobUsd / eurUsdRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       const freightEur = (freightUsd / eurUsdRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const portEur = (portUsd / eurUsdRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      return `EUR/USD ${eurUsdRate.toFixed(2)} 적용 · FOB €${fobEur} + 해상운임 €${freightEur} + 항만비 €${portEur}`;
+      return `EUR/USD ${eurUsdRate.toFixed(2)} 적용 · FOB €${fobEur} + 해상운임 €${freightEur}`;
     }
-    return `${usdSourcePrefix} · FOB $${fobUsd.toFixed(2)} + 해상운임 $${freightUsd.toFixed(2)} + 항만비 $${portUsd.toFixed(2)}`;
+    return `${usdSourcePrefix} · FOB $${fobUsd.toFixed(2)} + 해상운임 $${freightUsd.toFixed(2)}`;
   };
 
   const formatPriceValue = (usdVal: number, decimals: number = 2) => {
@@ -1907,19 +1853,17 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       ? fullYearHistoryData.data
       : (historicalData?.data && historicalData.data.length > 0)
       ? historicalData.data
-      : null;
+      : (palmOilCacheFallback?.historicalSeries && palmOilCacheFallback.historicalSeries.length > 0 ? palmOilCacheFallback.historicalSeries : null);
     if (!pts || pts.length < 2) {
-      return {
-        absChangeUsdMt: -32.50,
-        wowPct: -2.90,
-        direction: 'down' as const
-      };
+      return null;
     }
     const latest = pts[pts.length - 1];
     const prevIndex = Math.max(0, pts.length - 6);
     const prev = pts[prevIndex];
-    const absChangeUsdMt = Number((latest.usdPerMT - prev.usdPerMT).toFixed(2));
-    const wowPct = prev.usdPerMT > 0 ? Number((((latest.usdPerMT - prev.usdPerMT) / prev.usdPerMT) * 100).toFixed(2)) : -2.90;
+    const latestVal = latest.usdPerMT ?? latest.cpoUsd ?? 0;
+    const prevVal = prev.usdPerMT ?? prev.cpoUsd ?? 0;
+    const absChangeUsdMt = Number((latestVal - prevVal).toFixed(2));
+    const wowPct = prevVal > 0 ? Number((((latestVal - prevVal) / prevVal) * 100).toFixed(2)) : null;
     const direction: 'up' | 'down' | 'unchanged' = absChangeUsdMt > 0 ? 'up' : absChangeUsdMt < 0 ? 'down' : 'unchanged';
     return {
       absChangeUsdMt,
@@ -1937,51 +1881,36 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       ? historicalData.data
       : palmOilCacheFallback.historicalSeries;
 
-    let cpoWowPct = 0.82;
-    let cpoWowChangeMt = 9.40;
-    let cpoMomPct = 3.82;
-    let cpoMomChangeMt = 41.20;
-
-    let oleinWowPct = 0.86;
-    let oleinWowChangeMt = 10.00;
-    let oleinMomPct = 3.92;
-    let oleinMomChangeMt = 44.00;
-
-    if (pts.length >= 2) {
-      const latest = pts[pts.length - 1];
-      const latestCpo = latest.usdPerMT;
-      const latestOlein = (latest as any).oleinUsdPerMt || LIVE_OLEIN_USD;
-
-      // 1 week ago in verified series
-      const weekAgoIdx = Math.max(0, pts.length - 3);
-      const weekAgo = pts[weekAgoIdx];
-      const weekAgoCpo = weekAgo.usdPerMT;
-      const weekAgoOlein = (weekAgo as any).oleinUsdPerMt || LIVE_OLEIN_USD;
-
-      if (weekAgoCpo > 0) {
-        cpoWowChangeMt = Number((latestCpo - weekAgoCpo).toFixed(2));
-        cpoWowPct = Number((((latestCpo - weekAgoCpo) / weekAgoCpo) * 100).toFixed(2));
-      }
-      if (weekAgoOlein > 0) {
-        oleinWowChangeMt = Number((latestOlein - weekAgoOlein).toFixed(2));
-        oleinWowPct = Number((((latestOlein - weekAgoOlein) / weekAgoOlein) * 100).toFixed(2));
-      }
-
-      // 1 month ago in verified series
-      const monthAgoIdx = Math.max(0, pts.length - 11);
-      const monthAgo = pts[monthAgoIdx];
-      const monthAgoCpo = monthAgo.usdPerMT;
-      const monthAgoOlein = (monthAgo as any).oleinUsdPerMt || LIVE_OLEIN_USD;
-
-      if (monthAgoCpo > 0) {
-        cpoMomChangeMt = Number((latestCpo - monthAgoCpo).toFixed(2));
-        cpoMomPct = Number((((latestCpo - monthAgoCpo) / monthAgoCpo) * 100).toFixed(2));
-      }
-      if (monthAgoOlein > 0) {
-        oleinMomChangeMt = Number((latestOlein - monthAgoOlein).toFixed(2));
-        oleinMomPct = Number((((latestOlein - monthAgoOlein) / monthAgoOlein) * 100).toFixed(2));
-      }
+    if (!pts || pts.length < 2) {
+      return null;
     }
+
+    const cpoDynamic = calculateDynamicMetrics('palm-oil', cpoPrice, pts);
+    const cpoWowPct = cpoDynamic.wowPct;
+    const cpoMomPct = cpoDynamic.momPct;
+
+    const latest = pts[pts.length - 1];
+    const latestCpo = latest.usdPerMT ?? latest.cpoUsd ?? 0;
+    const latestOlein = (latest as any).oleinUsdPerMt || LIVE_OLEIN_USD;
+
+    const weekAgoIdx = Math.max(0, pts.length - 6);
+    const weekAgo = pts[weekAgoIdx];
+    const weekAgoCpo = weekAgo.usdPerMT ?? weekAgo.cpoUsd ?? 0;
+    const weekAgoOlein = (weekAgo as any).oleinUsdPerMt || LIVE_OLEIN_USD;
+
+    const monthAgoIdx = Math.max(0, pts.length - 23);
+    const monthAgo = pts[monthAgoIdx];
+    const monthAgoCpo = monthAgo.usdPerMT ?? monthAgo.cpoUsd ?? 0;
+    const monthAgoOlein = (monthAgo as any).oleinUsdPerMt || LIVE_OLEIN_USD;
+
+    const cpoWowChangeMt = weekAgoCpo > 0 ? Number((latestCpo - weekAgoCpo).toFixed(2)) : 0;
+    const cpoMomChangeMt = monthAgoCpo > 0 ? Number((latestCpo - monthAgoCpo).toFixed(2)) : 0;
+
+    const oleinWowChangeMt = weekAgoOlein > 0 ? Number((latestOlein - weekAgoOlein).toFixed(2)) : 0;
+    const oleinWowPct = weekAgoOlein > 0 ? Number((((latestOlein - weekAgoOlein) / weekAgoOlein) * 100).toFixed(2)) : null;
+
+    const oleinMomChangeMt = monthAgoOlein > 0 ? Number((latestOlein - monthAgoOlein).toFixed(2)) : 0;
+    const oleinMomPct = monthAgoOlein > 0 ? Number((((latestOlein - monthAgoOlein) / monthAgoOlein) * 100).toFixed(2)) : null;
 
     const cpoWowChangeConv = currency === 'KRW' ? Math.round(cpoWowChangeMt * liveUsdKrw) : currency === 'EUR' ? Number((cpoWowChangeMt * liveEurUsd).toFixed(2)) : cpoWowChangeMt;
     const cpoMomChangeConv = currency === 'KRW' ? Math.round(cpoMomChangeMt * liveUsdKrw) : currency === 'EUR' ? Number((cpoMomChangeMt * liveEurUsd).toFixed(2)) : cpoMomChangeMt;
@@ -2003,7 +1932,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         momChangeConv: oleinMomChangeConv,
       }
     };
-  }, [isPalmOil, fullYearHistoryData, historicalData, currency, liveUsdKrw, liveEurUsd, spreadUsd]);
+  }, [isPalmOil, fullYearHistoryData, historicalData, currency, liveUsdKrw, liveEurUsd, cpoPrice]);
 
   const wheatLandedCost = useMemo(() => isWheat ? (usWheatHistory?.landedCost || null) : null, [isWheat, usWheatHistory]);
   const amisData = amisResponse?.data;
@@ -2210,10 +2139,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     );
 
     const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
-    const wowPct = dynamicMetrics.wowPct !== 0 ? dynamicMetrics.wowPct : (commodity.changeWoW || 0);
-    const momPct = dynamicMetrics.momPct !== 0 ? dynamicMetrics.momPct : (commodity.changeMoM || 0);
-    const wowAmount = effectiveBasePrice * (wowPct / 100);
-    const momAmount = effectiveBasePrice * (momPct / 100);
+    const wowPct = dynamicMetrics.wowPct !== null ? dynamicMetrics.wowPct : commodity.changeWoW;
+    const momPct = dynamicMetrics.momPct !== null ? dynamicMetrics.momPct : commodity.changeMoM;
+    const wowAmount = wowPct !== null ? effectiveBasePrice * (wowPct / 100) : null;
+    const momAmount = momPct !== null ? effectiveBasePrice * (momPct / 100) : null;
 
     return { wowPct, wowAmount, momPct, momAmount };
   }, [isPalmOil, palmMetrics, isWheat, usWheatHistory, fullYearHistoryData, historicalData, commodity, effectiveBasePrice, currency, exchangeRate]);
@@ -3297,33 +3226,53 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 {/* Left: WoW */}
                 <div className="border-r border-slate-200/80 pr-2">
                   <span className="text-[10px] font-medium text-slate-400 block font-sans">주간 (WoW)</span>
-                  <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
-                    dynamicKpiMetrics.wowPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-                  }`}>
-                    <span className="material-symbols-outlined text-[14px]">
-                      {dynamicKpiMetrics.wowPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                    </span>
-                    <span>{dynamicKpiMetrics.wowPct >= 0 ? `+${dynamicKpiMetrics.wowPct.toFixed(2)}%` : `${dynamicKpiMetrics.wowPct.toFixed(2)}%`}</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
-                    {dynamicKpiMetrics.wowAmount >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(dynamicKpiMetrics.wowAmount))}
-                  </span>
+                  {dynamicKpiMetrics?.wowPct != null ? (
+                    <>
+                      <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
+                        dynamicKpiMetrics.wowPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                      }`}>
+                        <span className="material-symbols-outlined text-[14px]">
+                          {dynamicKpiMetrics.wowPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                        </span>
+                        <span>{dynamicKpiMetrics.wowPct >= 0 ? `+${dynamicKpiMetrics.wowPct.toFixed(2)}%` : `${dynamicKpiMetrics.wowPct.toFixed(2)}%`}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
+                        {dynamicKpiMetrics.wowAmount != null
+                          ? `${dynamicKpiMetrics.wowAmount >= 0 ? '+' : '-'}${currencySymbol}${formatConvertedPrice(Math.abs(dynamicKpiMetrics.wowAmount))}`
+                          : '--'}
+                      </span>
+                    </>
+                  ) : (
+                    <div className="font-mono text-xs sm:text-sm font-bold text-slate-400 mt-0.5">
+                      --%
+                    </div>
+                  )}
                 </div>
 
                 {/* Right: MoM */}
                 <div className="pl-1">
                   <span className="text-[10px] font-medium text-slate-400 block font-sans">전월 (MoM)</span>
-                  <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
-                    dynamicKpiMetrics.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-                  }`}>
-                    <span className="material-symbols-outlined text-[14px]">
-                      {dynamicKpiMetrics.momPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                    </span>
-                    <span>{dynamicKpiMetrics.momPct >= 0 ? `+${dynamicKpiMetrics.momPct.toFixed(2)}%` : `${dynamicKpiMetrics.momPct.toFixed(2)}%`}</span>
-                  </div>
-                  <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
-                    {dynamicKpiMetrics.momAmount >= 0 ? '+' : '-'}{currencySymbol}{formatConvertedPrice(Math.abs(dynamicKpiMetrics.momAmount))}
-                  </span>
+                  {dynamicKpiMetrics?.momPct != null ? (
+                    <>
+                      <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
+                        dynamicKpiMetrics.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                      }`}>
+                        <span className="material-symbols-outlined text-[14px]">
+                          {dynamicKpiMetrics.momPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                        </span>
+                        <span>{dynamicKpiMetrics.momPct >= 0 ? `+${dynamicKpiMetrics.momPct.toFixed(2)}%` : `${dynamicKpiMetrics.momPct.toFixed(2)}%`}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
+                        {dynamicKpiMetrics.momAmount != null
+                          ? `${dynamicKpiMetrics.momAmount >= 0 ? '+' : '-'}${currencySymbol}${formatConvertedPrice(Math.abs(dynamicKpiMetrics.momAmount))}`
+                          : '--'}
+                      </span>
+                    </>
+                  ) : (
+                    <div className="font-mono text-xs sm:text-sm font-bold text-slate-400 mt-0.5">
+                      --%
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -4616,7 +4565,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
       {/* 5. Key Issues & Market News (Market Intelligence) */}
       <section className="market-intelligence-section pdf-section-block print:mt-4 print:pt-2">
-        <CommodityNews commodityId={commodity.id} />
+        <CommodityNews commodityId={commodity.id} isSyncing={isSyncing} />
       </section>
     </div>
   </div>

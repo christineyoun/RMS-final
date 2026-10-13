@@ -9,6 +9,7 @@ import {
   formatLandedCost as formatLandedCostUtil,
   formatStarchSweetenerBenchmark,
   formatCurrencyValue,
+  formatPercentChange,
   COMMODITY_CONFIGS,
   getCalculatedMetrics
 } from '../utils/landedCostCalculator';
@@ -21,7 +22,7 @@ const DEFAULT_MACRO_FALLBACKS = {
   fx: {
     rate: '1,358.7 ₩',
     eurRate: 'EUR 1,556.2₩',
-    change: '+0.82%',
+    change: '--%',
     status: '원가상승 요인',
     badgeType: 'red' as const,
     note: '주요 외환 리스크'
@@ -61,12 +62,12 @@ const WASDE_PORTFOLIO_SUMMARY = [
   { id: 'sugar', name: '원당 (Sugar)', production: '186.2 MMT', consumption: '179.8 MMT', endingStocks: '41.5 MMT', stockToUseRatio: '23.1' },
 ];
 
-const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): string => {
+const getSparklinePath = (sparkline: number[] | undefined, changeWoW?: number | null): string => {
   let points: number[] = sparkline && sparkline.length >= 2 ? [...sparkline] : [];
   if (points.length < 2) {
-    if (changeWoW < 0) {
+    if (changeWoW != null && changeWoW < 0) {
       points = [12, 11, 9, 8, 7, 4];
-    } else if (changeWoW > 0) {
+    } else if (changeWoW != null && changeWoW > 0) {
       points = [4, 7, 8, 10, 11, 13];
     } else {
       points = [10, 10, 10, 10, 10, 10];
@@ -74,10 +75,10 @@ const getSparklinePath = (sparkline: number[] | undefined, changeWoW: number): s
   }
 
   // Force directional consistency with WoW metric:
-  if (changeWoW < 0 && points[points.length - 1] >= points[0]) {
+  if (changeWoW != null && changeWoW < 0 && points[points.length - 1] >= points[0]) {
     const diff = Math.abs(points[points.length - 1] - points[0]) + 3;
     points[points.length - 1] = points[0] - diff;
-  } else if (changeWoW > 0 && points[points.length - 1] <= points[0]) {
+  } else if (changeWoW != null && changeWoW > 0 && points[points.length - 1] <= points[0]) {
     const diff = Math.abs(points[0] - points[points.length - 1]) + 3;
     points[points.length - 1] = points[0] + diff;
   }
@@ -246,7 +247,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
       isMounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [isSyncing]);
 
   useEffect(() => {
     let isMounted = true;
@@ -502,9 +503,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     (c) => c.category === 'starches' || c.category === 'sweeteners'
   );
 
-  const sortedCommodities = [...commodities].sort((a, b) => b.changeWoW - a.changeWoW);
-  const topGainer = sortedCommodities[0];
-  const topLoser = sortedCommodities[sortedCommodities.length - 1];
+  const validWoWCommodities = commodities.filter((c) => c.changeWoW != null);
+  const sortedCommodities = [...validWoWCommodities].sort((a, b) => (b.changeWoW ?? 0) - (a.changeWoW ?? 0));
+  const topGainer = sortedCommodities.length > 0 ? sortedCommodities[0] : null;
+  const topLoser = sortedCommodities.length > 0 ? sortedCommodities[sortedCommodities.length - 1] : null;
 
   const effectiveUsdKrw = React.useMemo(() => {
     const parsed = parseFloat(fxData.rate.replace(/[^0-9.]/g, ''));
@@ -616,7 +618,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
           <div className="flex items-center gap-3 shrink-0 flex-nowrap">
             {/* Top Gainer */}
-            {topGainer && (
+            {topGainer && topGainer.changeWoW != null && (
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
                 <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
                   최대 상승
@@ -628,15 +630,15 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   {topGainer.nameKo} ({topGainer.nameEn})
                 </span>
                 <span className="text-[12px] font-bold text-[#059669] leading-normal inline-flex items-center">
-                  {topGainer.changeWoW >= 0 ? `+${topGainer.changeWoW.toFixed(2)}%` : `${topGainer.changeWoW.toFixed(2)}%`} WoW
+                  {formatPercentChange(topGainer.changeWoW, 'WoW')}
                 </span>
               </div>
             )}
 
-            <span className="text-[#cbd5e1] text-[12px] select-none px-1">|</span>
+            {topGainer && topLoser && <span className="text-[#cbd5e1] text-[12px] select-none px-1">|</span>}
 
             {/* Top Loser */}
-            {topLoser && (
+            {topLoser && topLoser.changeWoW != null && (
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
                 <span className="bg-red-50 border border-red-200 text-[#DF0029] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
                   최대 하락
@@ -648,7 +650,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   {topLoser.nameKo} ({topLoser.nameEn})
                 </span>
                 <span className="text-[12px] font-bold text-[#e11d48] leading-normal inline-flex items-center">
-                  {topLoser.changeWoW >= 0 ? `+${topLoser.changeWoW.toFixed(2)}%` : `${topLoser.changeWoW.toFixed(2)}%`} WoW
+                  {formatPercentChange(topLoser.changeWoW, 'WoW')}
                 </span>
               </div>
             )}
@@ -683,15 +685,19 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                       <span
                         className={`shrink-0 ${
-                          item.changeWoW >= 0
+                          item.changeWoW == null
+                            ? 'bg-slate-50 border border-slate-200 text-slate-400 font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                            : item.changeWoW >= 0
                             ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                             : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                         }`}
                       >
-                        <span className="material-symbols-outlined text-[13px]">
-                          {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
-                        </span>
-                        {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
+                        {item.changeWoW != null && (
+                          <span className="material-symbols-outlined text-[13px]">
+                            {item.changeWoW >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                          </span>
+                        )}
+                        {formatPercentChange(item.changeWoW, 'WoW')}
                       </span>
                     </div>
 
@@ -709,14 +715,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                       <div className="w-16 h-5">
                         <svg
-                          className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#DF0029]' : 'text-[#059669]'}`}
+                          className={`w-full h-full ${item.changeWoW != null && item.changeWoW < 0 ? 'text-[#DF0029]' : 'text-[#059669]'}`}
                           fill="none"
                           preserveAspectRatio="none"
                           viewBox="0 0 64 20"
                         >
                           <path
                             d={getSparklinePath(item.sparkline, item.changeWoW)}
-                            stroke={item.changeWoW < 0 ? '#DF0029' : '#059669'}
+                            stroke={item.changeWoW != null && item.changeWoW < 0 ? '#DF0029' : '#059669'}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth="1.5"
@@ -728,8 +734,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
-                        <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                          {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
+                        <span className={`font-mono text-[11px] font-bold ${
+                          item.changeMoM == null
+                            ? 'text-slate-400'
+                            : item.changeMoM >= 0
+                            ? 'text-[#059669]'
+                            : 'text-[#DF0029]'
+                        }`}>
+                          {formatPercentChange(item.changeMoM)}
                         </span>
                       </div>
                       
@@ -755,7 +767,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {oilCommodities.map((item) => {
                 const isSoybeanOil = item.id === 'soybean-oil';
-                const isWoWPositive = item.changeWoW >= 0;
+                const isWoWPositive = item.changeWoW != null && item.changeWoW >= 0;
 
                 return (
                   <div
@@ -781,15 +793,19 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </div>
                         <span
                           className={`shrink-0 ${
-                            isWoWPositive
+                            item.changeWoW == null
+                              ? 'bg-slate-50 border border-slate-200 text-slate-400 font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              : isWoWPositive
                               ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[13px]">
-                            {isWoWPositive ? 'arrow_upward' : 'arrow_downward'}
-                          </span>
-                          {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
+                          {item.changeWoW != null && (
+                            <span className="material-symbols-outlined text-[13px]">
+                              {isWoWPositive ? 'arrow_upward' : 'arrow_downward'}
+                            </span>
+                          )}
+                          {formatPercentChange(item.changeWoW, 'WoW')}
                         </span>
                       </div>
 
@@ -810,14 +826,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </div>
                         <div className="w-16 h-5">
                           <svg
-                            className={`w-full h-full ${item.changeWoW < 0 ? 'text-[#DF0029]' : 'text-[#059669]'}`}
+                            className={`w-full h-full ${item.changeWoW != null && item.changeWoW < 0 ? 'text-[#DF0029]' : 'text-[#059669]'}`}
                             fill="none"
                             preserveAspectRatio="none"
                             viewBox="0 0 64 20"
                           >
                             <path
                               d={getSparklinePath(item.sparkline, item.changeWoW)}
-                              stroke={item.changeWoW < 0 ? '#DF0029' : '#059669'}
+                              stroke={item.changeWoW != null && item.changeWoW < 0 ? '#DF0029' : '#059669'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="1.5"
@@ -830,8 +846,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <div className="mt-2.5 pt-2 border-t border-[#f1f5f9] flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
-                        <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                          {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
+                        <span className={`font-mono text-[11px] font-bold ${
+                          item.changeMoM == null
+                            ? 'text-slate-400'
+                            : item.changeMoM >= 0
+                            ? 'text-[#059669]'
+                            : 'text-[#DF0029]'
+                        }`}>
+                          {formatPercentChange(item.changeMoM)}
                         </span>
                       </div>
                       
@@ -856,8 +878,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {starchCommodities.map((item) => {
-                const isWoWPositive = item.changeWoW > 0;
-                const isWoWNegative = item.changeWoW < 0;
+                const isWoWPositive = item.changeWoW != null && item.changeWoW > 0;
+                const isWoWNegative = item.changeWoW != null && item.changeWoW < 0;
 
                 return (
                   <div
@@ -877,17 +899,21 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </div>
                         <span
                           className={`shrink-0 ${
-                            isWoWPositive
+                            item.changeWoW == null
+                              ? 'bg-slate-50 border border-slate-200 text-slate-400 font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              : isWoWPositive
                               ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : isWoWNegative
                               ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
                               : 'bg-[#f3f4f6] text-[#4b5563] border-[#e5e7eb] px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border'
                           }`}
                         >
-                          <span className="material-symbols-outlined text-[13px]">
-                            {isWoWPositive ? 'arrow_upward' : isWoWNegative ? 'arrow_downward' : 'remove'}
-                          </span>
-                          {item.changeWoW >= 0 ? `+${item.changeWoW.toFixed(2)}% WoW` : `${item.changeWoW.toFixed(2)}% WoW`}
+                          {item.changeWoW != null && (
+                            <span className="material-symbols-outlined text-[13px]">
+                              {isWoWPositive ? 'arrow_upward' : isWoWNegative ? 'arrow_downward' : 'remove'}
+                            </span>
+                          )}
+                          {formatPercentChange(item.changeWoW, 'WoW')}
                         </span>
                       </div>
 
@@ -907,9 +933,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <div className="w-16 h-5">
                           <svg
                             className={`w-full h-full ${
-                              item.changeWoW > 0
+                              item.changeWoW != null && item.changeWoW > 0
                                 ? 'text-[#059669]'
-                                : item.changeWoW < 0
+                                : item.changeWoW != null && item.changeWoW < 0
                                 ? 'text-[#DF0029]'
                                 : 'text-[#9ca3af]'
                             }`}
@@ -919,7 +945,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           >
                             <path
                               d={getSparklinePath(item.sparkline, item.changeWoW)}
-                              stroke={item.changeWoW > 0 ? '#059669' : item.changeWoW < 0 ? '#DF0029' : '#9ca3af'}
+                              stroke={item.changeWoW != null && item.changeWoW > 0 ? '#059669' : item.changeWoW != null && item.changeWoW < 0 ? '#DF0029' : '#9ca3af'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth="1.5"
@@ -931,8 +957,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <div className="mt-3 pt-2.5 border-t border-[#f1f5f9] flex items-center justify-between">
                         <div className="flex items-center gap-1">
                           <span className="text-[10px] text-[#6b7280]">전월 대비 (MoM)</span>
-                          <span className={`font-mono text-[11px] font-bold ${item.changeMoM >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'}`}>
-                            {item.changeMoM >= 0 ? `+${item.changeMoM.toFixed(2)}%` : `${item.changeMoM.toFixed(2)}%`}
+                          <span className={`font-mono text-[11px] font-bold ${
+                            item.changeMoM == null
+                              ? 'text-slate-400'
+                              : item.changeMoM >= 0
+                              ? 'text-[#059669]'
+                              : 'text-[#DF0029]'
+                          }`}>
+                            {formatPercentChange(item.changeMoM)}
                           </span>
                         </div>
                         

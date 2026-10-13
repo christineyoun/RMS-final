@@ -2,6 +2,7 @@ import { LiveMarketUpdate } from '../types';
 import { fetchLivePipelineMetrics } from './externalPipeline';
 import palmOilCache from '../data/cache_palmoil.json';
 import { getCalculatedMetrics } from '../lib/priceCalculator';
+import { calculateDynamicMetrics } from '../utils/landedCostCalculator';
 
 export const getKSTTime = () => {
   return new Date().toLocaleTimeString('en-US', {
@@ -58,78 +59,68 @@ class GeminiController {
     this.isQuerying = true;
 
     try {
-      const [res, wheatRes, cornRes, soybeanRes, soybeanOilRes, palmRes, tapiocaRes] = await Promise.all([
+      const [
+        res,
+        wheatRes,
+        cornRes,
+        soybeanRes,
+        soybeanOilRes,
+        palmRes,
+        sugarRes,
+        potatoRes,
+        tapiocaRes
+      ] = await Promise.all([
         fetch('/api/gemini/live-market-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ force })
-        }),
+        }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/corn/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/soybean/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/soybean-oil/procurement-analysis${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=palm-oil${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=tapioca-starch${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        fetch(`/api/history?commodity=corn&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=soybean&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=soybean-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=palm-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=sugar&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=potato-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=tapioca-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       ]);
-      const data: any = await res.json();
+      const data: any = res || {};
 
       const liveWheatPrice = wheatRes?.metrics?.srw?.latestPriceMt || 258.40;
-      const liveWheatMetrics = wheatRes?.metrics || {
-        srw: {
-          wheatClass: 'SRW',
-          classNameKo: '연질적맥',
-          classNameEn: 'Soft Red Winter',
-          exchange: 'CBOT',
-          contractMonth: 'DEC 26',
-          latestPriceMt: 258.40,
-          latestPriceBu: 703.25,
-          wowChangeMt: -8.08,
-          wowChangeBu: -22.00,
-          wowChangePct: -3.03,
-          momChangeMt: 23.61,
-          momChangeBu: 64.25,
-          momChangePct: 10.06
-        },
-        hrw: {
-          wheatClass: 'HRW',
-          classNameKo: '경질적맥',
-          classNameEn: 'Hard Red Winter',
-          exchange: 'KCBT',
-          contractMonth: 'DEC 26',
-          latestPriceMt: 242.87,
-          latestPriceBu: 661.00,
-          wowChangeMt: -11.02,
-          wowChangeBu: -30.00,
-          wowChangePct: -4.33,
-          momChangeMt: 17.45,
-          momChangeBu: 47.50,
-          momChangePct: 7.74
-        },
-        hrs: {
-          wheatClass: 'HRS',
-          classNameKo: '경질춘맥',
-          classNameEn: 'Hard Red Spring',
-          exchange: 'MGEX',
-          contractMonth: 'DEC 26',
-          latestPriceMt: 268.42,
-          latestPriceBu: 730.50,
-          wowChangeMt: -5.51,
-          wowChangeBu: -15.00,
-          wowChangePct: -2.00,
-          momChangeMt: 18.46,
-          momChangeBu: 50.25,
-          momChangePct: 7.37
-        }
-      };
-      const liveCornPrice = cornRes?.data?.benchmarkPrice?.usdPerMT || 197.63;
-      const liveCornWow = cornRes?.data?.weeklyChange?.wowPct ?? -4.98;
-      const liveCornMom = 3.20;
-      const liveSoybeanPrice = soybeanRes?.data?.benchmarkPrice?.usdPerMT || 474.27;
-      const liveSoybeanWow = soybeanRes?.data?.weeklyChange?.wowPct ?? -2.03;
-      const liveSoybeanMom = 0.60;
-      const liveSoybeanOilPrice = soybeanOilRes?.data?.benchmarkPrice?.usdPerMT || 1486.80;
-      const liveSoybeanOilWow = soybeanOilRes?.data?.weeklyChange?.wowPct ?? 1.69;
-      const liveSoybeanOilMom = -0.45;
+      const liveWheatMetrics = wheatRes?.metrics || null;
+
+      const cornPoints = cornRes?.data || [];
+      const cornLatest = cornPoints[cornPoints.length - 1];
+      const liveCornPrice = cornLatest?.usdPerMT || 189.46;
+      const cornMetrics = calculateDynamicMetrics('corn', liveCornPrice, cornPoints);
+
+      const soybeanPoints = soybeanRes?.data || [];
+      const soybeanLatest = soybeanPoints[soybeanPoints.length - 1];
+      const liveSoybeanPrice = soybeanLatest?.usdPerMT || 376.53;
+      const soybeanMetrics = calculateDynamicMetrics('soybean', liveSoybeanPrice, soybeanPoints);
+
+      const soybeanOilPoints = soybeanOilRes?.data || [];
+      const soybeanOilLatest = soybeanOilPoints[soybeanOilPoints.length - 1];
+      const liveSoybeanOilPrice = soybeanOilLatest?.usdPerMT || 1486.80;
+      const soybeanOilMetrics = calculateDynamicMetrics('soybean-oil', liveSoybeanOilPrice, soybeanOilPoints);
+
+      const palmPoints = palmRes?.data || palmOilCache.historicalSeries || [];
+      const palmMetrics = calculateDynamicMetrics('palm-oil', 0, palmPoints);
+
+      const sugarPoints = sugarRes?.data || [];
+      const sugarLatest = sugarPoints[sugarPoints.length - 1];
+      const liveSugarPrice = sugarLatest?.usdPerMT || getCalculatedMetrics('sugar').priceUsd;
+      const sugarMetrics = calculateDynamicMetrics('sugar', liveSugarPrice, sugarPoints);
+
+      const potatoPoints = potatoRes?.data || [];
+      const potatoLatest = potatoPoints[potatoPoints.length - 1];
+      const livePotatoPrice = potatoLatest?.usdPerMT || 928.80;
+      const potatoMetrics = calculateDynamicMetrics('potato-starch', livePotatoPrice, potatoPoints);
+
+      const tapiocaPoints = tapiocaRes?.data || [];
+      const tapiocaLatest = tapiocaPoints[tapiocaPoints.length - 1];
+      const liveTapiocaPrice = tapiocaLatest?.usdPerMT || 700.00;
+      const tapiocaMetrics = calculateDynamicMetrics('tapioca-starch', liveTapiocaPrice, tapiocaPoints);
 
       const liveUpdate: LiveMarketUpdate = {
         updatedAt: data.updatedAt || getKSTTime(),
@@ -149,32 +140,30 @@ class GeminiController {
         wheatPrice: liveWheatPrice,
         wheatMetrics: liveWheatMetrics,
         cornPrice: liveCornPrice,
-        cornWowChange: liveCornWow,
-        cornMomChange: liveCornMom,
+        cornWowChange: cornMetrics.wowPct,
+        cornMomChange: cornMetrics.momPct,
         soybeanPrice: liveSoybeanPrice,
-        soybeanWowChange: liveSoybeanWow,
-        soybeanMomChange: liveSoybeanMom,
+        soybeanWowChange: soybeanMetrics.wowPct,
+        soybeanMomChange: soybeanMetrics.momPct,
         soybeanOilPrice: liveSoybeanOilPrice,
-        soybeanOilWowChange: liveSoybeanOilWow,
-        soybeanOilMomChange: liveSoybeanOilMom,
+        soybeanOilWowChange: soybeanOilMetrics.wowPct,
+        soybeanOilMomChange: soybeanOilMetrics.momPct,
         palmOilPrice: (palmRes?.priceMyr && palmRes.priceMyr > 2000)
           ? palmRes.priceMyr
           : (data.commodities?.palmOil?.price && data.commodities.palmOil.price > 2000)
           ? data.commodities.palmOil.price
           : palmOilCache.priceMyr,
-        palmOilWowChange: -2.90,
-        palmOilMomChange: -4.49,
-        sugarPrice: getCalculatedMetrics('sugar').priceUsd,
-        sugarWowChange: 8.34,
-        sugarMomChange: 3.20,
-        potatoStarchPrice: 928.80,
-        potatoStarchWowChange: 0.00,
-        potatoStarchMomChange: -2.38,
-        tapiocaStarchPrice: (tapiocaRes?.data && tapiocaRes.data.length > 0 && tapiocaRes.data[tapiocaRes.data.length - 1]?.usdPerMT)
-          ? tapiocaRes.data[tapiocaRes.data.length - 1].usdPerMT
-          : 700.00,
-        tapiocaStarchWowChange: 0.00,
-        tapiocaStarchMomChange: 0.00,
+        palmOilWowChange: palmMetrics.wowPct,
+        palmOilMomChange: palmMetrics.momPct,
+        sugarPrice: liveSugarPrice,
+        sugarWowChange: sugarMetrics.wowPct,
+        sugarMomChange: sugarMetrics.momPct,
+        potatoStarchPrice: livePotatoPrice,
+        potatoStarchWowChange: potatoMetrics.wowPct,
+        potatoStarchMomChange: potatoMetrics.momPct,
+        tapiocaStarchPrice: liveTapiocaPrice,
+        tapiocaStarchWowChange: tapiocaMetrics.wowPct,
+        tapiocaStarchMomChange: tapiocaMetrics.momPct,
         aiBriefSynthesis: data.aiBriefSynthesis || '글로벌 소맥 및 유지류 시장은 흑해 수출 회랑 불확실성과 남미 주요 파종지의 가뭄으로 단기 상승 압력에 직면해 있습니다.',
         directives: data.directives,
         citations: data.citations || [],
@@ -196,14 +185,14 @@ class GeminiController {
       try {
         const pipeline = await fetchLivePipelineMetrics();
         const defaultCommodities = {
-          wheat: { price: 258.40, unit: 'USD/MT', changeWoW: -3.03, landedKrw: 358 },
-          corn: { price: 197.63, unit: 'USD/MT', changeWoW: -4.98, landedKrw: 274 },
-          soybean: { price: 474.27, unit: 'USD/MT', changeWoW: -2.03, landedKrw: 658 },
-          soybeanOil: { price: 1486.80, unit: 'USD/MT', changeWoW: 1.69, landedKrw: 2064 },
-          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: -4.49, landedKrw: 1545 },
-          sugar: { price: getCalculatedMetrics('sugar').priceUsd, unit: 'USD/MT', changeWoW: getCalculatedMetrics('sugar').wowPct, landedKrw: getCalculatedMetrics('sugar').baseKRW },
-          potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: 1290 },
-          tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: 0.00, landedKrw: 1010 }
+          wheat: { price: 258.40, unit: 'USD/MT', changeWoW: null, landedKrw: 358 },
+          corn: { price: 189.46, unit: 'USD/MT', changeWoW: null, landedKrw: 274 },
+          soybean: { price: 376.53, unit: 'USD/MT', changeWoW: null, landedKrw: 658 },
+          soybeanOil: { price: 1486.80, unit: 'USD/MT', changeWoW: null, landedKrw: 2064 },
+          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: null, landedKrw: 1545 },
+          sugar: { price: getCalculatedMetrics('sugar').priceUsd, unit: 'USD/MT', changeWoW: null, landedKrw: getCalculatedMetrics('sugar').baseKRW },
+          potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: null, landedKrw: 1290 },
+          tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: null, landedKrw: 1010 }
         };
 
         let macroScore = 58;

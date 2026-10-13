@@ -204,16 +204,105 @@ export default function App() {
     }
   };
 
+  // Unified dynamic metrics synchronization for ALL 8 commodities on startup & Live Sync
+  const syncAllCommodityMetrics = useCallback(async (force: boolean = false) => {
+    try {
+      const [
+        wheatRes,
+        cornRes,
+        soybeanRes,
+        soybeanOilRes,
+        palmRes,
+        sugarRes,
+        potatoRes,
+        tapiocaRes
+      ] = await Promise.all([
+        fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=corn&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=soybean&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=soybean-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=palm-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=sugar&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=potato-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/history?commodity=tapioca-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      ]);
+
+      setCommodities((prev) =>
+        prev.map((c) => {
+          let updatedPrice = c.price;
+          let updatedWoW = c.changeWoW;
+          let updatedMoM = c.changeMoM;
+
+          if (c.id === 'wheat') {
+            if (wheatRes?.metrics?.srw) {
+              updatedPrice = wheatRes.metrics.srw.latestPriceMt;
+              updatedWoW = wheatRes.metrics.srw.wowChangePct;
+              updatedMoM = wheatRes.metrics.srw.momChangePct;
+            } else if (wheatRes?.data && wheatRes.data.length >= 2) {
+              const m = calculateDynamicMetrics('wheat', c.price, wheatRes.data);
+              if (m.wowPct != null) updatedWoW = m.wowPct;
+              if (m.momPct != null) updatedMoM = m.momPct;
+            }
+          } else {
+            const resMap: Record<string, any> = {
+              'corn': cornRes,
+              'soybean': soybeanRes,
+              'soybean-oil': soybeanOilRes,
+              'palm-oil': palmRes,
+              'sugar': sugarRes,
+              'potato-starch': potatoRes,
+              'tapioca-starch': tapiocaRes,
+            };
+            const itemRes = resMap[c.id];
+            let seriesData = itemRes?.data;
+            if (!seriesData || seriesData.length < 2) {
+              if (c.id === 'palm-oil') seriesData = palmOilCacheFallback?.historicalSeries;
+              if (c.id === 'tapioca-starch') seriesData = tapiocaCacheFallback?.weeklyPrices;
+            }
+
+            if (seriesData && seriesData.length >= 2) {
+              const latest = seriesData[seriesData.length - 1];
+              const latestPrice = latest?.usdPerMT ?? latest?.cpoUsd ?? latest?.price;
+              if (latestPrice && latestPrice > 0 && c.id !== 'palm-oil') {
+                updatedPrice = latestPrice;
+              }
+              const m = calculateDynamicMetrics(c.id, updatedPrice, seriesData);
+              if (m.wowPct != null) updatedWoW = m.wowPct;
+              if (m.momPct != null) updatedMoM = m.momPct;
+            }
+          }
+
+          return {
+            ...c,
+            price: updatedPrice,
+            changeWoW: updatedWoW,
+            changeMoM: updatedMoM,
+          };
+        })
+      );
+    } catch (err) {
+      console.warn('Initial global metrics sync notice:', err);
+    }
+  }, []);
+
+  // Compute dynamic metrics on initial startup
+  useEffect(() => {
+    syncAllCommodityMetrics(false);
+  }, [syncAllCommodityMetrics]);
+
   const handleRefreshGemini = async () => {
     setIsSyncing(true);
     setLastSyncTime(getKSTTime());
-    await geminiController.fetchLiveMarketData(true);
+    await Promise.all([
+      geminiController.fetchLiveMarketData(true),
+      syncAllCommodityMetrics(true)
+    ]);
     setLastSyncTime(getKSTTime());
     setIsSyncing(false);
   };
 
   const handleUpdateCommodityMetrics = useCallback(
-    (commodityId: string, metrics: { price?: number; changeWoW?: number; changeMoM?: number }) => {
+    (commodityId: string, metrics: { price?: number; changeWoW?: number | null; changeMoM?: number | null }) => {
       setCommodities((prev) =>
         prev.map((c) => {
           if (c.id === commodityId) {
@@ -276,20 +365,22 @@ export default function App() {
         newUnit = 'KRW / MT';
       }
 
-      // 3. CENTRAL DYNAMIC METRIC CALCULATION FOR STARCHES & OILS ON FIRST LOAD
+      // 3. Fallback to cache series only if metrics are not yet loaded
       let computedWoW = c.changeWoW;
       let computedMoM = c.changeMoM;
 
-      if (c.id === 'tapioca-starch' && tapiocaCacheFallback?.weeklyPrices) {
-        const series = tapiocaCacheFallback.weeklyPrices.map(p => ({ usdPerMT: p.price, date: p.date }));
-        const metrics = calculateDynamicMetrics('tapioca-starch', c.price, series);
-        if (metrics.wowPct !== 0) computedWoW = metrics.wowPct;
-        if (metrics.momPct !== 0) computedMoM = metrics.momPct;
-      } else if (c.id === 'palm-oil' && palmOilCacheFallback?.historicalSeries) {
-        const series = palmOilCacheFallback.historicalSeries.map(p => ({ usdPerMT: p.usdPerMT, date: p.date }));
-        const metrics = calculateDynamicMetrics('palm-oil', c.price, series);
-        if (metrics.wowPct !== 0) computedWoW = metrics.wowPct;
-        if (metrics.momPct !== 0) computedMoM = metrics.momPct;
+      if (computedWoW == null) {
+        if (c.id === 'tapioca-starch' && tapiocaCacheFallback?.weeklyPrices) {
+          const series = tapiocaCacheFallback.weeklyPrices.map(p => ({ usdPerMT: p.price, date: p.date }));
+          const metrics = calculateDynamicMetrics('tapioca-starch', c.price, series);
+          if (metrics.wowPct != null) computedWoW = metrics.wowPct;
+          if (metrics.momPct != null) computedMoM = metrics.momPct;
+        } else if (c.id === 'palm-oil' && palmOilCacheFallback?.historicalSeries) {
+          const series = palmOilCacheFallback.historicalSeries.map(p => ({ usdPerMT: p.usdPerMT, date: p.date }));
+          const metrics = calculateDynamicMetrics('palm-oil', c.price, series);
+          if (metrics.wowPct != null) computedWoW = metrics.wowPct;
+          if (metrics.momPct != null) computedMoM = metrics.momPct;
+        }
       }
 
       return {

@@ -79,7 +79,7 @@ const normalizeTitleKey = (title?: string): string => {
     .trim();
 };
 
-export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }) => {
+export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean }> = ({ commodityId, isSyncing }) => {
   const [articles, setArticles] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -91,7 +91,8 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
       if (isMounted) setArticles([]);
 
       try {
-        const res = await fetch(`/api/market-intelligence?commodity=${commodityId}`, { cache: 'no-store' });
+        const forceParam = '&force=true';
+        const res = await fetch(`/api/market-intelligence?commodity=${commodityId}${forceParam}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
 
@@ -133,7 +134,8 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
               };
             })
             .filter((art: NewsItem) => {
-              const normUrl = !art.unavailable && art.originalUrl ? normalizeUrlKey(art.originalUrl) : '';
+              if (art.unavailable || !art.originalUrl) return false;
+              const normUrl = normalizeUrlKey(art.originalUrl);
               const normTitle = normalizeTitleKey(art.title);
               if (!normTitle) return false;
 
@@ -145,7 +147,7 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
               seenTitles.add(normTitle);
               return true;
             })
-            .slice(0, 6);
+            .slice(0, 4);
 
           if (isMounted) setArticles(mapped);
         }
@@ -160,7 +162,7 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
     return () => {
       isMounted = false;
     };
-  }, [commodityId]);
+  }, [commodityId, isSyncing]);
 
   return (
     <div className="mt-6 bg-white rounded-xl border border-slate-200 p-5 shadow-sm pdf-section-card min-h-[220px] print:mt-8 print:pt-4 break-inside-avoid print:break-inside-avoid">
@@ -172,7 +174,7 @@ export const CommodityNews: React.FC<{ commodityId: string }> = ({ commodityId }
           </h3>
         </div>
         {isLoading && (
-          <span className="text-xs text-[#DF0029] font-medium animate-pulse shrink-0">
+          <span className="text-xs text-[#2563EB] font-medium animate-pulse shrink-0">
             최신 공식자료 검색 중...
           </span>
         )}
