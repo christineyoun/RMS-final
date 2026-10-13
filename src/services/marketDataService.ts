@@ -198,4 +198,19 @@ class ClientMarketDataService {
   }
 }
 
+
+export const saveScfiCache = (data: { scfiPoints: number, changeStr: string }) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('rms_scfi_last_known', JSON.stringify(data));
+  }
+};
+
+export const getSavedScfi = () => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('rms_scfi_last_known');
+    return saved ? JSON.parse(saved) : null;
+  }
+  return null;
+};
+
 export const clientMarketDataService = ClientMarketDataService.getInstance();

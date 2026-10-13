@@ -1159,7 +1159,7 @@ export const MACRO_DRIVERS: MacroDriver[] = [
     icon: 'directions_boat',
     change: '-3.40%',
     isPositiveCostImpact: true,
-    primaryValue: '2,165.8 pts',
+    primaryValue: '3,664.11 pts',
     secondaryValue: 'BDI 1,580 pts',
     badgeText: '운임 하향 안정',
     badgeType: 'green',

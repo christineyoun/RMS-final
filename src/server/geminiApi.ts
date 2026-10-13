@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { scrapeTradlinxScfi, getScfiCache } from './scfiScraperService.ts';
+import { scrapeLiveScfiIndex, getScfiCache } from './scfiScraperService.ts';
 
 const CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 
@@ -220,10 +220,10 @@ export async function fetchLivePipelineMetrics() {
   const brentOil = await fetchLiveCrudeOilData('BZ=F', 101.40);
   const ttfGas = await fetchLiveCrudeOilData('TTF=F', 39.80);
 
-  // Scrape live SCFI from Tradlinx (or fallback to disk cache)
-  const scfiPayload = await scrapeTradlinxScfi(false);
-  const scfi = scfiPayload ? scfiPayload.scfiPoints : 3662.30;
-  const freightChangeStr = scfiPayload ? scfiPayload.changeStr : '-0.65%';
+  // Scrape live SCFI from SSE (or fallback to disk cache)
+  const scfiPayload = await scrapeLiveScfiIndex(false);
+  const scfi = scfiPayload ? scfiPayload.scfiPoints : 3664.11;
+  const freightChangeStr = scfiPayload ? scfiPayload.changeStr : '--%';
   const freightStatus = freightChangeStr.startsWith('+') ? '운임 상승세' : '운임 하향 안정';
   const bdi = 3370;
 

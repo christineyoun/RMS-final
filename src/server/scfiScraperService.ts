@@ -1,11 +1,12 @@
+import * as cheerio from 'cheerio';
 import fs from 'fs';
 import path from 'path';
 
 const SCFI_CACHE_FILE = path.join(process.cwd(), 'src/data/cache_scfi.json');
-const TRADLINX_URL = 'https://www.tradlinx.com/ko/freight-index';
+const SSE_SCFI_URL = 'https://en.sse.net.cn/indices/scfinew.jsp';
 
 export interface ScfiCachePayload {
-  scfiPoints: number;
+  scfiPoints: number | null;
   changeStr: string;
   updatedAt: string;
   source: string;
@@ -16,7 +17,7 @@ export function getScfiCache(): ScfiCachePayload {
   try {
     if (fs.existsSync(SCFI_CACHE_FILE)) {
       const data = JSON.parse(fs.readFileSync(SCFI_CACHE_FILE, 'utf-8'));
-      if (data && typeof data.scfiPoints === 'number' && data.scfiPoints > 500 && data.scfiPoints !== 4300) {
+      if (data) {
         return data as ScfiCachePayload;
       }
     }
@@ -24,11 +25,11 @@ export function getScfiCache(): ScfiCachePayload {
     console.warn('[ScfiCache] Disk cache read notice:', e);
   }
   return {
-    scfiPoints: 3662.30,
-    changeStr: '-0.65%',
+    scfiPoints: null,
+    changeStr: '--%',
     updatedAt: new Date().toISOString(),
-    source: '트레드링스 (Tradlinx)',
-    sourceUrl: TRADLINX_URL
+    source: 'Shanghai Shipping Exchange (SSE)',
+    sourceUrl: SSE_SCFI_URL
   };
 }
 
@@ -40,62 +41,50 @@ export function updateScfiCache(data: ScfiCachePayload): void {
   }
 }
 
-export async function scrapeTradlinxScfi(forceRefresh: boolean = false): Promise<ScfiCachePayload> {
+export async function scrapeLiveScfiIndex(forceRefresh: boolean = false): Promise<ScfiCachePayload> {
   const existingCache = getScfiCache();
 
   try {
-    const res = await fetch(TRADLINX_URL, {
+    const res = await fetch(SSE_SCFI_URL, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8',
+        'Referer': 'https://en.sse.net.cn/'
       },
-      signal: AbortSignal.timeout(6000)
+      signal: AbortSignal.timeout(8000)
     });
 
     if (res.ok) {
       const html = await res.text();
+      const $ = cheerio.load(html);
 
-      // Extract Next.js embedded JSON payload (__NEXT_DATA__)
-      const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-      if (nextDataMatch && nextDataMatch[1]) {
-        try {
-          const nextData = JSON.parse(nextDataMatch[1]);
-          const pageProps = nextData?.props?.pageProps;
-          
-          const scfiSeries = pageProps?.scfiList || pageProps?.freightIndexList || pageProps?.chartData;
-          if (Array.isArray(scfiSeries) && scfiSeries.length > 0) {
-            const latestPoint = scfiSeries[scfiSeries.length - 1];
-            const prevPoint = scfiSeries.length >= 2 ? scfiSeries[scfiSeries.length - 2] : null;
-
-            const scfiVal = typeof latestPoint === 'number' ? latestPoint : (latestPoint?.scfi || latestPoint?.value || latestPoint?.price);
-            const prevVal = prevPoint ? (typeof prevPoint === 'number' ? prevPoint : (prevPoint?.scfi || prevPoint?.value || prevPoint?.price)) : null;
-
-            if (typeof scfiVal === 'number' && scfiVal > 1000 && scfiVal < 5000 && scfiVal !== 4300) {
-              let changeStr = existingCache.changeStr;
-              if (prevVal && prevVal > 0) {
-                const diffPct = ((scfiVal - prevVal) / prevVal) * 100;
-                changeStr = `${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(2)}%`;
-              }
-
-              const updatedPayload: ScfiCachePayload = {
-                scfiPoints: Number(scfiVal.toFixed(2)),
-                changeStr,
-                updatedAt: new Date().toISOString(),
-                source: '트레드링스 (Tradlinx)',
-                sourceUrl: TRADLINX_URL
-              };
-              updateScfiCache(updatedPayload);
-              return updatedPayload;
-            }
-          }
-        } catch (jsonErr) {
-          console.warn('[TradlinxScraper] JSON parse notice:', jsonErr);
+      // Implementation details to find the data row and columns
+      // This part is highly dependent on the website structure and may require selectors
+      // I will assume standard table row/cell structure for now based on common patterns
+      const compositeRow = $('table').find('tr').filter((i, el) => $(el).text().includes('Composite Index')).first();
+      
+      if (compositeRow.length > 0) {
+        const cells = compositeRow.find('td');
+        const scfiValText = $(cells[1]).text().trim(); // Adjust index based on actual table structure
+        const changeText = $(cells[2]).text().trim(); // Adjust index
+        
+        const scfiPoints = parseFloat(scfiValText.replace(/,/g, ''));
+        
+        if (!isNaN(scfiPoints)) {
+          const updatedPayload: ScfiCachePayload = {
+            scfiPoints,
+            changeStr: changeText,
+            updatedAt: new Date().toISOString(),
+            source: 'Shanghai Shipping Exchange (SSE)',
+            sourceUrl: SSE_SCFI_URL
+          };
+          updateScfiCache(updatedPayload);
+          return updatedPayload;
         }
       }
     }
   } catch (err) {
-    console.warn('[TradlinxScraper] Live fetch notice, serving disk cache:', err);
+    console.warn('[SSE_Scraper] Live fetch notice:', err);
   }
 
   return existingCache;

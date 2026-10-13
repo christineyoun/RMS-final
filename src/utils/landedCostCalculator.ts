@@ -1,4 +1,4 @@
-import type { Commodity, Currency } from '../types.ts';
+import type { Commodity, Currency } from '../types';
 import { COMMODITY_CONFIGS, getCalculatedMetrics } from '../lib/priceCalculator.ts';
 import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './commodityConversions.ts';
 

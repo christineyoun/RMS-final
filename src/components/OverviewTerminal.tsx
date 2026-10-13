@@ -15,6 +15,7 @@ import {
 } from '../utils/landedCostCalculator';
 import AiMarketBrief from './AiMarketBrief';
 import { formatDateStandard } from '../utils/formatters';
+import { saveScfiCache, getSavedScfi } from '../services/marketDataService';
 
 const GREEN_BADGE_STYLE = 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
 
@@ -36,11 +37,11 @@ const DEFAULT_MACRO_FALLBACKS = {
     note: '가공 연료비 완화'
   },
   freight: {
-    rate: '3,445.0 pts',
+    rate: '-- pts',
     secondary: 'SCFI Index',
-    change: '-1.77%',
+    change: '--%',
     status: '운임 하향 안정',
-    badgeType: 'green' as const,
+    badgeType: 'amber' as const,
     note: '로테르담-부산 구간'
   },
   policy: {
@@ -425,41 +426,35 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
         // 3. Safeguard Freight State Setter
         const energyData = data.energy;
+        const savedScfi = getSavedScfi();
+        
         if (energyData && energyData.scfi !== undefined) {
           const scfiVal = energyData.scfi !== null ? Number(energyData.scfi) : null;
-          const changeStr = energyData.freightChangeStr || DEFAULT_MACRO_FALLBACKS.freight.change;
-          const statusStr = energyData.freightStatus || DEFAULT_MACRO_FALLBACKS.freight.status;
+          const changeStr = energyData.freightChangeStr || '--%';
+          const statusStr = energyData.freightStatus || '운임 하향 안정';
           const isFavorable = !changeStr.startsWith('+');
 
+          if (scfiVal !== null) {
+            saveScfiCache({ scfiPoints: scfiVal, changeStr });
+          }
+
           setFreightData({
-            rate: scfiVal ? `SCFI ${scfiVal.toLocaleString()} pts` : '연동 대기',
-            secondary: scfiVal ? `SCFI ${scfiVal.toLocaleString()} pt` : '연동 대기',
+            rate: scfiVal ? `SCFI ${scfiVal.toLocaleString()} pts` : (savedScfi?.scfiPoints ? `SCFI ${savedScfi.scfiPoints.toLocaleString()} pts` : '-- pts'),
+            secondary: scfiVal ? `SCFI ${scfiVal.toLocaleString()} pt` : (savedScfi?.scfiPoints ? `SCFI ${savedScfi.scfiPoints.toLocaleString()} pt` : 'SCFI Index'),
             change: changeStr,
             status: statusStr,
             badgeType: isFavorable ? 'green' : 'red',
             note: '상하이-유럽/미서안 컨테이너 운임 지수 동향'
           });
-        } else {
-          const rawScfi = data.energy?.scfi ?? data.scfi;
-          if (rawScfi !== undefined && rawScfi !== null) {
-            const currentPoints = Number(rawScfi);
-            if (!isNaN(currentPoints) && currentPoints > 0) {
-              const prevClose = 3713.0;
-              const pctChange = ((currentPoints - prevClose) / prevClose) * 100;
-              const sign = pctChange >= 0 ? '+' : '';
-              const changeStr = !isNaN(pctChange) ? `${sign}${pctChange.toFixed(2)}%` : DEFAULT_MACRO_FALLBACKS.freight.change;
-              const isFavorable = pctChange <= 0;
-
-              setFreightData((prev) => ({
-                rate: `SCFI ${currentPoints.toLocaleString()} pts`,
-                secondary: `SCFI ${currentPoints.toLocaleString()} pt`,
-                change: changeStr || prev?.change || DEFAULT_MACRO_FALLBACKS.freight.change,
-                status: isFavorable ? '운임 하향 안정' : '운임 상승세',
-                badgeType: isFavorable ? 'green' : 'red',
-                note: prev?.note || DEFAULT_MACRO_FALLBACKS.freight.note
-              }));
-            }
-          }
+        } else if (savedScfi) {
+          setFreightData({
+            rate: `SCFI ${savedScfi.scfiPoints.toLocaleString()} pts`,
+            secondary: `SCFI ${savedScfi.scfiPoints.toLocaleString()} pt`,
+            change: savedScfi.changeStr || '--%',
+            status: '운임 하향 안정',
+            badgeType: 'amber',
+            note: '상하이-유럽/미서안 컨테이너 운임 지수 동향'
+          });
         }
 
         // 4. Safeguard WASDE Telemetry State Setter
