@@ -1,0 +1,160 @@
+{
+  "commodity": "soybean",
+  "commodityCode": "2222000",
+  "verifiedAt": "2026-10-14T06:37:06.526Z",
+  "data": {
+    "commodityCode": "2222000",
+    "marketYear": "2026",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 442700,
+    "productionMMT": 442.7,
+    "domesticConsumption1000MT": 442177,
+    "domesticConsumptionMMT": 442.2,
+    "endingStocks1000MT": 124278,
+    "endingStocksMMT": 124.3,
+    "beginningStocks1000MT": 124927,
+    "beginningStocksMMT": 124.9,
+    "imports1000MT": 190823,
+    "exports1000MT": 191995,
+    "exportsMMT": 192,
+    "totalSupply1000MT": 758450,
+    "stocksToUseRatio": 28.1,
+    "stocksToUseRatioPct": 28.1,
+    "areaHarvested1000HA": 146419,
+    "yieldMTHA": 3.0235,
+    "rawRecordsCount": 13,
+    "rawRecords": [
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 4,
+        "unitId": 4,
+        "value": 146419
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 124927
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 442700
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 190823
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 758450
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 191995
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 7,
+        "unitId": 8,
+        "value": 385714
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 149,
+        "unitId": 8,
+        "value": 25923
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 161,
+        "unitId": 8,
+        "value": 30540
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 442177
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 124278
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 758450
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 184,
+        "unitId": 26,
+        "value": 3.0235
+      }
+    ]
+  }
+}

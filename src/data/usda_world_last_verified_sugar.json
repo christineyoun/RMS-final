@@ -1,0 +1,188 @@
+{
+  "commodity": "sugar",
+  "commodityCode": "0612000",
+  "verifiedAt": "2026-10-14T08:15:39.147Z",
+  "data": {
+    "commodityCode": "0612000",
+    "marketYear": "2026",
+    "releaseMonth": "05",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 184854,
+    "productionMMT": 184.9,
+    "domesticConsumption1000MT": 180536,
+    "domesticConsumptionMMT": 180.5,
+    "endingStocks1000MT": 44410,
+    "endingStocksMMT": 44.4,
+    "beginningStocks1000MT": 43523,
+    "beginningStocksMMT": 43.5,
+    "imports1000MT": 58893,
+    "exports1000MT": 62324,
+    "exportsMMT": 62.3,
+    "totalSupply1000MT": 287270,
+    "stocksToUseRatio": 24.6,
+    "stocksToUseRatioPct": 24.6,
+    "rawRecordsCount": 16,
+    "rawRecords": [
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 43523
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 30,
+        "unitId": 8,
+        "value": 37699
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 43,
+        "unitId": 8,
+        "value": 147155
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 184854
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 64,
+        "unitId": 8,
+        "value": 40732
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 74,
+        "unitId": 8,
+        "value": 18161
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 58893
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 287270
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 89,
+        "unitId": 8,
+        "value": 42524
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 99,
+        "unitId": 8,
+        "value": 19800
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 62324
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 139,
+        "unitId": 8,
+        "value": 179991
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 151,
+        "unitId": 8,
+        "value": 545
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 126,
+        "unitId": 8,
+        "value": 180536
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 44410
+      },
+      {
+        "commodityCode": "0612000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "05",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 287270
+      }
+    ]
+  }
+}

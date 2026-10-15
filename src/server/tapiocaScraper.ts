@@ -180,15 +180,19 @@ export class TapiocaScraper {
       console.warn('[TapiocaScraper] Warning reading existing cache:', e);
     }
 
-    // Live scrapers for full page archives
-    for (let year = startYear; year <= currentYear; year++) {
+    // Live scrapers for active years (only fetch current year and previous year if not already cached)
+    const yearsToScrape: number[] = allPrices.length === 0
+      ? [currentYear - 1, currentYear]
+      : [currentYear];
+
+    for (const year of yearsToScrape) {
       try {
         const url = `https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price/${year}`;
         const res = await fetch(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           },
-          signal: AbortSignal.timeout(5000)
+          signal: AbortSignal.timeout(8000)
         });
 
         if (res.ok) {
@@ -199,7 +203,7 @@ export class TapiocaScraper {
           }
         }
       } catch (err) {
-        console.warn(`[TapiocaScraper] Scrape failed for year ${year}, using cached copy:`, (err as Error).message);
+        console.info(`[TapiocaScraper] Live scrape for year ${year} unavailable (${(err as Error).message}), using cached copy.`);
       }
     }
 

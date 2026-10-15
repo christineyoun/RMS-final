@@ -1,0 +1,158 @@
+{
+  "commodityCode": "4232000",
+  "verifiedAt": "2026-10-14T08:24:53.300Z",
+  "data": {
+    "commodityCode": "4232000",
+    "marketYear": "2026",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online · authenticated world records",
+    "production1000MT": 75241,
+    "productionMMT": 75.2,
+    "domesticConsumption1000MT": 73483,
+    "domesticConsumptionMMT": 73.5,
+    "endingStocks1000MT": 6854,
+    "endingStocksMMT": 6.9,
+    "beginningStocks1000MT": 6415,
+    "beginningStocksMMT": 6.4,
+    "imports1000MT": 13630,
+    "exports1000MT": 14949,
+    "exportsMMT": 14.9,
+    "totalSupply1000MT": 95286,
+    "stocksToUseRatio": 9.3,
+    "stocksToUseRatioPct": 9.3,
+    "rawRecordsCount": 13,
+    "rawRecords": [
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 7,
+        "unitId": 8,
+        "value": 385714
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 181,
+        "unitId": 23,
+        "value": 0.1951
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 6415
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 75241
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 13630
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 95286
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 14949
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 140,
+        "unitId": 8,
+        "value": 18962
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 149,
+        "unitId": 8,
+        "value": 54436
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 161,
+        "unitId": 8,
+        "value": 85
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 73483
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 6854
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 95286
+      }
+    ],
+    "executiveBrief": "USDA FAS PSD 2026/27 글로벌 대두유: 생산 75.2 MMT, 소비 73.5 MMT, 기말재고 6.9 MMT, 수출 14.9 MMT. 실제 공급사 오퍼와 한국 도착원가는 별도 확인이 필요합니다."
+  }
+}

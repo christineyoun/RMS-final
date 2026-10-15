@@ -221,16 +221,18 @@ export interface TickerConfig {
   buPerMt?: number;
   lbsPerMt?: number;
   multiplier?: number;
+  quoteUnit?: string;
+  exchange?: string;
 }
 
 export const tickerMap: Record<string, TickerConfig> = {
-  corn: { symbol: 'ZC=F', buPerMt: CORN_BUSHELS_PER_MT, name: 'CBOT Corn' },
-  soybean: { symbol: 'ZS=F', buPerMt: WHEAT_SOY_BUSHELS_PER_MT, name: 'CBOT Soybean' },
-  'soybean-oil': { symbol: 'ZL=F', lbsPerMt: LBS_PER_METRIC_TON, name: 'CBOT Soybean Oil' },
+  corn: { symbol: 'ZC=F', buPerMt: CORN_BUSHELS_PER_MT, name: 'CBOT Corn', quoteUnit: 'US¢/bu', exchange: 'CBOT' },
+  soybean: { symbol: 'ZS=F', buPerMt: WHEAT_SOY_BUSHELS_PER_MT, name: 'CBOT Soybean', quoteUnit: 'US¢/bu', exchange: 'CBOT' },
+  'soybean-oil': { symbol: 'ZL=F', lbsPerMt: LBS_PER_METRIC_TON, name: 'CBOT Soybean Oil', quoteUnit: 'US¢/lb', exchange: 'CBOT' },
   'soybean-meal': { symbol: 'ZM=F', multiplier: 1.1023, name: 'CBOT Soybean Meal' },
-  wheat: { symbol: 'ZW=F', buPerMt: WHEAT_SOY_BUSHELS_PER_MT, name: 'CBOT Wheat' },
+  wheat: { symbol: 'ZW=F', buPerMt: WHEAT_SOY_BUSHELS_PER_MT, name: 'CBOT Wheat', quoteUnit: 'US¢/bu', exchange: 'CBOT' },
   'palm-oil': { symbol: 'FCPO.KL', multiplier: 1, name: 'Bursa Malaysia Palm Oil' },
-  sugar: { symbol: 'SB=F', lbsPerMt: LBS_PER_METRIC_TON, name: 'ICE Sugar' },
+  sugar: { symbol: 'SB=F', lbsPerMt: LBS_PER_METRIC_TON, name: 'ICE Sugar', quoteUnit: 'US¢/lb', exchange: 'ICE Futures U.S.' },
   'potato-starch': { symbol: 'CN_110813', name: 'Eurostat Comext CN 110813 Potato Starch Unit Value' },
   'tapioca-starch': { symbol: 'TTSA_FOB_BANGKOK', name: 'Thai Tapioca Starch Association Weekly Price' }
 };
@@ -404,23 +406,24 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
 
   let targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${yahooRange}&interval=1d`;
 
-  let response = await fetch(targetUrl, {
+  // A forced refresh must not reuse a local HTTP cache. Yahoo may still apply
+  // its own upstream caching; fetchedAt below reports *retrieval* time only.
+  const yahooFetchOptions: RequestInit = {
+    cache: forceRefresh ? 'no-store' : 'default',
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept': 'application/json',
+      ...(forceRefresh ? { 'Cache-Control': 'no-cache' } : {}),
     },
-  });
+    signal: AbortSignal.timeout(12000),
+  };
+  let response = await fetch(targetUrl, yahooFetchOptions);
 
   let json = response.ok ? await response.json() : null;
   let result = json?.chart?.result?.[0];
 
   if (!result || (result.timestamp || []).length <= 1) {
-    response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-      },
-    });
+    response = await fetch(targetUrl, yahooFetchOptions);
     if (response.ok) {
       json = await response.json();
       result = json?.chart?.result?.[0];
@@ -431,48 +434,81 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
     throw new Error(`Invalid response payload from Yahoo Finance for ${symbol}`);
   }
 
-  const timestamps = result.timestamp || [];
-  const quotes = result.indicators?.quote?.[0]?.close || [];
-
+  const timestamps: number[] = Array.isArray(result.timestamp) ? result.timestamp : [];
+  const quotes: Array<number | null> = result.indicators?.quote?.[0]?.close || [];
+  const quoteUnit = config.quoteUnit || 'unspecified';
+  const exchange = config.exchange || 'Unknown exchange';
+  const exchangeTimezone = result.meta?.exchangeTimezoneName || 'UTC';
   const mult = config.buPerMt || config.lbsPerMt || config.multiplier || 39.368;
+  const toUsdPerMt = (quoteValue: number): number =>
+    Number((config.lbsPerMt
+      ? centsPerLbToUsdPerMt(quoteValue)
+      : (quoteValue / 100) * mult).toFixed(2));
 
-  const priceData = timestamps
-    .map((ts: number, idx: number) => {
-      const dateStr = new Date(ts * 1000).toISOString().split('T')[0];
-      const rawVal = quotes[idx];
-      if (rawVal === null || rawVal === undefined || isNaN(rawVal)) return null;
-
-      // Formula for Sugar (SB=F): (USc/lb / 100) * 2204.62 = USD/MT
-      const sugarUsdPerMt = (rawVal / 100) * 2204.62;
-
-      const usdPerMT = (cleanId === 'sugar' || symbol === 'SB=F')
-        ? Math.round(sugarUsdPerMt * 100) / 100
-        : Math.round((rawVal / 100) * mult * 100) / 100;
-
-      return {
-        date: dateStr,
-        centsPerBushel: Math.round(rawVal * 100) / 100,
-        usdPerMT,
-      };
-    })
-    .filter(Boolean);
-
-  if (result.meta?.regularMarketPrice && priceData.length > 0) {
-    const regularPrice = result.meta.regularMarketPrice;
-    const latestPoint = priceData[priceData.length - 1];
-    if (Math.abs(latestPoint.centsPerBushel - regularPrice) > 0.01) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const regularUsdMt = (cleanId === 'sugar' || symbol === 'SB=F')
-        ? Math.round(((regularPrice / 100) * 2204.62) * 100) / 100
-        : Math.round((regularPrice / 100) * mult * 100) / 100;
-
-      priceData.push({
-        date: todayStr,
-        centsPerBushel: Math.round(regularPrice * 100) / 100,
-        usdPerMT: regularUsdMt,
-      });
+  // Daily Yahoo bars use exchange-local trading dates. Do not date a live
+  // market quote using the server's UTC calendar day.
+  const tradingDate = (timestampSeconds: number): string => {
+    const date = new Date(timestampSeconds * 1000);
+    try {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: exchangeTimezone,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      }).formatToParts(date);
+      const part = (type: string) => parts.find(item => item.type === type)?.value || '';
+      return `${part('year')}-${part('month')}-${part('day')}`;
+    } catch {
+      return date.toISOString().slice(0, 10);
     }
-  }
+  };
+
+  const marketTime = Number(result.meta?.regularMarketTime);
+  const marketQuotePrice = Number(result.meta?.regularMarketPrice);
+  const hasMarketTime = Number.isFinite(marketTime) && marketTime > 0;
+  const hasMarketQuote = Number.isFinite(marketQuotePrice) && marketQuotePrice > 0;
+  const marketQuoteDate = hasMarketTime ? tradingDate(marketTime) : null;
+
+  // A live/latest quote is not a historical close or an official settlement.
+  // Keep it in a separate object, rather than appending it to chart history.
+  const latestMarketQuote = hasMarketQuote ? {
+    quoteValue: Number(marketQuotePrice.toFixed(2)),
+    quoteUnit,
+    usdPerMT: toUsdPerMt(marketQuotePrice),
+    asOf: hasMarketTime ? new Date(marketTime * 1000).toISOString() : null,
+    tradingDate: marketQuoteDate,
+    type: 'latest_quote_not_verified_settlement',
+  } : null;
+
+  // Deduplicate by exchange-local trading date; a later daily bar for the
+  // same session replaces the previous one, with no synthetic observations.
+  const uniqueDailyBars = new Map<string, {
+    date: string;
+    quoteValue: number;
+    quoteUnit: string;
+    centsPerBushel: number;
+    usdPerMT: number;
+    isProvisional: boolean;
+  }>();
+
+  timestamps.forEach((timestamp, index) => {
+    const rawVal = quotes[index];
+    if (!Number.isFinite(timestamp) || timestamp <= 0 ||
+        typeof rawVal !== 'number' || !Number.isFinite(rawVal) || rawVal <= 0) return;
+    const date = tradingDate(timestamp);
+    const quotedPrice = Number(rawVal.toFixed(2));
+    uniqueDailyBars.set(date, {
+      date,
+      quoteValue: quotedPrice,
+      quoteUnit,
+      // DEPRECATED alias retained for current RMS frontend compatibility.
+      // For oil/sugar this is cents/lb, NOT cents/bushel. Use quoteValue/unit.
+      centsPerBushel: quotedPrice,
+      usdPerMT: toUsdPerMt(rawVal),
+      isProvisional: date === marketQuoteDate,
+    });
+  });
+
+  const priceData = Array.from(uniqueDailyBars.values())
+    .sort((a, b) => a.date.localeCompare(b.date));
 
   return {
     success: true,
@@ -480,7 +516,20 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
     symbol: `${symbol} (${config.name})`,
     timeframe,
     range: yahooRange,
-    source: 'CME / Yahoo Finance',
+    source: `${exchange} / Yahoo Finance`,
+    exchange,
+    provider: 'Yahoo Finance',
+    quoteUnit,
+    priceUnit: 'USD/MT',
+    fetchedAt: new Date().toISOString(),
+    latestMarketQuote,
+    historicalDataType: 'Yahoo daily bars; settlement status not independently verified',
+    contractSeries: {
+      ticker: symbol,
+      type: 'Yahoo generic futures symbol',
+      rolloverVerified: false,
+      // To verify historical rollover, explicit dated futures-contract data is needed.
+    },
     data: priceData,
   };
 }

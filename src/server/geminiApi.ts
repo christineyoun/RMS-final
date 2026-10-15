@@ -4,6 +4,10 @@ import fs from 'fs';
 import path from 'path';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { scrapeLiveScfiIndex, getScfiCache } from './scfiScraperService.ts';
+import { fetchOfficialTapiocaQuote } from './officialTapiocaQuoteService.ts';
+import { fetchOfficialPotatoEurostat } from './officialPotatoEurostatService.ts';
+import { fetchOfficialPotatoComext } from './officialPotatoComextService.ts';
+import { buildPotatoEurostatMarketView } from './potatoEurostatMarketView.ts';
 
 const CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 
@@ -46,6 +50,8 @@ export function updateSavedBaselinePrice(newPrice: number, newOleinUsd?: number)
 }
 import { serverMarketDataService } from './marketDataService.ts';
 import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, getCommodityBaseline } from './usdaFasService.ts';
+import { fetchSoybeanOilWorldPsd } from './usdaSoybeanOilLiveService.ts';
+import { fetchOtherCommodityWorldPsd } from './usdaOtherCommoditiesLiveService.ts';
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
@@ -597,16 +603,33 @@ export function createGeminiApiMiddleware() {
     }
 
     // AI Analysis Endpoint (Gemini Structured Output)
+    // RMS Step 22: Google Search-grounded market intelligence for all eight commodities.
+    // Six-box official-statistics routes remain separate and UNCHANGED.
     if (url.startsWith('/api/ai-analysis/')) {
       try {
         const parsedUrl = new URL(url, 'http://localhost');
         const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
         // /api/ai-analysis/:commodity -> pathSegments[2]
         const commodityParam = pathSegments[2] || 'corn';
-        const data = await generateAiAnalysis(commodityParam);
+        const forceRefresh = parsedUrl.searchParams.get('force') === 'true';
+        // RMS Step 19 — Eurostat-aligned Potato Starch AI market view
+        // Use the SAME Eurostat world/area source as the six-box potato card.
+        // Prevent the old AI fallback from reinserting unsupported 2026 decline figures.
+        if (commodityParam === 'potato-starch' || commodityParam === 'potato_starch') {
+          const source = await fetchOfficialPotatoEurostat(forceRefresh);
+          const data = buildPotatoEurostatMarketView(source);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-store');
+          res.statusCode = 200;
+          res.end(JSON.stringify({ success: true, data, dataStatus: source.dataStatus,
+            source: source.source, harvestYear: source.data?.harvestYear ?? null,
+            verifiedAt: source.verifiedAt, checkedAt: source.checkedAt }, null, 2));
+          return;
+        }
+        const data = await generateAiAnalysis(commodityParam, undefined, forceRefresh);
 
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=600');
+        res.setHeader('Cache-Control', 'no-store'); // AI brief prices must not be cached for 1h
         res.statusCode = 200;
         res.end(JSON.stringify({
           success: true,
@@ -844,6 +867,54 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
+    // USDA world Soybean Oil: authenticated data only, with a dated last-verified cache.
+    // Keep this ahead of the legacy generic USDA route, which still has static baselines.
+    if (url.startsWith('/api/usda/soybean-oil') || url.startsWith('/api/usda/soybean_oil') || url.startsWith('/api/usda/4232000')) {
+      try {
+        const parsed = new URL(url, 'http://localhost');
+        const result = await fetchSoybeanOilWorldPsd(parsed.searchParams.get('force') === 'true');
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        if (!result.success || !result.data) {
+          res.statusCode = 503;
+          res.end(JSON.stringify({ success: false, commodity: 'soybean-oil', dataStatus: 'unavailable',
+            checkedAt: result.checkedAt, error: result.message || 'USDA PSD currently unavailable' }, null, 2));
+        } else {
+          const payload = formatWasdeResponse('soybean-oil', result.data, result.verifiedAt);
+          res.statusCode = 200;
+          res.end(JSON.stringify({ ...payload, dataStatus: result.status,
+            marketYear: result.marketYear, checkedAt: result.checkedAt, verifiedAt: result.verifiedAt,
+            data: { ...payload.data, rawRecords: result.data.rawRecords,
+              rawRecordsCount: result.data.rawRecordsCount, marketYear: result.marketYear },
+            dataMessage: result.message || null }, null, 2));
+        }
+      } catch (err: any) {
+        res.statusCode = 503;
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({ success: false, dataStatus: 'unavailable', error: String(err?.message || err) }));
+      }
+      return;
+    }
+
+    // RMS Step 12 USDA multi-commodity: verified world data only; not static baselines.
+    if (/^\/api\/usda\/(wheat|corn|soybean|palm-oil|sugar)(\?|$)/.test(url)) {
+      const parsed = new URL(url, 'http://localhost');
+      const commodity = parsed.pathname.split('/')[3];
+      const result = await fetchOtherCommodityWorldPsd(commodity, parsed.searchParams.get('force') === 'true');
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = result.success ? 200 : 503;
+      res.end(JSON.stringify({
+        success: result.success, commodity, dataStatus: result.status,
+        checkedAt: result.checkedAt, verifiedAt: result.verifiedAt || null,
+        marketYear: result.marketYear || null,
+        data: result.data ? { ...result.data, commodity } : undefined,
+        ...(result.message ? { message: result.message } : {})
+      }, null, 2));
+      return;
+    }
+
     // USDA FAS PSD Wheat & Commodity Endpoint
     if (url.startsWith('/api/usda/')) {
       try {
@@ -867,6 +938,39 @@ export function createGeminiApiMiddleware() {
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ success: false, error: err.message }));
       }
+      return;
+    }
+
+    // RMS Step 17 — official starch source separation
+    if (/^\/api\/starch\/tapioca-quote(\?|$)/.test(url)) {
+      const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';
+      const result = await fetchOfficialTapiocaQuote(force);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = result.success ? 200 : 503;
+      res.end(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    // RMS Step 18 — Eurostat potato harvest statistics
+    if (/^\/api\/starch\/potato-stats(\?|$)/.test(url)) {
+      const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';
+      const result = await fetchOfficialPotatoEurostat(force);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = result.success ? 200 : 503;
+      res.end(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    // RMS Step 20 — potato starch Eurostat Comext trade
+    if (/^\/api\/starch\/potato-trade(\?|$)/.test(url)) {
+      const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';
+      const result = await fetchOfficialPotatoComext(force);
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = result.success ? 200 : 503;
+      res.end(JSON.stringify(result, null, 2));
       return;
     }
 
@@ -1106,7 +1210,10 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
         const data = await fetchHistoricalData(commodity, timeframe, force);
 
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
+        // force=true should also bypass browser/proxy caches, not just local fetch caches.
+        res.setHeader('Cache-Control', force
+          ? 'no-store, no-cache, must-revalidate'
+          : 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
         res.statusCode = 200;
         res.end(JSON.stringify(data, null, 2));
       } catch (err: any) {

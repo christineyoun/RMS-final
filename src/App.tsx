@@ -21,6 +21,8 @@ export default function App() {
   const [macroDrivers, setMacroDrivers] = useState(MACRO_DRIVERS);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  // RMS Step 16 — deterministic USDA Live Sync
+  const [usdaRefreshRevision, setUsdaRefreshRevision] = useState(0);
   const [lastSyncTime, setLastSyncTime] = useState<string>(getKSTTime());
   const [aiBriefText, setAiBriefText] = useState<string>('');
   const [modelVersion, setModelVersion] = useState<string>('gemini-flash-latest');
@@ -291,14 +293,39 @@ export default function App() {
   }, [syncAllCommodityMetrics]);
 
   const handleRefreshGemini = async () => {
+    if (isSyncing) return;
     setIsSyncing(true);
-    setLastSyncTime(getKSTTime());
-    await Promise.all([
-      geminiController.fetchLiveMarketData(true),
-      syncAllCommodityMetrics(true)
-    ]);
-    setLastSyncTime(getKSTTime());
-    setIsSyncing(false);
+    try {
+      // Preserve existing market-price/AI refreshes even if one source fails.
+      const jobs: Promise<unknown>[] = [
+        Promise.resolve().then(() => geminiController.fetchLiveMarketData(true)),
+        Promise.resolve().then(() => syncAllCommodityMetrics(true))
+      ];
+
+      // Force the active USDA-backed commodity directly from Live Sync.
+      // Avoid relying on a brief isSyncing React effect for network I/O.
+      const activeUsdaId = commodities.find(c => c.path === activeView)?.id;
+      if (activeUsdaId && ['wheat', 'corn', 'soybean', 'soybean-oil', 'palm-oil', 'sugar'].includes(activeUsdaId)) {
+        jobs.push(fetch('/api/usda/' + activeUsdaId + '?force=true', { cache: 'no-store' }).then(async response => {
+          if (!response.ok) throw new Error('USDA refresh HTTP ' + response.status);
+          const payload = await response.json();
+          if (!payload.success || !['live-verified', 'last-verified'].includes(payload.dataStatus))
+            throw new Error('USDA returned no validated world data');
+          if (payload.dataStatus === 'last-verified')
+            console.warn('[RMS Live Sync] USDA not reachable; last verified data retained.');
+          return payload;
+        }));
+      }
+      const settled = await Promise.allSettled(jobs);
+      settled.forEach((result, index) => {
+        if (result.status === 'rejected') console.warn('[RMS Live Sync] Source ' + (index + 1) + ' failed:', result.reason);
+      });
+    } finally {
+      // Refresh only the Global S&D card after forced USDA check completes.
+      setUsdaRefreshRevision(previous => previous + 1);
+      setLastSyncTime(getKSTTime());
+      setIsSyncing(false);
+    }
   };
 
   const handleUpdateCommodityMetrics = useCallback(
@@ -435,6 +462,7 @@ export default function App() {
             <CommodityDetail
               key={currentCommodity.id}
               commodity={currentCommodity}
+              usdaRefreshRevision={usdaRefreshRevision}
               onNavigateBack={() => handleNavigate('main-dashboard')}
               currency={currency}
               onOpenExportModal={() => setIsExportModalOpen(true)}

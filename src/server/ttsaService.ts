@@ -44,18 +44,21 @@ export class TtsaService {
     { date: '2021-06-15', price: 490, domesticThb: 12.80 },
     { date: '2021-12-21', price: 520, domesticThb: 13.50 },
     // 2022
+    { date: '2022-02-08', price: 490, domesticThb: 13.00 },
     { date: '2022-03-15', price: 540, domesticThb: 14.00 },
     { date: '2022-09-20', price: 530, domesticThb: 13.80 },
     // 2023
     { date: '2023-01-10', price: 540, domesticThb: 14.10 },
-    { date: '2023-06-20', price: 510, domesticThb: 13.20 },
+    { date: '2023-06-20', price: 570, domesticThb: 15.20 },
     { date: '2023-11-14', price: 500, domesticThb: 13.00 },
     // 2024
     { date: '2024-02-13', price: 520, domesticThb: 13.60 },
+    { date: '2024-05-14', price: 555, domesticThb: 14.50 },
     { date: '2024-07-16', price: 500, domesticThb: 13.00 },
     { date: '2024-12-17', price: 480, domesticThb: 12.50 },
     // 2025
     { date: '2025-03-11', price: 485, domesticThb: 12.60 },
+    { date: '2025-07-15', price: 445, domesticThb: 11.80 },
     { date: '2025-08-19', price: 490, domesticThb: 12.80 },
     { date: '2025-12-23', price: 480, domesticThb: 12.50 },
     // 2026
@@ -180,35 +183,49 @@ export class TtsaService {
     }
 
     const diskCache = this.getDiskCache();
+    const currentYear = new Date().getFullYear();
 
-    const currentYear = new Date().getFullYear(); // 2026
-    let startYear = 2017; // Full historical span 2017-2026
+    // Base collection begins with diskCache, or verified fallback prices if diskCache is empty
+    const allPrices: TtsaWeeklyPrice[] = diskCache.length > 0
+      ? [...diskCache]
+      : [...this.fallbackPrices];
 
-    const allPrices: TtsaWeeklyPrice[] = [...diskCache];
-
+    // Determine which years need live scraping:
+    // Only scrape the active currentYear (and currentYear - 1 if early in January).
+    // Past completed years (e.g. 2021..2024) are immutable historical records already secured in diskCache/fallback.
+    const yearsToScrape: number[] = [];
     if (isForce || diskCache.length === 0) {
-      for (let year = startYear; year <= currentYear; year++) {
-        try {
-          const url = `https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price/${year}`;
-          const res = await fetch(url, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-            },
-            signal: AbortSignal.timeout(6000)
-          });
+      const isJanuary = new Date().getMonth() === 0;
+      if (isJanuary) {
+        yearsToScrape.push(currentYear - 1);
+      }
+      yearsToScrape.push(currentYear);
+    }
 
-          if (res.ok) {
-            const html = await res.text();
-            const yearPrices = this.parseTtsaHtml(html);
-            if (yearPrices.length > 0) {
-              allPrices.push(...yearPrices);
-              console.log(`[TtsaService] Successfully fetched ${yearPrices.length} weekly prices from TTSA for year ${year}`);
-            }
+    let newPricesScrapedCount = 0;
+
+    for (const year of yearsToScrape) {
+      try {
+        const url = `https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price/${year}`;
+        const res = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          },
+          signal: AbortSignal.timeout(8000)
+        });
+
+        if (res.ok) {
+          const html = await res.text();
+          const yearPrices = this.parseTtsaHtml(html);
+          if (yearPrices.length > 0) {
+            allPrices.push(...yearPrices);
+            newPricesScrapedCount += yearPrices.length;
+            console.info(`[TtsaService] Successfully fetched ${yearPrices.length} weekly prices from TTSA for year ${year}`);
           }
-        } catch (err) {
-          console.warn(`[TtsaService] Failed to scrape TTSA year ${year}:`, (err as Error)?.message || err);
         }
+      } catch (err) {
+        console.info(`[TtsaService] Live scrape for TTSA year ${year} unavailable (${(err as Error)?.message || 'network timeout'}), using cached ledger.`);
       }
     }
 
@@ -220,7 +237,10 @@ export class TtsaService {
       const sorted = Array.from(uniqueMap.values())
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-      this.saveDiskCache(sorted);
+      if (newPricesScrapedCount > 0) {
+        this.saveDiskCache(sorted);
+      }
+
       const filled = TtsaService.forwardFillWeeklyPrices(sorted);
       this.cachedPrices = filled;
       this.cacheExpiresAt = now + this.cacheDurationMs;
@@ -228,7 +248,9 @@ export class TtsaService {
     }
 
     // Fallback if disk read or scrape failed
-    const sortedFallback = diskCache.length > 0 ? diskCache : [...this.fallbackPrices].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sortedFallback = diskCache.length > 0
+      ? diskCache
+      : [...this.fallbackPrices].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const filledFallback = TtsaService.forwardFillWeeklyPrices(sortedFallback);
     this.cachedPrices = filledFallback;
     this.cacheExpiresAt = now + 5 * 60 * 1000;

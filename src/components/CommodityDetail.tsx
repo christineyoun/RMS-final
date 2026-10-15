@@ -670,202 +670,7 @@ export const getNiceTicks = (min: number, max: number, count = 5): number[] => {
 
 export const getNiceYAxisTicks = getNiceTicks;
 
-const formatDateStr = (date: Date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}.${m}.${d}`;
-};
-
-const formatMonthDay = (date: Date) => {
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${m}.${d}`;
-};
-
 export type Timeframe = '1M' | '3M' | '6M' | '1Y' | '2Y' | '3Y' | '5Y';
-
-const getTimeframeChartData = (
-  basePrice: number,
-  timeframe: Timeframe,
-  sparkline: number[] = [10, 12, 11, 14, 13, 15]
-): TimeframeChartData => {
-  const configs: Record<
-    Timeframe,
-    {
-      days: number;
-      steps: number;
-      priceMultipliers: number[];
-      maMultipliers: number[];
-    }
-  > = {
-    '1M': {
-      days: 30,
-      steps: 30,
-      priceMultipliers: [0.985, 0.992, 0.988, 1.006, 0.998, 1.012, 1.0],
-      maMultipliers: [0.991, 0.993, 0.995, 0.997, 1.001, 1.003, 1.002],
-    },
-    '3M': {
-      days: 90,
-      steps: 45,
-      priceMultipliers: [0.935, 0.965, 0.948, 0.985, 0.972, 1.028, 1.0],
-      maMultipliers: [0.955, 0.965, 0.972, 0.985, 0.996, 1.008, 1.004],
-    },
-    '6M': {
-      days: 180,
-      steps: 50,
-      priceMultipliers: [0.910, 0.940, 0.970, 1.030, 1.015, 0.985, 1.0],
-      maMultipliers: [0.930, 0.945, 0.965, 0.995, 1.008, 1.012, 1.005],
-    },
-    '1Y': {
-      days: 365,
-      steps: 52,
-      priceMultipliers: [0.865, 0.915, 0.985, 1.065, 1.035, 0.965, 1.0],
-      maMultipliers: [0.895, 0.920, 0.955, 0.990, 1.015, 1.020, 1.008],
-    },
-    '2Y': {
-      days: 730,
-      steps: 104,
-      priceMultipliers: [0.820, 0.880, 0.950, 1.100, 1.050, 0.930, 1.0],
-      maMultipliers: [0.850, 0.890, 0.930, 0.980, 1.020, 1.030, 1.010],
-    },
-    '3Y': {
-      days: 1095,
-      steps: 156,
-      priceMultipliers: [0.780, 0.850, 0.920, 1.120, 1.060, 0.900, 1.0],
-      maMultipliers: [0.810, 0.860, 0.900, 0.970, 1.030, 1.040, 1.015],
-    },
-    '5Y': {
-      days: 1825,
-      steps: 260,
-      priceMultipliers: [0.720, 0.810, 0.950, 1.150, 1.080, 0.880, 1.0],
-      maMultipliers: [0.760, 0.830, 0.920, 1.020, 1.050, 0.950, 1.010],
-    },
-  };
-
-  const cfg = configs[timeframe];
-  const sparkMin = Math.min(...sparkline);
-  const sparkRange = Math.max(...sparkline) - sparkMin || 1;
-  const sparkNorm = sparkline.map((v) => (v - sparkMin) / sparkRange - 0.5);
-
-  const numPoints = cfg.steps;
-  const totalDays = cfg.days;
-
-  const pointsData: Array<{ date: string; price: number; maPrice: number }> = [];
-
-  for (let i = 0; i < numPoints; i++) {
-    const progress = i / (numPoints - 1);
-    const dayOffset = Math.round((1 - progress) * totalDays);
-    const pointDate = new Date();
-    pointDate.setDate(pointDate.getDate() - dayOffset);
-    const dateStr = formatDateStr(pointDate);
-
-    const baseIdx = progress * (cfg.priceMultipliers.length - 1);
-    const i0 = Math.floor(baseIdx);
-    const i1 = Math.min(cfg.priceMultipliers.length - 1, Math.ceil(baseIdx));
-    const t = baseIdx - i0;
-    const rawMult = cfg.priceMultipliers[i0] * (1 - t) + cfg.priceMultipliers[i1] * t;
-    const sparkNudge = (sparkNorm[i % sparkNorm.length] || 0) * 0.015 * Math.sin(progress * Math.PI * 3);
-
-    const price = i === numPoints - 1 ? basePrice : basePrice * (rawMult + sparkNudge);
-
-    const maMult = cfg.maMultipliers[i0] * (1 - t) + cfg.maMultipliers[i1] * t;
-    const maPrice = i === numPoints - 1 ? basePrice * 1.002 : basePrice * maMult;
-
-    pointsData.push({ date: dateStr, price, maPrice });
-  }
-
-  const allVals = pointsData.flatMap((p) => [p.price, p.maPrice]);
-  const high = Math.max(...allVals);
-  const low = Math.min(...allVals);
-  const avg = pointsData.reduce((sum, val) => sum + val.price, 0) / pointsData.length;
-
-  const absoluteMaxPrice = Math.max(...allVals, basePrice, high);
-  const absoluteMinPrice = Math.min(...allVals, basePrice, low);
-
-  const minVal = absoluteMinPrice * 0.95;
-  const maxVal = absoluteMaxPrice * 1.08; // Padded to prevent top clipping
-  const valRange = maxVal - minVal || 1;
-
-  const width = 500;
-  const height = 200;
-  const padTop = 10;
-  const padBottom = 15;
-  const usableHeight = height - padTop - padBottom;
-
-  const chartPoints: ChartPoint[] = pointsData.map((pt, idx) => {
-    const x = Math.round((idx / (numPoints - 1)) * width);
-    const y = Math.round(height - padBottom - ((pt.price - minVal) / valRange) * usableHeight);
-    return {
-      date: pt.date,
-      price: pt.price,
-      x,
-      y,
-    };
-  });
-
-  const maCoords = pointsData.map((pt, idx) => {
-    const x = Math.round((idx / (numPoints - 1)) * width);
-    const y = Math.round(height - padBottom - ((pt.maPrice - minVal) / valRange) * usableHeight);
-    return { x, y };
-  });
-
-  const linePath = chartPoints.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
-  const areaPath = `${linePath} L ${width},200 L 0,200 Z`;
-  const maPath = maCoords.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
-
-  // Compute nice Y-axis ticks using Nice Numbers algorithm
-  const niceTickValues = getNiceYAxisTicks(minVal, maxVal, 5);
-  const ticks: ChartTick[] = niceTickValues.map((value) => {
-    const y = Math.round(height - padBottom - ((value - minVal) / valRange) * usableHeight);
-    return { value, y };
-  });
-
-  // Dynamic axis labels based on active timeframe
-  let axisLabels: [string, string, string, string];
-  const now = new Date();
-
-  if (timeframe === '1M' || timeframe === '3M' || timeframe === '6M') {
-    const getDateAt = (daysAgo: number) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - daysAgo);
-      return formatMonthDay(d);
-    };
-    axisLabels = [
-      getDateAt(totalDays),
-      getDateAt(Math.round((totalDays * 2) / 3)),
-      getDateAt(Math.round(totalDays / 3)),
-      formatMonthDay(now),
-    ];
-  } else {
-    // '1Y'
-    const getYearMonthAt = (daysAgo: number) => {
-      const d = new Date(now);
-      d.setDate(d.getDate() - daysAgo);
-      return `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-    };
-    axisLabels = [
-      getYearMonthAt(totalDays),
-      getYearMonthAt(Math.round((totalDays * 2) / 3)),
-      getYearMonthAt(Math.round(totalDays / 3)),
-      `${String(now.getFullYear()).slice(2)}.${String(now.getMonth() + 1).padStart(2, '0')}`,
-    ];
-  }
-
-  return {
-    axisLabels,
-    high,
-    low,
-    avg,
-    minVal,
-    maxVal,
-    ticks,
-    linePath,
-    areaPath,
-    maPath,
-    points: chartPoints,
-  };
-};
 
 const filterSeriesByTimeframe = (
   series: Array<{ date?: string; reportDate?: string; [key: string]: any }>,
@@ -1996,7 +1801,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const activeDeskRecommendation =
     (isCorn && cornAnalysis?.deskRecommendation?.recommendation) ||
     (isSoybean && soybeanAnalysis?.deskRecommendation?.recommendation) ||
-    (isSoybeanOil && soybeanOilAnalysis?.deskRecommendation?.recommendation) ||
+    (isSoybeanOil && (aiInsight?.deskRecommendation || '가격 외 요인 확인 전 매입 판단 보류')) ||
     aiInsight?.deskRecommendation ||
     (aiInsight as any)?.recommendation ||
     (isWheat
@@ -2443,8 +2248,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     if (!isWheat && historicalChartData) {
       return historicalChartData;
     }
-    return getTimeframeChartData(effectiveBasePrice, activeTimeframe, commodity.sparkline);
-  }, [isWheat, isPotatoStarch, potatoProductionChartData, historicalChartData, effectiveBasePrice, activeTimeframe, commodity.sparkline]);
+    // Never invent a price curve when the verified history source has no observations.
+    return null;
+  }, [isWheat, isPotatoStarch, potatoProductionChartData, historicalChartData]);
 
   // U.S. Wheat Associates Historical Time-Series Chart Data (SRW, HRW, HRS)
   const wheatChartData = useMemo(() => {
@@ -2664,12 +2470,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     return 0;
   }, [isWheat, isPalmOil, palmChartData, historicalData, wheatChartData, chartData]);
 
-  const livePoint = chartData.points && chartData.points.length > 0
+  const livePoint = chartData?.points?.length
     ? chartData.points[chartData.points.length - 1]
     : null;
-  const latestLivePrice = livePoint ? livePoint.price : effectiveBasePrice;
-  const liveY = livePoint ? livePoint.y : Math.round(200 - 15 - ((latestLivePrice - chartData.minVal) / (chartData.maxVal - chartData.minVal || 1)) * (200 - 10 - 15));
-  const liveYPct = (liveY / 200) * 100;
+  const latestLivePrice = livePoint?.price ?? null;
+  const liveY = livePoint?.y ?? 0;
 
   const range52WeekStats = useMemo(() => {
     if (isWheat && usWheatHistory?.data?.length) {
@@ -2739,13 +2544,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       const low52W = validUsdPrices.length > 0 ? Math.min(...validUsdPrices) : 100;
       const high52W = validUsdPrices.length > 0 ? Math.max(...validUsdPrices) : 1000;
 
-      const rawCurrentPrice = (isSoybean && soybeanAnalysis?.benchmarkPrice?.usdPerMT)
-        || (isCorn && cornAnalysis?.benchmarkPrice?.usdPerMT)
-        || (isSoybeanOil && soybeanOilAnalysis?.benchmarkPrice?.usdPerMT)
-        || active365Data[active365Data.length - 1]?.usdPerMT
-        || effectiveBasePrice;
-
-      const current = currency === 'KRW' && !isSoybean && !isCorn && !isSoybeanOil ? effectiveBasePrice : rawCurrentPrice * convRate;
+      // Use the exact same currency-adjusted benchmark shown in the top price card.
+      // AI analysis benchmarks and the historical series can be from older snapshots;
+      // using either here made the 52-week "Current" value disagree with the main card.
+      // Keep 52-week low/high sourced from the historical observations above.
+      const current = effectiveBasePrice;
       const high = high52W * convRate;
       const low = low52W * convRate;
 
@@ -2772,17 +2575,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   }, [
     isWheat,
     isPalmOil,
-    isSoybean,
-    isCorn,
-    isSoybeanOil,
     usWheatHistory,
     fullYearHistoryData,
     historicalData,
     palmChartData,
     cpoPrice,
-    soybeanAnalysis,
-    cornAnalysis,
-    soybeanOilAnalysis,
     effectiveBasePrice,
     currency,
     exchangeRate
@@ -2942,8 +2739,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       return;
     }
 
+    if (!chartData?.points?.length) return;
     const pts = chartData.points;
-    if (!pts || pts.length === 0) return;
 
     let closest = pts[0];
     let minDiff = Infinity;
@@ -3436,7 +3233,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     {tf}
                   </button>
 
-                  {isActive && (
+                  {isActive && Boolean(
+                (isWheat && wheatChartData?.points?.length) ||
+                (isPalmOil && palmChartData?.points?.length) ||
+                (!isWheat && !isPalmOil && chartData?.points?.length)
+              ) && (
                     <div className="absolute top-full mt-1.5 z-30 flex flex-col items-center pointer-events-none">
                       {/* Upward pointing CSS arrow tip */}
                       <div
@@ -4193,7 +3994,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               <span>{palmChartData.axisLabels[3]}</span>
             </div>
           </div>
-        ) : (
+        ) : chartData ? (
           <div className="h-68 sm:h-76 w-full bg-[#fafbfc] border border-[#f3f4f6] rounded-lg p-4 flex flex-col justify-between relative overflow-visible select-none">
             <div className="grid grid-cols-3 w-full items-center text-xs text-[#6b7280] font-mono relative z-10 bg-[#fafbfc]">
               <span className="text-left">
@@ -4268,7 +4069,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 )}
 
                 {/* Connection line & point dot at the far right endpoint for live price badge */}
-                {!isPotatoStarch && (
+                {!isPotatoStarch && livePoint && (
                   <g>
                     <circle
                       cx={500}
@@ -4305,7 +4106,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               </div>
 
               {/* Permanent Fixed Live Price Badge or Latest Production */}
-              {!isPotatoStarch ? (
+              {!isPotatoStarch && latestLivePrice !== null && livePoint ? (
                 <div
                   className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
                   style={{
@@ -4386,6 +4187,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               <span>{chartData.axisLabels[2]}</span>
               <span>{chartData.axisLabels[3]}</span>
             </div>
+          </div>
+        ) : (
+          <div className="h-68 sm:h-76 w-full bg-[#fafbfc] border border-[#f3f4f6] rounded-lg flex items-center justify-center p-6 text-sm text-slate-500 text-center" role="status">
+            {isHistoryFailed ? '데이터 갱신에 실패했습니다. 원본 데이터 연결 상태를 확인해 주세요.' : '표시할 실제 이력 데이터가 없습니다.'}
           </div>
         )}
 
@@ -4526,7 +4331,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         key={selectedCommodity?.id || (selectedCommodity as any)?.slug || (selectedCommodity as any)?.key || commodity.id}
         commodityId={commodity.id}
         currency={commodity.id === 'potato-starch' ? 'EUR' : currency}
-        confidenceScore={aiInsight?.confidenceScore || 88}
+        confidenceScore={aiInsight?.confidenceScore ?? 88}
         recommendedCoverage={activeDeskRecommendation}
         executiveSummary={aiInsight?.executiveSummary}
         bullishFactors={aiInsight?.bullishFactors}

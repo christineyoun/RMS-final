@@ -13,6 +13,7 @@ import { marketIntelligenceService } from './marketIntelligenceService.ts';
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { serverMarketDataService } from './marketDataService.ts';
 import { calculateDynamicMetrics } from '../utils/landedCostCalculator.ts';
+import { fetchSoybeanOilOfficialEvidence, type SoybeanOilOfficialEvidence } from './soybeanOilEvidenceService.ts';
 
 export interface AiAnalysisData {
   confidenceScore: number;
@@ -65,24 +66,12 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
     ]
   },
   'soybean-oil': {
-    confidenceScore: 86,
-    deskRecommendation: '45~60일 분할 구매 권고',
-    executiveSummary: 'CBOT 대두유 시세는 2026-09-25 기준 907.20 USD/MT(41.15 USc/lb, 한국 도착가 988.50 USD/MT)로 주간 +1.85%(+16.53 USD/MT) 상승하며 단기 강세 흐름을 보이고 있습니다. 미국(생산 12.8M MT)과 브라질(11.2M MT)·아르헨티나(7.9M MT)의 대두 압착 가동으로 현물 착유 공급은 유지되고 있으나, 글로벌 기말재고가 5.4 MMT(재고율 8.3%)로 타이트하고 미국 재생디젤(RD)·브라질 B14 바이오디젤 의무 혼합 수요가 수출 가용 물량을 흡수하고 있습니다. 특히 아르헨티나 로사리오항 노조·파라나강 수위 변수와 동남아 팜유(951.14 USD/MT) 강세에 따른 대체 식용유 수입 수요가 핵심 상승 동인으로 작용 중입니다(연간 글로벌 생산 65.8 MMT·소비 65.2 MMT). 향후 1~3개월간 낮은 재고율과 바이오연료 정책 수요로 하방 경직성이 이어질 전망이므로, 조달 데스크에서는 단기 눌림목마다 45~60일 분할 구매로 대응할 것을 권고합니다.',
-    bullishFactors: [
-      '글로벌 대두유 기말재고율 8.3%(5.4 MMT)의 타이트한 재고 구조 및 주간 시세 +1.85% 상승',
-      '미국 EPA 바이오연료(RD) 원료 소비 및 브라질 B14 의무 혼합에 따른 내수 착유유 흡수',
-      '팜유(951.14 USD/MT) 대비 대두유(907.20 USD/MT) 가격 메리트 부각에 따른 인도·아시아 대체 수입 유입'
-    ],
-    bearishFactors: [
-      '아르헨티나(수출 5.6M MT) 및 브라질의 대두 압착(Crush) 가동 회복에 따른 남미 원유 공급 유입',
-      '미국 신곡 대두 수확(124.8M MT) 진척에 따른 착유 공장 원료 조달 안정',
-      '남미 대두유 FOB($920.00/MT) 오퍼 유지에 따른 단기 급등 피로감'
-    ],
-    watchItems: [
-      '미국 NOPA 월간 대두유 재고량 및 EPA 신재생연료(RVO)·45Z 세액공제 세부 지침',
-      '아르헨티나 로사리오항 선적 가동률 및 파라나강 수심에 따른 케미컬 탱커($58.00/MT) 운임',
-      '대두유-팜유 간 가격 스프레드(POGO) 및 인도 식용유 수입 관세 정책 추이'
-    ]
+    confidenceScore: 0,
+    deskRecommendation: '가격 외 요인 확인 전 매입 판단 보류',
+    executiveSummary: 'CBOT 대두유 최신 시세를 확인하고 있습니다. 검증된 데이터가 없으면 과거 가격을 현재 시세로 표시하지 않습니다. 선물 가격만으로 현물 FOB 또는 한국 도착가를 추정하지 않습니다. 실물 수급과 운임이 검증되기 전까지 AI 조달 권고를 보류합니다.',
+    bullishFactors: ['최근 가격 및 실물 근거 추가 확인 필요'],
+    bearishFactors: ['최근 가격 및 실물 근거 추가 확인 필요'],
+    watchItems: ['CBOT 대두유 가격 업데이트 및 정산가 확인', '선물 계약 롤오버 확인', 'FOB·운임·재고 데이터 검증']
   },
   wheat: {
     confidenceScore: 86,
@@ -114,7 +103,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
       '인도·중국 등 주요 수입국의 하반기 식품 제조용 RBD Olein 명절 재고 비축 유입 지속'
     ],
     bearishFactors: [
-      '대두유(907.20 USD/MT) 대비 CPO 및 RBD Olein 가격 프리미엄 역전에 따른 대체 식용유(대두유 등) 수입선 전환',
+      'CPO와 대두유 선물 시세를 비교할 때는 기준일·품목·정제등급·환율 차이를 확인해야 함',
       'CPO 대비 RBD Olein 가격 스프레드($216.36/MT) 확대 시 정제사들의 가동률 조정으로 인한 공급 단기 완화 가능성',
       'EU 산림벌채방지법(EUDR) 이행 유예에 따른 유럽 바이어들의 RBD Olein 선별적 구매 패턴'
     ],
@@ -281,11 +270,7 @@ function validateAiAnalysisOutput(
       .replace(/재배면적\s*확대/g, '재배면적 축소(8,180 kRAI, -7.8% YoY)')
       .replace(/전분\s*수출\s*급감/g, '천연(3.15 MMT)·변성전분(1.04 MMT) 수출 유지');
   } else if (ctx.commodityKey === 'soybean-oil') {
-    // Actual: 907.20 USD/MT (41.15 USc/lb), S/U 8.3% (5.4 MMT)
-    summary = summary
-      .replace(/67\.80\s*USc/g, '41.15 USc')
-      .replace(/1,495\s*USD/g, '907.20 USD')
-      .replace(/재고\s*과잉/g, '타이트한 기말재고(5.4 MMT, 재고율 8.3%)');
+    // Do not force a hard-coded benchmark or supply figure into AI output.
   } else if (ctx.commodityKey === 'wheat') {
     const upper = summary.toUpperCase();
     if (!upper.includes('HRW') || !upper.includes('SRW') || !upper.includes('HRS')) {
@@ -360,9 +345,131 @@ const CACHE_TTL_MS = 30 * 60 * 1000;
 let quotaCooldownUntil = 0;
 let searchGroundingCooldownUntil = 0;
 
-export async function generateAiAnalysis(commodityId: string, customPromptName?: string): Promise<AiAnalysisData> {
+/**
+ * Soybean-oil multi-factor procurement briefing.
+ * Only market prices returned by the verified Yahoo daily-bar endpoint and
+ * explicitly live USDA PSD responses may appear as current quantitative facts.
+ * Policy, physical supply, FOB and freight sections are analytical scenarios,
+ * never claims that a specific event or price was verified.
+ *
+ * confidenceScore is a documented DATA-COVERAGE heuristic (not AI accuracy).
+ */
+export function buildSoybeanOilMultiFactorBrief(history: any, psdResponse: any = null, asOfNow = new Date(), evidence: SoybeanOilOfficialEvidence | null = null): AiAnalysisData {
+  const rows = (Array.isArray(history?.data) ? history.data : [])
+    .filter((x: any) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(String(x?.date || '')) &&
+      typeof x.usdPerMT === 'number' && Number.isFinite(x.usdPerMT) && x.usdPerMT > 0 &&
+      typeof x.quoteValue === 'number' && Number.isFinite(x.quoteValue) && x.quoteValue > 0 &&
+      x.quoteUnit === 'US¢/lb'
+    )
+    .sort((a: any, b: any) => a.date.localeCompare(b.date));
+  const dates = new Set(rows.map((r: any) => r.date));
+  if (history?.success !== true || history?.commodity !== 'soybean-oil' ||
+      history?.quoteUnit !== 'US¢/lb' || history?.provider !== 'Yahoo Finance' ||
+      rows.length < 6 || dates.size !== rows.length) {
+    throw new Error('대두유 시계열 출처/가격 단위/날짜를 확인할 수 없습니다. 분석을 표시하지 않습니다.');
+  }
+  const latest = rows[rows.length - 1];
+  const observedMs = Date.parse(`${latest.date}T23:59:59Z`);
+  const ageMs = asOfNow.getTime() - observedMs;
+  if (!Number.isFinite(observedMs) || ageMs > 4 * 86400000 || ageMs < -86400000) {
+    throw new Error('대두유 시계열이 오래되었거나 날짜가 올바르지 않습니다. 분석을 표시하지 않습니다.');
+  }
+  const prior = rows[rows.length - 6];
+  const delta = Number((latest.usdPerMT - prior.usdPerMT).toFixed(2));
+  const deltaPct = Number((100 * delta / prior.usdPerMT).toFixed(2));
+  const mark = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}`;
+  const quoteState = latest.isProvisional ? '잠정 일별 가격' : '일별 관측값(공식 정산가 별도 확인)';
+  // The existing USDA service returns success:true even for its hardcoded baselines.
+  // Accept a world PSD row only with live raw, non-baseline commodity observations.
+  const records = psdResponse?.data?.rawRecords;
+  const rawAttr = Array.isArray(records) ? new Map(records.map((r: any) => [Number(r.attributeId), Number(r.value)])) : new Map();
+  const cleanPsd = psdResponse?.success === true && psdResponse?.isCached === false &&
+    psdResponse?.statusCode === 200 && psdResponse?.data?.commodityCode === '4232000' &&
+    Array.isArray(records) && records.length >= 4 &&
+    [28, 125, 176].every(id => Number.isFinite(rawAttr.get(id)) && Number(rawAttr.get(id)) > 0) &&
+    Number(psdResponse?.data?.productionMMT) > 0 &&
+    Number(psdResponse?.data?.domesticConsumptionMMT) > 0 &&
+    Number(psdResponse?.data?.endingStocksMMT) > 0 &&
+    Number.isFinite(psdResponse?.data?.exportsMMT) && psdResponse?.data?.exportsMMT >= 0 &&
+    Math.abs(Number(psdResponse.data.productionMMT) - Number(rawAttr.get(28))/1000) < 0.11 &&
+    Math.abs(Number(psdResponse.data.domesticConsumptionMMT) - Number(rawAttr.get(125))/1000) < 0.11 &&
+    Math.abs(Number(psdResponse.data.endingStocksMMT) - Number(rawAttr.get(176))/1000) < 0.11;
+  const supply = cleanPsd ? psdResponse.data : null;
+  // Procurement-desk lens: do not infer the company's suppliers, contract terms,
+  // specifications, stock coverage or import exposure from a futures quote.
+  const supplyStatement = supply
+    ? `공급·재고: USDA FAS PSD ${supply.marketYear} 시장연도 세계 대두유 생산 ${supply.productionMMT.toFixed(1)}백만 톤, 소비 ${supply.domesticConsumptionMMT.toFixed(1)}백만 톤, 기말재고 ${supply.endingStocksMMT.toFixed(1)}백만 톤, 수출 ${Number(supply.exportsMMT).toFixed(1)}백만 톤(원문 확인). 한국향 식품용 규격별 가용량과 선적·납기는 공급사에 별도 확인이 필요합니다.`
+    : `공급·재고: 최신 USDA FAS PSD/USDA NASS 수치가 아직 검증되지 않았습니다. 수급을 단정하는 대신 식품용 규격별 공급사 오퍼 물량과 선적·납기를 확인합니다.`;
+  const eia = evidence?.eia || null;
+  // U.S. biofuel demand matters ONLY insofar as it may influence edible-oil
+  // availability and supplier quotations, not as a direct Korea landed-cost input.
+  const eiaStatement = eia
+    ? `미국 바이오연료 수요: EIA ${eia.releaseDate} 발표, ${eia.period} 대두유 투입 ${eia.soybeanOilMillionLb.toLocaleString('en-US')}백만 파운드${eia.previousYearMillionLb !== null && eia.yoyPercent !== null ? ` (전년 동월 대비 ${eia.yoyPercent >= 0 ? '+' : ''}${eia.yoyPercent.toFixed(1)}%)` : ''}. 원료 수요 경쟁으로 미국산 오퍼에 간접 영향이 있을 수 있으나, 실제 한국 구매가격 영향은 최신 공급사 견적으로 판단합니다.`
+    : '미국 바이오연료 수요: 검증된 EIA 수치가 없어 미국산 오퍼 영향은 판단을 보류합니다.';
+  // Transparent DATA-COVERAGE score, not model prediction confidence.
+  // Futures price 70, verified/datable EIA history +10, live raw PSD +15; hard cap 90
+  // because physical FOB/freight and futures settlement have not been confirmed.
+  const score = Math.min(90, 50 + (ageMs < 2 * 86400000 ? 10 : 0) +
+    (rows.length >= 20 ? 5 : 0) +
+    (typeof history?.latestMarketQuote?.asOf === 'string' ? 5 : 0) +
+    (eia ? 10 : 0) + (supply ? 15 : 0));
+  const direction = delta > 0 ? '상승' : delta < 0 ? '하락' : '보합';
+
+  return {
+    confidenceScore: score,
+    deskRecommendation: '공급사 오퍼·납기 확인 후 분할 매입 검토',
+    executiveSummary: [
+      `조달 영향·가격: CBOT 대두유(ZL=F) ${latest.date} ${quoteState} ${latest.quoteValue.toFixed(2)} US¢/lb (${latest.usdPerMT.toFixed(2)} USD/MT), ${prior.date} 대비 ${mark(delta)} USD/MT (${mark(deltaPct)}%) ${direction}. 동일 규격의 공급사 식품용 정제유 오퍼에도 반영됐는지 확인해야 합니다. 선물 월물 교체·정산가 및 한국 도착가는 별도입니다.`,
+      supplyStatement,
+      `수요·대체유 경쟁: ${eiaStatement} 팜유 등 대체유는 같은 규격·인도조건의 견적과 내부 배합·품질 승인 여부를 확인한 뒤 비교합니다.`,
+      '한국 조달원가·납기: 공급사별 식품용 동일 규격·동일 인도조건의 오퍼를 비교합니다. 직수입 시 FOB/CFR/CIF·운임·보험·관세·환율·도착일을 대조합니다. 실물 오퍼가 없으므로 선물가를 한국 도착가로 환산하지 않습니다.', 
+      '1~3개월 구매 판단: 적격 공급사 오퍼·가격 유효기간·실제 납기와 사내 재고 커버리지를 확인한 뒤 분할 매입을 검토합니다. 농심의 실제 재고·계약조건은 연결되지 않아 특정 구매 일수나 수량을 확정하지 않습니다.'
+    ].join('\n\n'),
+    bullishFactors: [
+      delta > 0
+        ? `관측 선물가격 ${prior.date} 대비 ${mark(deltaPct)}% 상승 — 신규 공급사 오퍼 상승 여부 확인 필요`
+        : eia && eia.yoyPercent !== null && eia.yoyPercent > 0
+          ? `EIA ${eia.period} 바이오연료용 대두유 투입 전년비 +${eia.yoyPercent.toFixed(1)}% — 미국 공급사 오퍼에 전이되는지 확인`
+          : '바이오연료 수요 증가 시 식품용 원료 경쟁 심화 가능 — 실제 오퍼 영향 확인 전 시나리오',
+      '원산지별 수출·선적 지연이 확인되면 공급사 납기 연장 및 한국 인도원가 상승 가능 (현재 차질 확인되지 않음)',
+      '구매규격에 맞는 식품용 실물 오퍼의 프리미엄 상승 시 선물가 하락에도 실제 매입 단가 상승 가능'
+    ],
+    bearishFactors: [
+      delta < 0
+        ? `관측 선물가격 ${prior.date} 대비 ${mark(deltaPct)}% 하락 — 동일 규격 신규 오퍼에서 가격 인하 여부 확인`
+        : '대두 압착 증가로 식품용 대두유 공급이 확대될 경우 실물 프리미엄 하락 가능 (확인 전 시나리오)',
+      '원산지별 공급가능 물량 증가 또는 실제 FOB 프리미엄 하락 시 한국 조달원가 완화 가능',
+      '대체유 실물 오퍼가 유리할 때는 내부 배합·품질 승인된 용도에 한해서만 대체 조달 검토 가능'
+    ],
+    watchItems: [
+      '공급사별 동일 식품용 규격·기준일의 최신 오퍼, 가격 유효기간, 최소주문량, 계약 통화 및 납품 조건',
+      '조달 방식에 따른 국내 인도원가(직수입 시 FOB/CFR/CIF·운임·보험·관세·환율)와 실제 납기·사내 재고 커버리지',
+      `USDA 대두유 생산·재고 확인; ${eia ? `EIA ${eia.period} 이후 바이오연료 수요 업데이트` : 'EIA 바이오연료 수요 확인'}; CBOT 계약 롤오버·종가 확인 — 수치가 실물 오퍼에 미치는 영향만 판단`
+    ]
+  };
+}
+
+// Preserve the old exported name for any external imports; behavior is now
+// the comprehensive evidence-qualified brief, not the price-only version.
+export const buildSoybeanOilPriceOnlyBrief = buildSoybeanOilMultiFactorBrief;
+
+export async function generateAiAnalysis(commodityId: string, customPromptName?: string, forceRefresh = false): Promise<AiAnalysisData> {
   const cleanId = (commodityId || 'corn').toLowerCase().trim();
   const normalizedKey = cleanId.replace(/_/g, '-');
+
+  // Safety gate: never serve the old $907.20/MT price or an unverified buy
+  // recommendation for soybean oil. Reuse the same Yahoo daily-bar source as
+  // /api/history. Errors are surfaced rather than silently using a baseline.
+  if (normalizedKey === 'soybean-oil') {
+    const hasUsdaKey = Boolean(process.env.USDA_FAS_API_KEY?.trim() || process.env.USDA_API_KEY?.trim());
+    const [history, psd, evidence] = await Promise.all([
+      fetchHistoricalData('soybean-oil', '1M', forceRefresh),
+      hasUsdaKey ? usdaFasService.fetchWorldPsd('4232000', String(new Date().getUTCFullYear())).catch(() => null) : Promise.resolve(null),
+      fetchSoybeanOilOfficialEvidence(new Date(), fetch, forceRefresh)
+    ]);
+    return buildSoybeanOilMultiFactorBrief(history, psd, new Date(), evidence);
+  }
 
   // Check in-memory cache first to avoid repeating Gemini calls
   const cached = analysisCache.get(normalizedKey);
@@ -638,7 +745,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
           demandDrivers: isCorn
             ? '미국 EIA 에탄올 정유용 주간 분쇄 소비 견조 및 미 걸프·PNW 주간 수출 선적 회복'
             : isSoybeanOil
-            ? '미국 EPA 재생디젤(RD) 및 브라질 B14 바이오디젤 의무 혼합 수요 강세, 팜유(951.14 USD/MT) 대비 대두유(907.20 USD/MT) 가격 경쟁력으로 대체 수입 수요 유입'
+            ? '바이오연료 정책 및 대체 식용유 수요의 실물 영향은 별도 근거 확인 필요'
             : '미국 NOPA 대두 압착(Crush) 마진 호조 및 중국 착유 업계(연간 수입 109.0M MT)의 선도 카고 매입 지속'
         },
         step4_currentWeatherPolicyLogistics: {
@@ -767,7 +874,22 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
               estimatedKoreaLandedCostUsdMt: 970.55,
               fobUsdMt: 937.73,
               freightUsdMt: 22.32,
-              range52WeekMyrMt: histData ? `${histData.low52W.toFixed(0)} ~ ${histData.high52W.toFixed(0)} MYR/MT` : '3,720 ~ 4,350 MYR/MT',
+              range52WeekUsdMt: (() => {
+  const prices = Array.isArray(histData?.data)
+    ? histData.data
+        .map((row: any) => row?.usdPerMT)
+        .filter(
+          (price: unknown): price is number =>
+            typeof price === 'number' &&
+            Number.isFinite(price) &&
+            price > 0
+        )
+    : [];
+
+  return prices.length > 0
+    ? `${Math.min(...prices).toFixed(2)} ~ ${Math.max(...prices).toFixed(2)} USD/MT`
+    : undefined;
+})(),
               recentPriceDirection: 'up_firm'
             },
             step2_mandatoryRbdOleinSpreadAnalysis: {
@@ -781,7 +903,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
             },
             step4_latestExportsImportsDemand: {
               exportFlows: '인도네시아(수출 26.5M MT) 및 말레이시아(수출 15.8M MT) 선적 진행 중이나 인도네시아 내수 바이오디젤 우선 배정으로 역외 수출 여력 축소',
-              importDemand: '인도·중국 명절 재고 비축 수요가 유입되나 대두유(907.20 USD/MT) 대비 팜유(951.14 USD/MT) 가격 역전으로 일부 가격 민감 수요는 대두유로 대체'
+              importDemand: '인도·중국 수요 추이는 별도 근거 확인 필요. 대두유 선물과 팜유 현물을 비교할 때는 같은 날짜·등급·거래조건으로 비교해야 함'
             },
             step5_currentWeatherPolicyLogistics: {
               weather: '동남아 라니냐·몬순 강우 진입에 따른 산지 FFB(신선과실송이) 수확 및 운송 지연 리스크',
@@ -1360,7 +1482,9 @@ export async function fetchLiveMarketIssues(force: boolean = false): Promise<Liv
     const groundingChunks = candidate?.groundingMetadata?.groundingChunks || [];
     const deepLinks = groundingChunks
       .map((chunk: any) => chunk.web?.uri)
-      .filter((uri: string | undefined): uri is string => Boolean(uri) && uri.startsWith('http'));
+      .filter((uri: string | undefined): uri is string =>
+  typeof uri === 'string' && uri.startsWith('http')
+);
 
     // 3. Parse JSON content returned by Gemini
     let parsedItems: any[] = [];
