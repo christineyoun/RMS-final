@@ -76,10 +76,8 @@ class ClientMarketDataService {
         this.fetchNormalizedData(false);
       }, 200);
 
-      // Periodic check every 1 minute to check staleness of sources
-      this.autoSyncInterval = setInterval(() => {
-        this.checkAndSyncStaleData();
-      }, 60000);
+      // Stage 1: Disable automatic minute-by-minute refresh while testing.
+      // Manual refresh remains available; centralized daily scheduling is Stage 2.
     }
   }
 

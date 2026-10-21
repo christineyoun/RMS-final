@@ -1,3 +1,4 @@
+import {loadPublicHistory,refreshPublicHistory} from './publicPriceHistory.ts';
 import fs from 'fs';
 import path from 'path';
 
@@ -167,94 +168,11 @@ export class TtsaService {
     }
   }
 
-  public async getWeeklyPrices(timeframe: string | boolean = '1Y', force: boolean = false): Promise<TtsaWeeklyPrice[]> {
-    let tf = '1Y';
-    let isForce = false;
-    if (typeof timeframe === 'boolean') {
-      isForce = timeframe;
-    } else {
-      tf = timeframe;
-      isForce = force;
-    }
-
-    const now = Date.now();
-    if (!isForce && this.cachedPrices.length > 0 && now < this.cacheExpiresAt) {
-      return this.cachedPrices;
-    }
-
-    const diskCache = this.getDiskCache();
-    const currentYear = new Date().getFullYear();
-
-    // Base collection begins with diskCache, or verified fallback prices if diskCache is empty
-    const allPrices: TtsaWeeklyPrice[] = diskCache.length > 0
-      ? [...diskCache]
-      : [...this.fallbackPrices];
-
-    // Determine which years need live scraping:
-    // Only scrape the active currentYear (and currentYear - 1 if early in January).
-    // Past completed years (e.g. 2021..2024) are immutable historical records already secured in diskCache/fallback.
-    const yearsToScrape: number[] = [];
-    if (isForce || diskCache.length === 0) {
-      const isJanuary = new Date().getMonth() === 0;
-      if (isJanuary) {
-        yearsToScrape.push(currentYear - 1);
-      }
-      yearsToScrape.push(currentYear);
-    }
-
-    let newPricesScrapedCount = 0;
-
-    for (const year of yearsToScrape) {
-      try {
-        const url = `https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price/${year}`;
-        const res = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-          },
-          signal: AbortSignal.timeout(8000)
-        });
-
-        if (res.ok) {
-          const html = await res.text();
-          const yearPrices = this.parseTtsaHtml(html);
-          if (yearPrices.length > 0) {
-            allPrices.push(...yearPrices);
-            newPricesScrapedCount += yearPrices.length;
-            console.info(`[TtsaService] Successfully fetched ${yearPrices.length} weekly prices from TTSA for year ${year}`);
-          }
-        }
-      } catch (err) {
-        console.info(`[TtsaService] Live scrape for TTSA year ${year} unavailable (${(err as Error)?.message || 'network timeout'}), using cached ledger.`);
-      }
-    }
-
-    if (allPrices.length > 0) {
-      // Deduplicate and sort by date ascending
-      const uniqueMap = new Map<string, TtsaWeeklyPrice>();
-      allPrices.forEach(p => uniqueMap.set(p.date, p));
-      
-      const sorted = Array.from(uniqueMap.values())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      if (newPricesScrapedCount > 0) {
-        this.saveDiskCache(sorted);
-      }
-
-      const filled = TtsaService.forwardFillWeeklyPrices(sorted);
-      this.cachedPrices = filled;
-      this.cacheExpiresAt = now + this.cacheDurationMs;
-      return filled;
-    }
-
-    // Fallback if disk read or scrape failed
-    const sortedFallback = diskCache.length > 0
-      ? diskCache
-      : [...this.fallbackPrices].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const filledFallback = TtsaService.forwardFillWeeklyPrices(sortedFallback);
-    this.cachedPrices = filledFallback;
-    this.cacheExpiresAt = now + 5 * 60 * 1000;
-    return filledFallback;
+  public async getWeeklyPrices(timeframe:string|boolean='1Y',force=false):Promise<TtsaWeeklyPrice[]> {
+    let history=loadPublicHistory('tapioca-starch');
+    const requested=typeof timeframe==='boolean'?timeframe:force;
+    if(requested && (!history.lastCheckedAt||Date.now()-Date.parse(history.lastCheckedAt)>6*3600000))history=await refreshPublicHistory('tapioca-starch');
+    return history.points.filter(p=>p.benchmark==='tapioca-fob').map(p=>({date:p.date,price:p.value,domesticThb:p.domesticThb}));
   }
 
   private parseTtsaHtml(html: string): TtsaWeeklyPrice[] {

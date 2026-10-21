@@ -1,258 +1,80 @@
-import type {
-  SoybeanOilProcurementAnalysisData,
-  EstimatedSoybeanOilKoreaLandedCost,
-  UsdaAmsSoybeanOilFobExport,
-  SoybeanOilKoreaOceanFreight
-} from '../types.ts';
-import { fetchHistoricalData } from './historicalPriceService.ts';
-import { procurementConfig } from '../config/procurementConfig.ts';
-import { usdaFasService } from './usdaFasService.ts';
-import { amisService } from './amisService.ts';
-
-export class SoybeanOilIntelligenceService {
-  private static instance: SoybeanOilIntelligenceService;
-  private cachedAnalysis: SoybeanOilProcurementAnalysisData | null = null;
-  private cacheExpiresAt: number = 0;
-  private readonly cacheDurationMs = 15 * 60 * 1000; // 15-minute cache
-
-  // Verified physical export FOB for Soybean Oil (Crude Degummed, Rosario / U.S. Gulf)
-  private verifiedFobCache: UsdaAmsSoybeanOilFobExport = {
-    commodity: 'Soybean Oil',
-    grade: 'Crude Degummed Soybean Oil (Upriver/Rosario FOB)',
-    exportLocation: 'Argentina Upriver (Rosario Port) / U.S. Gulf',
-    shipmentPeriod: 'Prompt / Nearby Export Delivery',
-    fobPriceUsdMt: 920.00,
-    rawPrice: 41.73,
-    rawUnit: 'USc/lb',
-    observationDate: '2026-09-25',
-    source: 'CIARA / USDA ERS Oil Crops / USDA AMS Cash Market',
-    sourceUrl: 'https://www.ers.usda.gov/data-products/oil-crops-yearbook/'
-  };
-
-  // Verified specialized vegetable oil tanker freight to South Korea
-  private verifiedFreightCache: SoybeanOilKoreaOceanFreight = {
-    origin: 'Argentina Upriver / South America',
-    destination: 'South Korea (Busan / Ulsan Port)',
-    freightRateUsdMt: 58.00,
-    vessel: 'IMO II/III Chemical & Vegetable Oil Tanker',
-    observationDate: '2026-09-24',
-    source: 'Vegetable Oil Tanker Fixtures / RMS Logistics Ledger',
-    sourceUrl: 'https://www.ams.usda.gov/services/transportation-analysis/gtr'
-  };
-
-  private constructor() {}
-
-  public static getInstance(): SoybeanOilIntelligenceService {
-    if (!SoybeanOilIntelligenceService.instance) {
-      SoybeanOilIntelligenceService.instance = new SoybeanOilIntelligenceService();
-    }
-    return SoybeanOilIntelligenceService.instance;
-  }
-
-  /**
-   * Generates comprehensive Soybean Oil SCM procurement analysis
-   * integrating CBOT ZL=F, verified physical FOB + liquid tanker freight, USDA FAS PSD, and AMIS intelligence.
-   */
-  public async getSoybeanOilProcurementAnalysis(force: boolean = false): Promise<SoybeanOilProcurementAnalysisData> {
-    const now = Date.now();
-    if (!force && this.cachedAnalysis && now < this.cacheExpiresAt) {
-      return this.cachedAnalysis;
-    }
-
-    try {
-      // 1. Fetch live CBOT Soybean Oil futures series (ZL=F)
-      const historyRes = await fetchHistoricalData('soybean-oil', '3M');
-      const dataPoints = historyRes.data || [];
-
-      if (dataPoints.length === 0) {
-        throw new Error('No historical price points available for CBOT Soybean Oil (ZL=F)');
-      }
-
-      // Latest observation: ZL=F is quoted in US cents/lb, converted to USD/MT (cents/lb * 22.0462)
-      const latestPoint = dataPoints[dataPoints.length - 1];
-      const rawPrice = Number(latestPoint.centsPerBushel); // holds cents/lb
-      const usdPerMT = Number(latestPoint.usdPerMT);
-      const observationDate = latestPoint.date;
-
-      // Previous weekly observation (~5 trading days prior)
-      const prevIndex = Math.max(0, dataPoints.length - 6);
-      const prevPoint = dataPoints[prevIndex];
-      const prevPriceUsdMt = Number(prevPoint.usdPerMT);
-
-      const absoluteChangeUsdMt = Number((usdPerMT - prevPriceUsdMt).toFixed(2));
-      const wowPct = prevPriceUsdMt > 0
-        ? Number((((usdPerMT - prevPriceUsdMt) / prevPriceUsdMt) * 100).toFixed(2))
-        : 0;
-      const direction: 'up' | 'down' | 'unchanged' =
-        absoluteChangeUsdMt > 0 ? 'up' : absoluteChangeUsdMt < 0 ? 'down' : 'unchanged';
-
-      // 2. Verified Physical Landed Cost calculation
-      // Formula: Verified Physical FOB + Liquid Tanker Ocean Freight + Port Cost
-      const portCost = procurementConfig.portCostUsdPerMt !== null && procurementConfig.portCostUsdPerMt !== undefined
-        ? procurementConfig.portCostUsdPerMt
-        : 10.50;
-      
-      const physicalFob = this.verifiedFobCache;
-      const koreaFreight = this.verifiedFreightCache;
-      const estimatedLandedCostUsdMt = Number((physicalFob.fobPriceUsdMt + koreaFreight.freightRateUsdMt + portCost).toFixed(2));
-
-      const landedCost: EstimatedSoybeanOilKoreaLandedCost = {
-        isAvailable: true,
-        statusText: '산출 완료 (Verified)',
-        estimatedLandedCostUsdMt,
-        compactFormulaText: `South American FOB (Rosario) $${physicalFob.fobPriceUsdMt.toFixed(2)} + 해상운임 $${koreaFreight.freightRateUsdMt.toFixed(2)} + 항만비 $${portCost.toFixed(2)}`,
-        physicalFob,
-        koreaFreight,
-        portCostAssumption: {
-          portCostUsdMt: portCost,
-          isConfigured: true,
-          label: '내부 추정 가정치 (Assumption)'
-        },
-        missingInputs: []
-      };
-
-      // 3. Fetch official USDA FAS PSD dataset for World Soybean Oil (4232000, 2026)
-      const psdRes = await usdaFasService.fetchWorldPsd('4232000', '2026');
-      const psdData = psdRes.data;
-      const stocksToUsePct = psdData?.stocksToUseRatioPct || 8.3;
-
-      // 4. Fetch AMIS Market Monitor intelligence for Soybean Oil
-      const amisRes = await amisService.fetchSoybeanOilIntelligence(false);
-
-      // 5. Synthesize Desk Recommendation
-      let recommendation = '45~60일 분할 구매 권고';
-      if (wowPct <= -2.0) {
-        recommendation = '45~60일 분할 매수 확대 권고';
-      } else if (wowPct >= 3.0) {
-        recommendation = '30~45일 단기 관망 후 분할 구매';
-      } else if (stocksToUsePct >= 10.0) {
-        recommendation = '45~60일 안정적 분할 구매 권고';
-      } else {
-        recommendation = '45~60일 분할 구매 권고';
-      }
-
-      // 6. Synthesize Procurement Risk (Qualitative status & concise 1-2 line Korean explanation)
-      let riskLevel: '안정' | '주의' | '경계' = '안정';
-      let riskSummaryKo =
-        `아르헨티나 착유 가동률 회복 및 글로벌 대두유 공급이 유지(재고율 ${stocksToUsePct.toFixed(1)}%)되고 있으나, 미 바이오연료(RFS/HVO) 의무혼합 수요 및 남미 수출세 정책 모니터링 필요`;
-
-      if (stocksToUsePct < 7.0 || wowPct > 4.0) {
-        riskLevel = '경계';
-        riskSummaryKo =
-          `글로벌 유지류 재고 타이트 및 바이오디젤 혼합 수요 급증으로 대두유 조달 원가 상방 위험 경계 필요`;
-      } else if (stocksToUsePct < 8.5 || wowPct > 2.0) {
-        riskLevel = '주의';
-        riskSummaryKo =
-          `미국 바이오연료 내수 흡수 및 팜유 가격 역전 속에서 남미 대두유 FOB 프리미엄 변동성 모니터링 필요`;
-      }
-
-      const result: SoybeanOilProcurementAnalysisData = {
-        benchmarkPrice: {
-          rawPrice,
-          rawUnit: 'USc/lb',
-          usdPerMT,
-          observationDate,
-          source: 'CBOT (ZL=F)'
-        },
-        weeklyChange: {
-          wowPct,
-          absoluteChangeUsdMt,
-          direction,
-          previousPriceUsdMt: prevPriceUsdMt,
-          calculationBasis: `CBOT ZL=F 1-Week Interval (${prevPoint.date} → ${observationDate})`
-        },
-        landedCost,
-        deskRecommendation: {
-          recommendation,
-          dataInputsUsed: [
-            'CBOT ZL=F Benchmark (USD/MT)',
-            `Weekly Price Change (${wowPct > 0 ? '+' : ''}${wowPct}%)`,
-            `USDA FAS PSD 2026/27 (STU ${stocksToUsePct.toFixed(1)}%)`,
-            'AMIS Market Monitor (Soybean Oil Outlook)',
-            `Estimated Landed Cost ($${estimatedLandedCostUsdMt}/MT)`
-          ]
-        },
-        procurementRisk: {
-          level: riskLevel,
-          summarySentenceKo: riskSummaryKo,
-          sourcesUsed: [
-            'USDA FAS PSD',
-            'USDA WASDE',
-            'AMIS Market Monitor',
-            'USDA ERS Oil Crops',
-            'CME CBOT (ZL=F)'
-          ]
-        }
-      };
-
-      this.cachedAnalysis = result;
-      this.cacheExpiresAt = now + this.cacheDurationMs;
-      return result;
-    } catch (err: any) {
-      console.error('[SoybeanOilIntelligenceService] Error generating soybean oil analysis:', err);
-      if (this.cachedAnalysis) {
-        return this.cachedAnalysis;
-      }
-
-      // Safe verified fallback
-      const portCost = procurementConfig.portCostUsdPerMt || 10.50;
-      const physicalFob = this.verifiedFobCache;
-      const koreaFreight = this.verifiedFreightCache;
-      const fallbackLandedCost: EstimatedSoybeanOilKoreaLandedCost = {
-        isAvailable: true,
-        statusText: '산출 완료 (Verified)',
-        estimatedLandedCostUsdMt: Number((physicalFob.fobPriceUsdMt + koreaFreight.freightRateUsdMt + portCost).toFixed(2)),
-        compactFormulaText: `South American FOB (Rosario) $${physicalFob.fobPriceUsdMt.toFixed(2)} + 해상운임 $${koreaFreight.freightRateUsdMt.toFixed(2)} + 항만비 $${portCost.toFixed(2)}`,
-        physicalFob,
-        koreaFreight,
-        portCostAssumption: {
-          portCostUsdMt: portCost,
-          isConfigured: true,
-          label: '내부 추정 가정치 (Assumption)'
-        },
-        missingInputs: []
-      };
-
-      return {
-        benchmarkPrice: {
-          rawPrice: 67.84,
-          rawUnit: 'USc/lb',
-          usdPerMT: 1495.61,
-          observationDate: '2026-09-25',
-          source: 'CBOT (ZL=F)'
-        },
-        weeklyChange: {
-          wowPct: 0.21,
-          absoluteChangeUsdMt: 3.08,
-          direction: 'up',
-          previousPriceUsdMt: 1492.53,
-          calculationBasis: 'CBOT ZL=F 1-Week Interval'
-        },
-        landedCost: fallbackLandedCost,
-        deskRecommendation: {
-          recommendation: '45~60일 분할 구매 권고',
-          dataInputsUsed: [
-            'CBOT ZL=F Benchmark ($1495.61/MT)',
-            'Weekly Price Change (+0.21%)',
-            'USDA FAS PSD 2026/27 (STU 8.3%)',
-            'AMIS Market Monitor',
-            'USDA ERS Landed Cost ($988.50/MT)'
-          ]
-        },
-        procurementRisk: {
-          level: '안정',
-          summarySentenceKo: '아르헨티나 착유 가동률 회복 및 글로벌 대두유 공급이 유지(재고율 8.3%)되고 있으나, 미 바이오연료(RFS/HVO) 의무혼합 수요 및 남미 수출세 정책 모니터링 필요',
-          sourcesUsed: [
-            'USDA FAS PSD',
-            'USDA WASDE',
-            'AMIS Market Monitor',
-            'USDA ERS Oil Crops',
-            'CME CBOT (ZL=F)'
-          ]
-        }
-      };
-    }
-  }
+/** One durable dated ZL snapshot for page/manual/scheduled price consumers. */
+import type {SoybeanOilProcurementAnalysisData} from '../types.ts';
+import type {SoybeanOilPriceSnapshot} from '../utils/soybeanOilPriceSnapshot.ts';
+import {fetchHistoricalData} from './historicalPriceService.ts';
+import {fetchSoybeanOilWorldPsd} from './usdaSoybeanOilLiveService.ts';
+import {verifiedSoybeanOilSupply,type SoybeanOilSupplyResult} from '../lib/soybeanOilSupply.ts';
+import {observedPriceChanges} from '../utils/observedPriceChanges.ts';
+import {centsPerLbToUsdPerMt} from '../utils/commodityConversions.ts';
+type History=Awaited<ReturnType<typeof fetchHistoricalData>>;
+export function validateSoybeanOilHistory(history:History):History & {fetchedAt:string;quoteUnit:string;priceUnit:string} {
+ if(!history.fetchedAt||!Number.isFinite(Date.parse(history.fetchedAt))||!history.success||history.commodity!=='soybean-oil'||!history.symbol.startsWith('ZL=F')||history.quoteUnit!=='US¢/lb'||history.priceUnit!=='USD/MT'||!history.data?.length)throw Error('Invalid CBOT ZL price identity or units');
+ const seen=new Set<string>();
+ for(const p of history.data){const raw=p.quoteValue;
+  if(!/^20\d{2}-\d{2}-\d{2}$/.test(p.date)||!Number.isFinite(Date.parse(p.date))||Date.parse(p.date)>Date.now()||seen.has(p.date)||(p as any).isSynthetic||typeof raw!=='number'||!Number.isFinite(raw)||raw<=0||!Number.isFinite(p.usdPerMT)||p.usdPerMT<=0||Math.abs(centsPerLbToUsdPerMt(raw)-p.usdPerMT)>.02)throw Error('Invalid, duplicate or mismatched dated ZL observation');
+  seen.add(p.date);
+ }
+ if(history.data.some((p,i)=>i>0&&p.date<=history.data[i-1].date))throw Error('Unsorted ZL history');
+ return history as History & {fetchedAt:string;quoteUnit:string;priceUnit:string};
 }
-
-export const soybeanOilIntelligenceService = SoybeanOilIntelligenceService.getInstance();
+export function buildSoybeanOilProcurementAnalysis(history:Pick<SoybeanOilPriceSnapshot,'data'|'fetchedAt'|'stale'>,world:SoybeanOilSupplyResult,now=new Date()):SoybeanOilProcurementAnalysisData {
+ const latest=history.data.at(-1)!,moves=observedPriceChanges(history.data),wow=moves.wow,usd=latest.usdPerMT;
+ const supply=verifiedSoybeanOilSupply(world,now),age=now.getTime()-Date.parse(latest.date),checkedAge=now.getTime()-Date.parse(world.verifiedAt||'');
+ const sufficient=!!supply&&!world.refreshFailed&&checkedAge>=0&&checkedAge<=7*86400000&&!(history as any).stale&&age>=0&&age<=5*86400000&&now.getTime()-Date.parse(history.fetchedAt)<=3*86400000&&wow.pct!==null;
+ // RMS price-pressure screening, not crop health, inventory adequacy or verified physical cost.
+ const level=!sufficient?'자료 부족':wow.pct!>=4?'경계':wow.pct!>=2?'주의':'제한 평가';
+ const price=wow.pct===null?'CBOT 주간 비교 미확인':'CBOT 주간 '+(wow.pct>0?'+':'')+wow.pct.toFixed(2)+'%';
+ const period=supply?String(supply.rawRecords[0].calendarYear)+'-'+supply.releaseMonth.padStart(2,'0'):undefined;
+ const summary=price+' · '+(supply?'USDA 세계 S/U '+supply.stocksToUseRatioPct.toFixed(1)+'% (연간 전망)':'USDA 검증 자료 부족')+(!sufficient?' · 최신 근거 미확인':'');
+ const recommendation=!sufficient?'검증 자료 재확인 후 구매 판단':wow.pct!>=4?'견적 확인 후 필수 물량 분할 확보 검토':wow.pct!>=2?'견적 확인 후 분할 구매 검토':wow.pct!<=-2?'견적 재확인 후 분할 매수 검토':'견적·필요 물량 비교 후 분할 구매 검토';
+ return {benchmarkPrice:{rawPrice:latest.quoteValue??latest.centsPerBushel,rawUnit:'USc/lb',usdPerMT:usd,observationDate:latest.date,source:'CBOT (ZL=F)'},weeklyChange:{wowPct:wow.pct,absoluteChangeUsdMt:wow.amountUsdMt,direction:wow.amountUsdMt===null?'unavailable':wow.amountUsdMt>0?'up':wow.amountUsdMt<0?'down':'unchanged',previousPriceUsdMt:wow.amountUsdMt===null?null:Number((usd-wow.amountUsdMt).toFixed(2)),calculationBasis:'CBOT ZL=F actual observations ('+(wow.referenceDate||'unavailable')+' → '+latest.date+')'},deskRecommendation:{recommendation,dataInputsUsed:[price,supply?'USDA PSD '+supply.marketYear+'/'+String(+supply.marketYear+1).slice(-2)+' · '+period:'USDA unavailable']},procurementRisk:{level,summarySentenceKo:summary,sourcesUsed:['Yahoo Finance · CBOT ZL=F',...(supply?['USDA FAS PSD']:[])],criteria:'CBOT 주간 상승률 2% 이상 주의 · 4% 이상 경계. 그 외 제한 평가. S/U는 연간 전망 참고값이며 부족·적정 판단 기준이 아닙니다.'},supplyReference:supply?{commodityCode:'4232000',marketYear:supply.marketYear,reportPeriod:period!,verifiedAt:world.verifiedAt!,production1000MT:supply.production1000MT,consumption1000MT:supply.domesticConsumption1000MT,exports1000MT:supply.exports1000MT,endingStocks1000MT:supply.endingStocks1000MT}:undefined};
+}
+import {randomUUID} from 'node:crypto';
+import {SOYBEAN_OIL_HISTORY_FILE,emptySoybeanOilHistory,readSoybeanOilHistory,writeSoybeanOilHistory,mergeSoybeanOilHistory,recordSoybeanOilAttempt,acquireSoybeanOilHistoryLock} from './soybeanOilPriceHistoryStore.ts';
+import type {SoybeanOilHistoryState,SoybeanOilRefreshAttempt,SoybeanOilRefreshTrigger} from './soybeanOilPriceHistoryStore.ts';
+type OilSources={history:typeof fetchHistoricalData;world:()=>Promise<SoybeanOilSupplyResult>};
+export class SoybeanOilIntelligenceService {
+ private state:SoybeanOilHistoryState=emptySoybeanOilHistory();
+ private pending:Promise<SoybeanOilPriceSnapshot>|null=null;
+ private readonly file:string|null;
+ private readonly sources:OilSources;
+ constructor(sources?:OilSources,options:{file?:string|null}={}){
+  this.sources=sources||{history:fetchHistoricalData,world:()=>fetchSoybeanOilWorldPsd(false)};
+  this.file=options.file===undefined?(sources?null:SOYBEAN_OIL_HISTORY_FILE()):options.file;
+ }
+ private async view():Promise<SoybeanOilPriceSnapshot> {
+  const snapshot=this.state.snapshot;if(!snapshot)throw Error(this.state.lastAttempt?.error||'No saved Soybean Oil price observations');
+  let world:SoybeanOilSupplyResult;try{world=await this.sources.world();}catch(e){world={success:false,status:'unavailable',checkedAt:new Date().toISOString(),refreshFailed:true,message:(e as Error).message};}
+  return {...snapshot,procurementAnalysis:buildSoybeanOilProcurementAnalysis(snapshot,world),supplyEvidence:world,refreshMetadata:{lastAttempt:this.state.lastAttempt,lastSuccessAt:this.state.lastSuccessAt,lastObservationUpdateAt:this.state.lastObservationUpdateAt},lastError:this.state.lastAttempt?.error};
+ }
+ private fresh(){const a=this.state.lastAttempt;if(a?.status==='running')return false;const at=Date.parse(a?.finishedAt||'');return Boolean((this.state.snapshot||a?.status==='failed')&&Number.isFinite(at)&&Date.now()-at>=0&&Date.now()-at<(a?.status==='failed'||a?.status==='partial'?60000:15*60000));}
+ async getSoybeanOilPriceSnapshot(force=false,trigger:SoybeanOilRefreshTrigger=force?'manual':'read'):Promise<SoybeanOilPriceSnapshot>{
+  if(this.pending)return this.pending;
+  this.pending=(async()=>{
+   if(this.file)this.state=readSoybeanOilHistory(this.file);
+   if(!force&&this.fresh())return this.view();
+   const lock=this.file?await acquireSoybeanOilHistoryLock(this.file):null;
+   try{
+    if(this.file)this.state=readSoybeanOilHistory(this.file);
+    if((!force&&this.fresh())||(lock?.waited&&this.state.lastAttempt?.status!=='running'))return this.view();
+    const attempt:SoybeanOilRefreshAttempt={id:randomUUID(),trigger,startedAt:new Date().toISOString(),status:'running'};
+    this.state.lastAttempt=attempt;
+    if(this.file){writeSoybeanOilHistory(this.file,this.state);recordSoybeanOilAttempt(this.file,attempt);}
+    try{
+     const incoming=await this.sources.history('soybean-oil','5Y',force);
+     const merged=mergeSoybeanOilHistory(this.state.snapshot,incoming);
+     let error:string|undefined;
+     let world:SoybeanOilSupplyResult;try{world=await this.sources.world();}catch(e){world={success:false,status:'unavailable',checkedAt:new Date().toISOString(),refreshFailed:true,message:(e as Error).message};}
+     const procurementAnalysis=buildSoybeanOilProcurementAnalysis(merged.history,world);
+     if(merged.partial)error='Yahoo response ends before the saved latest observation; longer history retained';
+     const finishedAt=new Date().toISOString();Object.assign(attempt,{finishedAt,status:error?'partial':merged.added||merged.revised?'updated':'unchanged',receivedLatestDate:merged.receivedLatestDate,observationDate:merged.history.data.at(-1)!.date,receivedCount:incoming.data.length,storedCount:merged.history.data.length,added:merged.added,revised:merged.revised,error});if(!error)delete attempt.error;
+     this.state={...this.state,snapshot:{...merged.history,procurementAnalysis,stale:Boolean(error)},lastAttempt:attempt,lastSuccessAt:finishedAt,lastObservationUpdateAt:merged.added||merged.revised?finishedAt:this.state.lastObservationUpdateAt};
+     if(this.file){for(const revision of merged.revisions)recordSoybeanOilAttempt(this.file,{...attempt,revision} as SoybeanOilRefreshAttempt);writeSoybeanOilHistory(this.file,this.state);recordSoybeanOilAttempt(this.file,attempt);}
+    }catch(e){Object.assign(attempt,{finishedAt:new Date().toISOString(),status:'failed',error:(e as Error).message,observationDate:this.state.snapshot?.data.at(-1)?.date,storedCount:this.state.snapshot?.data.length||0});this.state.lastAttempt=attempt;if(this.state.snapshot)this.state.snapshot={...this.state.snapshot,stale:true};if(this.file){writeSoybeanOilHistory(this.file,this.state);recordSoybeanOilAttempt(this.file,attempt);}if(!this.state.snapshot)throw e;}
+    return this.view();
+   }finally{lock?.release();}
+  })();try{return await this.pending;}finally{this.pending=null;}
+ }
+ async getSoybeanOilProcurementAnalysis(force=false){return (await this.getSoybeanOilPriceSnapshot(force)).procurementAnalysis;}
+}
+export const soybeanOilIntelligenceService=new SoybeanOilIntelligenceService();

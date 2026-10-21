@@ -6,27 +6,30 @@ import { exportGlobalDashboardToPdf } from '../utils/exportDashboardPdf';
 import palmOilCache from '../data/cache_palmoil.json';
 import {
   formatPrice as formatPriceUtil,
-  formatLandedCost as formatLandedCostUtil,
   formatStarchSweetenerBenchmark,
   formatCurrencyValue,
   formatPercentChange,
   COMMODITY_CONFIGS,
   getCalculatedMetrics
-} from '../utils/landedCostCalculator';
+} from '../utils/commodityPriceMetrics';
 import AiMarketBrief from './AiMarketBrief';
 import { formatDateStandard } from '../utils/formatters';
 import { saveScfiCache, getSavedScfi } from '../services/marketDataService';
+import { subscribeFxRates } from '../services/currencyService';
+import { normalizeVerifiedOtherCommodityWasde } from '../lib/verifiedWorldWasde';
+import { normalizeVerifiedSoybeanOilWasde } from './CommodityWasdeCard';
+import type { WasdeRecord } from './WasdeTerminal';
 
-const GREEN_BADGE_STYLE = 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
+const GREEN_BADGE_STYLE = 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-2.5 py-1 rounded-md';
 
 const DEFAULT_MACRO_FALLBACKS = {
   fx: {
-    rate: '1,358.7 ₩',
-    eurRate: 'EUR 1,556.2₩',
+    rate: '—',
+    eurRate: 'EUR —',
     change: '--%',
-    status: '원가상승 요인',
-    badgeType: 'red' as const,
-    note: '주요 외환 리스크'
+    status: '환율 확인 중',
+    badgeType: 'amber' as const,
+    note: '공식 환율 확인 중'
   },
   oil: {
     rate: '$74.20 /bbl',
@@ -54,56 +57,37 @@ const DEFAULT_MACRO_FALLBACKS = {
   }
 };
 
-const WASDE_PORTFOLIO_SUMMARY = [
-  { id: 'wheat', name: '소맥 (Wheat)', production: '822.4 MMT', consumption: '822.5 MMT', endingStocks: '276.3 MMT', stockToUseRatio: '33.6' },
-  { id: 'corn', name: '옥수수 (Corn)', production: '1,235.7 MMT', consumption: '1,228.4 MMT', endingStocks: '318.5 MMT', stockToUseRatio: '25.9' },
-  { id: 'soybean', name: '대두 (Soybean)', production: '428.7 MMT', consumption: '402.5 MMT', endingStocks: '134.6 MMT', stockToUseRatio: '33.4' },
-  { id: 'soybean-oil', name: '대두유 (Soybean Oil)', production: '65.8 MMT', consumption: '65.2 MMT', endingStocks: '5.4 MMT', stockToUseRatio: '8.3' },
-  { id: 'palm-oil', name: '팜유 (Palm Oil)', production: '79.8 MMT', consumption: '78.4 MMT', endingStocks: '17.2 MMT', stockToUseRatio: '21.9' },
-  { id: 'sugar', name: '원당 (Sugar)', production: '186.2 MMT', consumption: '179.8 MMT', endingStocks: '41.5 MMT', stockToUseRatio: '23.1' },
-];
+// The commodity detail cards and Overview both use /api/usda/:id and exactly the
+// same strict USDA world PSD normalization. There are NO baseline S&D numbers here.
+const USDA_PORTFOLIO = [
+  { id: 'wheat', name: '소맥 (Wheat)' },
+  { id: 'corn', name: '옥수수 (Corn)' },
+  { id: 'soybean', name: '대두 (Soybean)' },
+  { id: 'soybean-oil', name: '대두유 (Soybean Oil)' },
+  { id: 'palm-oil', name: '팜유 (Palm Oil)' },
+  { id: 'sugar', name: '원당 (Sugar)' },
+] as const;
 
-const getSparklinePath = (sparkline: number[] | undefined, changeWoW?: number | null): string => {
-  let points: number[] = sparkline && sparkline.length >= 2 ? [...sparkline] : [];
-  if (points.length < 2) {
-    if (changeWoW != null && changeWoW < 0) {
-      points = [12, 11, 9, 8, 7, 4];
-    } else if (changeWoW != null && changeWoW > 0) {
-      points = [4, 7, 8, 10, 11, 13];
-    } else {
-      points = [10, 10, 10, 10, 10, 10];
-    }
-  }
+type UsdaPortfolioId = typeof USDA_PORTFOLIO[number]['id'];
+type UsdaPortfolioData = Partial<Record<UsdaPortfolioId, WasdeRecord>>;
 
-  // Force directional consistency with WoW metric:
-  if (changeWoW != null && changeWoW < 0 && points[points.length - 1] >= points[0]) {
-    const diff = Math.abs(points[points.length - 1] - points[0]) + 3;
-    points[points.length - 1] = points[0] - diff;
-  } else if (changeWoW != null && changeWoW > 0 && points[points.length - 1] <= points[0]) {
-    const diff = Math.abs(points[0] - points[points.length - 1]) + 3;
-    points[points.length - 1] = points[0] + diff;
-  }
+const formatPortfolioMMT = (n?: number): string =>
+  typeof n === 'number' && Number.isFinite(n) && n >= 0
+    ? `${n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT` : '—';
+const formatPortfolioStocksRatio = (n?: number): string =>
+  typeof n === 'number' && Number.isFinite(n) && n >= 0
+    ? `${n.toFixed(1)}%` : '—';
 
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const range = max - min || 1;
 
-  const width = 64;
-  const paddingX = 2;
-  const paddingY = 3;
-  const usableHeight = 14;
-
-  const n = points.length;
-  const stepX = (width - paddingX * 2) / (n - 1);
-
-  return points
-    .map((val, idx) => {
-      const x = Math.round((paddingX + idx * stepX) * 10) / 10;
-      const norm = (val - min) / range;
-      const y = Math.round((paddingY + (1 - norm) * usableHeight) * 10) / 10;
-      return `${idx === 0 ? 'M' : 'L'}${x} ${y}`;
-    })
-    .join(' ');
+const getSparklinePath = (series?: number[]): string => {
+  const points = (series || []).filter(p => Number.isFinite(p) && p > 0);
+  if (points.length < 2) return '';
+  const min = Math.min(...points), max = Math.max(...points), range = max-min || 1;
+  return points.map((v,i) => {
+    const x = 2 + i * 60 / (points.length-1);
+    const y = 3 + (1-(v-min)/range) * 14;
+    return `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
 };
 
 const getCardEyebrow = (item: { id: string; gradeEn: string }) => {
@@ -121,7 +105,7 @@ const getCardEyebrow = (item: { id: string; gradeEn: string }) => {
     case 'sugar':
       return 'ICE: SBC1 BENCHMARK';
     case 'potato-starch':
-      return 'EEX: PS BENCHMARK';
+      return 'PHYSICAL QUOTE UNAVAILABLE';
     case 'tapioca-starch':
       return 'TTSA: TS BENCHMARK';
     default:
@@ -151,7 +135,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
   onRefreshGemini,
   isSyncing,
   aiBriefText,
-  usdKrwRate = 1388.5,
+  usdKrwRate = 0,
   modelVersion
 }) => {
   const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -165,6 +149,17 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     badgeType: 'red' | 'green' | 'amber';
     note: string;
   }>(DEFAULT_MACRO_FALLBACKS.fx);
+
+  useEffect(() => subscribeFxRates(rates => {
+    const krw = rates.USD_KRW;
+    const eurKrw = rates.EUR_USD > 0 ? krw * rates.EUR_USD : 0;
+    setFxData(prev => ({...prev,
+      rate: krw > 0 ? `${krw.toLocaleString('en-US', {maximumFractionDigits:2})} ₩` : '—',
+      eurRate: eurKrw > 0 ? `EUR ${eurKrw.toLocaleString('en-US', {maximumFractionDigits:2})}₩` : 'EUR —',
+      change:'--%', status: krw > 0 ? '공식 환율' : '환율 확인 중',
+      badgeType:'amber'
+    }));
+  }), []);
 
   const [oilData, setOilData] = useState<{
     rate: string;
@@ -193,6 +188,43 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     note: string;
     sourceUrl?: string;
   }>(DEFAULT_MACRO_FALLBACKS.policy);
+
+  const [portfolioUsda, setPortfolioUsda] = useState<UsdaPortfolioData>({});
+  const [portfolioLoading, setPortfolioLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const controller = new AbortController();
+    setPortfolioLoading(true);
+    // Use the SAME endpoint and strict normalization as CommodityWasdeCard.
+    // Never fall back to bundled WASDE_BASELINES or a different crop's numbers.
+    const jobs = USDA_PORTFOLIO.map(async ({ id }) => {
+      try {
+        const response = await fetch(`/api/usda/${id}`, { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error(`USDA ${id}: HTTP ${response.status}`);
+        const json = await response.json();
+        const payload = json.data || json;
+        const data = json.success === true
+          ? (id === 'soybean-oil'
+              ? normalizeVerifiedSoybeanOilWasde(payload, json.dataStatus, json.verifiedAt || '')
+              : normalizeVerifiedOtherCommodityWasde(payload, json.dataStatus, json.verifiedAt || '', id))
+          : null;
+        if (mounted && data) setPortfolioUsda(prev => ({ ...prev, [id]: data }));
+        else if (mounted) setPortfolioUsda(prev => { const next = { ...prev }; delete next[id]; return next; });
+      } catch (error) {
+        if (mounted && !controller.signal.aborted) {
+          console.warn(`[OverviewTerminal] Verified USDA ${id} unavailable`, error);
+          setPortfolioUsda(prev => { const next = { ...prev }; delete next[id]; return next; });
+        }
+      }
+    });
+    void Promise.allSettled(jobs).then(() => { if (mounted) setPortfolioLoading(false); });
+    return () => { mounted = false; controller.abort(); };
+  }, [isSyncing]);
+
+  const portfolioYears = Array.from(new Set(Object.values(portfolioUsda as UsdaPortfolioData).map(row => row?.marketYear || '').filter(Boolean)));
+  const portfolioMarketYear = portfolioYears.length === 1 && Object.keys(portfolioUsda).length === USDA_PORTFOLIO.length
+    ? portfolioYears[0] : '품목별';
 
   const [selectedWasdeKey, setSelectedWasdeKey] = useState<string>('wheat');
   const [weatherData, setWeatherData] = useState({
@@ -275,11 +307,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
       }
     };
     fetchLivePolicy();
-    const interval = setInterval(fetchLivePolicy, 600000); // 10 minutes refresh
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    // No paid-analysis polling on a ten-minute timer.
+    return () => { isMounted = false; };
   }, [isSyncing]);
 
   const riskWeight: Record<string, number> = {
@@ -332,11 +361,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
       }
     };
     loadMarketIssues();
-    const interval = setInterval(loadMarketIssues, 600000); // 10 minutes refresh
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    // No paid-analysis polling on a ten-minute timer.
+    return () => { isMounted = false; };
   }, [marketIssues, isSyncing]);
 
   const [wasdeData, setWasdeData] = useState<any>({
@@ -366,29 +392,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         const data = await res.json();
         if (!isMounted || !data) return;
 
-        // 1. Safeguard FX State Setter
-        if (data.usdKrw !== undefined || data.eurKrw !== undefined) {
-          const rawKrw = Number(data.usdKrw);
-          const krw = !isNaN(rawKrw) && rawKrw > 0 ? rawKrw : 1358.7;
-          const prevCloseRef = 1347.6;
-          const diffPct = ((krw - prevCloseRef) / prevCloseRef) * 100;
-          const sign = diffPct >= 0 ? '+' : '';
-          const changeStr = !isNaN(diffPct) ? `${sign}${diffPct.toFixed(2)}%` : DEFAULT_MACRO_FALLBACKS.fx.change;
-          const isRed = diffPct >= 0;
-
-          const rawEur = data.eurKrw ? Number(data.eurKrw) : krw / 0.92;
-          const validEur = !isNaN(rawEur) && rawEur > 0 ? rawEur : 1556.2;
-          const eurFormatted = validEur.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-          setFxData((prev) => ({
-            rate: `${krw.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ₩`,
-            eurRate: `EUR ${eurFormatted}₩`,
-            change: changeStr || prev?.change || DEFAULT_MACRO_FALLBACKS.fx.change,
-            status: isRed ? '원가상승 요인' : '안정 구간',
-            badgeType: isRed ? 'red' : 'green',
-            note: prev?.note || DEFAULT_MACRO_FALLBACKS.fx.note
-          }));
-        }
+        // FX comes from the shared currency service, not this independent telemetry response.
 
         // 2. Safeguard Energy/Oil State Setter: Map data.energy.brent and data.energy.brentChange directly
         const rawBrent = data.energy?.brent ?? data.brent;
@@ -498,46 +502,19 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     (c) => c.category === 'starches' || c.category === 'sweeteners'
   );
 
-  const validWoWCommodities = commodities.filter((c) => c.changeWoW != null);
+  const validWoWCommodities = commodities.filter((c) => c.price > 0 && c.changeWoW != null);
   const sortedCommodities = [...validWoWCommodities].sort((a, b) => (b.changeWoW ?? 0) - (a.changeWoW ?? 0));
   const topGainer = sortedCommodities.length > 0 ? sortedCommodities[0] : null;
   const topLoser = sortedCommodities.length > 0 ? sortedCommodities[sortedCommodities.length - 1] : null;
 
-  const effectiveUsdKrw = React.useMemo(() => {
-    const parsed = parseFloat(fxData.rate.replace(/[^0-9.]/g, ''));
-    return !isNaN(parsed) && parsed > 0 ? parsed : (usdKrwRate || 1388.5);
-  }, [fxData.rate, usdKrwRate]);
 
-  const effectiveEurKrw = React.useMemo(() => {
-    const parsed = parseFloat(fxData.eurRate.replace(/[^0-9.]/g, ''));
-    return !isNaN(parsed) && parsed > 0 ? parsed : 1556.2;
-  }, [fxData.eurRate]);
 
-  const formatTopMoverLandedCost = (krwPerKg: number) => {
-    if (currency === 'USD') {
-      const usdPerKg = krwPerKg / effectiveUsdKrw;
-      return `$${usdPerKg.toFixed(2)}/kg`;
-    }
-    if (currency === 'EUR') {
-      const eurPerKg = krwPerKg / effectiveEurKrw;
-      return `€${eurPerKg.toFixed(2)}/kg`;
-    }
-    return `₩${Math.round(krwPerKg).toLocaleString('en-US')}/kg`;
-  };
 
   const formatPrice = (commodity: Commodity) => {
     return formatPriceUtil(commodity.price, currency, 'MT');
   };
 
-  const formatLandedCost = (item: Commodity) => {
-    return formatLandedCostUtil(item, currency, 42, usdKrwRate, 1 / 1.08);
-  };
 
-  const getLandedLabel = () => {
-    if (currency === 'USD') return '추정 CIF (USD)';
-    if (currency === 'EUR') return '추정 CIF (EUR)';
-    return '추정 국내 도착가';
-  };
 
   return (
     <div id="main-dashboard-view" className="OverviewTerminal overview-container flex flex-col w-full pb-16 space-y-4 print:space-y-0 print:pb-0 print:p-0">
@@ -615,7 +592,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             {/* Top Gainer */}
             {topGainer && topGainer.changeWoW != null && (
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
+                <span className="rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
                   최대 상승
                 </span>
                 <span
@@ -635,7 +612,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             {/* Top Loser */}
             {topLoser && topLoser.changeWoW != null && (
               <div className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <span className="bg-red-50 border border-red-200 text-[#DF0029] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
+                <span className="rms-status-negative bg-red-50 border border-red-200 text-[#DF0029] font-bold px-1.5 py-0.5 rounded text-[10px] leading-normal shrink-0 inline-flex items-center">
                   최대 하락
                 </span>
                 <span
@@ -681,10 +658,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <span
                         className={`shrink-0 ${
                           item.changeWoW == null
-                            ? 'bg-slate-50 border border-slate-200 text-slate-400 font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                            ? 'bg-slate-50 border border-slate-200 text-slate-400 font-bold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                             : item.changeWoW >= 0
-                            ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
-                            : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
+                            ? 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                            : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border rms-status-negative bg-red-50 text-[#DF0029] border-red-200/80'
                         }`}
                       >
                         {item.changeWoW != null && (
@@ -703,8 +680,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           id={item.id === 'wheat' ? 'ticker-price' : `el-${item.id}-price`}
                         >
                           {currency === 'KRW'
-                            ? `₩${Math.round(item.price).toLocaleString('en-US')}`
-                            : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            ? (Number.isFinite(item.price) && item.price > 0 ? `₩${Math.round(item.price).toLocaleString('en-US')}` : '—')
+                            : (Number.isFinite(item.price) && item.price > 0 ? `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—')}
                         </span>
                         <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
                       </div>
@@ -716,7 +693,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           viewBox="0 0 64 20"
                         >
                           <path
-                            d={getSparklinePath(item.sparkline, item.changeWoW)}
+                            d={getSparklinePath(item.sparkline)}
                             stroke={item.changeWoW != null && item.changeWoW < 0 ? '#DF0029' : '#059669'}
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -789,10 +766,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span
                           className={`shrink-0 ${
                             item.changeWoW == null
-                              ? 'bg-slate-50 border border-slate-200 text-slate-400 font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              ? 'bg-slate-50 border border-slate-200 text-slate-400 font-bold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : isWoWPositive
-                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
-                              : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
+                              ? 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              : 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border rms-status-negative bg-red-50 text-[#DF0029] border-red-200/80'
                           }`}
                         >
                           {item.changeWoW != null && (
@@ -808,14 +785,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <div>
                           <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
                             {currency === 'KRW'
-                              ? `₩${Math.round(item.price).toLocaleString('en-US')}`
-                              : `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                              ? (Number.isFinite(item.price) && item.price > 0 ? `₩${Math.round(item.price).toLocaleString('en-US')}` : '—')
+                              : (Number.isFinite(item.price) && item.price > 0 ? `${currency === 'EUR' ? '€' : '$'}${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—')}
                           </span>
                           <span className="text-xs text-[#6b7280] ml-1">{item.unit}</span>
 
                           {item.id === 'palm-oil' && (
                             <p className="text-[10px] text-slate-400 font-mono mt-0.5 leading-none">
-                              MDEX (FCPO) · ({(item._originalPrice || palmOilCache.priceMyr || 4539).toLocaleString('en-US')} MYR/MT)
+                              MDEX (FCPO) · ({item._originalPrice ? item._originalPrice.toLocaleString('en-US') : '—'} USD/MT)
                             </p>
                           )}
                         </div>
@@ -827,7 +804,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                             viewBox="0 0 64 20"
                           >
                             <path
-                              d={getSparklinePath(item.sparkline, item.changeWoW)}
+                              d={getSparklinePath(item.sparkline)}
                               stroke={item.changeWoW != null && item.changeWoW < 0 ? '#DF0029' : '#059669'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -895,11 +872,11 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span
                           className={`shrink-0 ${
                             item.changeWoW == null
-                              ? 'bg-slate-50 border border-slate-200 text-slate-400 font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              ? 'bg-slate-50 border border-slate-200 text-slate-400 font-bold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : isWoWPositive
-                              ? 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
+                              ? 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold font-mono text-[11px] flex items-center gap-0.5 !py-0.5 !px-1.5 rounded shrink-0'
                               : isWoWNegative
-                              ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border bg-red-50 text-[#DF0029] border-red-200/80'
+                              ? 'px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border rms-status-negative bg-red-50 text-[#DF0029] border-red-200/80'
                               : 'bg-[#f3f4f6] text-[#4b5563] border-[#e5e7eb] px-1.5 py-0.5 font-mono text-[11px] rounded font-bold flex items-center gap-0.5 border'
                           }`}
                         >
@@ -916,10 +893,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <div>
                           <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
                             {currency === 'KRW'
-                              ? `₩${Math.round(item.price).toLocaleString('en-US')}`
+                              ? (Number.isFinite(item.price) && item.price > 0 ? `₩${Math.round(item.price).toLocaleString('en-US')}` : '—')
                               : currency === 'EUR'
-                              ? `€${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                              : `$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                              ? (item.price > 0 ? `€${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—')
+                              : (item.price > 0 ? `$${item.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—')}
                           </span>
                           <span className="text-xs text-[#6b7280] ml-1">
                             {item.unit}
@@ -939,7 +916,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                             viewBox="0 0 64 20"
                           >
                             <path
-                              d={getSparklinePath(item.sparkline, item.changeWoW)}
+                              d={getSparklinePath(item.sparkline)}
                               stroke={item.changeWoW != null && item.changeWoW > 0 ? '#059669' : item.changeWoW != null && item.changeWoW < 0 ? '#DF0029' : '#9ca3af'}
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -988,7 +965,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   글로벌 수급 밸런스 (Global S&D Balance)
                 </h3>
               </div>
-              <span className="text-xs text-slate-400 font-medium">Market Year: 2026</span>
+              <span className="text-xs text-slate-400 font-medium">Market Year: {portfolioLoading && portfolioYears.length === 0 ? '확인 중' : portfolioMarketYear}</span>
             </div>
             
             <div className="flex-1 flex flex-col justify-center">
@@ -1003,21 +980,27 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {WASDE_PORTFOLIO_SUMMARY.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-2 px-1.5 print:py-1.5 font-semibold text-slate-900 text-xs">{item.name}</td>
-                      <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{item.production}</td>
-                      <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{item.consumption}</td>
-                      <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{item.endingStocks}</td>
-                      <td className="py-2 px-1.5 print:py-1.5 text-right font-bold text-slate-900 text-xs font-mono">{item.stockToUseRatio}%</td>
-                    </tr>
-                  ))}
+                  {USDA_PORTFOLIO.map(item => {
+                    const record = portfolioUsda[item.id];
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-2 px-1.5 print:py-1.5 font-semibold text-slate-900 text-xs">
+                          {item.name}
+                          <span className="block text-[9px] text-slate-400 font-normal">{record?.marketYear || '—'}</span>
+                        </td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.productionMMT)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.consumptionMMT)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.endingStocksMMT)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-right font-bold text-slate-900 text-xs font-mono">{formatPortfolioStocksRatio(record?.stocksToUseRatio)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             <div className="text-[10px] text-[#94A3B8] font-normal text-right mt-2 select-none">
-              출처: USDA FAS PSD (2026 WASDE Telemetry)
+              출처: USDA FAS PSD · 품목별 검증 자료 (미확인 —)
             </div>
           </div>
 
@@ -1079,12 +1062,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <span className="text-slate-300">·</span>
                     <span className="font-mono text-slate-500 text-[11px]">{item.rain}mm</span>
                     
-                    <span className={`rounded-full text-[10px] font-medium border ${
+                    <span className={`rounded-md text-[10px] font-medium border ${
                       item.status.includes('건조') || item.status.includes('고온') 
-                        ? 'bg-rose-50 text-rose-700 border-rose-200 px-2 py-0.5' 
+                        ? 'rms-status-negative bg-rose-50 text-rose-700 border-rose-200 px-2 py-0.5' 
                         : item.status.includes('흐림') || item.status.includes('주의')
-                        ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2 py-0.5'
-                        : 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded'
+                        ? 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2 py-0.5'
+                        : 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded'
                     }`}>
                       {item.status}
                     </span>
@@ -1112,7 +1095,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] text-[#6b7280] uppercase">핵심 수입원가 요인 (Core Landed Cost Factors)</span>
+              <span className="text-[10px] text-[#6b7280] uppercase">주요 거시경제·조달 지표 (Macro & Procurement Drivers)</span>
             </div>
           </div>
 
@@ -1153,8 +1136,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
                 <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                   (fxData?.change || DEFAULT_MACRO_FALLBACKS.fx.change).startsWith('+')
-                    ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                    : 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                    ? 'rms-status-negative bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                    : 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                 }`}>
                   {fxData?.status || ((fxData?.change || DEFAULT_MACRO_FALLBACKS.fx.change).startsWith('+') ? '원가상승 요인' : '원가절감 요인')}
                 </span>
@@ -1205,8 +1188,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
                 <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                   (oilData?.change || DEFAULT_MACRO_FALLBACKS.oil.change).startsWith('+')
-                    ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                    : 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                    ? 'rms-status-negative bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                    : 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                 }`}>
                   {oilData?.status || ((oilData?.change || DEFAULT_MACRO_FALLBACKS.oil.change).startsWith('+') ? '유가 상승 위험' : '우호적 (Favorable)')}
                 </span>
@@ -1254,8 +1237,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
                 <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                   (freightData?.change || DEFAULT_MACRO_FALLBACKS.freight.change).startsWith('+')
-                    ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                    : 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                    ? 'rms-status-negative bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                    : 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                 }`}>
                   {freightData?.status || ((freightData?.change || DEFAULT_MACRO_FALLBACKS.freight.change).startsWith('+') ? '운임 급등 위험' : '운임 하향 안정')}
                 </span>
@@ -1288,10 +1271,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   <div className="flex items-center shrink-0">
                     <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                       policyData?.badgeType === 'green'
-                        ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                        ? 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                         : policyData?.badgeType === 'red'
-                          ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                          : 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
+                          ? 'rms-status-negative bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                          : 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
                     }`}>
                       {policyData?.change || '중립적'}
                     </span>
@@ -1309,10 +1292,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
                 <span className={`text-[11px] font-medium px-2 py-0.5 rounded border ${
                   policyData?.badgeType === 'green'
-                    ? 'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                    ? 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
                     : policyData?.badgeType === 'red'
-                      ? 'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
-                      : 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
+                      ? 'rms-status-negative bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]'
+                      : 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
                 }`}>
                   {policyData?.status || '통상 정책 점검'}
                 </span>
@@ -1348,7 +1331,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </span>
               
               <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="px-2 py-0.5 bg-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">
+                <span className="rms-status-negative px-2 py-0.5 bg-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">
                   조치 필요
                 </span>
                 <span className="text-xs font-bold text-slate-800 break-keep">
@@ -1357,7 +1340,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="px-2 py-0.5 bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold text-[11px] rounded shrink-0">
+                <span className="px-2 py-0.5 rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold text-[11px] rounded shrink-0">
                   주시
                 </span>
                 <span className="text-xs font-bold text-slate-800 break-keep">
@@ -1366,7 +1349,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </div>
 
               <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded shrink-0">
+                <span className="rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded shrink-0">
                   우호적 조건
                 </span>
                 <span className="text-xs font-bold text-slate-800 break-keep">
@@ -1403,10 +1386,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <span
                         className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-bold border ${
                           issue.risk === 'High'
-                            ? 'bg-rose-50 border-rose-200 text-[#DF0029]'
+                            ? 'rms-status-negative bg-rose-50 border-rose-200 text-[#DF0029]'
                             : issue.risk === 'Med'
-                            ? 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
-                            : 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-1.5 py-0.5 rounded shrink-0'
+                            ? 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
+                            : 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-1.5 py-0.5 rounded shrink-0'
                         }`}
                       >
                         {issue.risk === 'High' ? '고위험' : issue.risk === 'Med' ? '중위험' : '저위험'}

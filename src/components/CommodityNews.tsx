@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Newspaper } from 'lucide-react';
-import { getPublisherPortalUrl, isInvalidOrSearchUrl } from '../utils/portalUrls';
+import { isInvalidOrSearchUrl } from '../utils/portalUrls';
+import { assessNewsSummary } from '../utils/newsSummaryQuality';
 
 export interface NewsItem {
   id: string;
@@ -14,7 +15,35 @@ export interface NewsItem {
   category?: string;
   affectedRegion?: string;
   unavailable?: boolean;
+  linkStatus?: 'verified' | 'unverified';
 }
+
+// Display-only attribution aliases. Unknown publishers retain their saved label.
+// Reuters attribution is restricted to the independently verified MPOB reprint.
+export const marketIntelligenceSourceLabel = (name: string, originalUrl: string): string => {
+  try {
+    const url = new URL(originalUrl);
+    const host = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (name.trim().toLowerCase().replace(/^www\./, '') !== host) return name;
+    if (host === 'prestasisawit.mpob.gov.my') {
+      return url.pathname.replace(/\/$/, '') === '/ms/palmnews/news/40027' ? 'MPOB · Reuters' : 'MPOB';
+    }
+    const publishers: Record<string, string> = {
+      'briefs.co': 'Briefs',
+      'sunsirs.com': 'SunSirs',
+      'theedgemalaysia.com': 'The Edge Malaysia',
+      'commodity-board.com': 'Commodity Board',
+      'world-grain.com': 'World Grain',
+      'ers.usda.gov': 'USDA ERS',
+      'igc.int': 'International Grains Council',
+      'ahdb.org.uk': 'AHDB',
+      'grains.org': 'U.S. Grains & BioProducts Council',
+    };
+    return publishers[host] || name;
+  } catch {
+    return name;
+  }
+};
 
 const formatPublicationDate = (value?: string) => {
   if (!value) return '발행일 미확인';
@@ -91,8 +120,8 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
       if (isMounted) setArticles([]);
 
       try {
-        const forceParam = '&force=true';
-        const res = await fetch(`/api/market-intelligence?commodity=${commodityId}${forceParam}`, { cache: 'no-store' });
+        // Never bypass the server's daily news cache during normal page navigation.
+        const res = await fetch(`/api/market-intelligence?commodity=${commodityId}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
 
@@ -102,7 +131,9 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
           const todayIso = new Date().toISOString().split('T')[0];
 
           const mapped: NewsItem[] = json.articles
-            .filter((art: any) => art && (art.title || art.title_kr))
+            .filter((art: any) => art && (art.title || art.title_kr) &&
+              assessNewsSummary(art.summary ?? art.summary_kr,
+                art.title ?? art.title_kr, commodityId).pass)
             .map((art: any, idx: number) => {
               const savedSourceName = String(art.sourceName ?? art.source ?? '').trim();
               const savedOriginalUrl = String(art.originalUrl ?? art.original_url ?? art.articleUrl ?? '').trim();
@@ -115,6 +146,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
 
               const isVerified =
                 !art.unavailable &&
+                (commodityId !== 'wheat' || art.linkStatus === 'verified') &&
                 Boolean(savedSourceName) &&
                 !isGoogleNewsLabel(savedSourceName) &&
                 isVerifiableOriginalUrl(savedOriginalUrl);
@@ -131,6 +163,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 category: art.category,
                 affectedRegion: art.affectedRegion ?? art.affected_region,
                 unavailable: !isVerified,
+                linkStatus: art.linkStatus,
               };
             })
             .filter((art: NewsItem) => {
@@ -175,7 +208,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
         </div>
         {isLoading && (
           <span className="text-xs text-[#2563EB] font-medium animate-pulse shrink-0">
-            최신 공식자료 검색 중...
+            불러오는 중...
           </span>
         )}
       </div>
@@ -183,22 +216,18 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
       {articles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {articles.map((item) => {
+            // Click only an independently verified direct article; never fall back to a portal homepage.
             const targetUrl = !item.unavailable && item.originalUrl && !isInvalidOrSearchUrl(item.originalUrl)
-              ? item.originalUrl
-              : getPublisherPortalUrl(item.sourceName, item.originalUrl);
+              ? item.originalUrl : '';
 
             return (
-              <article
+              <a
                 key={item.id}
-                onClick={() => {
-                  if (targetUrl) {
-                    const win = window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                    if (!win) {
-                      window.location.href = targetUrl;
-                    }
-                  }
-                }}
-                className="news-card-item group p-4 bg-white border border-slate-200 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between min-w-0 cursor-pointer"
+                href={targetUrl || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={targetUrl ? `${item.title} 원문 새 탭에서 열기` : undefined}
+                className="news-card-item group p-4 bg-white border border-slate-200 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between min-w-0 cursor-pointer no-underline text-inherit"
               >
                 <div>
                   {/* Top Bar: Category (Left) & Explicit Affected Region Label (Right) */}
@@ -223,27 +252,29 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                     {item.title}
                   </h4>
                   {item.summary && (
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                    <p className="text-xs text-slate-600 leading-relaxed mb-3 whitespace-normal break-words">
                       {item.summary}
                     </p>
                   )}
+
                 </div>
 
                 {/* Footer Divider & Bottom Bar: Date (Left) & Source (Right) */}
                 <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
                   <span className="text-[11px] font-medium text-slate-400">{formatPublicationDate(item.publishedAt)}</span>
                   <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[11px] font-medium rounded border border-slate-200">
-                    {item.sourceName}
+                    {marketIntelligenceSourceLabel(item.sourceName, item.originalUrl)}
                   </span>
                 </div>
-              </article>
+              </a>
             );
           })}
+
         </div>
       ) : (
         <div className="min-h-[120px] flex items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/60 px-4 text-center">
           <p className="text-xs text-slate-500">
-            {isLoading ? '검증된 최신 이슈를 불러오는 중입니다.' : '현재 표시할 수 있는 검증된 최신 이슈가 없습니다.'}
+            {isLoading ? '검증된 최신 이슈를 불러오는 중입니다.' : '저장된 시장 소식이 없습니다.'}
           </p>
         </div>
       )}

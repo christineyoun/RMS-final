@@ -1,16 +1,21 @@
 import React from 'react';
 import { Bot, Loader2 } from 'lucide-react';
+import {aiPublisherLabel,aiSourceTooltip,type AiDisplaySource} from '../utils/aiSourcePresentation';
 
 export interface AiRecommendationProps {
   key?: string;
   commodityId?: string;
   currency?: string;
-  confidenceScore?: number;
+  confidenceScore?: number; // retained for compatibility; not shown to users
   recommendedCoverage?: string;
   executiveSummary?: string;
   bullishFactors?: string[];
   bearishFactors?: string[];
   watchItems?: string[];
+  researchStatus?: "live" | "cached" | "rule-based";
+  researchSources?: AiDisplaySource[];
+  researchGeneratedAt?: string; // retained for compatibility; program-wide date is in the header
+  researchModel?: string; // retained for compatibility
   isLoading?: boolean;
   isError?: boolean;
   errorMessage?: string;
@@ -19,96 +24,62 @@ export interface AiRecommendationProps {
   className?: string;
 }
 
-export const GREEN_BADGE_STYLE = 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
-
-const getActionPillStyle = (score: number) => {
-  if (score >= 85) return GREEN_BADGE_STYLE;
-  if (score >= 70) return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold';
-  return 'bg-red-600 text-white font-bold border-transparent shadow-sm';
-};
-
-export const getRecommendationColor = (text: string) => {
-  if (!text) return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
+export const getRecommendationColor = (text: string,commodityId?:string) => {
+  if(commodityId==='palm-oil')return 'bg-slate-50 border border-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-md';
+  if (!text) return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
 
   // Tier 1: HIGH RISK / TIGHT BUFFER (Solid Red)
   if (text.includes('30~45일') || text.includes('즉시') || text.includes('조치 필요')) {
-    return 'bg-[#DF0029] text-white font-bold px-2.5 py-1 rounded-md shadow-xs';
+    return 'rms-status-negative bg-[#DF0029] text-white font-bold px-2.5 py-1 rounded-md shadow-xs';
   }
 
   // Tier 2: EXTENDED LONG-TERM LOCK (Soft Green - 60~75d)
   if (text.includes('60~75일') || text.includes('60일') || text.includes('75일') || text.includes('우호적') || text.includes('유럽 수입 계약')) {
-    return 'bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
+    return 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
   }
 
   // Tier 3: HYBRID SPOT/FORWARD / CAUTION (주의 / 중위험 / 스팟/선도)
   if (text.includes('주의') || text.includes('중위험') || text.includes('스팟/선도') || text.includes('혼합')) {
-    return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
+    return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
   }
 
   // Tier 4: FLEXIBLE SPLIT-BUY / CAUTION (Soft Orange - 45~60d, 분할 구매, 스팟/선도)
-  return 'bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
+  return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
 };
 
 export default function AiRecommendation({
   commodityId,
   currency,
-  confidenceScore = 88,
-  recommendedCoverage = '60~75일 선도 구매',
+  recommendedCoverage = '자료 확인 후 구매 검토',
   executiveSummary,
   bullishFactors = [],
   bearishFactors = [],
   watchItems = [],
+  researchStatus,
+  researchSources = [],
   isLoading = false,
   isError = false,
   errorMessage = '',
   className = ''
 }: AiRecommendationProps) {
 
-  // Determine dynamic footer source:
-  // Grains & Oilseeds -> Google Gemini AI · Refinitiv · USDA FAS
-  // Starch Derivatives (Potato Starch, Tapioca Starch) -> Google Gemini AI · EEX · TTSA · Tridge
-  const isStarchDerivative = commodityId ? (
-    commodityId.toLowerCase().includes('starch') ||
-    commodityId.toLowerCase().includes('potato') ||
-    commodityId.toLowerCase().includes('tapioca') ||
-    commodityId.includes('전분')
-  ) : false;
+  // Preserve distinct exact URLs, including query-specific publications. A
+  // publisher label is presentation only; no source records are rewritten.
+  const sourceLinks = Array.from(new Map(researchSources.filter((s) => {
+    try { return s?.url && ['https:', 'http:'].includes(new URL(s.url).protocol); }
+    catch { return false; }
+  }).map((s): [string,AiDisplaySource] => [s.url,s])).values());
 
-  const footerSource = isStarchDerivative
-    ? '출처: Google Gemini AI · EEX · TTSA · Tridge'
-    : '출처: Google Gemini AI · Refinitiv · USDA FAS';
-
-  if (isError) {
-    return (
-      <div className={`w-full flex flex-col h-full justify-between bg-white border border-red-200 rounded-xl p-5 mb-6 shadow-sm ${className}`.trim()}>
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-red-50 border border-red-100 rounded-lg shrink-0">
-              <Bot className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                RMS AI 시장 전망 호출 오류 (RMS AI Market View Error)
-              </h3>
-              <p className="text-xs text-red-500 font-sans mt-0.5">데이터 로딩에 실패했습니다.</p>
-            </div>
-          </div>
-          <div className="bg-red-50/80 border border-red-100 rounded-lg p-3.5 mt-2">
-            <p className="text-xs text-red-700 font-sans">
-              {errorMessage || 'AI 분석 분석 데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'}
-            </p>
-          </div>
-        </div>
-        <div className="mt-auto pt-4 flex justify-end text-xs text-gray-400">
-          <span>{footerSource}</span>
-        </div>
-      </div>
-    );
+  if (isError || researchStatus === 'rule-based') {
+    return <div className={`w-full bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm pdf-section-card ${className}`}>
+      <h3 className="text-base font-bold text-slate-900">RMS AI 시장 전망 및 구매 전략 권고</h3>
+      <p className="text-sm text-slate-500 mt-4">저장된 AI 분석이 없습니다.</p>
+    </div>;
   }
 
   if (isLoading) {
     return (
-      <div className={`w-full flex flex-col h-full justify-between bg-white border border-emerald-100 rounded-xl p-5 mb-6 shadow-sm animate-pulse ${className}`.trim()}>
+      <div className={`w-full flex flex-col h-full justify-between bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm animate-pulse ${className}`.trim()}>
         <div className="flex-1">
           <div className="flex items-center justify-between w-full mb-3">
             <div className="flex items-center gap-3">
@@ -143,17 +114,14 @@ export default function AiRecommendation({
             </div>
           </div>
         </div>
-        <div className="mt-auto pt-4 flex justify-end text-xs text-gray-400">
-          <span>{footerSource}</span>
-        </div>
       </div>
     );
   }
 
-  const defaultSummary = '원자재 시세 및 글로벌 수급 여건을 분석 중입니다. 국내 식품 제조 SCM에 맞춘 최적 선도 조달 전략을 제공합니다.';
+  const defaultSummary = '검증된 분석 자료가 없습니다. 실제 공급사 견적과 공식 수급을 확인하세요.';
 
   return (
-    <div className={`w-full flex flex-col h-full justify-between bg-white border border-emerald-100 rounded-xl p-5 mb-6 shadow-sm pdf-section-card min-h-[300px] break-inside-avoid print:break-inside-avoid ${className}`.trim()}>
+    <div className={`w-full flex flex-col h-full justify-between bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm pdf-section-card min-h-[300px] break-inside-avoid print:break-inside-avoid ${className}`.trim()}>
       
       <div className="flex-1">
         {/* Top Header Row */}
@@ -170,18 +138,12 @@ export default function AiRecommendation({
             </div>
           </div>
 
-          {/* Right Metadata Container: Confidence Score Only */}
-          <div className="flex items-center gap-2 shrink-0 flex-shrink-0 ml-4">
-            <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getActionPillStyle(confidenceScore)}`}>
-              신뢰도 점수: {confidenceScore}%
-            </span>
-          </div>
         </div>
 
         {/* Coverage Recommendation Badge */}
         <div className="flex items-center gap-2 mt-2 mb-4">
           <span className="text-xs font-semibold text-slate-500">데스크 권고:</span>
-          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getRecommendationColor(recommendedCoverage)}`}>
+          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getRecommendationColor(recommendedCoverage,commodityId)}`}>
             {recommendedCoverage}
           </span>
         </div>
@@ -230,7 +192,7 @@ export default function AiRecommendation({
           <div className="border border-slate-100 rounded-lg p-3.5">
             <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
               <h3 className="text-xs font-bold text-[#EC870C]">모니터링 항목 <span className="font-normal opacity-80">(WATCH ITEMS)</span></h3>
-              <span className="text-[11px] font-sans font-medium text-[#EC870C]"><span className="font-mono">7~14</span>일 내 영향</span>
+              <span className="text-[11px] font-sans font-medium text-[#EC870C]">주요 확인 사항</span>
             </div>
             <ul className="space-y-2 text-[12px] text-slate-600 font-sans">
               {(watchItems.length > 0 ? watchItems : ['검증된 최신 모니터링 항목 없음']).map((item, idx) => (
@@ -246,9 +208,18 @@ export default function AiRecommendation({
       </div>
 
       {/* Footer Citation */}
-      <div className="mt-auto pt-4 flex justify-end text-xs text-gray-400">
-        <span>{footerSource}</span>
-      </div>
+      {sourceLinks.length>0&&<div data-rms-ai-sources className="mt-auto pt-4 min-w-0 text-right text-xs text-gray-400 leading-relaxed break-words">
+          <span>출처: </span>
+          {sourceLinks.map((source, idx) => (
+            <React.Fragment key={source.url}>
+            {idx>0&&<span aria-hidden="true"> · </span>}
+            <a key={`${source.url}-${idx}`} href={source.url} target="_blank" rel="noopener noreferrer"
+               className="whitespace-normal [overflow-wrap:anywhere] text-slate-600 font-semibold no-underline hover:underline focus-visible:underline hover:text-rose-700" title={aiSourceTooltip(source)}>
+              {aiPublisherLabel(source)}{'\u00a0'}↗
+            </a>
+            </React.Fragment>
+          ))}
+      </div>}
     </div>
   );
 }

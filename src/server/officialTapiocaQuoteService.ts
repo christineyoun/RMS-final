@@ -1,3 +1,6 @@
+import {loadPublicHistory,refreshPublicHistory,publicBenchmarkMetrics,PRICE_SOURCES} from './publicPriceHistory.ts';
+import fs from 'node:fs';
+import { observedPriceChanges } from '../utils/observedPriceChanges.ts';
 /**
  * RMS Step 17: official Thai Tapioca Starch Association (TTSA) weekly FOB quote.
  * No invented prices, no synthetic carry-forward, no dates later than today.
@@ -61,40 +64,17 @@ export function parseOfficialTtsaHtml(html: string, now: Date = new Date()): Off
   const previous = dates[1] || null;
   const price = observed.get(current)!;
   const prevPrice = previous ? observed.get(previous)! : null;
-  const percent = prevPrice ? Number((((price - prevPrice) / prevPrice) * 100).toFixed(2)) : null;
+  const percent = observedPriceChanges([...observed].map(([date,usdPerMT])=>({date,usdPerMT}))).wow.pct;
   return { date: current, usdPerMt: price, previousDate: previous, previousUsdPerMt: prevPrice, wowPct: percent };
 }
 
-let lastSuccess: { quote: OfficialTapiocaQuote; verifiedAt: string } | null = null;
-let cacheUntil = 0;
-
-export async function fetchOfficialTapiocaQuote(force = false): Promise<OfficialTapiocaResponse> {
-  const checkedAt = new Date().toISOString();
-  const base = { source: 'Thai Tapioca Starch Association (TTSA)', sourceUrl: TTSA_WEEKLY_URL, checkedAt };
-  if (!force && lastSuccess && Date.now() < cacheUntil) {
-    return { ...base, success: true, dataStatus: 'last-verified', verifiedAt: lastSuccess.verifiedAt, quote: lastSuccess.quote,
-      message: 'Recently verified official quote returned from short-term cache.' };
-  }
-  try {
-    const year = new Date().getUTCFullYear();
-    const url = `${TTSA_WEEKLY_URL}/${year}`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 RMS-Procurement/1.0', Accept: 'text/html' },
-      signal: AbortSignal.timeout(9000)
-    });
-    if (!response.ok) throw new Error(`TTSA HTTP ${response.status}`);
-    const html = await response.text();
-    const quote = parseOfficialTtsaHtml(html);
-    if (!quote) throw new Error('No valid dated official TTSA quote found in the expected table');
-    lastSuccess = { quote, verifiedAt: checkedAt };
-    cacheUntil = Date.now() + 5 * 60 * 1000;
-    return { ...base, success: true, dataStatus: 'live-verified', verifiedAt: checkedAt, quote };
-  } catch (error) {
-    if (lastSuccess) {
-      return { ...base, success: true, dataStatus: 'last-verified', verifiedAt: lastSuccess.verifiedAt,
-        quote: lastSuccess.quote, message: `Official quote check unavailable: ${String((error as Error)?.message || error)}` };
-    }
-    return { ...base, success: false, dataStatus: 'unavailable', verifiedAt: null, quote: null,
-      message: `Official quote not verified: ${String((error as Error)?.message || error)}` };
-  }
+export async function fetchOfficialTapiocaQuote(force=false):Promise<OfficialTapiocaResponse> {
+  let history=loadPublicHistory('tapioca-starch');
+  if(force&&(!history.lastCheckedAt||Date.now()-Date.parse(history.lastCheckedAt)>6*3600000))history=await refreshPublicHistory('tapioca-starch');
+  const {latest,moves}=publicBenchmarkMetrics(history,'tapioca-fob');
+  const ref=history.points.find(p=>p.benchmark==='tapioca-fob'&&p.date===moves.wow.referenceDate);
+  return {success:!!latest,dataStatus:latest?'last-verified':'unavailable',checkedAt:new Date().toISOString(),verifiedAt:history.lastCheckedAt||null,
+    source:'Thai Tapioca Starch Association (TTSA)',sourceUrl:PRICE_SOURCES.tapioca,
+    quote:latest?{date:latest.date,usdPerMt:latest.value,previousDate:ref?.date||null,previousUsdPerMt:ref?.value??null,wowPct:moves.wow.pct}:null,
+    ...(history.lastError?{message:history.lastError}:{})};
 }

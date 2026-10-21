@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, isPaidGeminiEnabled } from './paidGeminiGuard.ts';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -79,11 +79,11 @@ export class RmsAiService {
 
     // Try generating AI summary with Gemini if API key is present
     const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey) {
+    if (apiKey && isPaidGeminiEnabled()) {
       try {
         const ai = new GoogleGenAI({ apiKey });
         const modelName = 'gemini-2.5-flash';
-        const prompt = `Act as an expert agricultural procurement risk manager for Nongshim. Provide a concise 3-sentence executive procurement strategy for ${commodityName} (${commodityId}) in October 2026. Current price: ${currentPrice} ${unit}, 52-week low: ${min52W}, high: ${max52W}. Language: Korean.`;
+        const prompt = `Act as an expert agricultural procurement risk manager for Nongshim. Provide a concise 3-sentence executive procurement strategy for ${commodityName} (${commodityId}) as of ${new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })}. Current price: ${currentPrice} ${unit}, 52-week low: ${min52W}, high: ${max52W}. Language: Korean.`;
 
         const response = await ai.models.generateContent({
           model: modelName,

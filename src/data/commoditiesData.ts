@@ -14,22 +14,20 @@ export const COMMODITIES: Commodity[] = [
     price: 258.40, // Standardized to CBOT SRW ($258.40 USD/MT)
     unit: 'USD / MT',
     priceKrwEstimated: 358788.0,
-    landedKrwKg: 358,
     changeWoW: null,
     changeMoM: null,
     changeYoY: -8.45,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (Estimated CIF Busan Landed Duty-Paid)',
     ticker: 'CBOT: W (SRW)',
     exchange: 'CBOT',
     sparkline: [240, 245, 250, 255, 250, 258.40],
     chartData: [
-      { date: '2023년 11월', cashPrice: 620.5, ma50: 640.2, landedBaseline: 420 },
-      { date: '2024년 1월', cashPrice: 595.0, ma50: 615.4, landedBaseline: 405 },
-      { date: '2024년 3월', cashPrice: 560.2, ma50: 585.0, landedBaseline: 385 },
-      { date: '2024년 5월', cashPrice: 640.0, ma50: 610.8, landedBaseline: 435 },
-      { date: '2024년 7월', cashPrice: 570.5, ma50: 595.2, landedBaseline: 390 },
-      { date: '2024년 9월', cashPrice: 562.0, ma50: 578.4, landedBaseline: 382 },
-      { date: '2024년 11월 (현재)', cashPrice: 574.25, ma50: 582.4, landedBaseline: 392 }
+      { date: '2023년 11월', cashPrice: 620.5, ma50: 640.2 },
+      { date: '2024년 1월', cashPrice: 595.0, ma50: 615.4 },
+      { date: '2024년 3월', cashPrice: 560.2, ma50: 585.0 },
+      { date: '2024년 5월', cashPrice: 640.0, ma50: 610.8 },
+      { date: '2024년 7월', cashPrice: 570.5, ma50: 595.2 },
+      { date: '2024년 9월', cashPrice: 562.0, ma50: 578.4 },
+      { date: '2024년 11월 (현재)', cashPrice: 574.25, ma50: 582.4 }
     ],
     aiConfidence: 88,
     recommendedCoverage: '60~75일 선도 구매',
@@ -70,37 +68,6 @@ export const COMMODITIES: Commodity[] = [
       s1: 555.0,
       s2: 538.0,
       directive: '555~560 USd 밴드 하단 터치 시 1분기 잔여 필요물량 추가 매수 유효.'
-    },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 55,
-        drivers: '박스권 횡보 지속 (570~590 USd/bu), 환율 1,385원, 해상운임 $42.50/MT',
-        landedKrw: 392,
-        diffPct: 0.0,
-        recommendation: '표준 60일 선도 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 30,
-        drivers: '러시아 수출 쿼터 강화 + 미 평원 한파 동해(Freeze) + 환율 1,420원 급등',
-        landedKrw: 428,
-        diffPct: 9.2,
-        diffKrw: 36,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '호주 대풍작 출하 + 홍해 해운 정상화 + 환율 1,340원 하향 안정',
-        landedKrw: 365,
-        diffPct: -6.9,
-        diffKrw: -27,
-        recommendation: '선도 버퍼 30일 축소 및 스팟 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+36원/kg (연간 약 +54억원 영향)',
-      maxOpportunityDown: '-27원/kg (연간 약 -40.5억원 절감)',
-      optimalHedge: '65~70% 선도 조달 (복합 리스크 헤지)'
     },
     wasdeKpis: {
       production: { value: '796.8', unit: 'M MT', diff: '+0.6% YoY', outlook: '안정 곡선 (Stable Curve)' },
@@ -164,13 +131,6 @@ export const COMMODITIES: Commodity[] = [
         sourceUrl: 'https://www.igc.int/en/gmr/gmrsummary.aspx'
       }
     ],
-    landedCompetitiveness: [
-      { origin: '미국 PNW HRW', grade: 'US PNW Hard Red Winter No.2, 단백질 11.5%', regionCategory: 'na', regionTag: '북미', fob: '$264.00/MT', freight: '$42.50/MT', tariff: '0% (한미FTA/TRQ)', cfr: '$306.50/MT', landedKrw: '₩425.6 / kg', assessment: '최적 가용성 / 벤치마크 기준' },
-      { origin: '캐나다 CWRS 13.5%', grade: 'Canada Western Red Spring No.1, 고단백', regionCategory: 'na', regionTag: '북미', fob: '$298.00/MT', freight: '$44.00/MT', tariff: '0% (TRQ)', cfr: '$342.00/MT', landedKrw: '₩474.9 / kg', assessment: '고단백 프리미엄 / 제빵 특화' },
-      { origin: '호주 APW', grade: 'Australian Premium White, 다목적 제분', regionCategory: 'oc', regionTag: '대양주', fob: '$272.00/MT', freight: '$31.00/MT', tariff: '0% (한호FTA/TRQ)', cfr: '$303.00/MT', landedKrw: '₩420.7 / kg', assessment: '운임 우위 / 조달 매력도 높음', highlightBadge: '운임 우위' },
-      { origin: '프랑스 Milling Wheat', grade: '유럽 연질 소맥, Rouen FOB', regionCategory: 'eu', regionTag: '유럽/흑해', fob: '$248.00/MT', freight: '$56.00/MT', tariff: '1.8%', cfr: '$309.47/MT', landedKrw: '₩429.7 / kg', assessment: '단거리 운임 불이익 / 유럽 내수 강세' },
-      { origin: '러시아 12.5%', grade: 'Novorossiysk FOB 흑해산 고단백', regionCategory: 'eu', regionTag: '유럽/흑해', fob: '$232.00/MT', freight: '$59.50/MT', tariff: '1.8%', cfr: '$296.86/MT', landedKrw: '₩412.2 / kg', assessment: '최저가 우위 / 지정학·금융 제재 주의', highlightBadge: '최저가' }
-    ],
     timelineEvents: [
       { date: '2024년 11월 14일', region: '글로벌', source: '미국 농무부 FAS', title: 'USDA 11월 WASDE 수급보고서: 글로벌 기말 재고 2.1M MT 하향 조정', url: 'https://www.usda.gov/oce/commodity/wasde', summary: 'usda.gov/oce/commodity/wasde', importance: 'High', direction: 'Bullish' },
       { date: '2024년 11월 18일', region: '유럽연합', source: 'EC MARS 보고서', title: 'EU MARS 작황 모니터링: 프랑스 연질소맥 생산 전망 14% 하향', url: 'https://ec.europa.eu/jrc/en/mars', summary: 'ec.europa.eu/jrc/mars', importance: 'Medium', direction: 'Bullish' },
@@ -191,22 +151,20 @@ export const COMMODITIES: Commodity[] = [
     price: 197.63,
     unit: 'USD / MT',
     priceKrwEstimated: 274409.0,
-    landedKrwKg: 274,
     changeWoW: null,
     changeMoM: null,
     changeYoY: -10.03,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (Estimated CIF Busan Landed Duty-Paid)',
     ticker: 'CBOT: CC1',
     exchange: 'CBOT',
     sparkline: [208, 206, 204, 202, 200, 197.33],
     chartData: [
-      { date: '2023년 11월', cashPrice: 480.7, ma50: 495.2, landedBaseline: 340 },
-      { date: '2024년 1월', cashPrice: 445.0, ma50: 460.0, landedBaseline: 310 },
-      { date: '2024년 3월', cashPrice: 425.5, ma50: 435.4, landedBaseline: 292 },
-      { date: '2024년 5월', cashPrice: 460.2, ma50: 440.0, landedBaseline: 320 },
-      { date: '2024년 7월', cashPrice: 410.0, ma50: 428.5, landedBaseline: 282 },
-      { date: '2024년 9월', cashPrice: 418.0, ma50: 422.0, landedBaseline: 288 },
-      { date: '2024년 11월 (현재)', cashPrice: 432.50, ma50: 425.8, landedBaseline: 296 }
+      { date: '2023년 11월', cashPrice: 480.7, ma50: 495.2 },
+      { date: '2024년 1월', cashPrice: 445.0, ma50: 460.0 },
+      { date: '2024년 3월', cashPrice: 425.5, ma50: 435.4 },
+      { date: '2024년 5월', cashPrice: 460.2, ma50: 440.0 },
+      { date: '2024년 7월', cashPrice: 410.0, ma50: 428.5 },
+      { date: '2024년 9월', cashPrice: 418.0, ma50: 422.0 },
+      { date: '2024년 11월 (현재)', cashPrice: 432.50, ma50: 425.8 }
     ],
     aiConfidence: 89,
     recommendedCoverage: '45~60일 선도 구매',
@@ -248,37 +206,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 410.0,
       directive: '425~428 USd 지지선 부근에서 1분기 가공용 소요물량 선제적 분할 매수 유효.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 55,
-        drivers: '박스권 안정세 (420~445 USd), 환율 1,385원, 해상운임 $41.50/MT',
-        landedKrw: 296,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 30,
-        drivers: '남미 가뭄 지속 + 에탄올 수요 급증, 환율 1,420원 급등',
-        landedKrw: 328,
-        diffPct: 10.8,
-        diffKrw: 32,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '브라질 기록적 대풍작 + 물류 정상화, 환율 1,340원 안정',
-        landedKrw: 272,
-        diffPct: -8.1,
-        diffKrw: -24,
-        recommendation: '선도 버퍼 30일 축소 및 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+32원/kg (연간 약 +48억원 영향)',
-      maxOpportunityDown: '-24원/kg (연간 약 -36억원 절감)',
-      optimalHedge: '60~65% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '1,228.0', unit: 'M MT', diff: '+0.5% YoY', outlook: '미국 역대급 단수' },
       consumption: { value: '1,229.5', unit: 'M MT', diff: '+1.1% YoY', outlook: '-9.7 M MT 결손' },
@@ -301,12 +228,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '아르헨티나 (Pampas)', production: '51.0', yoy: '+2.0%', isYoyPositive: true, exports: '36.0', endingStocks: '4.2', riskAssessment: '보통 - 파라나강 흘수 및 환율 변동성 주시', riskLevel: 'Medium' },
       { region: '우크라이나 (흑해 연안)', production: '26.2', yoy: '-12.5%', isYoyPositive: false, exports: '23.0', endingStocks: '2.1', riskAssessment: '고위험 - 흑해 항만 물류 지정학 리스크', riskLevel: 'High' }
     ],
-    landedCompetitiveness: [
-      { origin: '미국 걸프/PNW Yellow Corn #2', grade: 'US No.2 Yellow Dent Corn, 핵심 기준물량', regionCategory: 'na', regionTag: '북미', fob: '$198.00/MT', freight: '$42.50/MT', tariff: '0% (TRQ)', cfr: '$240.50/MT', landedKrw: '₩333.9 / kg', assessment: '조달 가용성 우수 / 핵심 기준물량' },
-      { origin: '브라질 산토스 Corn', grade: 'Santos FOB Safrinha Crop, 수출 성수기 오퍼', regionCategory: 'sa', regionTag: '남미', fob: '$192.00/MT', freight: '$46.00/MT', tariff: '0% (TRQ)', cfr: '$238.00/MT', landedKrw: '₩330.5 / kg', assessment: '중남미 수확기 가격 경쟁력 확보' },
-      { origin: '아르헨티나 Up-River Corn', grade: 'Rosario / Up-River FOB, 파라나강 제약 반영', regionCategory: 'sa', regionTag: '남미', fob: '$188.00/MT', freight: '$48.50/MT', tariff: '0% (TRQ)', cfr: '$236.50/MT', landedKrw: '₩328.4 / kg', assessment: '최저가 FOB 우위 / 단기 계약 매력', highlightBadge: '최저가' },
-      { origin: '우크라이나 Corn', grade: 'Pivdennyi / Chornomorsk FOB, 해상 회랑', regionCategory: 'eu', regionTag: '유럽/흑해', fob: '$185.00/MT', freight: '$58.00/MT', tariff: '1.8%', cfr: '$243.00/MT', landedKrw: '₩337.4 / kg', assessment: '물류 및 전쟁 보험료 부담' }
-    ],
     timelineEvents: [
       { date: 'Nov 14, 2024', region: '글로벌', source: 'USDA FAS', title: 'USDA 11월 WASDE 보고서: 글로벌 옥수수 기말 재고 소폭 하향 조정', url: 'https://www.usda.gov/oce/commodity/wasde', summary: '수요 증가로 재고율 24.7%로 하락, 공급 여력 축소', importance: 'High', direction: 'Bullish' },
       { date: 'Nov 18, 2024', region: '남미 (Brazil)', source: 'CONAB', title: 'CONAB 브라질 사프리냐 옥수수 파종 진도율 78% 발표', url: 'https://www.conab.gov.br', summary: '주요 산지 마토그로소 양호한 강우로 순항', importance: 'Medium', direction: 'Neutral' },
@@ -327,22 +248,20 @@ export const COMMODITIES: Commodity[] = [
     price: 474.27,
     unit: 'USD / MT',
     priceKrwEstimated: 658524.0,
-    landedKrwKg: 658,
     changeWoW: null,
     changeMoM: null,
     changeYoY: -19.32,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (Estimated CIF Busan Landed Duty-Paid)',
     ticker: 'CBOT: ZS',
     exchange: 'CBOT',
     sparkline: [486, 484, 482, 479, 476, 474.27],
     chartData: [
-      { date: '2023년 11월', cashPrice: 1270.0, ma50: 1285.0, landedBaseline: 840 },
-      { date: '2024년 1월', cashPrice: 1220.5, ma50: 1240.0, landedBaseline: 810 },
-      { date: '2024년 3월', cashPrice: 1180.0, ma50: 1200.0, landedBaseline: 780 },
-      { date: '2024년 5월', cashPrice: 1215.0, ma50: 1195.0, landedBaseline: 805 },
-      { date: '2024년 7월', cashPrice: 1060.0, ma50: 1110.0, landedBaseline: 710 },
-      { date: '2024년 9월', cashPrice: 1010.0, ma50: 1025.0, landedBaseline: 675 },
-      { date: '2024년 11월 (현재)', cashPrice: 1024.75, ma50: 1012.5, landedBaseline: 688 }
+      { date: '2023년 11월', cashPrice: 1270.0, ma50: 1285.0 },
+      { date: '2024년 1월', cashPrice: 1220.5, ma50: 1240.0 },
+      { date: '2024년 3월', cashPrice: 1180.0, ma50: 1200.0 },
+      { date: '2024년 5월', cashPrice: 1215.0, ma50: 1195.0 },
+      { date: '2024년 7월', cashPrice: 1060.0, ma50: 1110.0 },
+      { date: '2024년 9월', cashPrice: 1010.0, ma50: 1025.0 },
+      { date: '2024년 11월 (현재)', cashPrice: 1024.75, ma50: 1012.5 }
     ],
     aiConfidence: 91,
     recommendedCoverage: '60~75일 선도 구매',
@@ -384,37 +303,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 985.0,
       directive: '1,008~1,015 USd 지지선 구간에서 2025년 1분기 가공 및 착유용 소요물량 선제 분할 매수 유효.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 55,
-        drivers: '박스권 횡보 (1,000~1,050 USd), 환율 1,385원, 해상운임 $43.00/MT',
-        landedKrw: 688,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 30,
-        drivers: '중국 대량 매입 급증 + 남미 개화기 가뭄, 환율 1,420원 급등',
-        landedKrw: 754,
-        diffPct: 9.6,
-        diffKrw: 66,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '브라질 사상 최대 풍작 공급 과잉 + 미중 관세 분쟁 격화, 환율 1,340원 안정',
-        landedKrw: 635,
-        diffPct: -7.7,
-        diffKrw: -53,
-        recommendation: '선도 버퍼 30일 축소 및 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+₩66/kg (연간 약 +68억원 영향)',
-      maxOpportunityDown: '-₩53/kg (연간 약 -54억원 절감)',
-      optimalHedge: '65~70% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '399.5', unit: 'M MT', diff: '+4.8% YoY', outlook: '브라질 역대급 단수' },
       consumption: { value: '388.2', unit: 'M MT', diff: '+3.2% YoY', outlook: '80% 착유' },
@@ -437,12 +325,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '아르헨티나 (Pampas)', production: '52.0', yoy: '+7.9%', isYoyPositive: true, exports: '7.5', endingStocks: '28.5', riskAssessment: '보통 - 페소화 환율 변동 및 가공세 주시', riskLevel: 'Medium' },
       { region: '파라과이 (Alto Parana)', production: '11.2', yoy: '+4.7%', isYoyPositive: true, exports: '6.8', endingStocks: '1.2', riskAssessment: '저위험 - 비유전자변형 가공 및 인접 수로 물류', riskLevel: 'Low' }
     ],
-    landedCompetitiveness: [
-      { origin: '브라질 산토스 Soybean', grade: 'Santos FOB, #2 Yellow, 성수기 오퍼', regionCategory: 'sa', regionTag: '남미', fob: '$392.00/MT', freight: '$46.00/MT', tariff: '0% (TRQ)', cfr: '$438.00/MT', landedKrw: '₩608.2 / kg', assessment: '최고 가격 경쟁력 / 대량 구매 권고', highlightBadge: '최고가성비' },
-      { origin: '미국 걸프/PNW Soybean #2', grade: 'US No.2 Yellow, 기준 조달물량', regionCategory: 'na', regionTag: '북미', fob: '$408.00/MT', freight: '$43.00/MT', tariff: '0% (TRQ)', cfr: '$451.00/MT', landedKrw: '₩626.2 / kg', assessment: '조달 안정성 우수 / 핵심 기준물량' },
-      { origin: '아르헨티나 Up-River Soybean', grade: 'Rosario FOB, 착유용 오퍼 최적', regionCategory: 'sa', regionTag: '남미', fob: '$395.00/MT', freight: '$48.50/MT', tariff: '0% (TRQ)', cfr: '$443.50/MT', landedKrw: '₩615.8 / kg', assessment: '착유용 오퍼 최적 / 단기 계약 매력' },
-      { origin: '파라과이 Asuncion Soybean', grade: '아순시온 FOB, 고단백 프리미엄 원료', regionCategory: 'sa', regionTag: '남미', fob: '$390.00/MT', freight: '$54.00/MT', tariff: '0% (TRQ)', cfr: '$444.00/MT', landedKrw: '₩616.5 / kg', assessment: '단백질 함량 우수 / 프리미엄 배치' }
-    ],
     timelineEvents: [
       { date: 'Nov 14, 2024', region: '글로벌', source: 'USDA FAS', title: 'USDA 11월 WASDE 보고서: 글로벌 대두 생산량 상향 및 기말 재고 증가 확인', url: 'https://www.usda.gov/oce/commodity/wasde', summary: '재고율 32.7%로 상승, 중장기 상단 제한', importance: 'High', direction: 'Bearish' },
       { date: 'Nov 19, 2024', region: '브라질', source: 'CONAB', title: 'CONAB 2차 브라질 대두 파종 진척률 68% 돌파 발표', url: 'https://www.conab.gov.br', summary: '마토그로소 및 중서부 기후 호조로 대풍작 기대', importance: 'Medium', direction: 'Bearish' },
@@ -463,22 +345,20 @@ export const COMMODITIES: Commodity[] = [
     price: 1486.80,
     unit: 'USD / MT',
     priceKrwEstimated: 2064422.0,
-    landedKrwKg: 2064,
     changeWoW: null,
     changeMoM: null,
     changeYoY: -13.18,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (Estimated CIF Busan Landed Duty-Paid)',
     ticker: 'CBOT: ZL',
     exchange: 'CBOT',
     sparkline: [1470, 1475, 1482, 1488, 1495, 1500.47],
     chartData: [
-      { date: '2023년 11월', cashPrice: 51.6, ma50: 53.2, landedBaseline: 1510 },
-      { date: '2024년 1월', cashPrice: 48.2, ma50: 49.5, landedBaseline: 1410 },
-      { date: '2024년 3월', cashPrice: 47.0, ma50: 48.0, landedBaseline: 1375 },
-      { date: '2024년 5월', cashPrice: 45.5, ma50: 46.2, landedBaseline: 1330 },
-      { date: '2024년 7월', cashPrice: 46.8, ma50: 45.9, landedBaseline: 1370 },
-      { date: '2024년 9월', cashPrice: 43.8, ma50: 44.5, landedBaseline: 1280 },
-      { date: '2024년 11월 (현재)', cashPrice: 44.80, ma50: 43.6, landedBaseline: 1310 }
+      { date: '2023년 11월', cashPrice: 51.6, ma50: 53.2 },
+      { date: '2024년 1월', cashPrice: 48.2, ma50: 49.5 },
+      { date: '2024년 3월', cashPrice: 47.0, ma50: 48.0 },
+      { date: '2024년 5월', cashPrice: 45.5, ma50: 46.2 },
+      { date: '2024년 7월', cashPrice: 46.8, ma50: 45.9 },
+      { date: '2024년 9월', cashPrice: 43.8, ma50: 44.5 },
+      { date: '2024년 11월 (현재)', cashPrice: 44.80, ma50: 43.6 }
     ],
     aiConfidence: 90,
     recommendedCoverage: '60~75일 선도 구매',
@@ -520,37 +400,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 42.50,
       directive: '43.50~44.20 USc/lb 지지선 구간에서 1분기 농심 튀김유 및 가공유지 소요물량 선제 분할 매수 유효.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 55,
-        drivers: '박스권 43.0~46.5 USc, 환율 1,385원, 해상운임 $58.00/MT',
-        landedKrw: 1310,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 30,
-        drivers: 'EPA 바이오디젤 의무량 상향 + 팜유 급등, 환율 1,420원 급등',
-        landedKrw: 1440,
-        diffPct: 9.9,
-        diffKrw: 130,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '남미 대두 착유 기록적 급증 + 원유 급락, 환율 1,340원 안정',
-        landedKrw: 1215,
-        diffPct: -7.3,
-        diffKrw: -95,
-        recommendation: '선도 버퍼 30일 축소 및 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+₩130/kg (연간 약 +28억원 영향)',
-      maxOpportunityDown: '-₩95/kg (연간 약 -20억원 절감)',
-      optimalHedge: '65~70% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '62.8', unit: 'M MT', diff: '+3.8% YoY', outlook: '역대 최고치 경신' },
       consumption: { value: '61.9', unit: 'M MT', diff: '+3.4% YoY', outlook: '바이오연료 비중 35%' },
@@ -572,12 +421,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '미국 (US Gulf / Midwest)', production: '14.05', yoy: '+3.8%', isYoyPositive: true, exports: '1.2', endingStocks: '0.72', riskAssessment: '저위험 - 자국 재생디젤(RD/SAF) 수요 집중으로 수출 가용량 제한적', riskLevel: 'Low' },
       { region: '유럽연합 (EU-27)', production: '2.85', yoy: '+1.1%', isYoyPositive: true, exports: '0.8', endingStocks: '0.25', riskAssessment: '저위험 - 역내 소모 위주 및 고품질 가공', riskLevel: 'Low' }
     ],
-    landedCompetitiveness: [
-      { origin: '아르헨티나 Upriver Degummed Oil', grade: 'Rosario FOB, 탈검 대두유 기준 오퍼', regionCategory: 'sa', regionTag: '남미', fob: '$920.00/MT', freight: '$58.00/MT', tariff: '0% (TRQ)', cfr: '$978.00/MT', landedKrw: '₩1,358.0 / kg', assessment: '최고 공급량 / 대량 정제유 최적', highlightBadge: '최대공급' },
-      { origin: '브라질 Paranagua Crude Degummed', grade: 'Paranagua FOB, 착유 탈검유', regionCategory: 'sa', regionTag: '남미', fob: '$935.00/MT', freight: '$56.00/MT', tariff: '0% (TRQ)', cfr: '$991.00/MT', landedKrw: '₩1,376.0 / kg', assessment: '조달 안정성 우수 / 품질 균일' },
-      { origin: '미국 Gulf Refined/Crude Bleached', grade: 'US Gulf FOB, 정제 블리치드 규격', regionCategory: 'na', regionTag: '북미', fob: '$980.00/MT', freight: '$52.00/MT', tariff: '0% (TRQ)', cfr: '$1,032.00/MT', landedKrw: '₩1,433.0 / kg', assessment: '프리미엄 고순도 / 규격 유지용' },
-      { origin: '유럽연합 Rotterdam FOB', grade: '로테르담 FOB, 유럽 표준 착유유지', regionCategory: 'eu', regionTag: '유럽', fob: '$1,010.00/MT', freight: '$64.00/MT', tariff: '0% (TRQ)', cfr: '$1,074.00/MT', landedKrw: '₩1,491.0 / kg', assessment: '특수 가공유지용' }
-    ],
     timelineEvents: [
       { date: 'Nov 15, 2024', region: '글로벌', source: 'USDA FAS', title: 'USDA 11월 WASDE 대두유 수급 개정 (글로벌 기말재고 5.2M MT 전망)', url: 'https://www.usda.gov/oce/commodity/wasde', summary: '바이오연료 의무 혼합에 따른 수요 견조', importance: 'High', direction: 'Bullish' },
       { date: 'Nov 21, 2024', region: '미국', source: 'EPA', title: '2025 신재생연료의무(RFS) 바이오디젤 혼합 의무량 공청회', url: 'https://www.epa.gov', summary: '정유사 바이오연료 의무 배정량 상향 논의', importance: 'High', direction: 'Bullish' },
@@ -598,18 +441,16 @@ export const COMMODITIES: Commodity[] = [
     price: palmOilCache.priceMyr || 4649, // Standardized to dynamic cache_palmoil.json
     unit: 'MYR / MT',
     priceKrwEstimated: 1545188.0,
-    landedKrwKg: 1545,
     changeWoW: null,
     changeMoM: null,
     changeYoY: 13.88,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (MYR/KRW 기준)',
     ticker: 'MDEX: FCPO',
     exchange: 'MDEX',
     sparkline: palmOilCache.historicalSeries
       ? palmOilCache.historicalSeries.slice(-6).map((s: any) => s.centsPerBushel || s.usdPerMT)
       : [4820, 4810, 4780, 4720, 4690, 4649],
     chartData: [
-      { date: '현재', cashPrice: palmOilCache.priceMyr, ma50: 4520, landedBaseline: 1545 }
+      { date: '현재', cashPrice: palmOilCache.priceMyr, ma50: 4520 }
     ],
     aiConfidence: 92,
     recommendedCoverage: '60~75일 선도 구매',
@@ -650,37 +491,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 4010,
       directive: '4,120~4,160 MYR 지지선 확인 시 1분기 농심 라면 유탕 소요량 선제 분할 매수 적극 유효.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 55,
-        drivers: '선물 4,100~4,250 MYR, B40 단계 도입, 환율 1,388원, 해상운임 $38/MT',
-        landedKrw: 1440,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 30,
-        drivers: '인도네시아 B40 전면 시행, 라니냐 수확 중단 및 수출세 인상, 환율 1,420원',
-        landedKrw: 1590,
-        diffPct: 10.4,
-        diffKrw: 150,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '인도네시아 수출세 완화, 대두유 대체 급증, 환율 1,340원 안정',
-        landedKrw: 1335,
-        diffPct: -7.3,
-        diffKrw: -105,
-        recommendation: '선도 버퍼 30일 축소 및 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+₩150/kg (연간 약 +34억원 영향)',
-      maxOpportunityDown: '-₩105/kg (연간 약 -23억원 절감)',
-      optimalHedge: '65~70% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '81.5', unit: 'M MT', diff: '+1.4% YoY', outlook: '수확기 점진적 회복' },
       consumption: { value: '80.2', unit: 'M MT', diff: '+2.8% YoY', outlook: '바이오디젤 비중 38%' },
@@ -702,12 +512,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '태국 (Southern Thailand)', production: '3.5', yoy: '+3.2%', isYoyPositive: true, exports: '1.2', endingStocks: '0.32', riskAssessment: '저위험 - 역내 소비 위주 및 인접국 선적', riskLevel: 'Low' },
       { region: '콜롬비아 / 중남미', production: '2.1', yoy: '+4.5%', isYoyPositive: true, exports: '0.9', endingStocks: '0.18', riskAssessment: '저위험 - RSPO 친환경 인증 비중 높음', riskLevel: 'Low' }
     ],
-    landedCompetitiveness: [
-      { origin: '말레이시아 Port Klang RBD Palm Olein', grade: '포트클랑 FOB, 라면 튀김 전용 표준 규격', regionCategory: 'all', regionTag: '말레이시아', fob: '$1,020.00/MT', freight: '$38.00/MT', tariff: '0% (AKFTA)', cfr: '$1,058.00/MT', landedKrw: '₩1,469.0 / kg', assessment: '조달 안정성 최상 / 라면 유탕 표준', highlightBadge: '농심표준' },
-      { origin: '말레이시아 Pasir Gudang Crude Palm Oil', grade: '파시르구당 FOB, CPO 원유 기준', regionCategory: 'all', regionTag: '말레이시아', fob: '$980.00/MT', freight: '$36.00/MT', tariff: '0% (AKFTA)', cfr: '$1,016.00/MT', landedKrw: '₩1,410.7 / kg', assessment: '가격경쟁력 우수 / 정제 가공용' },
-      { origin: '인도네시아 Belawan RBD Palm Olein', grade: '벨라완 FOB, 수출 레비 포함 오퍼', regionCategory: 'all', regionTag: '인도네시아', fob: '$1,005.00/MT', freight: '$42.00/MT', tariff: '0% (AKFTA)', cfr: '$1,047.00/MT', landedKrw: '₩1,453.7 / kg', assessment: '대량 구매 시 단가 협상 용이' },
-      { origin: '인도네시아 Dumai Crude Palm Oil', grade: '두마이 FOB, 원유 수출 규격', regionCategory: 'all', regionTag: '인도네시아', fob: '$970.00/MT', freight: '$40.00/MT', tariff: '0% (AKFTA)', cfr: '$1,010.00/MT', landedKrw: '₩1,402.4 / kg', assessment: '수출세 인상 정책 주시 필요' }
-    ],
     timelineEvents: [
       { date: 'Nov 18, 2024', region: '말레이시아', source: 'MPOB', title: 'MPOB 11월 공식 수급 보고서 발표 (말레이시아 기말재고 1.85M MT 확인)', url: 'https://www.mpob.gov.my', summary: '재고 감소 및 수출 호조로 현물 프리미엄 강화', importance: 'High', direction: 'Bullish' },
       { date: 'Nov 22, 2024', region: '인도네시아', source: 'ESDM (에너지부)', title: '인도네시아 에너지부 B40 의무 바이오디젤 로드맵 세부 시행령 확정', url: 'https://www.esdm.go.id', summary: '2025년 1월부터 수송용 B40 강행 방침', importance: 'High', direction: 'Bullish' },
@@ -728,22 +532,20 @@ export const COMMODITIES: Commodity[] = [
     price: 418.00,
     unit: 'USD / MT',
     priceKrwEstimated: 580393.0,
-    landedKrwKg: 626,
     changeWoW: null,
     changeMoM: null,
     changeYoY: 9.07,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (USD/KRW 1,388.50 기준)',
     ticker: 'ICE: SBC1',
     exchange: 'ICE',
     sparkline: [386, 392, 398, 405, 412, 418.00],
     chartData: [
-      { date: '2023년 11월', cashPrice: 27.2, ma50: 26.5, landedBaseline: 810 },
-      { date: '2024년 1월', cashPrice: 23.8, ma50: 25.0, landedBaseline: 710 },
-      { date: '2024년 3월', cashPrice: 21.9, ma50: 22.8, landedBaseline: 650 },
-      { date: '2024년 5월', cashPrice: 19.5, ma50: 20.8, landedBaseline: 580 },
-      { date: '2024년 7월', cashPrice: 18.8, ma50: 19.2, landedBaseline: 560 },
-      { date: '2024년 9월', cashPrice: 23.1, ma50: 21.0, landedBaseline: 685 },
-      { date: '2024년 11월 (현재)', cashPrice: 21.65, ma50: 22.1, landedBaseline: 640 }
+      { date: '2023년 11월', cashPrice: 27.2, ma50: 26.5 },
+      { date: '2024년 1월', cashPrice: 23.8, ma50: 25.0 },
+      { date: '2024년 3월', cashPrice: 21.9, ma50: 22.8 },
+      { date: '2024년 5월', cashPrice: 19.5, ma50: 20.8 },
+      { date: '2024년 7월', cashPrice: 18.8, ma50: 19.2 },
+      { date: '2024년 9월', cashPrice: 23.1, ma50: 21.0 },
+      { date: '2024년 11월 (현재)', cashPrice: 21.65, ma50: 22.1 }
     ],
     aiConfidence: 90,
     recommendedCoverage: '45~60일 선도 구매',
@@ -785,37 +587,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 20.80,
       directive: '21.20~21.50 USc 밴드 하단 터치 시 1분기 스낵/제과 소요량 선제 분할 매수 대응.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 55,
-        drivers: '브라질 파쇄 마감, 환율 1,385원, 해상운임 $52/MT',
-        landedKrw: 640,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 30,
-        drivers: '브라질 폭우로 파쇄 조기 마감, 태국 생산 감소, 환율 1,420원',
-        landedKrw: 705,
-        diffPct: 10.2,
-        diffKrw: 65,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '인도 200만톤 수출 쿼터 개방, 브라질 에탄올 패리티 급락',
-        landedKrw: 590,
-        diffPct: -7.8,
-        diffKrw: -50,
-        recommendation: '선도 버퍼 30일 축소 및 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+₩65/kg (연간 약 +18억원 영향)',
-      maxOpportunityDown: '-₩50/kg (연간 약 -14억원 절감)',
-      optimalHedge: '55~60% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '181.2', unit: 'M MT', diff: '+1.2% YoY', outlook: '브라질 생산 호조' },
       consumption: { value: '179.8', unit: 'M MT', diff: '+1.4% YoY', outlook: '식음료 가공 수요 증가' },
@@ -837,12 +608,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '태국 (Central & Isan Plains)', production: '10.2', yoy: '+8.5%', isYoyPositive: true, exports: '7.5', endingStocks: '2.1', riskAssessment: '저위험 - 지리적 인접성 및 단축 해상 운송일수 우수', riskLevel: 'Low' },
       { region: '유럽연합 (EU-27 Beet Sugar)', production: '15.8', yoy: '+3.0%', isYoyPositive: true, exports: '1.8', endingStocks: '3.2', riskAssessment: '저위험 - 역내 사탕무 가공 및 안정적 생산', riskLevel: 'Low' }
     ],
-    landedCompetitiveness: [
-      { origin: '브라질 Santos VHP Raw Sugar', grade: '산투스 FOB, 고분극 원당(Very High Polarization)', regionCategory: 'sa', regionTag: '남미', fob: '$465.00/MT', freight: '$54.00/MT', tariff: '3% (TRQ)', cfr: '$519.00/MT', landedKrw: '₩640.0 / kg', assessment: '대량 조달 최적 / 기준 가격경쟁력 우수', highlightBadge: '대량조달' },
-      { origin: '태국 Laem Chabang Hi-Pol Raw Sugar', grade: '람차방 FOB, Hi-Pol 규격', regionCategory: 'asia', regionTag: '아시아', fob: '$485.00/MT', freight: '$25.00/MT', tariff: '0% (AKFTA)', cfr: '$510.00/MT', landedKrw: '₩628.5 / kg', assessment: '리드타임 최단 / 소량 신속 조달 유리' },
-      { origin: '인도 JNPT Raw Sugar', grade: '나바셰바 FOB, 수출 쿼터 연계 규격', regionCategory: 'asia', regionTag: '아시아', fob: '$478.00/MT', freight: '$38.00/MT', tariff: '3% (CEPA)', cfr: '$516.00/MT', landedKrw: '₩636.2 / kg', assessment: '수출 쿼터 인가 시 대체 조달선' },
-      { origin: '호주 Queensland Raw Sugar', grade: '퀸즐랜드 FOB, 고품위 정제원당', regionCategory: 'oc', regionTag: '대양주', fob: '$495.00/MT', freight: '$34.00/MT', tariff: '0% (KAFTA)', cfr: '$529.00/MT', landedKrw: '₩652.8 / kg', assessment: '최고 품질 규격 / 무관세 혜택' }
-    ],
     timelineEvents: [
       { date: 'Nov 18, 2024', region: '브라질', source: 'UNICA', title: 'UNICA 10월 하반기 브라질 중남부 사탕수수 파쇄 실적 발표', url: 'https://www.unica.com.br', summary: '설탕 배분율 48.8% 유지로 공급 여력 충분', importance: 'High', direction: 'Bearish' },
       { date: 'Nov 22, 2024', region: '인도', source: '식량공공배분부', title: '인도 2024/25 시즌 에탄올 전용 한도 및 원당 수출 쿼터 배정 공청회', url: 'https://dfpd.gov.in', summary: '조기 수출 허용 가능성 대두로 시세 하방 압력', importance: 'High', direction: 'Bearish' },
@@ -856,30 +621,20 @@ export const COMMODITIES: Commodity[] = [
     path: 'commodity-potato-starch',
     nameKo: '감자 전분',
     nameEn: 'Potato Starch',
-    gradeEn: 'EEX: PS BENCHMARK',
+    gradeEn: 'PHYSICAL QUOTE UNAVAILABLE',
     description: '유럽산 고품질 면류 및 가공식품용 감자 전분',
     category: 'starches',
     categoryNameKo: '당류 및 전분류',
-    price: 928.80,
+    price: 0,
     unit: 'EUR / MT',
-    priceKrwEstimated: 1290138.0,
-    landedKrwKg: 1290,
+    priceKrwEstimated: 0,
     changeWoW: null,
     changeMoM: null,
-    changeYoY: 15.44,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (EUR/KRW 1,485.40, USD/KRW 1,388.50 기준)',
-    ticker: 'EEX: PS',
-    exchange: 'EEX',
-    sparkline: [870, 870, 870, 870, 870, 870],
-    chartData: [
-      { date: '2023년 11월', cashPrice: 745.0, ma50: 760.0, landedBaseline: 1235 },
-      { date: '2024년 1월', cashPrice: 790.0, ma50: 775.0, landedBaseline: 1310 },
-      { date: '2024년 3월', cashPrice: 830.0, ma50: 810.0, landedBaseline: 1380 },
-      { date: '2024년 5월', cashPrice: 890.0, ma50: 860.0, landedBaseline: 1480 },
-      { date: '2024년 7월', cashPrice: 885.0, ma50: 890.0, landedBaseline: 1470 },
-      { date: '2024년 9월', cashPrice: 881.0, ma50: 885.0, landedBaseline: 1460 },
-      { date: '2024년 11월 (현재)', cashPrice: 860.0, ma50: 875.0, landedBaseline: 1428 }
-    ],
+    changeYoY: null,
+    ticker: '공급사 견적 필요',
+    exchange: '현물 시세 미확인',
+    sparkline: [],
+    chartData: [],
     aiConfidence: 91,
     recommendedCoverage: '60~75일 선도 구매',
     aiSynthesis:
@@ -920,37 +675,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 835.0,
       directive: '850~860 EUR/MT 지지선 확인 시 1분기 농심 스낵 및 면류 배합용 소요량 안정적 분할 매수 유효.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 60,
-        drivers: 'EU 스팟 €860, 환율 1,485원, 안정적 건조 비용',
-        landedKrw: 1428,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 25,
-        drivers: 'EU 난방 가스비 급등, 홍해 운임 할증 가중, 환율 1,510원',
-        landedKrw: 1540,
-        diffPct: 7.8,
-        diffKrw: 112,
-        recommendation: '선도 커버리지 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '폴란드/독일 공급 과잉, 유로화 약세, 가스 가격 안정',
-        landedKrw: 1350,
-        diffPct: -5.5,
-        diffKrw: -78,
-        recommendation: '선도 버퍼 30일 축소 및 현물 분할 매수 레버리지'
-      },
-      maxRiskUp: '+₩112/kg (연간 약 +16억원 영향)',
-      maxOpportunityDown: '-₩78/kg (연간 약 -11억원 절감)',
-      optimalHedge: '60~70% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '1.45', unit: 'M MT', diff: '+2.1% YoY', outlook: '가을 수확 호조' },
       consumption: { value: '640.0', unit: 'k MT', diff: '+1.8% YoY', outlook: '가공 가동률 정상' },
@@ -973,12 +697,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '폴란드 (WPPZ / Wielkopolska)', production: '115.0', yoy: '+3.2%', isYoyPositive: true, exports: '58.0', endingStocks: '21.0', riskAssessment: '저위험 - 원가 경쟁력 우수, 발트해 물류 안정', riskLevel: 'Low' },
       { region: '프랑스 (Roquette / Hauts-de-France)', production: '70.0', yoy: '-0.5%', isYoyPositive: false, exports: '42.0', endingStocks: '13.0', riskAssessment: '보통 - 고부가가치 변성전분 가공 집중', riskLevel: 'Medium' }
     ],
-    landedCompetitiveness: [
-      { origin: '네덜란드 Avebe Superior Potato Starch', grade: '로테르담 FOB, 고점도 표준 원료', regionCategory: 'eu', regionTag: '서유럽', fob: '€850.00/MT', freight: '€95.00/MT', tariff: '0% (TRQ)', cfr: '€945.00/MT', landedKrw: '₩1,403.7 / kg', assessment: '조달 안정성 최상 / 면류 고점도 표준 원료', highlightBadge: '농심표준' },
-      { origin: '독일 Emsland Standard Potato Starch', grade: '함부르크 FOB, 제과/면류 표준 규격', regionCategory: 'eu', regionTag: '서유럽', fob: '€840.00/MT', freight: '€92.00/MT', tariff: '0% (TRQ)', cfr: '€932.00/MT', landedKrw: '₩1,384.4 / kg', assessment: '대량 구매 최적 / 가격경쟁력 우수' },
-      { origin: '폴란드 WPPZ Food Grade Potato Starch', grade: '그단스크 FOB, 식품 가공용 규격', regionCategory: 'eu', regionTag: '동유럽', fob: '€810.00/MT', freight: '€98.00/MT', tariff: '0% (TRQ)', cfr: '€908.00/MT', landedKrw: '₩1,348.7 / kg', assessment: '최저 FOB 오퍼 / 가성비 우수', highlightBadge: '최저가' },
-      { origin: '프랑스 Roquette Premium Potato Starch', grade: '르아브르 FOB, 특수 스낵용 고순도', regionCategory: 'eu', regionTag: '서유럽', fob: '€880.00/MT', freight: '€96.00/MT', tariff: '0% (TRQ)', cfr: '€976.00/MT', landedKrw: '₩1,449.8 / kg', assessment: '최고 순도 규격 / 특수 스낵용' }
-    ],
     timelineEvents: [
       { date: 'Nov 18, 2024', region: '네덜란드', source: 'Avebe', title: 'Avebe 2024/25 캠페인 전분 수율 및 품질 리포트 발표', url: 'https://www.avebe.com', summary: '전분가 전년 대비 0.8%p 개선 확인', importance: 'Medium', direction: 'Bearish' },
       { date: 'Nov 22, 2024', region: '독일', source: 'Emsland / VDDS', title: '독일 전분가공협회 2024년 수확기 마감 및 재고량 집계', url: 'https://www.emsland-group.de', summary: '가동률 95% 달성으로 연간 공급 물량 확보', importance: 'Medium', direction: 'Neutral' },
@@ -999,20 +717,18 @@ export const COMMODITIES: Commodity[] = [
     price: 700.00, // Standardized to $700.00 USD/MT
     unit: 'USD / MT',
     priceKrwEstimated: 1010828.0,
-    landedKrwKg: 1010,
     changeWoW: null,
     changeMoM: null,
     changeYoY: 37.25,
-    cifBusanDesc: '부산 CIF 추정 통관 원가 (기준 환율 USD/KRW 1,388.50 기준)',
     ticker: 'TTSA: TS',
     exchange: 'TTSA',
     sparkline: [700, 700, 700, 700, 700, 700],
     chartData: [
-      { date: '2026년 1월', cashPrice: 480.0, ma50: 485.0, landedBaseline: 690 },
-      { date: '2026년 3월', cashPrice: 510.0, ma50: 500.0, landedBaseline: 730 },
-      { date: '2026년 5월', cashPrice: 625.0, ma50: 560.0, landedBaseline: 865 },
-      { date: '2026년 7월', cashPrice: 700.0, ma50: 640.0, landedBaseline: 960 },
-      { date: '2026년 9월 (현재)', cashPrice: 700.00, ma50: 702.0, landedBaseline: 960 }
+      { date: '2026년 1월', cashPrice: 480.0, ma50: 485.0 },
+      { date: '2026년 3월', cashPrice: 510.0, ma50: 500.0 },
+      { date: '2026년 5월', cashPrice: 625.0, ma50: 560.0 },
+      { date: '2026년 7월', cashPrice: 700.0, ma50: 640.0 },
+      { date: '2026년 9월 (현재)', cashPrice: 700.00, ma50: 702.0 }
     ],
     aiConfidence: 92,
     recommendedCoverage: '60~75일 선도 구매',
@@ -1054,37 +770,6 @@ export const COMMODITIES: Commodity[] = [
       s2: 480.0,
       directive: '488~492 USD 지지선 안착 확인 시 1분기 및 2분기 초 농심 튀김 및 면용 소요량 선제 분할 매수 유효.'
     },
-    scenarios: {
-      base: {
-        title: '기본 시나리오 (Base Case)',
-        probability: 60,
-        drivers: '태국 FOB $495, 환율 1,388원, CMD 통제 및 표준 수확 진척',
-        landedKrw: 725,
-        diffPct: 0.0,
-        recommendation: '표준 60일 버퍼 유지 (Maintain standard 60-day buffer)'
-      },
-      bull: {
-        title: '강세 시나리오 (Bull Case)',
-        probability: 25,
-        drivers: 'CMD 전국 확산, 중국 수입 폭증, 환율 1,420원 돌파',
-        landedKrw: 785,
-        diffPct: 8.3,
-        diffKrw: 60,
-        recommendation: '선도 90일로 긴급 확대 (Extend forward coverage to 90d)'
-      },
-      bear: {
-        title: '약세 시나리오 (Bear Case)',
-        probability: 15,
-        drivers: '베트남/캄보디아 공급 풍작, 중국 수요 둔화, 해상운임 추가 하락',
-        landedKrw: 680,
-        diffPct: -6.2,
-        diffKrw: -45,
-        recommendation: '선도 30일 축소 및 분할 매수 레버리지'
-      },
-      maxRiskUp: '+₩60/kg (연간 약 +9.5억원 영향)',
-      maxOpportunityDown: '-₩45/kg (연간 약 -7.2억원 절감)',
-      optimalHedge: '65~75% 선도 조달 (리스크 헤지)'
-    },
     wasdeKpis: {
       production: { value: '28.5', unit: 'M MT', diff: '-3.4% YoY', outlook: 'CMD 감염 여파 지속' },
       consumption: { value: '3.85', unit: 'M MT', diff: '-2.1% YoY', outlook: '공장 가동률 84% 수준' },
@@ -1106,12 +791,6 @@ export const COMMODITIES: Commodity[] = [
       { region: '베트남 (Tay Ninh / Binh Phuoc)', production: '1150.0', yoy: '+1.8%', isYoyPositive: true, exports: '850.0', endingStocks: '110.0', riskAssessment: '저위험 - 중국 국경 교역 및 호치민 선적, 가격경쟁력 우수', riskLevel: 'Low' },
       { region: '캄보디아 (Battambang / Kratie)', production: '480.0', yoy: '+4.5%', isYoyPositive: true, exports: '310.0', endingStocks: '35.0', riskAssessment: '보통 - 국경 원료 카사바 수출 위주', riskLevel: 'Medium' },
       { region: '인도네시아 (Lampung / Java)', production: '320.0', yoy: '-0.5%', isYoyPositive: false, exports: '85.0', endingStocks: '28.0', riskAssessment: '보통 - 내수 스낵/식품 가공 수요 우선 배정', riskLevel: 'Medium' }
-    ],
-    landedCompetitiveness: [
-      { origin: '태국 코랏 Premium Food Grade (TTSA Standard)', grade: '방콕 FOB, 면발 탄력성 강화용 고순도', regionCategory: 'all', regionTag: '태국', fob: '$510.00/MT', freight: '$22.00/MT', tariff: '0% (AKFTA)', cfr: '$532.00/MT', landedKrw: '₩746.0 / kg', assessment: '조달 안정성 최상 / 면류 및 스낵용 표준 원료', highlightBadge: '농심표준' },
-      { origin: '태국 람차방 Native Super Grade', grade: '람차방 FOB, 스낵 및 제과용 표준 규격', regionCategory: 'all', regionTag: '태국', fob: '$488.00/MT', freight: '$20.00/MT', tariff: '0% (AKFTA)', cfr: '$508.00/MT', landedKrw: '₩712.4 / kg', assessment: '대량 구매 최적 / 가성비 우수' },
-      { origin: '베트남 떠이닌 First Grade Native Starch', grade: '호치민 FOB, 식품 가공용 규격', regionCategory: 'all', regionTag: '베트남', fob: '$478.00/MT', freight: '$24.00/MT', tariff: '0% (VKFTA)', cfr: '$502.00/MT', landedKrw: '₩704.0 / kg', assessment: '최저 FOB 오퍼 / 점도 균일도 사전 검수 필요', highlightBadge: '최저가' },
-      { origin: '태국 변성 타피오카 (Modified Distarch Adipate)', grade: '방콕 FOB, 고내열/고점도 냉동면/라면 전용', regionCategory: 'all', regionTag: '태국', fob: '$640.00/MT', freight: '$22.00/MT', tariff: '0% (AKFTA)', cfr: '$662.00/MT', landedKrw: '₩928.3 / kg', assessment: '프리미엄 냉동면/고점도 라면 전용 규격' }
     ],
     timelineEvents: [
       { date: 'Nov 18, 2024', region: '태국', source: 'TTSA', title: '태국타피오카협회(TTSA) 2024/25 수확기 1차 수율 및 출하 동향 발표', url: 'https://www.ttsa.or.th', summary: '전분 함량(28%) 소폭 감소 및 수매가 지지', importance: 'High', direction: 'Bullish' },

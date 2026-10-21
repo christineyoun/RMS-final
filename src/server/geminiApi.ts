@@ -1,4 +1,6 @@
-import { GoogleGenAI } from '@google/genai';
+import {sugarPriceSnapshotService} from './sugarPriceSnapshotService.ts';
+import {potatoProductionPayload} from './potatoProductionHistory.ts';
+import { GoogleGenAI, isPaidGeminiEnabled } from './paidGeminiGuard.ts';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -56,10 +58,10 @@ import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceS
 import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
 import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
+import { getGroundedAiAnalysis } from './liveAiAnalysisService.ts';
 import { amisService } from './amisService.ts';
 import { wheatIntelligenceService } from './wheatIntelligenceService.ts';
 import { originRadarService } from './originRadarService.ts';
-import { usdaAmsCornService } from './usdaAmsCornService.ts';
 import { cornIntelligenceService } from './cornIntelligenceService.ts';
 import { soybeanIntelligenceService } from './soybeanIntelligenceService.ts';
 import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService.ts';
@@ -275,28 +277,6 @@ export async function fetchLivePipelineMetrics() {
   };
 }
 
-// Calculate Busan Landed Costs (KRW/kg) based on live FX and freight benchmarks
-export function calculateBusanLandedCosts(commodities: any, usdKrw: number, eurKrw: number) {
-  const wheatUsdMt = grainCentsPerBuToUsdPerMt(commodities?.wheat?.price || 574.25);
-  const cornUsdMt = cornCentsPerBuToUsdPerMt(commodities?.corn?.price || 432.50);
-  const soybeanUsdMt = grainCentsPerBuToUsdPerMt(commodities?.soybean?.price || 1024.75);
-  const soybeanOilUsdMt = centsPerLbToUsdPerMt(commodities?.soybeanOil?.price || 44.80);
-  const palmOilUsdMt = (commodities?.palmOil?.price || 4185) / 4.40;
-  const sugarUsdMt = centsPerLbToUsdPerMt(commodities?.sugar?.price || 21.65);
-  const potatoStarchEurMt = commodities?.potatoStarch?.price || 860.00;
-  const tapiocaStarchUsdMt = commodities?.tapiocaStarch?.price || 700.00;
-
-  return {
-    wheat: Math.round(((wheatUsdMt + 42) * usdKrw * 1.03) / 1000),
-    corn: Math.round(((cornUsdMt + 40) * usdKrw * 1.03) / 1000),
-    soybean: Math.round(((soybeanUsdMt + 42) * usdKrw * 1.03) / 1000),
-    soybeanOil: Math.round(((soybeanOilUsdMt + 65) * usdKrw * 1.054) / 1000),
-    palmOil: Math.round(((palmOilUsdMt + 35) * usdKrw * 1.03) / 1000),
-    sugar: Math.round(((sugarUsdMt + 45) * usdKrw * 1.03) / 1000),
-    potatoStarch: Math.round(((potatoStarchEurMt + 85) * (eurKrw || 1485) * 1.08) / 1000),
-    tapiocaStarch: Math.round(((tapiocaStarchUsdMt + 32) * usdKrw * 1.04) / 1000)
-  };
-}
 
 // Calculate Macro Risk Index Score (0-100) and Gauge Needle Angle (-90° to +90°)
 export function calculateMacroRisk(usdKrw: number, weather: any, energy: any) {
@@ -326,17 +306,15 @@ export async function getLiveMarketData(forceRefresh: boolean = false) {
   }
   const pipeline = await fetchLivePipelineMetrics();
   const defaultCommodities = {
-    wheat: { price: 574.25, unit: 'USd/bu', changeWoW: 2.14, landedKrw: 392 },
-    corn: { price: 432.50, unit: 'USd/bu', changeWoW: -0.85, landedKrw: 296 },
-    soybean: { price: 1024.75, unit: 'USd/bu', changeWoW: 1.45, landedKrw: 688 },
-    soybeanOil: { price: 44.80, unit: 'USc/lb', changeWoW: 1.12, landedKrw: 1310 },
-    palmOil: { price: getSavedBaselinePrice(), unit: 'MYR/MT', changeWoW: 3.80, landedKrw: 1440 },
-    sugar: { price: 21.65, unit: 'USc/lb', changeWoW: -1.20, landedKrw: 640 },
-    potatoStarch: { price: 860.00, unit: 'EUR/MT', changeWoW: 0.00, landedKrw: 1428 },
-    tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: 0.00, landedKrw: 960 }
+    wheat: { price: 574.25, unit: 'USd/bu', changeWoW: 2.14},
+    corn: { price: 432.50, unit: 'USd/bu', changeWoW: -0.85},
+    soybean: { price: 1024.75, unit: 'USd/bu', changeWoW: 1.45},
+    soybeanOil: { price: 44.80, unit: 'USc/lb', changeWoW: 1.12},
+    palmOil: { price: getSavedBaselinePrice(), unit: 'MYR/MT', changeWoW: 3.80},
+    sugar: { price: 21.65, unit: 'USc/lb', changeWoW: -1.20},
+    potatoStarch: { price: 860.00, unit: 'EUR/MT', changeWoW: 0.00},
+    tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: 0.00}
   };
-
-  const computedLanded = calculateBusanLandedCosts(defaultCommodities, pipeline.usdKrw, pipeline.eurKrw);
   const macroRisk = calculateMacroRisk(pipeline.usdKrw, pipeline.weather, pipeline.energy);
 
   const defaultData = {
@@ -354,23 +332,14 @@ export async function getLiveMarketData(forceRefresh: boolean = false) {
     macroRiskPointerAngle: macroRisk.pointerAngle,
     weather: pipeline.weather,
     supplyDemand: pipeline.supplyDemand,
-    commodities: {
-      wheat: { ...defaultCommodities.wheat, landedKrw: computedLanded.wheat },
-      corn: { ...defaultCommodities.corn, landedKrw: computedLanded.corn },
-      soybean: { ...defaultCommodities.soybean, landedKrw: computedLanded.soybean },
-      soybeanOil: { ...defaultCommodities.soybeanOil, landedKrw: computedLanded.soybeanOil },
-      palmOil: { ...defaultCommodities.palmOil, landedKrw: computedLanded.palmOil },
-      sugar: { ...defaultCommodities.sugar, landedKrw: computedLanded.sugar },
-      potatoStarch: { ...defaultCommodities.potatoStarch, landedKrw: computedLanded.potatoStarch },
-      tapiocaStarch: { ...defaultCommodities.tapiocaStarch, landedKrw: computedLanded.tapiocaStarch }
-    },
+    commodities: defaultCommodities,
     aiBriefSynthesis:
       `[현재 시세]\n- 글로벌 소맥 및 유지류 시장은 주요 원자재 수급 우려와 남미 기상 이변으로 인해 소폭의 상승세를 나타내고 있습니다. 원/달러 환율은 ${pipeline.usdKrw}원 부근에서 좁은 폭으로 횡보하고 있습니다.\n\n[주요 원인]\n- 남미 파종지 고온 건조 기후(${pipeline.weather.southAmerica.tempCurrent}°C, 강우 ${pipeline.weather.southAmerica.precipSumMm}mm) 지속\n- 홍해 지정학적 리스크에 따른 원양 컨테이너 운임(SCFI ${pipeline.energy.scfi}pt) 변동성\n- 흑해 곡물 수출 회랑 관련 수급 불확실성\n\n[전망]\n- 향후 1-3개월간 소맥 및 팜유 가격은 남미 작황 진척도와 가을철 강우 강도에 따라 추가 변동성이 예상됩니다.\n\n[구매 제안]\n- 주요 원자재 가격 변동성 완화를 위해 안정적인 분할 구매 방식을 채택하고, 리스크 완충용 주요 변수를 집중 모니터링할 것을 제안합니다.`,
     directives: [
       {
         type: 'action',
         label: '조치 필요 (Action Required)',
-        title: `BMD 하락 구간에서 2025 Q1 팜유 포워드 커버리지(목표 ₩${computedLanded.palmOil}/kg 이하) 확보`,
+        title: '팜유 가격 추이와 승인 공급사 실제 견적을 비교한 뒤 구매 시점 결정',
         source: '출처: RMS 멀티소스 피드 종합 분석 (USDA FAS, Frankfurter FX, Open-Meteo)'
       },
       {
@@ -382,7 +351,7 @@ export async function getLiveMarketData(forceRefresh: boolean = false) {
       {
         type: 'favorable',
         label: '우호적 조건 (Favorable)',
-        title: `로테르담/함부르크발 부산향 스팟 컨테이너 운임 안정 및 감자 전분(₩${computedLanded.potatoStarch}/kg) 단가 완충`,
+        title: '유럽 감자전분 승인 공급사 견적과 한국향 컨테이너 운임 변동 모니터링',
         source: '출처: EU Agri-food Data Portal & Baltic Exchange'
       }
     ],
@@ -444,7 +413,7 @@ Search the web for any immediate breaking shifts for:
 1. CBOT Wheat (USd/bu), Corn (USd/bu), Soybean (USd/bu), Soybean Oil (USc/lb)
 2. BMD Palm Oil (MYR/MT), ICE Sugar No.11 (USc/lb), EU Potato Starch (EUR/MT), Thai Tapioca Starch (USD/MT)
 
-Calculate Busan Landed Costs (KRW/kg) with live USD/KRW (${pipeline.usdKrw}) and ocean freight, assess Macro Risk Index (0-100), and write an Executive AI Procurement Brief with 3 directives.
+Consider observed market benchmarks, live USD/KRW (${pipeline.usdKrw}), and ocean-freight trends, assess Macro Risk Index (0-100), and write an Executive AI Procurement Brief with 3 directives.
 
 Please return a valid JSON object matching this structure EXACTLY (pure JSON without markdown):
 {
@@ -456,14 +425,14 @@ Please return a valid JSON object matching this structure EXACTLY (pure JSON wit
   "macroRiskScore": number,
   "macroRiskLevel": "LOW" | "MODERATE" | "ELEVATED" | "CRITICAL",
   "commodities": {
-    "wheat": { "price": number, "unit": "USd/bu", "changeWoW": number, "landedKrw": number },
-    "corn": { "price": number, "unit": "USd/bu", "changeWoW": number, "landedKrw": number },
-    "soybean": { "price": number, "unit": "USd/bu", "changeWoW": number, "landedKrw": number },
-    "soybeanOil": { "price": number, "unit": "USc/lb", "changeWoW": number, "landedKrw": number },
-    "palmOil": { "price": number, "unit": "MYR/MT", "changeWoW": number, "landedKrw": number },
-    "sugar": { "price": number, "unit": "USc/lb", "changeWoW": number, "landedKrw": number },
-    "potatoStarch": { "price": number, "unit": "EUR/MT", "changeWoW": number, "landedKrw": number },
-    "tapiocaStarch": { "price": number, "unit": "USD/MT", "changeWoW": number, "landedKrw": number }
+    "wheat": { "price": number, "unit": "USd/bu", "changeWoW": number },
+    "corn": { "price": number, "unit": "USd/bu", "changeWoW": number },
+    "soybean": { "price": number, "unit": "USd/bu", "changeWoW": number },
+    "soybeanOil": { "price": number, "unit": "USc/lb", "changeWoW": number },
+    "palmOil": { "price": number, "unit": "MYR/MT", "changeWoW": number },
+    "sugar": { "price": number, "unit": "USc/lb", "changeWoW": number },
+    "potatoStarch": { "price": number, "unit": "EUR/MT", "changeWoW": number },
+    "tapiocaStarch": { "price": number, "unit": "USD/MT", "changeWoW": number }
   },
   "aiBriefSynthesis": "Strictly structured Korean text divided into exactly 4 sections. Each section must start on a new line with its bracketed header precisely formatted as follows: \n\n[현재 시세]\n- {1-2 concise sentences explaining current price levels and short-term directional trends}\n\n[주요 원인]\n- {2-4 core drivers shaping current market prices in order of importance. Strictly limit factors to verified input data: Supply/Demand, Weather, Energy, FX, Logistics, Policy, Demand}\n\n[전망]\n- {1-2 sentences outlining price projections for the next 1-3 months, explicitly citing key underlying conditions driving this projection}\n\n[구매 제안]\n- {1-2 sentences providing clear, actionable procurement direction. Do NOT invent specific quantities or timeline numbers unless inventory/demand data is explicitly provided in the payload. Use standard strategic options: 분할 구매 (split purchasing), 일부 선확보 (securing partial volumes), 비축구매 검토 (reserve stocking), 관망 (observation), 공급사 경쟁견적 (competitive bidding), or 주요 변수 집중 모니터링 (variable tracking).}",
   "directives": [
@@ -507,17 +476,20 @@ Please return a valid JSON object matching this structure EXACTLY (pure JSON wit
     const resolvedModelName = (response as any).model || 'gemini-flash-latest';
 
     if (parsed) {
-      const finalCommodities = {
-        ...defaultData.commodities,
-        ...(parsed.commodities || {})
-      };
-      const finalLanded = calculateBusanLandedCosts(finalCommodities, parsed.usdKrw || pipeline.usdKrw, parsed.eurKrw || pipeline.eurKrw);
-      Object.keys(finalCommodities).forEach((k) => {
-        if (!(finalCommodities as any)[k].landedKrw || (finalCommodities as any)[k].landedKrw <= 0) {
-          (finalCommodities as any)[k].landedKrw = (finalLanded as any)[k] || (defaultData.commodities as any)[k].landedKrw;
-        }
-      });
-
+      // Accept ONLY documented commodity benchmark fields from a model response.
+      // A legacy/novel model field must never reintroduce fabricated import-cost estimates.
+      const finalCommodities = Object.fromEntries(
+        Object.entries(defaultCommodities).map(([key, baseline]) => {
+          const proposal = parsed.commodities?.[key];
+          const validPrice = typeof proposal?.price === 'number' && Number.isFinite(proposal.price) && proposal.price > 0;
+          const validChange = typeof proposal?.changeWoW === 'number' && Number.isFinite(proposal.changeWoW) && Math.abs(proposal.changeWoW) <= 100;
+          return [key, {
+            price: validPrice ? proposal.price : baseline.price,
+            unit: baseline.unit,
+            changeWoW: validChange ? proposal.changeWoW : baseline.changeWoW
+          }];
+        })
+      );
       if (finalCommodities.palmOil?.price && finalCommodities.palmOil.price > 3000) {
         updateSavedBaselinePrice(finalCommodities.palmOil.price);
       }
@@ -595,6 +567,19 @@ export function createGeminiApiMiddleware() {
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const url = req.url || '';
 
+    // Inspect protection without sending a paid AI request or exposing credentials.
+    if (url.startsWith('/api/rms/gemini-cost-status')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = 200;
+      res.end(JSON.stringify({
+        paidGeminiCalls: isPaidGeminiEnabled() ? 'ENABLED' : 'BLOCKED',
+        stage: 'weekday-snapshot',
+        note: 'Dashboard requests are blocked; only explicit, budgeted weekday refresh jobs can use Gemini.'
+      }));
+      return;
+    }
+
     if (url.startsWith('/api/health')) {
       res.setHeader('Content-Type', 'application/json');
       res.statusCode = 200;
@@ -603,8 +588,7 @@ export function createGeminiApiMiddleware() {
     }
 
     // AI Analysis Endpoint (Gemini Structured Output)
-    // RMS Step 22: Google Search-grounded market intelligence for all eight commodities.
-    // Six-box official-statistics routes remain separate and UNCHANGED.
+    // Pre-Step-1 AI Studio market analysis route. Official statistics endpoints remain unchanged.
     if (url.startsWith('/api/ai-analysis/')) {
       try {
         const parsedUrl = new URL(url, 'http://localhost');
@@ -612,21 +596,7 @@ export function createGeminiApiMiddleware() {
         // /api/ai-analysis/:commodity -> pathSegments[2]
         const commodityParam = pathSegments[2] || 'corn';
         const forceRefresh = parsedUrl.searchParams.get('force') === 'true';
-        // RMS Step 19 — Eurostat-aligned Potato Starch AI market view
-        // Use the SAME Eurostat world/area source as the six-box potato card.
-        // Prevent the old AI fallback from reinserting unsupported 2026 decline figures.
-        if (commodityParam === 'potato-starch' || commodityParam === 'potato_starch') {
-          const source = await fetchOfficialPotatoEurostat(forceRefresh);
-          const data = buildPotatoEurostatMarketView(source);
-          res.setHeader('Content-Type', 'application/json; charset=utf-8');
-          res.setHeader('Cache-Control', 'no-store');
-          res.statusCode = 200;
-          res.end(JSON.stringify({ success: true, data, dataStatus: source.dataStatus,
-            source: source.source, harvestYear: source.data?.harvestYear ?? null,
-            verifiedAt: source.verifiedAt, checkedAt: source.checkedAt }, null, 2));
-          return;
-        }
-        const data = await generateAiAnalysis(commodityParam, undefined, forceRefresh);
+        const data = await getGroundedAiAnalysis(commodityParam, forceRefresh);
 
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Cache-Control', 'no-store'); // AI brief prices must not be cached for 1h
@@ -634,18 +604,22 @@ export function createGeminiApiMiddleware() {
         res.end(JSON.stringify({
           success: true,
           data,
-          timestamp: new Date().toLocaleTimeString('ko-KR') + ' KST'
+          timestamp: new Date().toISOString(),
+          status: data.status,
+          generatedAt: data.generatedAt,
+          sourceCount: data.sources.length
         }, null, 2));
       } catch (err: any) {
-        res.statusCode = 500;
+        res.statusCode = 502;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ success: false, error: err.message }));
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(JSON.stringify({ success: false, status: 'unavailable', error: err.message }));
       }
       return;
     }
 
 
-    // Corn SCM Procurement Analysis Endpoint (CBOT ZC=F, USDA AMS Landed Cost, USDA FAS PSD, AMIS)
+    // Corn SCM Procurement Analysis Endpoint (CBOT ZC=F, USDA FAS PSD, AMIS)
     if (url.startsWith('/api/corn/procurement-analysis') || url.startsWith('/api/corn/analysis')) {
       try {
         const force = url.includes('force=true');
@@ -662,7 +636,16 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
-    // Soybean SCM Procurement Analysis Endpoint (CBOT ZS=F, USDA AMS Landed Cost, USDA FAS PSD, AMIS)
+    // One dated Soybean history also owns its procurement price/weekly comparison.
+    if (/^\/api\/soybean\/price-snapshot(?:\?|$)/.test(url)) {
+      try {
+        const snapshot=await soybeanIntelligenceService.getSoybeanPriceSnapshot(new URL(url,'http://localhost').searchParams.get('force')==='true');
+        res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=200;res.end(JSON.stringify(snapshot));
+      } catch {res.setHeader('Content-Type','application/json');res.statusCode=503;res.end(JSON.stringify({success:false,error:'Soybean price snapshot unavailable'}));}
+      return;
+    }
+
+    // Soybean SCM Procurement Analysis Endpoint (CBOT ZS=F, USDA FAS PSD, AMIS)
     if (url.startsWith('/api/soybean/procurement-analysis') || url.startsWith('/api/soybean/analysis')) {
       try {
         const force = url.includes('force=true');
@@ -679,6 +662,15 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
+    if (/^\/api\/sugar\/price-snapshot(?:\?|$)/.test(url)) {
+      try {const snapshot=await sugarPriceSnapshotService.getSnapshot(new URL(url,'http://localhost').searchParams.get('force')==='true');res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=200;res.end(JSON.stringify(snapshot));}
+      catch {res.setHeader('Content-Type','application/json');res.statusCode=503;res.end(JSON.stringify({success:false,error:'Sugar price snapshot unavailable'}));}return;
+    }
+    if (/^\/api\/soybean-oil\/price-snapshot(?:\?|$)/.test(url)) {
+      try {const snapshot=await soybeanOilIntelligenceService.getSoybeanOilPriceSnapshot(new URL(url,'http://localhost').searchParams.get('force')==='true');res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=200;res.end(JSON.stringify(snapshot));}
+      catch {res.setHeader('Content-Type','application/json');res.statusCode=503;res.end(JSON.stringify({success:false,error:'Soybean Oil price snapshot unavailable'}));}return;
+    }
+
     // Soybean Oil SCM Procurement Analysis Endpoint (CBOT ZL=F, Physical FOB, Liquid Tanker Freight, USDA FAS PSD, AMIS)
     if (url.startsWith('/api/soybean-oil/procurement-analysis') || url.startsWith('/api/soybean-oil/analysis')) {
       try {
@@ -686,44 +678,6 @@ export function createGeminiApiMiddleware() {
         const result = await soybeanOilIntelligenceService.getSoybeanOilProcurementAnalysis(force);
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: true, data: result }, null, 2));
-      } catch (err: any) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-      return;
-    }
-
-    // USDA AMS Corn Estimated Korea Landed Cost Endpoint
-    if (url.startsWith('/api/corn/landed-cost') || url.startsWith('/api/corn/korea-landed-cost')) {
-      try {
-        const parsedUrl = new URL(url, `http://${req.headers.host || 'localhost:3000'}`);
-        const force = parsedUrl.searchParams.get('force') === 'true';
-        const portCostParam = parsedUrl.searchParams.get('portCost');
-        const portCostOverride = portCostParam !== null ? parseFloat(portCostParam) : undefined;
-        const result = await usdaAmsCornService.getEstimatedCornKoreaLandedCost(force, portCostOverride);
-        res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: true, data: result }, null, 2));
-      } catch (err: any) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ success: false, error: err.message }));
-      }
-      return;
-    }
-
-    // U.S. Wheat HRW Estimated Korea Landed Cost Endpoint
-    if (url.startsWith('/api/uswheat/landed-cost') || url.startsWith('/api/uswheat/korea-landed-cost')) {
-      try {
-        const parsedUrl = new URL(url, `http://${req.headers.host || 'localhost:3000'}`);
-        const force = parsedUrl.searchParams.get('force') === 'true';
-        const portCostParam = parsedUrl.searchParams.get('portCost');
-        const portCostOverride = portCostParam !== null ? parseFloat(portCostParam) : undefined;
-        const result = await usWheatPriceReportService.getEstimatedKoreaLandedCost(force, portCostOverride);
-        res.setHeader('Content-Type', 'application/json');
         res.statusCode = 200;
         res.end(JSON.stringify({ success: true, data: result }, null, 2));
       } catch (err: any) {
@@ -974,95 +928,11 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
-    // Live JRC MARS Search Route for Potato Starch Production
+    // Compatibility alias: official agricultural proxy only; never a paid page-view call.
     if (url.startsWith('/api/potato-starch/production')) {
-      const fallbackPotatoData = {
-        years: [
-          { year: "2022", productionMMT: 27.53, status: "Actual" },
-          { year: "2023", productionMMT: 29.16, status: "Actual" },
-          { year: "2024", productionMMT: 31.42, status: "Actual" },
-          { year: "2025", productionMMT: 30.00, status: "Actual" },
-          { year: "2026", productionMMT: 27.60, status: "Estimate" }
-        ],
-        latestYoyChange: -8.00,
-        summary: "유럽 위원회 JRC MARS 회보에 따르면 고온 가뭄 여파로 가공용 원료감자 단수 감소가 예상됩니다."
-      };
-
-      const now = Date.now();
-      const apiKey = process.env.GEMINI_API_KEY;
-
-      // Check cooldown or if key is demo
-      if (now < potatoGroundingCooldownUntil || !apiKey || apiKey === 'DEMO_KEY') {
-        const dataToServe = cachedPotatoResponse || fallbackPotatoData;
-        res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: true, data: dataToServe, cached: true }, null, 2));
-        return;
-      }
-
-      try {
-        const ai = new GoogleGenAI({
-          apiKey,
-          httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
-        });
-
-        const systemPrompt = `You are an automated agricultural intelligence agent.
-Search the latest European Commission JRC MARS Bulletin (https://joint-research-centre.ec.europa.eu/monitoring-agricultural-resources-mars/jrc-mars-bulletin_en) and Eurostat Crop Production estimates for raw processing potatoes (DE, FR, NL, DK).
-Return a strict JSON object:
-{
-  "years": [
-    { "year": "2022", "productionMMT": 27.53, "status": "Actual" },
-    { "year": "2023", "productionMMT": 29.16, "status": "Actual" },
-    { "year": "2024", "productionMMT": 31.42, "status": "Actual" },
-    { "year": "2025", "productionMMT": 30.00, "status": "Actual" },
-    { "year": "2026", "productionMMT": 27.60, "status": "Estimate" }
-  ],
-  "latestYoyChange": -8.00,
-  "summary": "Short 2-sentence summary in Korean of EU potato yield and starch content impact."
-}
-Return pure JSON only without markdown formatting. Ensure that the returned value is a valid JSON object and nothing else.`;
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: systemPrompt,
-          config: {
-            tools: [{ googleSearch: {} }]
-          }
-        });
-
-        const text = response.text || '';
-        const match = text.match(/\{[\s\S]*\}/);
-        if (match) {
-          const data = JSON.parse(match[0]);
-          cachedPotatoResponse = data;
-          res.setHeader('Content-Type', 'application/json');
-          res.statusCode = 200;
-          res.end(JSON.stringify({ success: true, data }, null, 2));
-          return;
-        }
-        throw new Error('JSON structure not found in response');
-      } catch (err: any) {
-        const errStr = String(err?.message || err);
-        const is429 =
-          err?.status === 429 ||
-          err?.status === 'RESOURCE_EXHAUSTED' ||
-          err?.code === 429 ||
-          errStr.includes('429') ||
-          errStr.includes('quota') ||
-          errStr.includes('RESOURCE_EXHAUSTED');
-
-        if (is429) {
-          potatoGroundingCooldownUntil = now + 10 * 60 * 1000;
-          console.info('[PotatoStatus] API quota limit reached (429). Activating 10m cooldown mode.');
-        } else {
-          console.warn('[PotatoStatus] Grounded search notice:', err?.message || errStr);
-        }
-
-        const dataToServe = cachedPotatoResponse || fallbackPotatoData;
-        res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: false, data: dataToServe, rateLimited: is429 }, null, 2));
-      }
+      const result=potatoProductionPayload();
+      res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=200;
+      res.end(JSON.stringify(result));
       return;
     }
 
@@ -1207,11 +1077,13 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
         const timeframe = parsedUrl.searchParams.get('timeframe') || '6M';
         const force = parsedUrl.searchParams.get('force') === 'true' || parsedUrl.searchParams.get('forceRefresh') === 'true';
 
-        const data = await fetchHistoricalData(commodity, timeframe, force);
+        const data = commodity==='soybean'
+          ? await soybeanIntelligenceService.getSoybeanPriceSnapshot(force)
+          : commodity==='soybean-oil' ? await soybeanOilIntelligenceService.getSoybeanOilPriceSnapshot(force) : commodity==='sugar' ? await sugarPriceSnapshotService.getSnapshot(force) : await fetchHistoricalData(commodity, timeframe, force);
 
         res.setHeader('Content-Type', 'application/json');
         // force=true should also bypass browser/proxy caches, not just local fetch caches.
-        res.setHeader('Cache-Control', force
+        res.setHeader('Cache-Control', force || commodity==='soybean'
           ? 'no-store, no-cache, must-revalidate'
           : 'public, max-age=300, s-maxage=300, stale-while-revalidate=60');
         res.statusCode = 200;
@@ -1220,6 +1092,20 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
         res.statusCode = 500;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+      return;
+    }
+
+    // Read-only persistent history status; does not trigger a website scrape.
+    if (url.startsWith('/api/uswheat/history-status')) {
+      try {
+        res.setHeader('Content-Type','application/json');
+        res.setHeader('Cache-Control','no-store');
+        res.statusCode = 200;
+        res.end(JSON.stringify(usWheatPriceReportService.getPriceHistoryStatus()));
+      } catch (err: any) {
+        res.statusCode = 503;
+        res.end(JSON.stringify({ success:false, error: err.message }));
       }
       return;
     }

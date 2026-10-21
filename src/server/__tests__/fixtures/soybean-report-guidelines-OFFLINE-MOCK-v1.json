@@ -1,0 +1,264 @@
+{
+  "outputFormat": "typed-segments-v1",
+  "factBinding": "verified-records-v1",
+  "evidenceContractVersion": 4,
+  "confidenceScore": 78,
+  "evidenceClaims": [
+    {
+      "field": "deskRecommendation",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "soybean-zs-wow-2026-10-14--2026-10-21"
+          ],
+          "support": []
+        },
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "article-soybean-2096bd6a545f-export-offer"
+          ],
+          "support": []
+        },
+        {
+          "kind": "recommendation",
+          "text": "대두 선물 가격의 주간 하락을 고려할 때 단기 구매는 분할 검토하되, 보도된 FOB 오퍼와 실제 공급사 견적 및 해상운임을 비교한 후 계약 조건을 확정하는 것이 적절합니다.",
+          "evidenceIds": [
+            "soybean-zs-wow-2026-10-14--2026-10-21",
+            "article-soybean-2096bd6a545f-export-offer"
+          ],
+          "support": [
+            {
+              "evidenceId": "soybean-zs-wow-2026-10-14--2026-10-21",
+              "aspect": "interval-change"
+            },
+            {
+              "evidenceId": "article-soybean-2096bd6a545f-export-offer",
+              "aspect": "price-level"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "executiveSummary",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "psd-28"
+          ],
+          "support": []
+        },
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "psd-125"
+          ],
+          "support": []
+        },
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "article-soybean-b0ab508416cc-september-us-production"
+          ],
+          "support": []
+        },
+        {
+          "kind": "conditional",
+          "text": "만약 향후 세계 대두 생산 전망이 소비 전망을 상회하는 수준을 유지한다면 글로벌 수급 여건이 선물 가격 상승 압력을 제한할 가능성이 있습니다.",
+          "evidenceIds": [
+            "psd-28",
+            "psd-125"
+          ],
+          "support": [
+            {
+              "evidenceId": "psd-28",
+              "aspect": "production"
+            },
+            {
+              "evidenceId": "psd-125",
+              "aspect": "consumption"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "bullishFactors.0",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "article-soybean-abe078d1656b-us-exports"
+          ],
+          "support": []
+        },
+        {
+          "kind": "conditional",
+          "text": "향후 미국 대두 수출 전망이 추가 상향 조정된다면 선물 가격 지지 요인으로 작용할 수 있습니다.",
+          "evidenceIds": [
+            "article-soybean-abe078d1656b-us-exports"
+          ],
+          "support": [
+            {
+              "evidenceId": "article-soybean-abe078d1656b-us-exports",
+              "aspect": "exports"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "bullishFactors.1",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "psd-125"
+          ],
+          "support": []
+        },
+        {
+          "kind": "conditional",
+          "text": "향후 세계 대두 소비 전망이 상향 조정된다면 선물 가격에 상승 압력으로 작용할 가능성이 있습니다.",
+          "evidenceIds": [
+            "psd-125"
+          ],
+          "support": [
+            {
+              "evidenceId": "psd-125",
+              "aspect": "consumption"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "bearishFactors.0",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "article-soybean-abe078d1656b-us-production"
+          ],
+          "support": []
+        },
+        {
+          "kind": "conditional",
+          "text": "미국 대두 생산 전망이 상향됨에 따라 향후 선물 가격에 하방 압력으로 작용할 가능성이 있습니다.",
+          "evidenceIds": [
+            "article-soybean-abe078d1656b-us-production"
+          ],
+          "support": [
+            {
+              "evidenceId": "article-soybean-abe078d1656b-us-production",
+              "aspect": "production"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "bearishFactors.1",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "psd-28"
+          ],
+          "support": []
+        },
+        {
+          "kind": "conditional",
+          "text": "향후 세계 대두 생산 전망이 추가 상향된다면 선물 가격에 하방 압력으로 작용할 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ],
+          "support": [
+            {
+              "evidenceId": "psd-28",
+              "aspect": "production"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "watchItems.0",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "soybean-weather-brazil-721fc6b7-2026-10-17"
+          ],
+          "support": []
+        },
+        {
+          "kind": "recommendation",
+          "text": "브라질 마투그로수 대표 격자의 고온 선별 신호를 추적하고 현지 기상 자료를 점검하십시오.",
+          "evidenceIds": [
+            "soybean-weather-brazil-721fc6b7-2026-10-17"
+          ],
+          "support": [
+            {
+              "evidenceId": "soybean-weather-brazil-721fc6b7-2026-10-17",
+              "aspect": "weather-signal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "watchItems.1",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "article-soybean-5ad8e9ed2f04-brazil-planting"
+          ],
+          "support": []
+        },
+        {
+          "kind": "recommendation",
+          "text": "브라질 마토그로소 파종 진척과 5년 평균 비교를 확인하고 실제 공급사 오퍼를 검토하십시오.",
+          "evidenceIds": [
+            "article-soybean-5ad8e9ed2f04-brazil-planting"
+          ],
+          "support": [
+            {
+              "evidenceId": "article-soybean-5ad8e9ed2f04-brazil-planting",
+              "aspect": "planting-progress"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "field": "watchItems.2",
+      "segments": [
+        {
+          "kind": "fact",
+          "evidenceIds": [
+            "psd-176"
+          ],
+          "support": []
+        },
+        {
+          "kind": "recommendation",
+          "text": "세계 대두 기말재고 전망 수정 방향을 점검하고 실제 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-176"
+          ],
+          "support": [
+            {
+              "evidenceId": "psd-176",
+              "aspect": "inventory-level"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

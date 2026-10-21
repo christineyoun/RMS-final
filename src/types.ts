@@ -1,3 +1,6 @@
+import type {SugarPriceSnapshot} from './utils/sugarPriceSnapshot';
+import type {SoybeanOilPriceSnapshot} from './utils/soybeanOilPriceSnapshot';
+import type { SoybeanPriceSnapshot, DatedDisplayFx } from './utils/soybeanPriceSnapshot';
 export type CommodityCategory = 'grain' | 'oils' | 'starches' | 'sweeteners';
 
 export type Currency = 'KRW' | 'USD' | 'EUR';
@@ -45,8 +48,18 @@ export interface Commodity {
   price: number;
   unit: string;
   changeWoW?: number | null;
-  landedKrwKg: number;
 
+
+  _sugarPriceSnapshot?: SugarPriceSnapshot;
+  _soybeanOilPriceSnapshot?: SoybeanOilPriceSnapshot;
+  _soybeanPriceSnapshot?: SoybeanPriceSnapshot;
+  _soybeanDisplayFx?: DatedDisplayFx | null;
+  _originalPrice?: number;
+  _originalUnit?: string;
+  _canonicalQuoteDate?: string;
+  _canonicalQuoteSource?: string;
+  _canonicalWowUsdMt?: number | null;
+  _canonicalMomUsdMt?: number | null;
   sparkline?: number[];
   sparklineHistory?: Array<{ usdPerMT?: number; price?: number; date?: string } | number>;
   aiSynthesis?: string;
@@ -66,13 +79,13 @@ export interface Commodity {
   priceKrwEstimated?: number;
   changeMoM?: number | null;
   changeYoY?: number;
-  cifBusanDesc?: string;
+
   exchange?: string;
   chartData?: Array<{
     date: string;
     cashPrice: number;
     ma50: number;
-    landedBaseline: number;
+
   }>;
   aiConfidence?: number;
   bullishFactors?: string[];
@@ -99,50 +112,6 @@ export interface Commodity {
     s2: number;
     directive: string;
   };
-  scenarios?: {
-    base: {
-      title: string;
-      probability: number;
-      drivers: string;
-      landedKrw: number;
-      diffPct: number;
-      recommendation: string;
-    };
-    bull: {
-      title: string;
-      probability: number;
-      drivers: string;
-      landedKrw: number;
-      diffPct: number;
-      diffKrw: number;
-      recommendation: string;
-    };
-    bear: {
-      title: string;
-      probability: number;
-      drivers: string;
-      landedKrw: number;
-      diffPct: number;
-      diffKrw: number;
-      recommendation: string;
-    };
-    maxRiskUp: string;
-    maxOpportunityDown: string;
-    optimalHedge: string;
-  };
-  landedCompetitiveness?: Array<{
-    origin: string;
-    grade: string;
-    regionCategory: 'all' | 'na' | 'sa' | 'oc' | 'eu' | 'asia';
-    regionTag: string;
-    fob: string;
-    freight: string;
-    tariff: string;
-    cfr: string;
-    landedKrw: string;
-    assessment: string;
-    highlightBadge?: string;
-  }>;
   timelineEvents?: Array<{
     date: string;
     region: string;
@@ -207,17 +176,6 @@ export interface SupplyDemandBalance {
   source: string;
 }
 
-export interface BusanLandedCostItem {
-  commodityKey: string;
-  landedKrwKg: number;
-  benchmarkPrice: number;
-  unit: string;
-  freightUsd: number;
-  usdKrwRate: number;
-  tariffPercent: number;
-  portHandlingPercent: number;
-  calculationFormula: string;
-}
 
 export interface UnifiedEndpointMetrics {
   fx: {
@@ -290,7 +248,7 @@ export interface LiveMarketUpdate {
   macroRiskScore?: number; // 0 - 100
   macroRiskLevel?: 'LOW' | 'MODERATE' | 'ELEVATED' | 'CRITICAL';
   macroRiskPointerAngle?: number; // -90 deg to +90 deg
-  busanLandedCosts?: Record<string, BusanLandedCostItem>;
+
   weather?: WeatherTelemetry;
   supplyDemand?: SupplyDemandBalance;
   citations: Array<{ title: string; uri: string }>;
@@ -377,44 +335,14 @@ export interface UsWheatClassMetric {
   momChangeMt: number;
   momChangeBu: number;
   momChangePct: number;
+  wowAvailable?: boolean;
+  momAvailable?: boolean;
+  wowReferenceDate?: string;
+  momReferenceDate?: string;
 }
 
-export interface UsWheatHrwFobExport {
-  wheatClass: 'HRW';
-  proteinSpec: string;
-  exportLocation: string;
-  shipmentPeriod: string;
-  fobPriceUsdMt: number;
-  fobPriceUsdBu: number;
-  basisCentsBu: number;
-  reportDate: string;
-  sourcePdfUrl: string;
-}
 
-export interface UsWheatKoreaFreight {
-  origin: string;
-  destination: string;
-  freightRateUsdMt: number;
-  vessel: string;
-  quotationDate: string;
-  sourcePdfUrl: string;
-}
 
-export interface EstimatedKoreaLandedCost {
-  isAvailable: boolean;
-  statusText: string;
-  statusReason?: string;
-  estimatedLandedCostUsdMt: number | null;
-  compactFormulaText: string;
-  hrwFob: UsWheatHrwFobExport | null;
-  koreaFreight: UsWheatKoreaFreight | null;
-  portCostAssumption: {
-    portCostUsdMt: number | null;
-    isConfigured: boolean;
-    label: string;
-  };
-  missingInputs: string[];
-}
 
 export interface UsWheatPriceHistoryResponse {
   success: boolean;
@@ -432,9 +360,14 @@ export interface UsWheatPriceHistoryResponse {
     hrw: UsWheatClassMetric;
     hrs: UsWheatClassMetric;
   };
-  landedCost?: EstimatedKoreaLandedCost;
+
   errorMessage?: string;
   isCached?: boolean;
+  latestSourceType?: 'imported-baseline' | 'source-verified';
+  sourceStatus?: 'verified' | 'baseline' | 'unavailable';
+  sourceLastCheckedAt?: string | null;
+  sourceLastVerifiedAt?: string | null;
+  sourceError?: string | null;
 }
 
 
@@ -477,44 +410,8 @@ export interface AmisWheatResponse {
 }
 
 // USDA AMS Corn Physical Export & Ocean Freight Types
-export interface UsdaAmsCornFobExport {
-  commodity: 'Corn';
-  grade: string; // e.g. '#2 Yellow Corn'
-  exportLocation: string; // e.g. 'U.S. Gulf (Louisiana)'
-  shipmentPeriod: string; // e.g. 'Prompt / Nearby'
-  fobPriceUsdMt: number;
-  fobPriceUsdBu: number;
-  basisCentsBu?: number;
-  observationDate: string;
-  source: string;
-  sourceUrl: string;
-}
 
-export interface CornKoreaOceanFreight {
-  origin: string; // 'U.S. Gulf'
-  destination: string; // 'South Korea'
-  freightRateUsdMt: number;
-  vessel: string; // 'Panamax (54+ TMT)'
-  observationDate: string;
-  source: string;
-  sourceUrl: string;
-}
 
-export interface EstimatedCornKoreaLandedCost {
-  isAvailable: boolean;
-  statusText: string;
-  statusReason?: string;
-  estimatedLandedCostUsdMt: number | null;
-  compactFormulaText: string;
-  physicalFob: UsdaAmsCornFobExport | null;
-  koreaFreight: CornKoreaOceanFreight | null;
-  portCostAssumption: {
-    portCostUsdMt: number | null;
-    isConfigured: boolean;
-    label: string;
-  };
-  missingInputs: string[];
-}
 
 export interface CornProcurementAnalysisData {
   benchmarkPrice: {
@@ -531,57 +428,21 @@ export interface CornProcurementAnalysisData {
     previousPriceUsdMt: number;
     calculationBasis: string;
   };
-  landedCost: EstimatedCornKoreaLandedCost;
+
   deskRecommendation: {
     recommendation: string;
     dataInputsUsed: string[];
   };
   procurementRisk: {
-    level: '안정' | '주의' | '경계';
+    level: '안정' | '주의' | '경계' | '자료 부족';
     summarySentenceKo: string;
     sourcesUsed: string[];
   };
 }
 
 // USDA AMS Soybean Physical Export & Ocean Freight Types
-export interface UsdaAmsSoybeanFobExport {
-  commodity: 'Soybean';
-  grade: string;
-  exportLocation: string;
-  shipmentPeriod: string;
-  fobPriceUsdMt: number;
-  fobPriceUsdBu: number;
-  basisCentsBu?: number;
-  observationDate: string;
-  source: string;
-  sourceUrl: string;
-}
 
-export interface SoybeanKoreaOceanFreight {
-  origin: string;
-  destination: string;
-  freightRateUsdMt: number;
-  vessel: string;
-  observationDate: string;
-  source: string;
-  sourceUrl: string;
-}
 
-export interface EstimatedSoybeanKoreaLandedCost {
-  isAvailable: boolean;
-  statusText: string;
-  statusReason?: string;
-  estimatedLandedCostUsdMt: number | null;
-  compactFormulaText: string;
-  physicalFob: UsdaAmsSoybeanFobExport | null;
-  koreaFreight: SoybeanKoreaOceanFreight | null;
-  portCostAssumption: {
-    portCostUsdMt: number | null;
-    isConfigured: boolean;
-    label: string;
-  };
-  missingInputs: string[];
-}
 
 export interface SoybeanProcurementAnalysisData {
   benchmarkPrice: {
@@ -592,65 +453,30 @@ export interface SoybeanProcurementAnalysisData {
     source: string;
   };
   weeklyChange: {
-    wowPct: number;
-    absoluteChangeUsdMt: number;
-    direction: 'up' | 'down' | 'unchanged';
-    previousPriceUsdMt: number;
+    wowPct: number | null;
+    absoluteChangeUsdMt: number | null;
+    direction: 'up' | 'down' | 'unchanged' | 'unavailable';
+    previousPriceUsdMt: number | null;
     calculationBasis: string;
   };
-  landedCost: EstimatedSoybeanKoreaLandedCost;
+
   deskRecommendation: {
     recommendation: string;
     dataInputsUsed: string[];
   };
   procurementRisk: {
-    level: '안정' | '주의' | '경계';
+    level: '안정' | '주의' | '경계' | '자료 부족';
     summarySentenceKo: string;
     sourcesUsed: string[];
   };
 }
 
 // USDA AMS / ERS Soybean Oil Physical Export & Ocean Freight Types
-export interface UsdaAmsSoybeanOilFobExport {
-  commodity: 'Soybean Oil';
-  grade: string;
-  exportLocation: string;
-  shipmentPeriod: string;
-  fobPriceUsdMt: number;
-  rawPrice?: number;
-  rawUnit?: string;
-  observationDate: string;
-  source: string;
-  sourceUrl: string;
-}
 
-export interface SoybeanOilKoreaOceanFreight {
-  origin: string;
-  destination: string;
-  freightRateUsdMt: number;
-  vessel: string;
-  observationDate: string;
-  source: string;
-  sourceUrl: string;
-}
 
-export interface EstimatedSoybeanOilKoreaLandedCost {
-  isAvailable: boolean;
-  statusText: string;
-  statusReason?: string;
-  estimatedLandedCostUsdMt: number | null;
-  compactFormulaText: string;
-  physicalFob: UsdaAmsSoybeanOilFobExport | null;
-  koreaFreight: SoybeanOilKoreaOceanFreight | null;
-  portCostAssumption: {
-    portCostUsdMt: number | null;
-    isConfigured: boolean;
-    label: string;
-  };
-  missingInputs: string[];
-}
 
 export interface SoybeanOilProcurementAnalysisData {
+  supplyReference?: {commodityCode:string;marketYear:string;reportPeriod:string;verifiedAt:string;production1000MT:number;consumption1000MT:number;exports1000MT:number;endingStocks1000MT:number};
   benchmarkPrice: {
     rawPrice: number;
     rawUnit: string;
@@ -659,19 +485,20 @@ export interface SoybeanOilProcurementAnalysisData {
     source: string;
   };
   weeklyChange: {
-    wowPct: number;
-    absoluteChangeUsdMt: number;
-    direction: 'up' | 'down' | 'unchanged';
-    previousPriceUsdMt: number;
+    wowPct: number | null;
+    absoluteChangeUsdMt: number | null;
+    direction: 'up' | 'down' | 'unchanged' | 'unavailable';
+    previousPriceUsdMt: number | null;
     calculationBasis: string;
   };
-  landedCost: EstimatedSoybeanOilKoreaLandedCost;
+
   deskRecommendation: {
     recommendation: string;
     dataInputsUsed: string[];
   };
   procurementRisk: {
-    level: '안정' | '주의' | '경계';
+    level: '안정' | '주의' | '경계' | '제한 평가' | '자료 부족';
+    criteria?: string;
     summarySentenceKo: string;
     sourcesUsed: string[];
   };

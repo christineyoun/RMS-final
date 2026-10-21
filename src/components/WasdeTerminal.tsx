@@ -18,6 +18,9 @@ export interface WasdeRecord {
   yieldKGHA: number;
   lastUpdated: string;
   source?: string;
+  crush1000MT?:number;
+  oilCrushRatioPct?:number;
+  reportPeriod?:string;
   executiveBrief?: string;
 }
 
@@ -393,7 +396,6 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
             Official WASDE Release ↗
           </a>
         </span>
-        <span>동기화: <strong className="font-mono text-slate-700">{activePsdData.lastUpdated}</strong></span>
       </div>
     </div>
   );

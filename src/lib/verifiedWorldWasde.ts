@@ -112,6 +112,6 @@ export function normalizeVerifiedOtherCommodityWasde(
     yieldMTHA, yieldKGHA: Math.round(yieldMTHA * 1000),
     lastUpdated: verifiedAt,
     source: 'USDA FAS PSD Online',
-    executiveBrief: `USDA FAS PSD ${label} 글로벌 ${spec.ko}: 생산 ${mmt(productionKMT).toFixed(1)} MMT, 소비 ${mmt(consumptionKMT).toFixed(1)} MMT, 기말재고 ${mmt(endingStocksKMT).toFixed(1)} MMT, 수출 ${mmt(exportsKMT).toFixed(1)} MMT. 실제 공급처 오퍼·한국 도착원가는 별도 확인이 필요합니다.`
+    executiveBrief: `USDA FAS PSD ${label} 글로벌 ${spec.ko}: 생산 ${mmt(productionKMT).toFixed(1)} MMT, 소비 ${mmt(consumptionKMT).toFixed(1)} MMT, 기말재고 ${mmt(endingStocksKMT).toFixed(1)} MMT, 수출 ${mmt(exportsKMT).toFixed(1)} MMT. 실제 공급처 오퍼·실제 공급사 견적 및 한국향 운송조건는 별도 확인이 필요합니다.`
   };
 }

@@ -1,0 +1,1794 @@
+{
+  "kind": "OFFLINE-RETAINED-EVIDENCE-NOT-A-GEMINI-SNAPSHOT",
+  "checkedAt": "2026-10-21T00:14:23.448Z",
+  "packets": {
+    "palm-oil": {
+      "commodity": "palm-oil",
+      "facts": [
+        {
+          "id": "psd-28",
+          "commodity": "palm-oil",
+          "topic": "팜유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 팜유 생산 전망 78921 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-20T23:33:16.113Z",
+          "verification": "original-record",
+          "recordSha256": "bfc5747c2661d186e9b40e93f68cf0abdf5f23204c7db34816ca8bd297f74fa0",
+          "measure": {
+            "metric": "생산",
+            "scope": "world:2026/2027",
+            "benchmark": "4243000",
+            "unit": "천 MT",
+            "value": 78921,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-176",
+          "commodity": "palm-oil",
+          "topic": "팜유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 팜유 기말재고 전망 13697 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-20T23:33:16.113Z",
+          "verification": "original-record",
+          "recordSha256": "5c1a662e1cc1086352bfacb7f5641dcb5a836d28a2b8af80a313b72ef2baf53c",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "4243000",
+            "unit": "천 MT",
+            "value": 13697,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-88",
+          "commodity": "palm-oil",
+          "topic": "팜유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 팜유 수출 전망 43747 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-20T23:33:16.113Z",
+          "verification": "original-record",
+          "recordSha256": "5956af270c93740a4a1940348e2b031d48c28e6bd6d89e4959f176f503bef21d",
+          "measure": {
+            "metric": "수출",
+            "scope": "world:2026/2027",
+            "benchmark": "4243000",
+            "unit": "천 MT",
+            "value": 43747,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-20",
+          "commodity": "palm-oil",
+          "topic": "팜유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 팜유 기초재고 전망 15179 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-20T23:33:16.113Z",
+          "verification": "original-record",
+          "recordSha256": "920c8c54e247497ffdea04937310f7796527014107d058cd835393e591c748e0",
+          "measure": {
+            "metric": "기초재고",
+            "scope": "world:2026/2027",
+            "benchmark": "4243000",
+            "unit": "천 MT",
+            "value": 15179,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-125",
+          "commodity": "palm-oil",
+          "topic": "팜유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 팜유 소비 전망 78059 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-20T23:33:16.113Z",
+          "verification": "original-record",
+          "recordSha256": "c9ecb9ae695a366ab72d11b5ef6fdcbb0413c0220a549f27489e07e14d4f0efd",
+          "measure": {
+            "metric": "소비",
+            "scope": "world:2026/2027",
+            "benchmark": "4243000",
+            "unit": "천 MT",
+            "value": 78059,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-forecast-stock-balance",
+          "commodity": "palm-oil",
+          "topic": "팜유",
+          "text": "USDA PSD 2026-10: 2026/27 세계 팜유 기초재고 15179 천 MT 대비 기말재고 전망 13697 천 MT, 차이 -9.76%. 연간 전망 수지이며 실제 월간 재고 변화나 재고 부족 판정이 아닙니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-20T23:33:16.113Z",
+          "verification": "original-record",
+          "recordSha256": "0b165346cea758531af4fcb45784cf3348b6cba8e3149ee50f5d1c4c4d7e9229",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "4243000",
+            "unit": "천 MT",
+            "value": 13697,
+            "valueKind": "forecast"
+          },
+          "comparison": {
+            "metric": "annual-stock-forecast-balance",
+            "baselineId": "psd-20",
+            "currentId": "psd-176",
+            "direction": "decrease",
+            "pct": -9.76,
+            "observationCount": 2,
+            "monotonic": false
+          },
+          "interpretations": [
+            "기초재고와 기말재고 전망의 차이는 연간 전망 수지이며 실제 월간 재고 감소를 입증하지 않습니다."
+          ]
+        },
+        {
+          "id": "palm-cpo-2026-10-19",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-19 Kuala Lumpur FCPOc1 CPO 공표 종가 4797 MYR/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "68552b95f1fa4ef31d0150a82df0909e55d7d59ebdeed6087b01f8fbc2e181a5",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4797,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-cpo-2026-10-15",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-15 Kuala Lumpur FCPOc1 CPO 공표 종가 4769 MYR/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-15",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "68552b95f1fa4ef31d0150a82df0909e55d7d59ebdeed6087b01f8fbc2e181a5",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4769,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-cpo-2026-10-14",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-14 Kuala Lumpur FCPOc1 CPO 공표 종가 4619 MYR/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-14",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "68552b95f1fa4ef31d0150a82df0909e55d7d59ebdeed6087b01f8fbc2e181a5",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4619,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-cpo-2026-10-13",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-13 Kuala Lumpur FCPOc1 CPO 공표 종가 4700 MYR/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-13",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "68552b95f1fa4ef31d0150a82df0909e55d7d59ebdeed6087b01f8fbc2e181a5",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4700,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-cpo-2026-10-12",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-12 Kuala Lumpur FCPOc1 CPO 공표 종가 4682 MYR/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-12",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "68552b95f1fa4ef31d0150a82df0909e55d7d59ebdeed6087b01f8fbc2e181a5",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4682,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "comparison-palm-cpo-2026-10-12--palm-cpo-2026-10-19",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-12 대비 2026-10-19 CPO price 관측값: 4682 → 4797 MYR/MT, 변화 2.46%.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "83e5701103401b232cd163ffc68cf24dd8fd446672e9977db913b84d87bac928",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4797,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "palm-cpo-2026-10-12",
+            "currentId": "palm-cpo-2026-10-19",
+            "direction": "increase",
+            "pct": 2.46,
+            "observationCount": 5,
+            "monotonic": false
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 CPO price 관측값은 상승했습니다."
+          ]
+        },
+        {
+          "id": "comparison-palm-cpo-2026-10-14--palm-cpo-2026-10-19",
+          "commodity": "palm-oil",
+          "topic": "CPO",
+          "text": "2026-10-14 대비 2026-10-19 CPO price 관측값: 4619 → 4797 MYR/MT, 변화 3.85%.",
+          "sourceUrl": "https://www.investing.com/commodities/palm-oil-historical-data",
+          "sourceTitle": "Investing.com · CPO",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-20T02:09:10.996Z",
+          "verification": "original-record",
+          "recordSha256": "9dbc1bc1f46f3127ed6195182bd97c216e0a0e75e3e74e9cb9a54053e78d48ff",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-cpo",
+            "unit": "MYR/MT",
+            "value": 4797,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "palm-cpo-2026-10-14",
+            "currentId": "palm-cpo-2026-10-19",
+            "direction": "increase",
+            "pct": 3.85,
+            "observationCount": 3,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 CPO price 관측값은 상승했습니다."
+          ]
+        },
+        {
+          "id": "palm-olein-2026-10-19",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-10-19 Bursa Malaysia FPOLc1 RBD Olein 공표 종가 1167.5 USD/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "bff3b0b106dd751b8f9e2e247480ebbb004b731d14a4e78515ac9ad7f3e70418",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-olein-2026-10-15",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-10-15 Bursa Malaysia FPOLc1 RBD Olein 공표 종가 1167.5 USD/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-15",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "bff3b0b106dd751b8f9e2e247480ebbb004b731d14a4e78515ac9ad7f3e70418",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-olein-2026-10-14",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-10-14 Bursa Malaysia FPOLc1 RBD Olein 공표 종가 1167.5 USD/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-14",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "bff3b0b106dd751b8f9e2e247480ebbb004b731d14a4e78515ac9ad7f3e70418",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-olein-2026-10-13",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-10-13 Bursa Malaysia FPOLc1 RBD Olein 공표 종가 1167.5 USD/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-13",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "bff3b0b106dd751b8f9e2e247480ebbb004b731d14a4e78515ac9ad7f3e70418",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-olein-2026-10-12",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-10-12 Bursa Malaysia FPOLc1 RBD Olein 공표 종가 1167.5 USD/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-12",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "bff3b0b106dd751b8f9e2e247480ebbb004b731d14a4e78515ac9ad7f3e70418",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "palm-olein-2026-09-10",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-09-10 Bursa Malaysia FPOLc1 RBD Olein 공표 종가 1228 USD/MT.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-09-10",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "bff3b0b106dd751b8f9e2e247480ebbb004b731d14a4e78515ac9ad7f3e70418",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1228,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "comparison-palm-olein-2026-09-10--palm-olein-2026-10-19",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-09-10 대비 2026-10-19 RBD Olein price 관측값: 1228 → 1167.5 USD/MT, 변화 -4.93%.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "ff384d76a01469bb5cfa048c3b746e852ee59856d3d6ec74dc89a297337db11c",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "palm-olein-2026-09-10",
+            "currentId": "palm-olein-2026-10-19",
+            "direction": "decrease",
+            "pct": -4.93,
+            "observationCount": 20,
+            "monotonic": false
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 RBD Olein price 관측값은 하락했습니다."
+          ]
+        },
+        {
+          "id": "comparison-palm-olein-2026-10-14--palm-olein-2026-10-19",
+          "commodity": "palm-oil",
+          "topic": "RBD Olein",
+          "text": "2026-10-14 대비 2026-10-19 RBD Olein price 관측값: 1167.5 → 1167.5 USD/MT, 변화 0%.",
+          "sourceUrl": "https://www.investing.com/commodities/rbd-palm-olein-historical-data",
+          "sourceTitle": "Investing.com · RBD Olein",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:04.751Z",
+          "verification": "original-record",
+          "recordSha256": "7b2dc5dabc6c5961d00d273d3531a7819e198db053ad0f915ff0726b10d8a9c4",
+          "measure": {
+            "metric": "price",
+            "scope": "publisher-futures-close",
+            "benchmark": "palm-olein",
+            "unit": "USD/MT",
+            "value": 1167.5,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "palm-olein-2026-10-14",
+            "currentId": "palm-olein-2026-10-19",
+            "direction": "unchanged",
+            "pct": 0,
+            "observationCount": 3,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 RBD Olein price 관측값은 동일합니다."
+          ]
+        }
+      ],
+      "failures": [
+        "publisher-receipt-incomplete:publisher-f243018d6f1600b11f7dceeacb26f6d68af1b9da6e5829ebf5023c65353d2697.json"
+      ]
+    },
+    "soybean": {
+      "commodity": "soybean",
+      "facts": [
+        {
+          "id": "psd-28",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두 생산 전망 442700 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.250Z",
+          "verification": "original-record",
+          "recordSha256": "82a721f02371ec170f095aa594a2f705317e4cac620edbd91c41cdfd762170da",
+          "measure": {
+            "metric": "생산",
+            "scope": "world:2026/2027",
+            "benchmark": "2222000",
+            "unit": "천 MT",
+            "value": 442700,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-176",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두 기말재고 전망 124278 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.250Z",
+          "verification": "original-record",
+          "recordSha256": "417591380cf46cc461b3653688d4adf29eb4b4e680d6630102e5bef411e7534e",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "2222000",
+            "unit": "천 MT",
+            "value": 124278,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-88",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두 수출 전망 191995 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.250Z",
+          "verification": "original-record",
+          "recordSha256": "ba16456875c20f7339344dab9cc133af16ac937e94e5d8ecb50cb6f6131dfcd2",
+          "measure": {
+            "metric": "수출",
+            "scope": "world:2026/2027",
+            "benchmark": "2222000",
+            "unit": "천 MT",
+            "value": 191995,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-20",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두 기초재고 전망 124927 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.250Z",
+          "verification": "original-record",
+          "recordSha256": "244cc436a7f7867ef0017ee2464a69d2e76d18c2800f3aa44f58cedce917cda9",
+          "measure": {
+            "metric": "기초재고",
+            "scope": "world:2026/2027",
+            "benchmark": "2222000",
+            "unit": "천 MT",
+            "value": 124927,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-125",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두 소비 전망 442177 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.250Z",
+          "verification": "original-record",
+          "recordSha256": "b99c91737d57f3a82fa9a9c87d9fa875f4ea8ca29ddc564a6f158fcc5ec21b91",
+          "measure": {
+            "metric": "소비",
+            "scope": "world:2026/2027",
+            "benchmark": "2222000",
+            "unit": "천 MT",
+            "value": 442177,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-forecast-stock-balance",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "USDA PSD 2026-10: 2026/27 세계 대두 기초재고 124927 천 MT 대비 기말재고 전망 124278 천 MT, 차이 -0.52%. 연간 전망 수지이며 실제 월간 재고 변화나 재고 부족 판정이 아닙니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.250Z",
+          "verification": "original-record",
+          "recordSha256": "4a5f9a32256b68b9459c68528891ad361b7708cb858a30358d53762ee113d415",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "2222000",
+            "unit": "천 MT",
+            "value": 124278,
+            "valueKind": "forecast"
+          },
+          "comparison": {
+            "metric": "annual-stock-forecast-balance",
+            "baselineId": "psd-20",
+            "currentId": "psd-176",
+            "direction": "decrease",
+            "pct": -0.52,
+            "observationCount": 2,
+            "monotonic": false
+          },
+          "interpretations": [
+            "기초재고와 기말재고 전망의 차이는 연간 전망 수지이며 실제 월간 재고 감소를 입증하지 않습니다."
+          ]
+        },
+        {
+          "id": "soybean-zs-2026-09-21",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-09-21 CBOT ZS=F 대두 Yahoo 일봉 1328 US¢/bu, 487.96 USD/MT (36.7437 bu/MT로 환산). Yahoo 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-09-21",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "6389d29f3dac3f784a07beccebf005e773e7ab035a1298f7ffb460381b6f362e",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 487.96,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-2026-10-13",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-13 CBOT ZS=F 대두 Yahoo 일봉 1283.75 US¢/bu, 471.7 USD/MT (36.7437 bu/MT로 환산). Yahoo 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-13",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "3771a25014cd09195f50af3886a6584cb850822daeb1dc01107da4a543044d82",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 471.7,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-2026-10-14",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-14 CBOT ZS=F 대두 Yahoo 일봉 1277.25 US¢/bu, 469.31 USD/MT (36.7437 bu/MT로 환산). Yahoo 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-14",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "840a898d0c38201c695dd890194471eae60135e7943af35126d7a1dcb56a4a0e",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 469.31,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-2026-10-15",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-15 CBOT ZS=F 대두 Yahoo 일봉 1263 US¢/bu, 464.07 USD/MT (36.7437 bu/MT로 환산). Yahoo 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-15",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "e1ad899cd52f027cb94faf3166d1f55f2bcc338b4570a9288c2d4ad5aa20b7d6",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 464.07,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-2026-10-16",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-16 CBOT ZS=F 대두 Yahoo 일봉 1261.25 US¢/bu, 463.43 USD/MT (36.7437 bu/MT로 환산). Yahoo 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-16",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "2f1530b94506eb572dd9e46f7866290664e310978d00218e311585e145b42a80",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 463.43,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-2026-10-19",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-19 CBOT ZS=F 대두 Yahoo 일봉 1253.5 US¢/bu, 460.58 USD/MT (36.7437 bu/MT로 환산). Yahoo 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "bd8e5e3668709f37c7c5dcdf3c9fff0cd4559bc88c405aa4d22689ff5fdbc44d",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 460.58,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-2026-10-20",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-20 CBOT ZS=F 대두 Yahoo 일봉 1247.5 US¢/bu, 458.38 USD/MT (36.7437 bu/MT로 환산). 잠정 일봉이며 공식 CBOT 정산 확인 안 됨. 일반 선물 연결 심볼로 롤오버 미검증, 현물·한국 도착 원가 아님.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-20",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "a702ecbd13d20cdcc88cc06512b96044c0a31edc78ea092b2762063bb25b780a",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 458.38,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-zs-wow-2026-10-13--2026-10-20",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-10-13 대비 2026-10-20 대두 price 관측값: 471.7 → 458.38 USD/MT, 변화 -2.82%. WoW 실제 관측일 비교이며 중간 경로의 지속 추세·확정 정산·현물 도입 비용 변화는 입증하지 않습니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-20",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "54cf0c9d4da444bf2847908acb2b45039bb22932515aeb41bb969c217cbae442",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 458.38,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "soybean-zs-2026-10-13",
+            "currentId": "soybean-zs-2026-10-20",
+            "direction": "decrease",
+            "pct": -2.82,
+            "observationCount": 2,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 대두 선물 일봉의 순변화이며 지속 추세나 현물 원가 변화가 아닙니다."
+          ]
+        },
+        {
+          "id": "soybean-zs-mom-2026-09-21--2026-10-20",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "2026-09-21 대비 2026-10-20 대두 price 관측값: 487.96 → 458.38 USD/MT, 변화 -6.06%. MoM 실제 관측일 비교이며 중간 경로의 지속 추세·확정 정산·현물 도입 비용 변화는 입증하지 않습니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZS=F daily bars",
+          "observedAt": "2026-10-20",
+          "verifiedAt": "2026-10-21T00:00:06.248Z",
+          "verification": "original-record",
+          "recordSha256": "95e789e79736aacaa0af9e10b4f2b73e52c8e0267aceda942c681086c246a928",
+          "measure": {
+            "metric": "price",
+            "scope": "Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZS=F",
+            "unit": "USD/MT",
+            "value": 458.38,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "soybean-zs-2026-09-21",
+            "currentId": "soybean-zs-2026-10-20",
+            "direction": "decrease",
+            "pct": -6.06,
+            "observationCount": 2,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 대두 선물 일봉의 순변화이며 지속 추세나 현물 원가 변화가 아닙니다."
+          ]
+        },
+        {
+          "id": "soybean-weather-usa-cb2237ca-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 미국 아이오와 대표 격자 기상: 7일 강수 21.5 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-93.62&latitude=42.02&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 미국 아이오와",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "db6f9eb1363abc0e106f9be6c588fcc0e8f655f700bf52b4f4c9bdd793748721",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "usa:아이오와:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-usa-ab395b19-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 미국 일리노이 대표 격자 기상: 7일 강수 22.6 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-89.25&latitude=40.11&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 미국 일리노이",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "308a1106047cb11e9f15f527d4a0c11b9e816c9f30b9f38ebf7e4361dd66abe6",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "usa:일리노이:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-brazil-721fc6b7-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 브라질 마투그로수 대표 격자 기상: 7일 강수 28.1 mm, 일최고기온 35°C 이상 4일. 반복 고온 선별 신호이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-56.1&latitude=-13.5&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 브라질 마투그로수",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "c3e9b3e1819f172bcaab4d4ebf64b80feb1df1d4d674554fe218ab78366eacc3",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "brazil:마투그로수:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 4,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-brazil-d8efef70-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 브라질 파라나 대표 격자 기상: 7일 강수 97.1 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-51.5&latitude=-24.5&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 브라질 파라나",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "30885374761bd8e48d5f731fee2c252fe2ccfde94cd330385fc778140b584a9c",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "brazil:파라나:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-argentina-a1db2745-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 아르헨티나 코르도바 대표 격자 기상: 7일 강수 21 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-64.18&latitude=-31.42&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 아르헨티나 코르도바",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "e7e33f038965b17fe9815c393c324f47824acf952cced266a87f5240fc3fea2e",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "argentina:코르도바:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-argentina-96e1506c-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 아르헨티나 산타페 대표 격자 기상: 7일 강수 1.7 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-60.7&latitude=-31.6&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 아르헨티나 산타페",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "5676d17df965cf27ca2603d5dab3ef599a5ce2f552842906c27db7454ae5148f",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "argentina:산타페:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-paraguay-dd12a4d9-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 파라과이 알토파라나 대표 격자 기상: 7일 강수 112.1 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-54.63&latitude=-25.53&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 파라과이 알토파라나",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "cbe5a2343013869b314ceddc67b4f1bfc6ed2ab97be150bfc59503fd4e10f655",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "paraguay:알토파라나:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-weather-paraguay-b0e7bfaa-2026-10-17",
+          "commodity": "soybean",
+          "topic": "대두",
+          "text": "NASA POWER 2026-10-11~2026-10-17 LST 파라과이 이타푸아 대표 격자 기상: 7일 강수 28.6 mm, 일최고기온 35°C 이상 0일. 반복 고온 선별 임계 신호 없음이며 지역 전체 작황·토양수분·가뭄·침수·피해 판정 아님.",
+          "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-55.67&latitude=-26.89&start=20260920&end=20261019&format=JSON&time-standard=LST",
+          "sourceTitle": "NASA POWER · 파라과이 이타푸아",
+          "observedAt": "2026-10-17",
+          "verifiedAt": "2026-10-20T08:26:54.680Z",
+          "verification": "original-record",
+          "recordSha256": "a3d1f4b0f3f2ec164d593a788aba2ff8232ec67eb1009174668f5228763f96d2",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "paraguay:이타푸아:grid:LST",
+            "benchmark": "NASA POWER:T2M_MAX,PRECTOTCORR",
+            "unit": "observed days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "actual"
+          }
+        }
+      ],
+      "failures": []
+    },
+    "soybean-oil": {
+      "commodity": "soybean-oil",
+      "facts": [
+        {
+          "id": "psd-28",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두유 생산 전망 75241 천 MT. 국가별 통계·실제 월간 재고 변화와 구분하는 연간 전망입니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "생산",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "천 MT",
+            "value": 75241,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-125",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두유 소비 전망 73483 천 MT. 국가별 통계·실제 월간 재고 변화와 구분하는 연간 전망입니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "소비",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "천 MT",
+            "value": 73483,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-88",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두유 수출 전망 14949 천 MT. 국가별 통계·실제 월간 재고 변화와 구분하는 연간 전망입니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "수출",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "천 MT",
+            "value": 14949,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-176",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두유 기말재고 전망 6854 천 MT. 국가별 통계·실제 월간 재고 변화와 구분하는 연간 전망입니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "천 MT",
+            "value": 6854,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-20",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 보고: 2026/27 세계 대두유 기초재고 전망 6415 천 MT. 국가별 통계·실제 월간 재고 변화와 구분하는 연간 전망입니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "기초재고",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "천 MT",
+            "value": 6415,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-forecast-stock-balance",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10: 2026/27 세계 대두유 기초재고 6415 천 MT 대비 기말재고 전망 6854 천 MT, 차이 6.84%. 연간 전망 수지이며 실제 월간 재고 변화나 재고 적정성 판정이 아닙니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "천 MT",
+            "value": 6854,
+            "valueKind": "forecast"
+          },
+          "comparison": {
+            "metric": "annual-stock-forecast-balance",
+            "baselineId": "psd-20",
+            "currentId": "psd-176",
+            "direction": "increase",
+            "pct": 6.84,
+            "observationCount": 2,
+            "monotonic": false
+          }
+        },
+        {
+          "id": "psd-oil-crush-input",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 세계 대두유 2026/27 연간 전망의 원료 대두 압착 투입량 385714 천 MT. 대두유 생산량이나 세계 대두 총생산량이 아닙니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "raw-soybean-crush-input",
+            "scope": "world:2026/2027:raw-soybean-input",
+            "benchmark": "4232000",
+            "unit": "천 MT raw soybeans",
+            "value": 385714,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-oil-production-crush-ratio",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "USDA PSD 2026-10 세계 대두유 2026/27 생산 전망 75241 천 MT ÷ 원료 압착량 전망 385714 천 MT × 100 = 19.51%. 계산된 연간 생산/원료 투입 질량비이며 공장 실측 추출 효율·정제 수율이 아닙니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD · World soybean oil",
+          "observedAt": "2026-10",
+          "verifiedAt": "2026-10-21T00:00:06.284Z",
+          "verification": "original-record",
+          "recordSha256": "2d00675c58430304bbf3c5557df7e335031017b1d709210afe571a6f761ac0e0",
+          "measure": {
+            "metric": "production-crush-ratio",
+            "scope": "world:2026/2027",
+            "benchmark": "4232000",
+            "unit": "% derived annual mass ratio",
+            "value": 19.51,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-09-21",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-09-21 CBOT ZL=F 대두유 Yahoo 일봉 68.32 US¢/lb, 1506.2 USD/MT (US¢/lb × 22.0462262185 환산). Yahoo 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-09-21",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "d53997f74533f2be69580d4417384fc1e4df3a22fbd1fda639710ba3c1d9a668",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1506.2,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-10-13",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-13 CBOT ZL=F 대두유 Yahoo 일봉 67.67 US¢/lb, 1491.87 USD/MT (US¢/lb × 22.0462262185 환산). Yahoo 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-13",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "cb97f8b02c1e4ded23123ddcc531dfab729b35c5ff4bae7ecd9bef80ab87a314",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1491.87,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-10-14",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-14 CBOT ZL=F 대두유 Yahoo 일봉 67.05 US¢/lb, 1478.2 USD/MT (US¢/lb × 22.0462262185 환산). Yahoo 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-14",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "67988b1ddc9638b630cbf1879ca0a82ddb12d37b1ca034bc202386ba81932222",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1478.2,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-10-15",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-15 CBOT ZL=F 대두유 Yahoo 일봉 67.15 US¢/lb, 1480.4 USD/MT (US¢/lb × 22.0462262185 환산). Yahoo 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-15",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "aebce19c57d6a984928d265a270fa521ee06c1c434602334708f0d2b79ebcc94",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1480.4,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-10-16",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-16 CBOT ZL=F 대두유 Yahoo 일봉 67.13 US¢/lb, 1479.96 USD/MT (US¢/lb × 22.0462262185 환산). Yahoo 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-16",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "d8116aee23eb2c35bbdb8dd674ae7359c9c3cac9ffb670fa4c28ce70ae57e457",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1479.96,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-10-19",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-19 CBOT ZL=F 대두유 Yahoo 일봉 66.69 US¢/lb, 1470.26 USD/MT (US¢/lb × 22.0462262185 환산). Yahoo 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "87d5c09e8ffa6627fc20415d7c868428043b8553a6c2e56bf0457e36d27ad3ae",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1470.26,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-2026-10-20",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-20 CBOT ZL=F 대두유 Yahoo 일봉 66.71 US¢/lb, 1470.7 USD/MT (US¢/lb × 22.0462262185 환산). 잠정 일봉이며 공식 CBOT 정산·롤오버는 미검증. 원유 대두유 선물 지표이며 정제유 현물 견적·한국 도착 원가가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-20",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "ad6f439014b01b151a58af2ee3d20f650157f93c3b3993e2989ba5efbf6bb30e",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1470.7,
+            "valueKind": "actual"
+          }
+        },
+        {
+          "id": "soybean-oil-zl-wow",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-10-13 대비 2026-10-20 대두유 price 관측값: 1491.87 → 1470.7 USD/MT, 변화 -1.42%. WoW 실제 두 관측일의 순변화이며 지속 추세·확정 정산·물리적 구매 비용 변화가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-20",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "fd61dccfb93e417276043592d47b90c8610338d48993fedb115173f3cff9fe4c",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1470.7,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "soybean-oil-zl-2026-10-13",
+            "currentId": "soybean-oil-zl-2026-10-20",
+            "direction": "decrease",
+            "pct": -1.42,
+            "observationCount": 2,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 대두유 price 관측값은 하락했습니다."
+          ]
+        },
+        {
+          "id": "soybean-oil-zl-mom",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "2026-09-21 대비 2026-10-20 대두유 price 관측값: 1506.2 → 1470.7 USD/MT, 변화 -2.36%. MoM 실제 두 관측일의 순변화이며 지속 추세·확정 정산·물리적 구매 비용 변화가 아닙니다.",
+          "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+          "sourceTitle": "Yahoo Finance · CBOT ZL=F daily bars",
+          "observedAt": "2026-10-20",
+          "verifiedAt": "2026-10-21T00:00:06.282Z",
+          "verification": "original-record",
+          "recordSha256": "87dda5c92866273969a48dea60e6547590f4322a9405bc8ff688fc2ec41595a3",
+          "measure": {
+            "metric": "price",
+            "scope": "US:Yahoo-generic-futures-daily-bar-not-verified-settlement",
+            "benchmark": "CBOT:ZL=F",
+            "unit": "USD/MT",
+            "value": 1470.7,
+            "valueKind": "actual"
+          },
+          "comparison": {
+            "metric": "price",
+            "baselineId": "soybean-oil-zl-2026-09-21",
+            "currentId": "soybean-oil-zl-2026-10-20",
+            "direction": "decrease",
+            "pct": -2.36,
+            "observationCount": 2,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 대두유 price 관측값은 하락했습니다."
+          ]
+        },
+        {
+          "id": "soybean-oil-weather-argentina",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "Open-Meteo 2026-10-13~2026-10-19 (America/Argentina/Cordoba) 아르헨티나 (Rosario) 원료 대두 재배지 대표 격자 모델 기상: 7일 강수 8.1 mm, 일최고기온 35°C 이상 0일. 3일 이상 반복 고온만 RMS 선별하며 관측소 실측·기상 정상·작황 피해·대두유 생산 변화는 입증하지 않습니다.",
+          "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-32.95&longitude=-60.66&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto",
+          "sourceTitle": "Open-Meteo · upstream soybean 아르헨티나 (Rosario)",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:04.911Z",
+          "verification": "original-record",
+          "recordSha256": "49d2f6889fcc88f54df0f810869cf920bf23d44bd1dde9559b8ebcdf343d3e41",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "AR:아르헨티나 (Rosario):upstream-soybean-grid-model",
+            "benchmark": "Open-Meteo:temperature_2m_max,precipitation_sum",
+            "unit": "model days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "proxy"
+          }
+        },
+        {
+          "id": "soybean-oil-weather-paraguay",
+          "commodity": "soybean-oil",
+          "topic": "대두유",
+          "text": "Open-Meteo 2026-10-13~2026-10-19 (America/Asuncion) 파라과이 (Alto Paraná) 원료 대두 재배지 대표 격자 모델 기상: 7일 강수 33.7 mm, 일최고기온 35°C 이상 0일. 3일 이상 반복 고온만 RMS 선별하며 관측소 실측·기상 정상·작황 피해·대두유 생산 변화는 입증하지 않습니다.",
+          "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-25.53&longitude=-54.63&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto",
+          "sourceTitle": "Open-Meteo · upstream soybean 파라과이 (Alto Paraná)",
+          "observedAt": "2026-10-19",
+          "verifiedAt": "2026-10-21T00:00:04.911Z",
+          "verification": "original-record",
+          "recordSha256": "5d6e7598ce81bbd1a560b1d3904587971285fe6f79e875568be60c8abcade6a2",
+          "measure": {
+            "metric": "weather-screen",
+            "scope": "PA:파라과이 (Alto Paraná):upstream-soybean-grid-model",
+            "benchmark": "Open-Meteo:temperature_2m_max,precipitation_sum",
+            "unit": "model days Tmax>=35°C",
+            "value": 0,
+            "valueKind": "proxy"
+          }
+        }
+      ],
+      "failures": [
+        "Oil-weather-insufficient:brazil",
+        "Oil-weather-insufficient:usa"
+      ]
+    },
+    "sugar": {
+      "commodity": "sugar",
+      "facts": [
+        {
+          "id": "psd-28",
+          "commodity": "sugar",
+          "topic": "설탕(원심분리당)",
+          "text": "USDA PSD 2026-05 보고: 2026/27 세계 설탕(원심분리당) 생산 전망 184854 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/0612000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-05",
+          "verifiedAt": "2026-10-20T23:33:16.114Z",
+          "verification": "original-record",
+          "recordSha256": "62c355ca38694a3854fa23761a59b8cce42cbaf729ac1964873bedb7583f91e6",
+          "measure": {
+            "metric": "생산",
+            "scope": "world:2026/2027",
+            "benchmark": "0612000",
+            "unit": "천 MT",
+            "value": 184854,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-176",
+          "commodity": "sugar",
+          "topic": "설탕(원심분리당)",
+          "text": "USDA PSD 2026-05 보고: 2026/27 세계 설탕(원심분리당) 기말재고 전망 44410 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/0612000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-05",
+          "verifiedAt": "2026-10-20T23:33:16.114Z",
+          "verification": "original-record",
+          "recordSha256": "9f4bc02e9722490a2adce960fe47f4eb6a0209dafda1bd79775d3ed64524caa1",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "0612000",
+            "unit": "천 MT",
+            "value": 44410,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-88",
+          "commodity": "sugar",
+          "topic": "설탕(원심분리당)",
+          "text": "USDA PSD 2026-05 보고: 2026/27 세계 설탕(원심분리당) 수출 전망 62324 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/0612000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-05",
+          "verifiedAt": "2026-10-20T23:33:16.114Z",
+          "verification": "original-record",
+          "recordSha256": "df85db00aadcfd44f881fbf6b92c82ab0f8ec578327bd3a7f40bac92f202e9ce",
+          "measure": {
+            "metric": "수출",
+            "scope": "world:2026/2027",
+            "benchmark": "0612000",
+            "unit": "천 MT",
+            "value": 62324,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-20",
+          "commodity": "sugar",
+          "topic": "설탕(원심분리당)",
+          "text": "USDA PSD 2026-05 보고: 2026/27 세계 설탕(원심분리당) 기초재고 전망 43523 천 MT.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/0612000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-05",
+          "verifiedAt": "2026-10-20T23:33:16.114Z",
+          "verification": "original-record",
+          "recordSha256": "8638dc9542a71c550a4a935cd9226c25b73b1a136da8c7021185c94fd3a7b0ab",
+          "measure": {
+            "metric": "기초재고",
+            "scope": "world:2026/2027",
+            "benchmark": "0612000",
+            "unit": "천 MT",
+            "value": 43523,
+            "valueKind": "forecast"
+          }
+        },
+        {
+          "id": "psd-forecast-stock-balance",
+          "commodity": "sugar",
+          "topic": "설탕(원심분리당)",
+          "text": "USDA PSD 2026-05: 2026/27 세계 설탕(원심분리당) 기초재고 43523 천 MT 대비 기말재고 전망 44410 천 MT, 차이 2.04%. 연간 전망 수지이며 실제 월간 재고 변화나 재고 부족 판정이 아닙니다.",
+          "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/0612000/world/year/2026",
+          "sourceTitle": "USDA FAS PSD",
+          "observedAt": "2026-05",
+          "verifiedAt": "2026-10-20T23:33:16.114Z",
+          "verification": "original-record",
+          "recordSha256": "97139ba3c7ab4bd1acc02952c20c601d434e243e00df24ac3e649490a71f9897",
+          "measure": {
+            "metric": "기말재고",
+            "scope": "world:2026/2027",
+            "benchmark": "0612000",
+            "unit": "천 MT",
+            "value": 44410,
+            "valueKind": "forecast"
+          },
+          "comparison": {
+            "metric": "annual-stock-forecast-balance",
+            "baselineId": "psd-20",
+            "currentId": "psd-176",
+            "direction": "increase",
+            "pct": 2.04,
+            "observationCount": 2,
+            "monotonic": false
+          },
+          "interpretations": [
+            "기초재고와 기말재고 전망의 차이는 연간 전망 수지이며 실제 월간 재고 감소를 입증하지 않습니다."
+          ]
+        }
+      ],
+      "failures": []
+    },
+    "potato-starch": {
+      "commodity": "potato-starch",
+      "facts": [
+        {
+          "id": "potato-production-2023",
+          "commodity": "potato-starch",
+          "topic": "원료감자",
+          "text": "Eurostat 2023년 독일·프랑스·네덜란드·덴마크 원료감자 생산량 29.46 MMT. 전분 가격이나 전분 생산량이 아닌 공급 대리지표입니다.",
+          "sourceUrl": "https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en",
+          "sourceTitle": "Eurostat · raw potato production",
+          "observedAt": "2023-12-31",
+          "verifiedAt": "2026-10-21T00:00:07.148Z",
+          "verification": "original-record",
+          "recordSha256": "89496322067095fe2cf9086b9cb0d0893dbc9bf364924b020bb887aee2e4ddf5",
+          "measure": {
+            "metric": "raw-potato-production",
+            "scope": "DE,FR,NL,DK",
+            "benchmark": "Eurostat:R1000",
+            "unit": "MMT",
+            "value": 29.46,
+            "valueKind": "proxy"
+          }
+        },
+        {
+          "id": "potato-production-2024",
+          "commodity": "potato-starch",
+          "topic": "원료감자",
+          "text": "Eurostat 2024년 독일·프랑스·네덜란드·덴마크 원료감자 생산량 31.31 MMT. 전분 가격이나 전분 생산량이 아닌 공급 대리지표입니다.",
+          "sourceUrl": "https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en",
+          "sourceTitle": "Eurostat · raw potato production",
+          "observedAt": "2024-12-31",
+          "verifiedAt": "2026-10-21T00:00:07.148Z",
+          "verification": "original-record",
+          "recordSha256": "3f1f6cc2eabc985ff7dffa71394ebdb8b4752cfb65db452ede692eb284e6e2e6",
+          "measure": {
+            "metric": "raw-potato-production",
+            "scope": "DE,FR,NL,DK",
+            "benchmark": "Eurostat:R1000",
+            "unit": "MMT",
+            "value": 31.31,
+            "valueKind": "proxy"
+          }
+        },
+        {
+          "id": "potato-production-2025",
+          "commodity": "potato-starch",
+          "topic": "원료감자",
+          "text": "Eurostat 2025년 독일·프랑스·네덜란드·덴마크 원료감자 생산량 35.25 MMT. 전분 가격이나 전분 생산량이 아닌 공급 대리지표입니다.",
+          "sourceUrl": "https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en",
+          "sourceTitle": "Eurostat · raw potato production",
+          "observedAt": "2025-12-31",
+          "verifiedAt": "2026-10-21T00:00:07.148Z",
+          "verification": "original-record",
+          "recordSha256": "25ffd07fef5705e3d9ac14ba088aa1a7b847a712240ebb8255e6f8698c9cc2a1",
+          "measure": {
+            "metric": "raw-potato-production",
+            "scope": "DE,FR,NL,DK",
+            "benchmark": "Eurostat:R1000",
+            "unit": "MMT",
+            "value": 35.25,
+            "valueKind": "proxy"
+          }
+        },
+        {
+          "id": "comparison-potato-production-2024--potato-production-2025",
+          "commodity": "potato-starch",
+          "topic": "원료감자",
+          "text": "2024-12-31 대비 2025-12-31 원료감자 raw-potato-production 관측값: 31.31 → 35.25 MMT, 변화 12.58%.",
+          "sourceUrl": "https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en",
+          "sourceTitle": "Eurostat · raw potato production",
+          "observedAt": "2025-12-31",
+          "verifiedAt": "2026-10-21T00:00:07.148Z",
+          "verification": "original-record",
+          "recordSha256": "5ce0d5273184d8ebfcef400908b1f08b6d6df0c970806c74cf01497b8caf9f20",
+          "measure": {
+            "metric": "raw-potato-production",
+            "scope": "DE,FR,NL,DK",
+            "benchmark": "Eurostat:R1000",
+            "unit": "MMT",
+            "value": 35.25,
+            "valueKind": "proxy"
+          },
+          "comparison": {
+            "metric": "raw-potato-production",
+            "baselineId": "potato-production-2024",
+            "currentId": "potato-production-2025",
+            "direction": "increase",
+            "pct": 12.58,
+            "observationCount": 2,
+            "monotonic": true
+          },
+          "interpretations": [
+            "해당 두 관측일 사이 원료감자 raw-potato-production 관측값은 상승했습니다."
+          ]
+        }
+      ],
+      "failures": []
+    }
+  },
+  "psdWorldPalm": {
+    "commodity": "palm-oil",
+    "commodityCode": "4243000",
+    "verifiedAt": "2026-10-20T23:33:16.113Z",
+    "data": {
+      "commodityCode": "4243000",
+      "marketYear": "2026",
+      "releaseMonth": "10",
+      "source": "USDA FAS PSD Online",
+      "production1000MT": 78921,
+      "productionMMT": 78.9,
+      "domesticConsumption1000MT": 78059,
+      "domesticConsumptionMMT": 78.1,
+      "endingStocks1000MT": 13697,
+      "endingStocksMMT": 13.7,
+      "beginningStocks1000MT": 15179,
+      "beginningStocksMMT": 15.2,
+      "imports1000MT": 41403,
+      "exports1000MT": 43747,
+      "exportsMMT": 43.7,
+      "totalSupply1000MT": 135503,
+      "stocksToUseRatio": 17.5,
+      "stocksToUseRatioPct": 17.5,
+      "areaHarvested1000HA": 27717,
+      "yieldMTHA": 2.8474,
+      "rawRecordsCount": 13,
+      "rawRecords": [
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 4,
+          "unitId": 4,
+          "value": 27717
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 20,
+          "unitId": 8,
+          "value": 15179
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 28,
+          "unitId": 8,
+          "value": 78921
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 57,
+          "unitId": 8,
+          "value": 41403
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 86,
+          "unitId": 8,
+          "value": 135503
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 88,
+          "unitId": 8,
+          "value": 43747
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 140,
+          "unitId": 8,
+          "value": 28190
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 149,
+          "unitId": 8,
+          "value": 49274
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 161,
+          "unitId": 8,
+          "value": 595
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 125,
+          "unitId": 8,
+          "value": 78059
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 176,
+          "unitId": 8,
+          "value": 13697
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 178,
+          "unitId": 8,
+          "value": 135503
+        },
+        {
+          "commodityCode": "4243000",
+          "countryCode": "00",
+          "marketYear": "2026",
+          "calendarYear": "2026",
+          "month": "10",
+          "attributeId": 184,
+          "unitId": 26,
+          "value": 2.8474
+        }
+      ]
+    }
+  }
+}

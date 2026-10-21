@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {parsePalmHistory,PRICE_SOURCES,validatePalmPublisher,quarantinePublicObservation,appendMatchingPalmRows,palmHistoryPayload} from '../publicPriceHistory.ts';
+import {latestCommonPalmSpread,palmClosingRange} from '../../utils/palmPriceIntegrity.ts';
+import {observedPriceChanges} from '../../utils/observedPriceChanges.ts';
+
+const now=new Date('2026-10-20T00:00:00Z');
+const rows=(values:Array<[string,number]>)=>`<table><thead><tr><th>Date</th><th>Price</th><th>Open</th><th>High</th><th>Low</th></tr></thead><tbody>${values.map(([d,v])=>`<tr><td>${d}</td><td>${v.toLocaleString('en-US',{minimumFractionDigits:2})}</td></tr>`).join('')}</tbody></table>`;
+const publishedDates=['Sep 24, 2026','Sep 28, 2026','Sep 29, 2026','Sep 30, 2026','Oct 01, 2026','Oct 05, 2026','Oct 06, 2026','Oct 07, 2026','Oct 08, 2026','Oct 12, 2026','Oct 13, 2026','Oct 14, 2026','Oct 15, 2026'];
+const html=`<h1>RBD Palm Olein (FPOLc1)</h1><p>Currency in USD</p><p>Delayed Data · 15/10</p>${rows(publishedDates.map(d=>[d,1167.5]))}<table><tr><td>Oct 19, 2026</td><td>1167.50</td></tr></table>`;
+validatePalmPublisher(html,'palm-olein',PRICE_SOURCES.olein);
+const parsed=parsePalmHistory(html,'palm-olein',now,true);
+assert.equal(parsed.length,13);assert.equal(parsed.at(-1)?.date,'2026-10-15');assert.ok(parsed.every(p=>p.value===1167.5&&p.unit==='USD/MT'));
+assert.ok(!parsed.some(p=>p.date==='2026-10-19'),'unrelated table/refresh date cannot manufacture an observation');
+const directHtml=`<h1>RBD Palm Olein (FPOLc1)</h1>Currency in USD<time data-test="trading-time-label" datetime="2026-10-15T05:00:00.000Z">15/10</time>${rows([['Oct 19, 2026',1167.5],['Oct 15, 2026',1167.5]])}`;
+const direct=parsePalmHistory(directHtml,'palm-olein',now,true);
+assert.equal(direct.at(-1)?.date,'2026-10-19');assert.equal(direct.at(-1)?.publisherQuoteDate,'2026-10-15','explicit table date and older quote timestamp remain separate facts');
+const cpoHtml=`<h1>Palm Oil (FCPOc1)</h1>Currency in MYR<p>Delayed Data · 15/10</p>${rows([['Oct 19, 2026',4797],['Oct 12, 2026',4682]])}`;
+validatePalmPublisher(cpoHtml,'palm-cpo',PRICE_SOURCES.cpoFcpo);
+assert.deepEqual(parsePalmHistory(cpoHtml,'palm-cpo',now,true).map(p=>[p.date,p.value,p.unit]),[['2026-10-12',4682,'MYR/MT'],['2026-10-19',4797,'MYR/MT']],'table dates take priority over stale quote header');
+const bad={...parsed[0],date:'2026-10-19'};
+const quarantined=quarantinePublicObservation({version:1,points:[...parsed,bad]},'palm-olein','2026-10-19','not in verified table',PRICE_SOURCES.olein);
+assert.equal(quarantined.points.length,13);assert.deepEqual(quarantined.quarantined?.[0].point,bad,'suspect row is retained for audit');
+assert.equal(palmHistoryPayload(quarantined).oleinObservationDate,'2026-10-15');
+const manual={benchmark:'palm-cpo' as const,sourceUrl:PRICE_SOURCES.cpo,date:'2026-10-07',value:4553,usdPerMT:1114.7,unit:'MYR/MT' as const,provenance:'manual-import' as const};
+const corrected={...manual,sourceUrl:PRICE_SOURCES.cpoFcpo,value:4661,usdPerMT:1140.17,provenance:'source-verified' as const};
+const merged=appendMatchingPalmRows({version:1,points:[manual]},[corrected],PRICE_SOURCES.cpoFcpo);
+assert.deepEqual(merged.points[0],manual);assert.equal(palmHistoryPayload(merged).historicalSeries[0].cpoMyr,4661);
+const observations=[{date:'2026-09-14',cpoUsd:1200,oleinUsd:1228},{date:'2026-10-08',cpoUsd:1122.33,oleinUsd:1167.5},{date:'2026-10-12',cpoUsd:1146.43,oleinUsd:1167.5},{date:'2026-10-15',cpoUsd:1168.16,oleinUsd:1167.5},{date:'2026-10-19',cpoUsd:1175.02}];
+assert.deepEqual(latestCommonPalmSpread(observations),{date:'2026-10-15',usdPerMT:-0.66},'spread uses the last common date, not mismatched latest quotes');
+const oleinMoves=observedPriceChanges(observations.map(p=>({date:p.date,usdPerMT:p.oleinUsd!})));
+assert.equal(oleinMoves.wow.pct,0);assert.equal(oleinMoves.wow.referenceDate,'2026-10-08');assert.equal(oleinMoves.mom.pct,-4.93);assert.equal(oleinMoves.mom.referenceDate,'2026-09-14');
+const range=palmClosingRange(observations,'olein',now.getTime())!;
+assert.equal(range.asOf,'2026-10-15');assert.equal(range.low,1167.5);assert.equal(range.high,1228);assert.equal(range.pct,0);
+assert.equal(palmClosingRange([],'cpo',now.getTime()),null,'missing range cannot become hardcoded prices');
+const fx=1330;for(const p of observations){if(p.oleinUsd&&p.cpoUsd)assert.ok(Math.abs((p.oleinUsd-p.cpoUsd)*fx-(p.oleinUsd*fx-p.cpoUsd*fx))<1e-8,'same display FX across both benchmarks and spread');}
+console.log('PASS: publisher dates/units; real flat Olein rows; explicit Oct19 table row versus Oct15 quote header; no inferred/relabelled dates; preserved audit/imports; CPO corrections; common-date spread; dated WoW/MoM; closing-range position; shared display FX.');

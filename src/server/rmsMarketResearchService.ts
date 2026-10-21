@@ -3,7 +3,7 @@
  * Separate external market research from the verified six-box statistics.
  * Public headline search and dated Open-Meteo forecasts are evidence inputs; no Gemini Google Search tool or old fixed narratives.
  */
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from './paidGeminiGuard.ts';
 import { fetchOtherCommodityWorldPsd } from './usdaOtherCommoditiesLiveService.ts';
 import { fetchSoybeanOilWorldPsd } from './usdaSoybeanOilLiveService.ts';
 import { fetchOfficialPotatoEurostat } from './officialPotatoEurostatService.ts';
@@ -81,7 +81,7 @@ async function sourceContext(id: string): Promise<string> {
     }
     if (id === 'tapioca-starch') {
       const q = await fetchOfficialTapiocaQuote(false);
-      return JSON.stringify({source:'TTSA weekly tapioca starch FOB Bangkok, NOT landed Korea cost', status:q.dataStatus,
+      return JSON.stringify({source:'TTSA weekly tapioca starch FOB Bangkok, not a supplier-delivered import quotation', status:q.dataStatus,
         quote: q.success ? q.quote : null, additionalCassavaAndExportFigures:'Unverified reference estimates, do NOT repeat as current observations'});
     }
     const r = id === 'soybean-oil' ? await fetchSoybeanOilWorldPsd(false) : await fetchOtherCommodityWorldPsd(id, false);
@@ -218,7 +218,7 @@ OFFICIAL RMS STATISTICS (BACKGROUND ONLY; not daily news): ${officialContext}
 
 Generate an insightful Korean procurement market interpretation that is DIFFERENT from the six-box Global S&D figures. Cover crop/weather conditions, demand, policy, logistics, supply, and supplier risks to the extent SUPPORTED by evidence. Distinguish a search result HEADLINE from independently verified article facts; phrase such points as '보도 제목상 ... 실제 보도 내용 및 공식 발표 교차확인 필요'. Open-Meteo forecast values are model predictions (not measured rainfall, agricultural outcomes or official crop forecasts). If headlines are unavailable state that latest current policy/news was not confirmed. If no evidence supports a particular market claim, discuss only a labeled conditional scenario and state the critical document or observation needed to confirm it. Never fabricate a policy announcement, confirmed shipment, commodity price, forecast probability, made-up YoY rate, quotations, or citations. Respect geography, date, food-grade specs and physical FOB/CIF versus exchange futures. Weigh downside as well as upside without false balance.
 
-Write executiveSummary of 4-6 substantive Korean sentences about risks/opportunities and purchasing decisions, avoiding a rehash of annual production totals. BullishFactors, bearishFactors, watchItems: 2-3 specific Korean factors each, distinguishing CONFIRMED evidence from CONDITIONAL supplier checks. Mention at least one real dated weather forecast or searched headline when evidence allows, and explain link to approved food-grade supplier cost and Korean landed cost. Cite dates and publishers in the prose, but NEVER imply article bodies were read. Avoid ungrounded claims of exact port delays or crop losses. Confidence score is evidence COVERAGE, not probability of price direction.
+Write executiveSummary of 4-6 substantive Korean sentences about risks/opportunities and purchasing decisions, avoiding a rehash of annual production totals. BullishFactors, bearishFactors, watchItems: 2-3 specific Korean factors each, distinguishing CONFIRMED evidence from CONDITIONAL supplier checks. Mention at least one real dated weather forecast or searched headline when evidence allows, and explain link to approved food-grade supplier cost and actual Korean importer supplier quotations. Cite dates and publishers in the prose, but NEVER imply article bodies were read. Avoid ungrounded claims of exact port delays or crop losses. Confidence score is evidence COVERAGE, not probability of price direction.
 
 Respond with exactly one valid JSON object, no markdown, fields:
 {"confidenceScore":65,"deskRecommendation":"승인 공급사 실물오퍼를 비교한 조건부 구매 권고","executiveSummary":"4-6 well-developed Korean sentences","bullishFactors":["Specific cost upside factor","Another upside factor"],"bearishFactors":["Specific cost downside factor","Another downside factor"],"watchItems":["Near-term dated trigger","Supplier logistics/policy check"]}.`;

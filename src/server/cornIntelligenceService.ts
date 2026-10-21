@@ -1,11 +1,9 @@
 import type {
   CornProcurementAnalysisData,
-  EstimatedCornKoreaLandedCost
 } from '../types.ts';
 import { fetchHistoricalData } from './historicalPriceService.ts';
-import { usdaAmsCornService } from './usdaAmsCornService.ts';
+import { observedPriceChanges } from '../utils/observedPriceChanges.ts';
 import { usdaFasService } from './usdaFasService.ts';
-import { amisService } from './amisService.ts';
 
 export class CornIntelligenceService {
   private static instance: CornIntelligenceService;
@@ -24,7 +22,7 @@ export class CornIntelligenceService {
 
   /**
    * Generates comprehensive Corn SCM procurement analysis
-   * integrating CBOT ZC=F, USDA AMS Landed Cost, USDA FAS PSD, and AMIS intelligence.
+   * integrating CBOT ZC=F, USDA FAS PSD, and AMIS intelligence.
    */
   public async getCornProcurementAnalysis(force: boolean = false): Promise<CornProcurementAnalysisData> {
     const now = Date.now();
@@ -35,68 +33,69 @@ export class CornIntelligenceService {
     try {
       // 1. Fetch live CBOT Corn futures series (ZC=F)
       const historyRes = await fetchHistoricalData('corn', '3M');
-      const dataPoints = historyRes.data || [];
-
-      if (dataPoints.length === 0) {
-        throw new Error('No historical price points available for CBOT Corn (ZC=F)');
+      const dataPoints = (historyRes.data || []).filter((p: any) =>
+        /^\d{4}-\d{2}-\d{2}$/.test(String(p.date || '')) &&
+        !p.isSynthetic && Number.isFinite(Number(p.usdPerMT)) && Number(p.usdPerMT) > 0
+      ).sort((a: any, b: any) => a.date.localeCompare(b.date));
+      const changes = observedPriceChanges(dataPoints.map((p: any) => ({
+        date: p.date, usdPerMT: Number(p.usdPerMT),
+      })));
+      if (dataPoints.length < 2 || changes.wow.pct === null ||
+          changes.wow.amountUsdMt === null || !changes.wow.referenceDate) {
+        throw new Error('Insufficient dated Corn observations for a valid weekly comparison');
       }
 
-      // Latest observation
       const latestPoint = dataPoints[dataPoints.length - 1];
       const rawPrice = Number(latestPoint.centsPerBushel);
       const usdPerMT = Number(latestPoint.usdPerMT);
       const observationDate = latestPoint.date;
-
-      // Previous weekly observation (~5 trading days prior)
-      const prevIndex = Math.max(0, dataPoints.length - 6);
-      const prevPoint = dataPoints[prevIndex];
+      const prevPoint = dataPoints.find((p: any) => p.date === changes.wow.referenceDate)!;
       const prevPriceUsdMt = Number(prevPoint.usdPerMT);
-
-      const absoluteChangeUsdMt = Number((usdPerMT - prevPriceUsdMt).toFixed(2));
-      const wowPct = prevPriceUsdMt > 0
-        ? Number((((usdPerMT - prevPriceUsdMt) / prevPriceUsdMt) * 100).toFixed(2))
-        : 0;
+      const absoluteChangeUsdMt = changes.wow.amountUsdMt;
+      const wowPct = changes.wow.pct;
       const direction: 'up' | 'down' | 'unchanged' =
         absoluteChangeUsdMt > 0 ? 'up' : absoluteChangeUsdMt < 0 ? 'down' : 'unchanged';
-
-      // 2. Fetch official USDA AMS physical export price & Korea ocean freight
-      const landedCost: EstimatedCornKoreaLandedCost =
-        await usdaAmsCornService.getEstimatedCornKoreaLandedCost(force);
 
       // 3. Fetch official USDA FAS PSD dataset for World Corn (0440000, 2026)
       const psdRes = await usdaFasService.fetchWorldPsd('0440000', '2026');
       const psdData = psdRes.data;
-      const stocksToUsePct = psdData?.stocksToUseRatioPct || 25.9;
+      const ratio = psdData?.stocksToUseRatioPct;
+      const stocksAvailable = typeof ratio === 'number' && Number.isFinite(ratio) && ratio > 0;
+      const stocksToUsePct = stocksAvailable ? Number(ratio) : 0;
 
-      // 4. Fetch AMIS Market Monitor intelligence
-      const amisRes = await amisService.fetchWheatIntelligence(false); // AMIS issue covers macro grains
-      const amisData = amisRes.data;
-
-      // 5. Synthesize Desk Recommendation
-      let recommendation = '45~60일 분할 구매 권고';
+      // Futures and stock levels provide a market signal, not an actionable physical offer.
+      // Without a dated supplier quote, freight terms and FX, keep decisions conditional.
+      let recommendation = '실제 공급사 견적·해상운임·환율 확인 후 분할 구매 검토';
       if (wowPct <= -2.0) {
-        recommendation = '45~60일 분할 매수 확대 권고';
+        recommendation = '선물 시세 하락 확인 · 현물 오퍼·운임·환율 비교 후 분할 매수 검토';
       } else if (wowPct >= 3.0) {
-        recommendation = '30~45일 단기 관망 후 분할 구매';
-      } else if (stocksToUsePct >= 25.0) {
-        recommendation = '45~60일 분할 구매 권고';
-      } else {
-        recommendation = '45~60일 선도 구매 권고';
+        recommendation = '선물 변동성 확대 · 실제 공급사 오퍼 확인 전 확대 구매 보류';
+      } else if (stocksAvailable && stocksToUsePct < 25) {
+        recommendation = '공급 여건 점검 · 승인 공급사 견적과 납기 확인 후 분할 구매 검토';
       }
 
       // 6. Synthesize Procurement Risk (Qualitative status & concise 1-2 line Korean explanation)
-      let riskLevel: '안정' | '주의' | '경계' = '안정';
-      let riskSummaryKo =
-        `미 콘벨트 수확 진척 및 글로벌 옥수수 공급 안정세(재고율 ${stocksToUsePct.toFixed(1)}%)가 유지되고 있으나 남미 파종기 강우 여건 및 해상 운임 변동성 모니터링 필요`;
+      let riskLevel: '안정' | '주의' | '경계' | '자료 부족' = stocksAvailable ? '안정' : '자료 부족';
+      let riskSummaryKo = stocksAvailable
+        ? `글로벌 옥수수 재고율 ${stocksToUsePct.toFixed(1)}% 기준 · 남미 기상 및 해상운임 변동성 모니터링 필요`
+        : 'USDA 재고율을 확인할 수 없어 공급 위험을 판정하지 않습니다. 공식 수급 자료 확인 필요';
 
-      if (stocksToUsePct < 22.0 || wowPct > 4.0) {
+      if (!stocksAvailable) {
+        recommendation = '공식 재고율 확인 전 매입 판단 보류 · 공급사 오퍼 점검';
+      } else if (stocksToUsePct < 22.0 || wowPct > 4.0) {
         riskLevel = '경계';
-        riskSummaryKo =
-          `글로벌 기말재고율 타이트 및 단기 선물 급등세로 조달 원가 상승 위험 경계 필요`;
+        // A tight stock buffer can justify a red risk signal even during a
+        // weekly price decline. Never describe a price surge unless observed.
+        riskSummaryKo = stocksToUsePct < 22.0 && wowPct > 4.0
+          ? `글로벌 옥수수 재고율 ${stocksToUsePct.toFixed(1)}%로 타이트하고 선물 주간 ${wowPct.toFixed(2)}% 상승하여 조달 위험 경계 필요`
+          : stocksToUsePct < 22.0
+          ? `글로벌 옥수수 재고율 ${stocksToUsePct.toFixed(1)}%로 공급 완충 여력 제한 · 주간 선물 ${wowPct > 0 ? '+' : ''}${wowPct.toFixed(2)}%와 별개로 조달 위험 점검 필요`
+          : `선물 주간 ${wowPct.toFixed(2)}% 급등에 따른 원가 변동성 경계 · 실제 현물 오퍼·운임·환율 확인 필요`;
       } else if (stocksToUsePct < 25.0 || wowPct > 2.0) {
         riskLevel = '주의';
-        riskSummaryKo =
-          `미국 수확기 공급 안정 속 남미 파종기 기상 불확실성 및 원양 곡물 벌크선 운임 추이 모니터링 필요`;
+        riskSummaryKo = stocksToUsePct < 25.0
+          ? `글로벌 옥수수 재고율 ${stocksToUsePct.toFixed(1)}% · 공급 여력과 남미 기상·운임 변수 지속 점검 필요`
+          : `선물 주간 ${wowPct.toFixed(2)}% 상승 · 남미 파종기 기상 및 원양 곡물 벌크선 운임 추이 모니터링 필요`;
       }
 
       const result: CornProcurementAnalysisData = {
@@ -114,15 +113,12 @@ export class CornIntelligenceService {
           previousPriceUsdMt: prevPriceUsdMt,
           calculationBasis: `CBOT ZC=F 1-Week Interval (${prevPoint.date} → ${observationDate})`
         },
-        landedCost,
         deskRecommendation: {
           recommendation,
           dataInputsUsed: [
             'CBOT ZC=F Benchmark (USD/MT)',
             `Weekly Price Change (${wowPct > 0 ? '+' : ''}${wowPct}%)`,
-            `USDA FAS PSD 2026/27 (STU ${stocksToUsePct.toFixed(1)}%)`,
-            'AMIS Market Monitor (Maize Outlook)',
-            `USDA AMS Landed Cost ($${landedCost.estimatedLandedCostUsdMt || 276.50}/MT)`
+            stocksAvailable ? `USDA FAS PSD (STU ${stocksToUsePct.toFixed(1)}%)` : 'USDA FAS PSD 재고율 미확인'
           ]
         },
         procurementRisk: {
@@ -130,9 +126,6 @@ export class CornIntelligenceService {
           summarySentenceKo: riskSummaryKo,
           sourcesUsed: [
             'USDA FAS PSD',
-            'USDA WASDE',
-            'AMIS Market Monitor',
-            'USDA AMS GTR',
             'CME CBOT (ZC=F)'
           ]
         }
@@ -143,52 +136,9 @@ export class CornIntelligenceService {
       return result;
     } catch (err: any) {
       console.error('[CornIntelligenceService] Error generating corn analysis:', err);
-      if (this.cachedAnalysis) {
-        return this.cachedAnalysis;
-      }
-
-      // Safe verified fallback
-      const fallbackLandedCost: EstimatedCornKoreaLandedCost =
-        await usdaAmsCornService.getEstimatedCornKoreaLandedCost(false);
-
-      return {
-        benchmarkPrice: {
-          rawPrice: 528.25,
-          rawUnit: 'cents/bushel',
-          usdPerMT: 207.96,
-          observationDate: '2026-09-25',
-          source: 'CBOT (ZC=F)'
-        },
-        weeklyChange: {
-          wowPct: 0.14,
-          absoluteChangeUsdMt: 0.29,
-          direction: 'up',
-          previousPriceUsdMt: 207.67,
-          calculationBasis: 'CBOT ZC=F 1-Week Interval'
-        },
-        landedCost: fallbackLandedCost,
-        deskRecommendation: {
-          recommendation: '45~60일 분할 구매 권고',
-          dataInputsUsed: [
-            'CBOT ZC=F Benchmark',
-            'USDA FAS PSD',
-            'AMIS Market Monitor',
-            'USDA AMS Landed Cost'
-          ]
-        },
-        procurementRisk: {
-          level: '안정',
-          summarySentenceKo:
-            '미 콘벨트 수확 진척 및 글로벌 옥수수 공급 안정세(재고율 25.9%)가 유지되고 있으나 남미 파종기 강우 여건 및 해상 운임 변동성 모니터링 필요',
-          sourcesUsed: [
-            'USDA FAS PSD',
-            'USDA WASDE',
-            'AMIS Market Monitor',
-            'USDA AMS GTR',
-            'CME CBOT (ZC=F)'
-          ]
-        }
-      };
+      // Do not fabricate a dated price or a green risk badge after a source failure.
+      // The HTTP endpoint reports an error; UI shows a neutral '자료 부족' state.
+      throw err;
     }
   }
 }

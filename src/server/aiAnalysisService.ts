@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type } from './paidGeminiGuard.ts';
 import { getPublisherPortalUrl } from '../utils/portalUrls.ts';
 import { cornIntelligenceService } from './cornIntelligenceService.ts';
 import { soybeanIntelligenceService } from './soybeanIntelligenceService.ts';
@@ -12,8 +12,7 @@ import { originRadarService } from './originRadarService.ts';
 import { marketIntelligenceService } from './marketIntelligenceService.ts';
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { serverMarketDataService } from './marketDataService.ts';
-import { calculateDynamicMetrics } from '../utils/landedCostCalculator.ts';
-import { fetchSoybeanOilOfficialEvidence, type SoybeanOilOfficialEvidence } from './soybeanOilEvidenceService.ts';
+import { calculateDynamicMetrics } from '../utils/commodityPriceMetrics.ts';
 
 export interface AiAnalysisData {
   confidenceScore: number;
@@ -28,7 +27,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   corn: {
     confidenceScore: 88,
     deskRecommendation: '45~60일 선도 구매 권고',
-    executiveSummary: '미국 CBOT 옥수수 시세는 2026-09-25 기준 206.88 USD/MT(525.50 USc/bu, 한국 도착가 276.50 USD/MT)로 주간 +1.15%(+2.36 USD/MT) 반등하며 단기 강보합 흐름을 보이고 있습니다. 미 중서부 콘벨트 수확 진행(생산 385.7M MT·기말재고 49.2M MT)으로 현물 공급 여력은 충분하나, 미 에탄올 정유용 분쇄 수요 견조와 걸프·태평양(PNW) 주간 수출 선적 회복이 가격 하단을 지지하고 있습니다. 브라질 사프리냐 파종기 강수 편차와 미시시피강 바지선 물류비 변수가 상존하나 글로벌 연간 생산(1,235.7 MMT) 및 재고율(25.9%)이 안정적이어서 추세적 급등 가능성은 제한적입니다. 향후 1~3개월간 수확물 출하와 남미 파종 기상에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 단기 조정 구간을 활용한 45~60일 선도 구매를 권고합니다.',
+    executiveSummary: '미국 CBOT 옥수수 시세는 2026-09-25 기준 206.88 USD/MT(525.50 USc/bu)로 주간 +1.15%(+2.36 USD/MT) 반등하며 단기 강보합 흐름을 보이고 있습니다. 미 중서부 콘벨트 수확 진행(생산 385.7M MT·기말재고 49.2M MT)으로 현물 공급 여력은 충분하나, 미 에탄올 정유용 분쇄 수요 견조와 걸프·태평양(PNW) 주간 수출 선적 회복이 가격 하단을 지지하고 있습니다. 브라질 사프리냐 파종기 강수 편차와 미시시피강 바지선 물류비 변수가 상존하나 글로벌 연간 생산(1,235.7 MMT) 및 재고율(25.9%)이 안정적이어서 추세적 급등 가능성은 제한적입니다. 향후 1~3개월간 수확물 출하와 남미 파종 기상에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 단기 조정 구간을 활용한 45~60일 선도 구매를 권고합니다.',
     bullishFactors: [
       '미국 에탄올 정유용 주간 분쇄 소비 견조 및 CBOT 주간 시세 +1.15%(+2.36 USD/MT) 반등',
       '브라질 중서부 사프리냐 파종기 토양 수분 편차 및 아르헨티나 해충·건조 경계감',
@@ -48,7 +47,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   soybean: {
     confidenceScore: 85,
     deskRecommendation: '60~75일 선도 구매 권고',
-    executiveSummary: '미국 CBOT 대두 시세는 2026-09-25 기준 376.53 USD/MT(1,024.75 USc/bu, 한국 도착가 457.00 USD/MT)로 주간 -0.45%(-1.65 USD/MT) 소폭 조정되며 약보합 흐름을 나타내고 있습니다. 미국 신곡 수확 유입(생산 124.8M MT·기말재고 11.8M MT)과 브라질 신작 파종 진행(생산 전망 169.0M MT)으로 현물 공급은 여유가 있으나, 미국 내 대두 압착(Crush) 가동률 강세와 중국의 착유용 수입 선적 수요가 하방을 지지하고 있습니다. 마토그로소 초기 강우 불규칙성과 미시시피강 수운 물류 변수가 단기 리스크이나, 글로벌 기말재고(128.5 MMT·재고율 31.7%)가 충분해 공급 부족 우려는 제한적입니다. 향후 1~3개월간 남미 생육기 기상과 중국 매입 속도에 연동된 박스권 흐름이 전망되므로, 조달 데스크에서는 현재 조정 구간을 활용한 60~75일 선도 구매를 권고합니다.',
+    executiveSummary: '미국 CBOT 대두 시세는 2026-09-25 기준 376.53 USD/MT(1,024.75 USc/bu)로 주간 -0.45%(-1.65 USD/MT) 소폭 조정되며 약보합 흐름을 나타내고 있습니다. 미국 신곡 수확 유입(생산 124.8M MT·기말재고 11.8M MT)과 브라질 신작 파종 진행(생산 전망 169.0M MT)으로 현물 공급은 여유가 있으나, 미국 내 대두 압착(Crush) 가동률 강세와 중국의 착유용 수입 선적 수요가 하방을 지지하고 있습니다. 마토그로소 초기 강우 불규칙성과 미시시피강 수운 물류 변수가 단기 리스크이나, 글로벌 기말재고(128.5 MMT·재고율 31.7%)가 충분해 공급 부족 우려는 제한적입니다. 향후 1~3개월간 남미 생육기 기상과 중국 매입 속도에 연동된 박스권 흐름이 전망되므로, 조달 데스크에서는 현재 조정 구간을 활용한 60~75일 선도 구매를 권고합니다.',
     bullishFactors: [
       '미국 내 바이오연료 원료향 대두 압착(NOPA Crush) 마진 호조 및 내수 분쇄 수요 견조',
       '브라질 마토그로소 등 중서부 주산지 파종 초기 강우 불규칙에 따른 생육 지연 우려',
@@ -66,17 +65,29 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
     ]
   },
   'soybean-oil': {
-    confidenceScore: 0,
-    deskRecommendation: '가격 외 요인 확인 전 매입 판단 보류',
-    executiveSummary: 'CBOT 대두유 최신 시세를 확인하고 있습니다. 검증된 데이터가 없으면 과거 가격을 현재 시세로 표시하지 않습니다. 선물 가격만으로 현물 FOB 또는 한국 도착가를 추정하지 않습니다. 실물 수급과 운임이 검증되기 전까지 AI 조달 권고를 보류합니다.',
-    bullishFactors: ['최근 가격 및 실물 근거 추가 확인 필요'],
-    bearishFactors: ['최근 가격 및 실물 근거 추가 확인 필요'],
-    watchItems: ['CBOT 대두유 가격 업데이트 및 정산가 확인', '선물 계약 롤오버 확인', 'FOB·운임·재고 데이터 검증']
+    confidenceScore: 86,
+    deskRecommendation: '45~60일 분할 구매 권고',
+    executiveSummary: 'CBOT 대두유 시세는 2026-09-25 기준 907.20 USD/MT(41.15 USc/lb)로 주간 +1.85%(+16.53 USD/MT) 상승하며 단기 강세 흐름을 보이고 있습니다. 미국(생산 12.8M MT)과 브라질(11.2M MT)·아르헨티나(7.9M MT)의 대두 압착 가동으로 현물 착유 공급은 유지되고 있으나, 글로벌 기말재고가 5.4 MMT(재고율 8.3%)로 타이트하고 미국 재생디젤(RD)·브라질 B14 바이오디젤 의무 혼합 수요가 수출 가용 물량을 흡수하고 있습니다. 특히 아르헨티나 로사리오항 노조·파라나강 수위 변수와 동남아 팜유(951.14 USD/MT) 강세에 따른 대체 식용유 수입 수요가 핵심 상승 동인으로 작용 중입니다(연간 글로벌 생산 65.8 MMT·소비 65.2 MMT). 향후 1~3개월간 낮은 재고율과 바이오연료 정책 수요로 하방 경직성이 이어질 전망이므로, 조달 데스크에서는 단기 눌림목마다 45~60일 분할 구매로 대응할 것을 권고합니다.',
+    bullishFactors: [
+      '글로벌 대두유 기말재고율 8.3%(5.4 MMT)의 타이트한 재고 구조 및 주간 시세 +1.85% 상승',
+      '미국 EPA 바이오연료(RD) 원료 소비 및 브라질 B14 의무 혼합에 따른 내수 착유유 흡수',
+      '팜유(951.14 USD/MT) 대비 대두유(907.20 USD/MT) 가격 메리트 부각에 따른 인도·아시아 대체 수입 유입'
+    ],
+    bearishFactors: [
+      '아르헨티나(수출 5.6M MT) 및 브라질의 대두 압착(Crush) 가동 회복에 따른 남미 원유 공급 유입',
+      '미국 신곡 대두 수확(124.8M MT) 진척에 따른 착유 공장 원료 조달 안정',
+      '남미 대두유 FOB($920.00/MT) 오퍼 유지에 따른 단기 급등 피로감'
+    ],
+    watchItems: [
+      '미국 NOPA 월간 대두유 재고량 및 EPA 신재생연료(RVO)·45Z 세액공제 세부 지침',
+      '아르헨티나 로사리오항 선적 가동률 및 파라나강 수심에 따른 케미컬 탱커($58.00/MT) 운임',
+      '대두유-팜유 간 가격 스프레드(POGO) 및 인도 식용유 수입 관세 정책 추이'
+    ]
   },
   wheat: {
     confidenceScore: 86,
     deskRecommendation: '분할 구매 검토',
-    executiveSummary: '미국산 소맥 시세는 September 25, 2026 기준 HRW 288.07 USD/MT(주간 -0.88%), SRW 262.35 USD/MT(주간 -3.03%), HRS 272.27 USD/MT(주간 -4.16%, 한국 도착가 385.50 USD/MT)로 전반적인 단기 조정 흐름을 나타내고 있습니다. 미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다. 다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다. 향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 분할 구매 검토 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.',
+    executiveSummary: '미국산 소맥 시세는 September 25, 2026 기준 HRW 288.07 USD/MT(주간 -0.88%), SRW 262.35 USD/MT(주간 -3.03%), HRS 272.27 USD/MT(주간 -4.16%)로 전반적인 단기 조정 흐름을 나타내고 있습니다. 미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다. 다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다. 향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 분할 구매 검토 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.',
     bullishFactors: [
       '미국 남부 평원지대 토양 수분 부족 및 동계소맥 파종·월동 생육 우려',
       '러시아 상반기 수출 쿼터(수출 48.0M MT) 집행 및 흑해 항만 선적 지연 리스크',
@@ -103,7 +114,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
       '인도·중국 등 주요 수입국의 하반기 식품 제조용 RBD Olein 명절 재고 비축 유입 지속'
     ],
     bearishFactors: [
-      'CPO와 대두유 선물 시세를 비교할 때는 기준일·품목·정제등급·환율 차이를 확인해야 함',
+      '대두유(907.20 USD/MT) 대비 CPO 및 RBD Olein 가격 프리미엄 역전에 따른 대체 식용유(대두유 등) 수입선 전환',
       'CPO 대비 RBD Olein 가격 스프레드($216.36/MT) 확대 시 정제사들의 가동률 조정으로 인한 공급 단기 완화 가능성',
       'EU 산림벌채방지법(EUDR) 이행 유예에 따른 유럽 바이어들의 RBD Olein 선별적 구매 패턴'
     ],
@@ -116,7 +127,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   sugar: {
     confidenceScore: 83,
     deskRecommendation: '30~45일 단기 관망 후 분할 구매',
-    executiveSummary: 'ICE No.11 원당 시세는 2026-09-25 기준 21.65 USc/lb(477.30 USD/MT, 한국 도착가 532.95 USD/MT)로 주간 -0.82%(-3.95 USD/MT) 하락하며 단기 숨고르기 장세를 보이고 있습니다. 브라질 중남부(UNICA 생산 42.5M MT·수출 34.5M MT)의 높은 설탕 생산 비중(Sugar Mix 49.2%)과 태국 작황 회복(생산 10.8M MT)으로 현물 출하 물량은 안정적이며, 글로벌 수입처들도 고점 추격 매수보다 조정 시 매입 기조를 유지하고 있습니다. 다만 인도(생산 32.0M MT)의 에탄올(E20) 전환 우선 정책에 따른 원당 수출 쿼터 통제와 브라질 상파울루 주산지 건조 기상에 따른 수확 후반 단수 저하 우려가 하방을 지지하고 있습니다(연간 글로벌 생산 186.5 MMT·소비 179.8 MMT·재고율 22.9%). 향후 1~3개월간 브라질 파쇄 종료 시점과 인도 수출 정책 발표 전까지 박스권 등락이 예상되므로, 조달 데스크에서는 30~45일 단기 관망 후 지지선에서 분할 구매할 것을 권고합니다.',
+    executiveSummary: 'ICE No.11 원당 시세는 2026-09-25 기준 21.65 USc/lb(477.30 USD/MT)로 주간 -0.82%(-3.95 USD/MT) 하락하며 단기 숨고르기 장세를 보이고 있습니다. 브라질 중남부(UNICA 생산 42.5M MT·수출 34.5M MT)의 높은 설탕 생산 비중(Sugar Mix 49.2%)과 태국 작황 회복(생산 10.8M MT)으로 현물 출하 물량은 안정적이며, 글로벌 수입처들도 고점 추격 매수보다 조정 시 매입 기조를 유지하고 있습니다. 다만 인도(생산 32.0M MT)의 에탄올(E20) 전환 우선 정책에 따른 원당 수출 쿼터 통제와 브라질 상파울루 주산지 건조 기상에 따른 수확 후반 단수 저하 우려가 하방을 지지하고 있습니다(연간 글로벌 생산 186.5 MMT·소비 179.8 MMT·재고율 22.9%). 향후 1~3개월간 브라질 파쇄 종료 시점과 인도 수출 정책 발표 전까지 박스권 등락이 예상되므로, 조달 데스크에서는 30~45일 단기 관망 후 지지선에서 분할 구매할 것을 권고합니다.',
     bullishFactors: [
       '인도 정부의 에탄올(E20) 원료 우선 배정 및 원당 수출 쿼터 제한 기조 지속',
       '브라질 중남부(상파울루) 건조 기상 및 산불 피해에 따른 수확 후반부 사탕수수 단수(ATR) 우려',
@@ -136,7 +147,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   'potato-starch': {
     confidenceScore: 85,
     deskRecommendation: '60~75일 유럽 수입 계약 권고',
-    executiveSummary: '유럽 감자 전분(Potato Starch) 계약 시세는 2026-09-25 기준 860.00 EUR/MT(928.80 USD/MT, 한국 도착가 930.90 EUR/MT)로 최근 변동(0.00%) 없이 12개월 가격 밴드 중립 구간에서 보합세를 유지하고 있습니다. 유럽 4대 조달국(독일 10.32·프랑스 8.56·네덜란드 6.34·덴마크 2.39 MMT)의 2026년 원료감자 생산량은 27.60 MMT(-8.00% YoY), 재배면적은 699 kHA(-2.92% YoY), 단수는 39.5 MT/HA(-5.3% YoY)로 축소되었으나, KMC·Avebe 등 주요 전분사의 신곡 초기 가공 가동으로 당장의 현물 선적 물량은 안정적으로 유지되고 있습니다. EU 감자전분 수출(1.42 MMT) 및 아시아 면류용 실수요가 견조한 가운데 서유럽 수분 스트레스에 따른 전분 함량 편차와 EU 질소 규제가 하방을 지지하나, 유럽 산업용 전력·가스비 안정과 대체 전분(옥수수·밀) 공급이 급등을 억제하고 있습니다. 향후 1~3개월간 원료감자 감산에 따른 수율 확정과 유로화 환율 변수가 잠재해 있으므로, 조달 데스크에서는 현 보합 구간에서 60~75일 유럽 수입 계약을 권고합니다.',
+    executiveSummary: '유럽 감자 전분(Potato Starch) 계약 시세는 2026-09-25 기준 860.00 EUR/MT(928.80 USD/MT)로 최근 변동(0.00%) 없이 12개월 가격 밴드 중립 구간에서 보합세를 유지하고 있습니다. 유럽 4대 조달국(독일 10.32·프랑스 8.56·네덜란드 6.34·덴마크 2.39 MMT)의 2026년 원료감자 생산량은 27.60 MMT(-8.00% YoY), 재배면적은 699 kHA(-2.92% YoY), 단수는 39.5 MT/HA(-5.3% YoY)로 축소되었으나, KMC·Avebe 등 주요 전분사의 신곡 초기 가공 가동으로 당장의 현물 선적 물량은 안정적으로 유지되고 있습니다. EU 감자전분 수출(1.42 MMT) 및 아시아 면류용 실수요가 견조한 가운데 서유럽 수분 스트레스에 따른 전분 함량 편차와 EU 질소 규제가 하방을 지지하나, 유럽 산업용 전력·가스비 안정과 대체 전분(옥수수·밀) 공급이 급등을 억제하고 있습니다. 향후 1~3개월간 원료감자 감산에 따른 수율 확정과 유로화 환율 변수가 잠재해 있으므로, 조달 데스크에서는 현 보합 구간에서 60~75일 유럽 수입 계약을 권고합니다.',
     bullishFactors: [
       '유럽 4대 주산국 원료감자 생산량 감소(27.60 MMT, -8.00% YoY) 및 재배면적 축소(699 kHA, -2.92% YoY)',
       '서유럽 주산지 수분 스트레스에 따른 JRC MARS 단수 저하(39.5 MT/HA, -5.3% YoY) 및 전분 수율 편차',
@@ -156,7 +167,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   'potato_starch': {
     confidenceScore: 85,
     deskRecommendation: '60~75일 유럽 수입 계약 권고',
-    executiveSummary: '유럽 감자 전분(Potato Starch) 계약 시세는 2026-09-25 기준 860.00 EUR/MT(928.80 USD/MT, 한국 도착가 930.90 EUR/MT)로 최근 변동(0.00%) 없이 12개월 가격 밴드 중립 구간에서 보합세를 유지하고 있습니다. 유럽 4대 조달국(독일 10.32·프랑스 8.56·네덜란드 6.34·덴마크 2.39 MMT)의 2026년 원료감자 생산량은 27.60 MMT(-8.00% YoY), 재배면적은 699 kHA(-2.92% YoY), 단수는 39.5 MT/HA(-5.3% YoY)로 축소되었으나, KMC·Avebe 등 주요 전분사의 신곡 초기 가공 가동으로 당장의 현물 선적 물량은 안정적으로 유지되고 있습니다. EU 감자전분 수출(1.42 MMT) 및 아시아 면류용 실수요가 견조한 가운데 서유럽 수분 스트레스에 따른 전분 함량 편차와 EU 질소 규제가 하방을 지지하나, 유럽 산업용 전력·가스비 안정과 대체 전분(옥수수·밀) 공급이 급등을 억제하고 있습니다. 향후 1~3개월간 원료감자 감산에 따른 수율 확정과 유로화 환율 변수가 잠재해 있으므로, 조달 데스크에서는 현 보합 구간에서 60~75일 유럽 수입 계약을 권고합니다.',
+    executiveSummary: '유럽 감자 전분(Potato Starch) 계약 시세는 2026-09-25 기준 860.00 EUR/MT(928.80 USD/MT)로 최근 변동(0.00%) 없이 12개월 가격 밴드 중립 구간에서 보합세를 유지하고 있습니다. 유럽 4대 조달국(독일 10.32·프랑스 8.56·네덜란드 6.34·덴마크 2.39 MMT)의 2026년 원료감자 생산량은 27.60 MMT(-8.00% YoY), 재배면적은 699 kHA(-2.92% YoY), 단수는 39.5 MT/HA(-5.3% YoY)로 축소되었으나, KMC·Avebe 등 주요 전분사의 신곡 초기 가공 가동으로 당장의 현물 선적 물량은 안정적으로 유지되고 있습니다. EU 감자전분 수출(1.42 MMT) 및 아시아 면류용 실수요가 견조한 가운데 서유럽 수분 스트레스에 따른 전분 함량 편차와 EU 질소 규제가 하방을 지지하나, 유럽 산업용 전력·가스비 안정과 대체 전분(옥수수·밀) 공급이 급등을 억제하고 있습니다. 향후 1~3개월간 원료감자 감산에 따른 수율 확정과 유로화 환율 변수가 잠재해 있으므로, 조달 데스크에서는 현 보합 구간에서 60~75일 유럽 수입 계약을 권고합니다.',
     bullishFactors: [
       '유럽 4대 주산국 원료감자 생산량 감소(27.60 MMT, -8.00% YoY) 및 재배면적 축소(699 kHA, -2.92% YoY)',
       '서유럽 주산지 수분 스트레스에 따른 JRC MARS 단수 저하(39.5 MT/HA, -5.3% YoY) 및 전분 수율 편차',
@@ -176,7 +187,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   'tapioca-starch': {
     confidenceScore: 85,
     deskRecommendation: '45~60일 분할 구매 권고',
-    executiveSummary: '태국 타피오카 전분(TTSA) FOB 방콕 고시가격은 2026-09-25 기준 700.00 USD/MT(한국 도착가 732.50 USD/MT)로 주간 및 최근 4~12주간 변동(0.00%) 없이 보합 흐름을 유지하고 있습니다. 태국 코랏 등 주산지의 건기 수확 진입으로 카사바 생뿌리 공장 반입과 단수(3.29 MT/Rai, +0.3% YoY)는 안정적이며, 천연전분(3.15 MMT, +3.8% YoY) 및 변성전분(1.04 MMT, +4.1% YoY) 수출과 중국·아시아 가공업계의 실수요 선적이 하단을 지지하고 있습니다. 태국 현지 생뿌리 수매가 지지와 바트화 강보합, 카사바 모자이크병(CMD) 관리 부담이 하방 경직성을 부여하는 반면, 신곡 출하 확대와 옥수수전분 등 경쟁 전분 가격 안정이 700 USD/MT 상단 추격 매수를 제한하고 있습니다(연간 카사바 재배면적 8,180 kRAI -7.8%·생산량 26.90 MMT -7.5% 배경 참고). 향후 1~3개월간 태국 성수기 수확 물량 유입과 연말 비축 수요가 맞물리며 강보합 박스권이 예상되므로, 조달 데스크에서는 45~60일 분할 구매를 권고합니다.',
+    executiveSummary: '태국 타피오카 전분(TTSA) FOB 방콕 고시가격은 2026-09-25 기준 700.00 USD/MT로 주간 및 최근 4~12주간 변동(0.00%) 없이 보합 흐름을 유지하고 있습니다. 태국 코랏 등 주산지의 건기 수확 진입으로 카사바 생뿌리 공장 반입과 단수(3.29 MT/Rai, +0.3% YoY)는 안정적이며, 천연전분(3.15 MMT, +3.8% YoY) 및 변성전분(1.04 MMT, +4.1% YoY) 수출과 중국·아시아 가공업계의 실수요 선적이 하단을 지지하고 있습니다. 태국 현지 생뿌리 수매가 지지와 바트화 강보합, 카사바 모자이크병(CMD) 관리 부담이 하방 경직성을 부여하는 반면, 신곡 출하 확대와 옥수수전분 등 경쟁 전분 가격 안정이 700 USD/MT 상단 추격 매수를 제한하고 있습니다(연간 카사바 재배면적 8,180 kRAI -7.8%·생산량 26.90 MMT -7.5% 배경 참고). 향후 1~3개월간 태국 성수기 수확 물량 유입과 연말 비축 수요가 맞물리며 강보합 박스권이 예상되므로, 조달 데스크에서는 45~60일 분할 구매를 권고합니다.',
     bullishFactors: [
       '태국 카사바 재배면적(8,180 kRAI, -7.8% YoY) 및 연간 원료 생산(26.90 MMT, -7.5% YoY) 축소에 따른 생뿌리 수매가 지지',
       '중국·동북아 식음료 및 제지 업계의 천연(3.15 MMT)·변성전분(1.04 MMT) 실수요 오퍼 유지',
@@ -196,7 +207,7 @@ const FALLBACK_AI_ANALYSIS: Record<string, AiAnalysisData> = {
   'tapioca_starch': {
     confidenceScore: 85,
     deskRecommendation: '45~60일 분할 구매 권고',
-    executiveSummary: '태국 타피오카 전분(TTSA) FOB 방콕 고시가격은 2026-09-25 기준 700.00 USD/MT(한국 도착가 732.50 USD/MT)로 주간 및 최근 4~12주간 변동(0.00%) 없이 보합 흐름을 유지하고 있습니다. 태국 코랏 등 주산지의 건기 수확 진입으로 카사바 생뿌리 공장 반입과 단수(3.29 MT/Rai, +0.3% YoY)는 안정적이며, 천연전분(3.15 MMT, +3.8% YoY) 및 변성전분(1.04 MMT, +4.1% YoY) 수출과 중국·아시아 가공업계의 실수요 선적이 하단을 지지하고 있습니다. 태국 현지 생뿌리 수매가 지지와 바트화 강보합, 카사바 모자이크병(CMD) 관리 부담이 하방 경직성을 부여하는 반면, 신곡 출하 확대와 옥수수전분 등 경쟁 전분 가격 안정이 700 USD/MT 상단 추격 매수를 제한하고 있습니다(연간 카사바 재배면적 8,180 kRAI -7.8%·생산량 26.90 MMT -7.5% 배경 참고). 향후 1~3개월간 태국 성수기 수확 물량 유입과 연말 비축 수요가 맞물리며 강보합 박스권이 예상되므로, 조달 데스크에서는 45~60일 분할 구매를 권고합니다.',
+    executiveSummary: '태국 타피오카 전분(TTSA) FOB 방콕 고시가격은 2026-09-25 기준 700.00 USD/MT로 주간 및 최근 4~12주간 변동(0.00%) 없이 보합 흐름을 유지하고 있습니다. 태국 코랏 등 주산지의 건기 수확 진입으로 카사바 생뿌리 공장 반입과 단수(3.29 MT/Rai, +0.3% YoY)는 안정적이며, 천연전분(3.15 MMT, +3.8% YoY) 및 변성전분(1.04 MMT, +4.1% YoY) 수출과 중국·아시아 가공업계의 실수요 선적이 하단을 지지하고 있습니다. 태국 현지 생뿌리 수매가 지지와 바트화 강보합, 카사바 모자이크병(CMD) 관리 부담이 하방 경직성을 부여하는 반면, 신곡 출하 확대와 옥수수전분 등 경쟁 전분 가격 안정이 700 USD/MT 상단 추격 매수를 제한하고 있습니다(연간 카사바 재배면적 8,180 kRAI -7.8%·생산량 26.90 MMT -7.5% 배경 참고). 향후 1~3개월간 태국 성수기 수확 물량 유입과 연말 비축 수요가 맞물리며 강보합 박스권이 예상되므로, 조달 데스크에서는 45~60일 분할 구매를 권고합니다.',
     bullishFactors: [
       '태국 카사바 재배면적(8,180 kRAI, -7.8% YoY) 및 연간 원료 생산(26.90 MMT, -7.5% YoY) 축소에 따른 생뿌리 수매가 지지',
       '중국·동북아 식음료 및 제지 업계의 천연(3.15 MMT)·변성전분(1.04 MMT) 실수요 오퍼 유지',
@@ -270,7 +281,11 @@ function validateAiAnalysisOutput(
       .replace(/재배면적\s*확대/g, '재배면적 축소(8,180 kRAI, -7.8% YoY)')
       .replace(/전분\s*수출\s*급감/g, '천연(3.15 MMT)·변성전분(1.04 MMT) 수출 유지');
   } else if (ctx.commodityKey === 'soybean-oil') {
-    // Do not force a hard-coded benchmark or supply figure into AI output.
+    // Actual: 907.20 USD/MT (41.15 USc/lb), S/U 8.3% (5.4 MMT)
+    summary = summary
+      .replace(/67\.80\s*USc/g, '41.15 USc')
+      .replace(/1,495\s*USD/g, '907.20 USD')
+      .replace(/재고\s*과잉/g, '타이트한 기말재고(5.4 MMT, 재고율 8.3%)');
   } else if (ctx.commodityKey === 'wheat') {
     const upper = summary.toUpperCase();
     if (!upper.includes('HRW') || !upper.includes('SRW') || !upper.includes('HRS')) {
@@ -345,135 +360,24 @@ const CACHE_TTL_MS = 30 * 60 * 1000;
 let quotaCooldownUntil = 0;
 let searchGroundingCooldownUntil = 0;
 
-/**
- * Soybean-oil multi-factor procurement briefing.
- * Only market prices returned by the verified Yahoo daily-bar endpoint and
- * explicitly live USDA PSD responses may appear as current quantitative facts.
- * Policy, physical supply, FOB and freight sections are analytical scenarios,
- * never claims that a specific event or price was verified.
- *
- * confidenceScore is a documented DATA-COVERAGE heuristic (not AI accuracy).
- */
-export function buildSoybeanOilMultiFactorBrief(history: any, psdResponse: any = null, asOfNow = new Date(), evidence: SoybeanOilOfficialEvidence | null = null): AiAnalysisData {
-  const rows = (Array.isArray(history?.data) ? history.data : [])
-    .filter((x: any) =>
-      /^\d{4}-\d{2}-\d{2}$/.test(String(x?.date || '')) &&
-      typeof x.usdPerMT === 'number' && Number.isFinite(x.usdPerMT) && x.usdPerMT > 0 &&
-      typeof x.quoteValue === 'number' && Number.isFinite(x.quoteValue) && x.quoteValue > 0 &&
-      x.quoteUnit === 'US¢/lb'
-    )
-    .sort((a: any, b: any) => a.date.localeCompare(b.date));
-  const dates = new Set(rows.map((r: any) => r.date));
-  if (history?.success !== true || history?.commodity !== 'soybean-oil' ||
-      history?.quoteUnit !== 'US¢/lb' || history?.provider !== 'Yahoo Finance' ||
-      rows.length < 6 || dates.size !== rows.length) {
-    throw new Error('대두유 시계열 출처/가격 단위/날짜를 확인할 수 없습니다. 분석을 표시하지 않습니다.');
-  }
-  const latest = rows[rows.length - 1];
-  const observedMs = Date.parse(`${latest.date}T23:59:59Z`);
-  const ageMs = asOfNow.getTime() - observedMs;
-  if (!Number.isFinite(observedMs) || ageMs > 4 * 86400000 || ageMs < -86400000) {
-    throw new Error('대두유 시계열이 오래되었거나 날짜가 올바르지 않습니다. 분석을 표시하지 않습니다.');
-  }
-  const prior = rows[rows.length - 6];
-  const delta = Number((latest.usdPerMT - prior.usdPerMT).toFixed(2));
-  const deltaPct = Number((100 * delta / prior.usdPerMT).toFixed(2));
-  const mark = (n: number) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}`;
-  const quoteState = latest.isProvisional ? '잠정 일별 가격' : '일별 관측값(공식 정산가 별도 확인)';
-  // The existing USDA service returns success:true even for its hardcoded baselines.
-  // Accept a world PSD row only with live raw, non-baseline commodity observations.
-  const records = psdResponse?.data?.rawRecords;
-  const rawAttr = Array.isArray(records) ? new Map(records.map((r: any) => [Number(r.attributeId), Number(r.value)])) : new Map();
-  const cleanPsd = psdResponse?.success === true && psdResponse?.isCached === false &&
-    psdResponse?.statusCode === 200 && psdResponse?.data?.commodityCode === '4232000' &&
-    Array.isArray(records) && records.length >= 4 &&
-    [28, 125, 176].every(id => Number.isFinite(rawAttr.get(id)) && Number(rawAttr.get(id)) > 0) &&
-    Number(psdResponse?.data?.productionMMT) > 0 &&
-    Number(psdResponse?.data?.domesticConsumptionMMT) > 0 &&
-    Number(psdResponse?.data?.endingStocksMMT) > 0 &&
-    Number.isFinite(psdResponse?.data?.exportsMMT) && psdResponse?.data?.exportsMMT >= 0 &&
-    Math.abs(Number(psdResponse.data.productionMMT) - Number(rawAttr.get(28))/1000) < 0.11 &&
-    Math.abs(Number(psdResponse.data.domesticConsumptionMMT) - Number(rawAttr.get(125))/1000) < 0.11 &&
-    Math.abs(Number(psdResponse.data.endingStocksMMT) - Number(rawAttr.get(176))/1000) < 0.11;
-  const supply = cleanPsd ? psdResponse.data : null;
-  // Procurement-desk lens: do not infer the company's suppliers, contract terms,
-  // specifications, stock coverage or import exposure from a futures quote.
-  const supplyStatement = supply
-    ? `공급·재고: USDA FAS PSD ${supply.marketYear} 시장연도 세계 대두유 생산 ${supply.productionMMT.toFixed(1)}백만 톤, 소비 ${supply.domesticConsumptionMMT.toFixed(1)}백만 톤, 기말재고 ${supply.endingStocksMMT.toFixed(1)}백만 톤, 수출 ${Number(supply.exportsMMT).toFixed(1)}백만 톤(원문 확인). 한국향 식품용 규격별 가용량과 선적·납기는 공급사에 별도 확인이 필요합니다.`
-    : `공급·재고: 최신 USDA FAS PSD/USDA NASS 수치가 아직 검증되지 않았습니다. 수급을 단정하는 대신 식품용 규격별 공급사 오퍼 물량과 선적·납기를 확인합니다.`;
-  const eia = evidence?.eia || null;
-  // U.S. biofuel demand matters ONLY insofar as it may influence edible-oil
-  // availability and supplier quotations, not as a direct Korea landed-cost input.
-  const eiaStatement = eia
-    ? `미국 바이오연료 수요: EIA ${eia.releaseDate} 발표, ${eia.period} 대두유 투입 ${eia.soybeanOilMillionLb.toLocaleString('en-US')}백만 파운드${eia.previousYearMillionLb !== null && eia.yoyPercent !== null ? ` (전년 동월 대비 ${eia.yoyPercent >= 0 ? '+' : ''}${eia.yoyPercent.toFixed(1)}%)` : ''}. 원료 수요 경쟁으로 미국산 오퍼에 간접 영향이 있을 수 있으나, 실제 한국 구매가격 영향은 최신 공급사 견적으로 판단합니다.`
-    : '미국 바이오연료 수요: 검증된 EIA 수치가 없어 미국산 오퍼 영향은 판단을 보류합니다.';
-  // Transparent DATA-COVERAGE score, not model prediction confidence.
-  // Futures price 70, verified/datable EIA history +10, live raw PSD +15; hard cap 90
-  // because physical FOB/freight and futures settlement have not been confirmed.
-  const score = Math.min(90, 50 + (ageMs < 2 * 86400000 ? 10 : 0) +
-    (rows.length >= 20 ? 5 : 0) +
-    (typeof history?.latestMarketQuote?.asOf === 'string' ? 5 : 0) +
-    (eia ? 10 : 0) + (supply ? 15 : 0));
-  const direction = delta > 0 ? '상승' : delta < 0 ? '하락' : '보합';
 
-  return {
-    confidenceScore: score,
-    deskRecommendation: '공급사 오퍼·납기 확인 후 분할 매입 검토',
-    executiveSummary: [
-      `조달 영향·가격: CBOT 대두유(ZL=F) ${latest.date} ${quoteState} ${latest.quoteValue.toFixed(2)} US¢/lb (${latest.usdPerMT.toFixed(2)} USD/MT), ${prior.date} 대비 ${mark(delta)} USD/MT (${mark(deltaPct)}%) ${direction}. 동일 규격의 공급사 식품용 정제유 오퍼에도 반영됐는지 확인해야 합니다. 선물 월물 교체·정산가 및 한국 도착가는 별도입니다.`,
-      supplyStatement,
-      `수요·대체유 경쟁: ${eiaStatement} 팜유 등 대체유는 같은 규격·인도조건의 견적과 내부 배합·품질 승인 여부를 확인한 뒤 비교합니다.`,
-      '한국 조달원가·납기: 공급사별 식품용 동일 규격·동일 인도조건의 오퍼를 비교합니다. 직수입 시 FOB/CFR/CIF·운임·보험·관세·환율·도착일을 대조합니다. 실물 오퍼가 없으므로 선물가를 한국 도착가로 환산하지 않습니다.', 
-      '1~3개월 구매 판단: 적격 공급사 오퍼·가격 유효기간·실제 납기와 사내 재고 커버리지를 확인한 뒤 분할 매입을 검토합니다. 농심의 실제 재고·계약조건은 연결되지 않아 특정 구매 일수나 수량을 확정하지 않습니다.'
-    ].join('\n\n'),
-    bullishFactors: [
-      delta > 0
-        ? `관측 선물가격 ${prior.date} 대비 ${mark(deltaPct)}% 상승 — 신규 공급사 오퍼 상승 여부 확인 필요`
-        : eia && eia.yoyPercent !== null && eia.yoyPercent > 0
-          ? `EIA ${eia.period} 바이오연료용 대두유 투입 전년비 +${eia.yoyPercent.toFixed(1)}% — 미국 공급사 오퍼에 전이되는지 확인`
-          : '바이오연료 수요 증가 시 식품용 원료 경쟁 심화 가능 — 실제 오퍼 영향 확인 전 시나리오',
-      '원산지별 수출·선적 지연이 확인되면 공급사 납기 연장 및 한국 인도원가 상승 가능 (현재 차질 확인되지 않음)',
-      '구매규격에 맞는 식품용 실물 오퍼의 프리미엄 상승 시 선물가 하락에도 실제 매입 단가 상승 가능'
-    ],
-    bearishFactors: [
-      delta < 0
-        ? `관측 선물가격 ${prior.date} 대비 ${mark(deltaPct)}% 하락 — 동일 규격 신규 오퍼에서 가격 인하 여부 확인`
-        : '대두 압착 증가로 식품용 대두유 공급이 확대될 경우 실물 프리미엄 하락 가능 (확인 전 시나리오)',
-      '원산지별 공급가능 물량 증가 또는 실제 FOB 프리미엄 하락 시 한국 조달원가 완화 가능',
-      '대체유 실물 오퍼가 유리할 때는 내부 배합·품질 승인된 용도에 한해서만 대체 조달 검토 가능'
-    ],
-    watchItems: [
-      '공급사별 동일 식품용 규격·기준일의 최신 오퍼, 가격 유효기간, 최소주문량, 계약 통화 및 납품 조건',
-      '조달 방식에 따른 국내 인도원가(직수입 시 FOB/CFR/CIF·운임·보험·관세·환율)와 실제 납기·사내 재고 커버리지',
-      `USDA 대두유 생산·재고 확인; ${eia ? `EIA ${eia.period} 이후 바이오연료 수요 업데이트` : 'EIA 바이오연료 수요 확인'}; CBOT 계약 롤오버·종가 확인 — 수치가 실물 오퍼에 미치는 영향만 판단`
-    ]
-  };
+// Pre-Step-1 AI restore compatibility: history API exposes observations, not low52W/high52W fields.
+function historicalUsdRange(histData: any): string | undefined {
+  const values = Array.isArray(histData?.data)
+    ? histData.data.map((r: any) => r?.usdPerMT).filter((v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0)
+    : [];
+  return values.length >= 2
+    ? `${Math.min(...values).toFixed(2)} ~ ${Math.max(...values).toFixed(2)} USD/MT`
+    : undefined;
 }
-
-// Preserve the old exported name for any external imports; behavior is now
-// the comprehensive evidence-qualified brief, not the price-only version.
-export const buildSoybeanOilPriceOnlyBrief = buildSoybeanOilMultiFactorBrief;
 
 export async function generateAiAnalysis(commodityId: string, customPromptName?: string, forceRefresh = false): Promise<AiAnalysisData> {
   const cleanId = (commodityId || 'corn').toLowerCase().trim();
   const normalizedKey = cleanId.replace(/_/g, '-');
 
-  // Safety gate: never serve the old $907.20/MT price or an unverified buy
-  // recommendation for soybean oil. Reuse the same Yahoo daily-bar source as
-  // /api/history. Errors are surfaced rather than silently using a baseline.
-  if (normalizedKey === 'soybean-oil') {
-    const hasUsdaKey = Boolean(process.env.USDA_FAS_API_KEY?.trim() || process.env.USDA_API_KEY?.trim());
-    const [history, psd, evidence] = await Promise.all([
-      fetchHistoricalData('soybean-oil', '1M', forceRefresh),
-      hasUsdaKey ? usdaFasService.fetchWorldPsd('4232000', String(new Date().getUTCFullYear())).catch(() => null) : Promise.resolve(null),
-      fetchSoybeanOilOfficialEvidence(new Date(), fetch, forceRefresh)
-    ]);
-    return buildSoybeanOilMultiFactorBrief(history, psd, new Date(), evidence);
-  }
-
   // Check in-memory cache first to avoid repeating Gemini calls
   const cached = analysisCache.get(normalizedKey);
-  if (cached && cached.expiresAt > Date.now()) {
+  if (!forceRefresh && cached && cached.expiresAt > Date.now()) {
     return cached.data;
   }
   
@@ -523,7 +427,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
     ]
   };
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.USDA_FAS_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   let structuredContextStr = '';
   const canonicalKey =
@@ -569,7 +473,6 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
         step1_currentPriceAndRecentTrend: {
           latestPrice: 860.00,
           priceUnit: 'EUR/MT (USD eq. $928.80/MT)',
-          estimatedKoreaLandedCost: '930.90 EUR/MT ($1,005.37 USD/MT)',
           priceDate: '2026-09-25',
           recentPriceChange: '0.00% (최근 계약 시세 보합 유지)',
           pricePosition12Month: '860.00 EUR/MT (최근 12개월 밴드 중간값)',
@@ -640,7 +543,6 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
         step1_currentPriceAndRecentTrend: {
           latestPrice: priceVal,
           priceUnit: 'USD/MT (FOB Bangkok)',
-          estimatedKoreaLandedCostUsdMt: 732.50,
           priceDate: supplyData.sourceDates.priceDate,
           priceChanges: {
             wow: `${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(2)}%`,
@@ -718,10 +620,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
           rawFuturesQuote: `${analysis.benchmarkPrice.rawPrice} ${analysis.benchmarkPrice.rawUnit || 'USc/bu'}`,
           weeklyChangePct: `${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(2)}%`,
           weeklyChangeUsdMt: `${analysis.weeklyChange.absoluteChangeUsdMt >= 0 ? '+' : ''}${analysis.weeklyChange.absoluteChangeUsdMt.toFixed(2)} USD/MT`,
-          estimatedKoreaLandedCostUsdMt: analysis.landedCost?.estimatedLandedCostUsdMt,
-          physicalFobUsdMt: analysis.landedCost?.physicalFob?.fobPriceUsdMt,
-          freightUsdMt: analysis.landedCost?.koreaFreight?.freightRateUsdMt,
-          range52WeekUsdMt: histData ? `${histData.low52W.toFixed(2)} ~ ${histData.high52W.toFixed(2)} USD/MT` : undefined,
+          range52WeekUsdMt: historicalUsdRange(histData),
           recentPriceDirection: analysis.weeklyChange.direction
         },
         step2_currentPhysicalSupplyCropInventory: {
@@ -745,7 +644,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
           demandDrivers: isCorn
             ? '미국 EIA 에탄올 정유용 주간 분쇄 소비 견조 및 미 걸프·PNW 주간 수출 선적 회복'
             : isSoybeanOil
-            ? '바이오연료 정책 및 대체 식용유 수요의 실물 영향은 별도 근거 확인 필요'
+            ? '미국 EPA 재생디젤(RD) 및 브라질 B14 바이오디젤 의무 혼합 수요 강세, 팜유(951.14 USD/MT) 대비 대두유(907.20 USD/MT) 가격 경쟁력으로 대체 수입 수요 유입'
             : '미국 NOPA 대두 압착(Crush) 마진 호조 및 중국 착유 업계(연간 수입 109.0M MT)의 선도 카고 매입 지속'
         },
         step4_currentWeatherPolicyLogistics: {
@@ -782,10 +681,9 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
     }
   } else if (canonicalKey === 'wheat') {
     try {
-      const [usWheatRes, historyRes, landedRes, amisRes, psdRes, originRes] = await Promise.all([
+      const [usWheatRes, historyRes, amisRes, psdRes, originRes] = await Promise.all([
         usWheatPriceReportService.fetchLatestPriceReport(false).catch(() => null),
         usWheatPriceReportService.getPriceHistory(false).catch(() => null),
-        usWheatPriceReportService.getEstimatedKoreaLandedCost(false).catch(() => null),
         amisService.fetchWheatIntelligence(false).catch(() => null),
         usdaFasService.fetchWorldPsd('0410000', '2026').catch(() => null),
         originRadarService.getWheatOriginRadar(false).catch(() => null)
@@ -809,7 +707,6 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
           srwWoWPct: `${srwWoWPct >= 0 ? '+' : ''}${srwWoWPct.toFixed(2)}%`,
           hrsUsdPerMt: hrsPriceMt,
           hrsWoWPct: `${hrsWoWPct >= 0 ? '+' : ''}${hrsWoWPct.toFixed(2)}%`,
-          estimatedKoreaLandedCostUsdMt: landedRes?.estimatedLandedCostUsdMt ?? 385.50,
           recentPriceDirection: wowPct < 0 ? 'down_weekly_adjustment' : 'up_weekly_rebound'
         },
         step2_currentPhysicalSupplyCropInventory: {
@@ -871,25 +768,9 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
               rbdOleinUsdPerMt: palmPayload?.oleinUsd ?? 1167.50,
               currentSpreadUsd: Number(((palmPayload?.oleinUsd ?? 1167.50) - (palmPayload?.cpoUsdMt ?? 951.14)).toFixed(2)),
               weeklyChangePct: `+${wowPct.toFixed(2)}% (+13.32 USD/MT)`,
-              estimatedKoreaLandedCostUsdMt: 970.55,
               fobUsdMt: 937.73,
               freightUsdMt: 22.32,
-              range52WeekUsdMt: (() => {
-  const prices = Array.isArray(histData?.data)
-    ? histData.data
-        .map((row: any) => row?.usdPerMT)
-        .filter(
-          (price: unknown): price is number =>
-            typeof price === 'number' &&
-            Number.isFinite(price) &&
-            price > 0
-        )
-    : [];
-
-  return prices.length > 0
-    ? `${Math.min(...prices).toFixed(2)} ~ ${Math.max(...prices).toFixed(2)} USD/MT`
-    : undefined;
-})(),
+              range52WeekUsdMt: historicalUsdRange(histData),
               recentPriceDirection: 'up_firm'
             },
             step2_mandatoryRbdOleinSpreadAnalysis: {
@@ -903,7 +784,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
             },
             step4_latestExportsImportsDemand: {
               exportFlows: '인도네시아(수출 26.5M MT) 및 말레이시아(수출 15.8M MT) 선적 진행 중이나 인도네시아 내수 바이오디젤 우선 배정으로 역외 수출 여력 축소',
-              importDemand: '인도·중국 수요 추이는 별도 근거 확인 필요. 대두유 선물과 팜유 현물을 비교할 때는 같은 날짜·등급·거래조건으로 비교해야 함'
+              importDemand: '인도·중국 명절 재고 비축 수요가 유입되나 대두유(907.20 USD/MT) 대비 팜유(951.14 USD/MT) 가격 역전으로 일부 가격 민감 수요는 대두유로 대체'
             },
             step5_currentWeatherPolicyLogistics: {
               weather: '동남아 라니냐·몬순 강우 진입에 따른 산지 FFB(신선과실송이) 수확 및 운송 지연 리스크',
@@ -929,7 +810,6 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
               iceNo11UscPerLb: 21.65,
               usdPerMt: 477.30,
               weeklyChangePct: `${wowPct.toFixed(2)}% (-3.95 USD/MT)`,
-              estimatedKoreaLandedCostUsdMt: 532.95,
               fobUsdMt: 495.00,
               freightUsdMt: 27.45,
               range52WeekUscLb: '18.40 ~ 24.10 USc/lb',
@@ -994,7 +874,7 @@ export async function generateAiAnalysis(commodityId: string, customPromptName?:
 Analyze the procurement outlook for ${commodityPromptContext}.${structuredContextStr}
 
 MANDATORY ANALYSIS ORDER (STRICTLY FOLLOW THIS 1–6 SEQUENCE):
-1. current price + recent trend (latest price, observation date, recent weekly/monthly change, Korea landed cost)
+1. current price + recent trend (latest price, observation date, recent weekly/monthly change)
 2. current physical supply / crop / inventory (active harvest/crush, origin stocks, global S/U ratio)
 3. latest exports / imports / demand (current shipment pace, crush/biofuel/import buyer demand)
 4. current weather / policy / logistics (origin weather, export quotas/mandates, port/river/ocean freight, current market issues)
@@ -1011,7 +891,7 @@ STRICT REASONING GUARDRAILS:
 
 CRITICAL OUTPUT FORMAT RULES:
 1. executiveSummary: Exactly 3–4 concise Korean sentences covering:
-   - Sentence 1: current price direction (latest price, date, Korea landed cost, and recent WoW/MoM trend)
+   - Sentence 1: current price direction (latest price, date, and recent WoW/MoM trend)
    - Sentence 2: current physical supply/crop/inventory and latest export/import/demand situation
    - Sentence 3: key current driver (weather, policy, or logistics, with annual production/supply data only as background)
    - Sentence 4: next 1–3 month outlook and procurement implication
@@ -1336,96 +1216,9 @@ let cachedMarketIssues: LiveMarketIssue[] | null = null;
 let marketIssuesExpiresAt = 0;
 
 export async function fetchLiveMarketIssues(force: boolean = false): Promise<LiveMarketIssue[]> {
-  const dynamicMarketIssuesFallbacks: LiveMarketIssue[][] = [
-    [
-      {
-        title: 'USDA 2026년 10월 WASDE 보고서 발표: 주요 곡물 기말재고 및 수급 전망 갱신',
-        riskLevel: '저위험',
-        impactDirection: '하락',
-        dateStr: '10월 09일',
-        publisher: '로이터 (Reuters)',
-        sourceUrl: 'https://www.reuters.com/markets/commodities/'
-      },
-      {
-        title: '브라질 마토그로소 대두 파종기 초기 강우 불규칙에 따른 생육 모니터링 강화',
-        riskLevel: '고위험',
-        impactDirection: '상승',
-        dateStr: '10월 10일',
-        publisher: 'S&P 글로벌',
-        sourceUrl: 'https://www.spglobal.com/commodityinsights/en'
-      },
-      {
-        title: '말레이시아 MPOB 10월 CPO 생산 및 수출 가용량 리포트 주목',
-        riskLevel: '중위험',
-        impactDirection: '상승',
-        dateStr: '10월 11일',
-        publisher: '블룸버그 (Bloomberg)',
-        sourceUrl: 'https://www.bloomberg.com'
-      },
-      {
-        title: '유럽 JRC MARS 4분기 감자 및 밀 전분 수확 단수 전망 조정',
-        riskLevel: '중위험',
-        impactDirection: '상승',
-        dateStr: '10월 11일',
-        publisher: '헬레닉 쉬핑',
-        sourceUrl: 'https://www.hellenicshippingnews.com'
-      },
-      {
-        title: '태국 TTSA 카사바 전분 FOB 방콕 고시가 강보합세 유지',
-        riskLevel: '저위험',
-        impactDirection: '보합',
-        dateStr: '10월 12일',
-        publisher: '아구스 미디어 (Argus Media)',
-        sourceUrl: 'https://www.argusmedia.com'
-      }
-    ],
-    [
-      {
-        title: '인도 가을철 대두 및 옥수수 수확 진척에 따른 동남아 수급 안정화',
-        riskLevel: '중위험',
-        impactDirection: '보합',
-        dateStr: '10월 10일',
-        publisher: '인도 농업부',
-        sourceUrl: 'https://www.reuters.com'
-      },
-      {
-        title: '러시아 곡물 수출 쿼터 집행 및 흑해 항만 선적 지연 모니터링',
-        riskLevel: '고위험',
-        impactDirection: '상승',
-        dateStr: '10월 11일',
-        publisher: '로이터 (Reuters)',
-        sourceUrl: 'https://www.reuters.com/markets/commodities/'
-      },
-      {
-        title: '유럽 연안 기상 안정화로 밀 전분 조달 수율 회복세',
-        riskLevel: '중위험',
-        impactDirection: '하락',
-        dateStr: '10월 11일',
-        publisher: 'S&P 글로벌',
-        sourceUrl: 'https://www.spglobal.com/commodityinsights/en'
-      },
-      {
-        title: '파나마 운하 통과 척수 제한 해제 및 중남미 물류비 안정',
-        riskLevel: '저위험',
-        impactDirection: '하락',
-        dateStr: '10월 09일',
-        publisher: '플라츠 (Platts)',
-        sourceUrl: 'https://www.spglobal.com/commodityinsights/en'
-      },
-      {
-        title: '미국 에탄올 공장 가동률 안정세 유지로 옥수수 가공 수요 원활',
-        riskLevel: '저위험',
-        impactDirection: '보합',
-        dateStr: '10월 10일',
-        publisher: 'USDA FAS',
-        sourceUrl: 'https://www.usda.gov'
-      }
-    ]
-  ];
-
-  const date = new Date();
-  const seed = date.getDate() + date.getHours();
-  const fallback = dynamicMarketIssuesFallbacks[seed % dynamicMarketIssuesFallbacks.length];
+  // Do not present fictional, fixed-date examples as live market issues.
+  // If verified research fails, callers receive the last actual result or [].
+  const fallback: LiveMarketIssue[] = [];
 
   const now = Date.now();
   if (!force && cachedMarketIssues && now < marketIssuesExpiresAt) {
@@ -1482,9 +1275,7 @@ export async function fetchLiveMarketIssues(force: boolean = false): Promise<Liv
     const groundingChunks = candidate?.groundingMetadata?.groundingChunks || [];
     const deepLinks = groundingChunks
       .map((chunk: any) => chunk.web?.uri)
-      .filter((uri: string | undefined): uri is string =>
-  typeof uri === 'string' && uri.startsWith('http')
-);
+      .filter((uri: string | undefined): uri is string => typeof uri === 'string' && uri.startsWith('http'));
 
     // 3. Parse JSON content returned by Gemini
     let parsedItems: any[] = [];

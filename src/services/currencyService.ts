@@ -1,3 +1,6 @@
+import {parseDatedDisplayFx,type DatedDisplayFx} from '../utils/soybeanPriceSnapshot';
+let datedDisplayFx:DatedDisplayFx|null=null;
+export const getDatedDisplayFx=()=>datedDisplayFx;
 export interface FXRates {
   USD_KRW: number;
   EUR_USD: number;
@@ -9,9 +12,9 @@ export interface FXRates {
 type FXListener = (rates: FXRates) => void;
 
 let cacheFxRates: FXRates = {
-  USD_KRW: 1388.5,
-  EUR_USD: 1.081,
-  USD_MYR: 4.0845,
+  USD_KRW: 0,
+  EUR_USD: 0,
+  USD_MYR: 0,
 };
 
 const listeners: Set<FXListener> = new Set();
@@ -25,7 +28,9 @@ export function subscribeFxRates(listener: FXListener): () => void {
 }
 
 export function updateLiveFxRates(newRates: Partial<FXRates>): void {
-  cacheFxRates = { ...cacheFxRates, ...newRates };
+  const valid = Object.fromEntries(Object.entries(newRates).filter(([,v]) => typeof v === 'number' && Number.isFinite(v) && v > 0));
+  if (Object.keys(valid).length === 0) return;
+  cacheFxRates = { ...cacheFxRates, ...valid };
   listeners.forEach((listener) => listener(cacheFxRates));
 }
 
@@ -35,21 +40,30 @@ export function getAllFxRates(): FXRates {
 
 export function getLiveExchangeRate(pair: string = 'USD_MYR'): number {
   if (pair === 'USD_MYR' || pair === 'MYR') {
-    return cacheFxRates.USD_MYR || 4.0845;
+    return cacheFxRates.USD_MYR || 0;
   }
   if (pair === 'USD_KRW' || pair === 'KRW') {
-    return cacheFxRates.USD_KRW || 1388.5;
+    return cacheFxRates.USD_KRW || 0;
   }
   if (pair === 'EUR_USD' || pair === 'EUR') {
-    return cacheFxRates.EUR_USD || 1.081;
+    return cacheFxRates.EUR_USD || 0;
   }
-  return cacheFxRates[pair] || 1;
+  return cacheFxRates[pair] || 0;
 }
 
 /**
  * Dynamically fetches live FX rates from the pipeline telemetry endpoint or Frankfurter API.
  */
-export async function fetchLiveFxRates(): Promise<FXRates> {
+let lastAttemptAt = 0;
+let pendingFx: Promise<FXRates> | null = null;
+export function fetchLiveFxRates(force = false): Promise<FXRates> {
+  if (pendingFx) return pendingFx;
+  if (!force && Date.now() - lastAttemptAt < 15 * 60_000) return Promise.resolve(cacheFxRates);
+  lastAttemptAt = Date.now();
+  pendingFx = fetchFxNow().finally(() => { pendingFx = null; });
+  return pendingFx;
+}
+async function fetchFxNow(): Promise<FXRates> {
   let updated = false;
   const newRates: Partial<FXRates> = {};
 
@@ -98,6 +112,8 @@ export async function fetchLiveFxRates(): Promise<FXRates> {
     if (res.ok) {
       const json = await res.json();
       if (json && json.rates) {
+        const verifiedFx=parseDatedDisplayFx(json);
+        if(verifiedFx)datedDisplayFx=verifiedFx;
         if (typeof json.rates.KRW === 'number') newRates.USD_KRW = json.rates.KRW;
         if (typeof json.rates.MYR === 'number') newRates.USD_MYR = json.rates.MYR;
         if (typeof json.rates.EUR === 'number' && json.rates.EUR > 0) {

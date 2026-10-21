@@ -1,0 +1,17 @@
+# RMS secrets, dependencies and local backups
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.rms-cost-guard-backups/
+.rms-ai-live-backup-*/
+.rms-original-ai-backup/
+.DS_Store
+.rms-stage3/
+.rms-stage3-backups/
+
+# Verified official wheat origin cache (local runtime, not source code)
+.rms-origin-verified/
+.rms-wheat-origin-backups/
+.rms-price-history/

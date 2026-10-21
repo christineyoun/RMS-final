@@ -1,3 +1,4 @@
+import { loadPublicHistory, palmHistoryPayload, refreshPublicHistory } from './publicPriceHistory.ts';
 import fs from 'fs';
 import path from 'path';
 import { ttsaService } from './ttsaService.ts';
@@ -11,6 +12,8 @@ const TRADINGVIEW_FCPO_URL = 'https://www.tradingview.com/symbols/MYX-FCPO1!/';
 const INVESTING_OLEIN_URL = 'https://www.investing.com/commodities/rbd-palm-olein';
 
 export interface PalmOilDataPoint {
+  oleinPublisherQuoteDate?:string;
+  cpoMyr?: number;
   date: string;
   centsPerBushel: number; // MDEX FCPO in MYR/MT
   usdPerMT: number;       // CPO in USD/MT
@@ -20,6 +23,9 @@ export interface PalmOilDataPoint {
 }
 
 export interface PalmOilCachePayload {
+  diagnostics?:any;fxPolicy?:string;
+  cpoObservationDate?:string;
+  oleinObservationDate?:string;
   priceMyr: number;
   cpoUsdMt: number;
   oleinUsd: number;
@@ -96,123 +102,11 @@ function parseInvestingOleinHtml(html: string): number | null {
   return null;
 }
 
-export async function scrapeLivePalmOilPrices(forceRefresh: boolean = false): Promise<PalmOilCachePayload> {
-  const existingCache = getPalmCache();
-  const now = Date.now();
-
-  if (!forceRefresh && existingCache && now - lastPalmScrapeAt < PALM_SCRAPE_COOLDOWN_MS) {
-    return existingCache;
-  }
-
-  lastPalmScrapeAt = now;
-
-  let scrapedCpoMyr: number | null = null;
-  let scrapedOleinUsd: number | null = null;
-
-  const browserHeaders = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9'
-  };
-
-  // 1. Attempt live scrape of CPO (MYR/MT) from TradingView / Bursa Malaysia
-  try {
-    const cpoRes = await fetch(TRADINGVIEW_FCPO_URL, {
-      headers: browserHeaders,
-      signal: AbortSignal.timeout(6000)
-    });
-    if (cpoRes.ok) {
-      const cpoHtml = await cpoRes.text();
-      scrapedCpoMyr = parseTradingViewFcpoHtml(cpoHtml);
-    }
-  } catch (err) {
-    console.warn('[PalmOilScraper] TradingView FCPO scrape notice:', (err as Error)?.message || err);
-  }
-
-  // 2. Attempt live scrape of RBD Palm Olein (USD/MT) from Investing.com
-  try {
-    const oleinRes = await fetch(INVESTING_OLEIN_URL, {
-      headers: browserHeaders,
-      signal: AbortSignal.timeout(6000)
-    });
-    if (oleinRes.ok) {
-      const oleinHtml = await oleinRes.text();
-      scrapedOleinUsd = parseInvestingOleinHtml(oleinHtml);
-    }
-  } catch (err) {
-    console.warn('[PalmOilScraper] Investing.com RBD Olein scrape notice:', (err as Error)?.message || err);
-  }
-
-  // Also attempt background sync of 1Y historical series table from Investing.com
-  scrapeInvestingOleinHistory().catch((err) =>
-    console.warn('[PalmOilScraper] 1Y Olein history background sync notice:', err)
-  );
-
-  // Validate scraped values strictly before updating the cache
-  const isCpoValid = scrapedCpoMyr !== null && scrapedCpoMyr >= 3000 && scrapedCpoMyr <= 7500;
-  const isOleinValid = scrapedOleinUsd !== null && scrapedOleinUsd >= 700 && scrapedOleinUsd <= 2200;
-
-  if (isCpoValid && isOleinValid && existingCache) {
-    const usdMyrRate = getLiveExchangeRate('USD_MYR');
-    const scrapedCpoUsd = Number((scrapedCpoMyr / usdMyrRate).toFixed(2));
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    const updatedSeries = [...existingCache.historicalSeries];
-    const lastIdx = updatedSeries.length - 1;
-    if (lastIdx >= 0 && updatedSeries[lastIdx].date === todayStr) {
-      updatedSeries[lastIdx] = {
-        date: todayStr,
-        centsPerBushel: scrapedCpoMyr,
-        usdPerMT: scrapedCpoUsd,
-        cpoUsd: scrapedCpoUsd,
-        oleinUsd: scrapedOleinUsd,
-        oleinUsdPerMt: scrapedOleinUsd
-      };
-    } else {
-      updatedSeries.push({
-        date: todayStr,
-        centsPerBushel: scrapedCpoMyr,
-        usdPerMT: scrapedCpoUsd,
-        cpoUsd: scrapedCpoUsd,
-        oleinUsd: scrapedOleinUsd,
-        oleinUsdPerMt: scrapedOleinUsd
-      });
-    }
-
-    const updatedPayload: PalmOilCachePayload = {
-      priceMyr: scrapedCpoMyr,
-      cpoUsdMt: scrapedCpoUsd,
-      oleinUsd: scrapedOleinUsd,
-      updatedAt: new Date().toISOString(),
-      source: 'MDEX (FCPO) · RBD Olein (Investing.com)',
-      cpoSourceUrl: TRADINGVIEW_FCPO_URL,
-      oleinSourceUrl: INVESTING_OLEIN_URL,
-      historicalSeries: updatedSeries
-    };
-
-    updatePalmCache(updatedPayload);
-    updateSavedBaselinePrice(scrapedCpoMyr);
-    return updatedPayload;
-  }
-
-  // Immediate fallback to persistent local cache (src/data/cache_palmoil.json)
-  if (existingCache) {
-    return existingCache;
-  }
-
-  // Emergency safeguard if disk read ever failed
-  return {
-    priceMyr: 4649,
-    cpoUsdMt: 1120.24,
-    oleinUsd: 1167.50,
-    updatedAt: new Date().toISOString(),
-    source: 'MDEX (FCPO) · RBD Olein (Investing.com)',
-    cpoSourceUrl: TRADINGVIEW_FCPO_URL,
-    oleinSourceUrl: INVESTING_OLEIN_URL,
-    historicalSeries: [
-      { date: '2026-09-28', centsPerBushel: 4649, usdPerMT: 1120.24, oleinUsdPerMt: 1167.50 }
-    ]
-  };
+export async function scrapeLivePalmOilPrices(forceRefresh=false):Promise<PalmOilCachePayload> {
+  let history=loadPublicHistory('palm-oil');
+  if(forceRefresh)
+    history=await refreshPublicHistory('palm-oil',getLiveExchangeRate('USD_MYR'));
+  return palmHistoryPayload(history);
 }
 
 export interface TickerConfig {
@@ -241,66 +135,9 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
   const cleanId = (commodityId || 'corn').toLowerCase();
   
   if (cleanId === 'potato-starch' || cleanId === 'potato_starch') {
-    const eurostatData = [
-      // 2023
-      { date: '2023-10-15', centsPerBushel: 820.00, usdPerMT: 885.60 },
-      { date: '2023-11-15', centsPerBushel: 825.00, usdPerMT: 891.00 },
-      { date: '2023-12-15', centsPerBushel: 830.00, usdPerMT: 896.40 },
-      // 2024
-      { date: '2024-01-15', centsPerBushel: 835.00, usdPerMT: 901.80 },
-      { date: '2024-02-15', centsPerBushel: 832.00, usdPerMT: 898.56 },
-      { date: '2024-03-15', centsPerBushel: 830.00, usdPerMT: 896.40 },
-      { date: '2024-04-15', centsPerBushel: 828.00, usdPerMT: 894.24 },
-      { date: '2024-05-15', centsPerBushel: 835.00, usdPerMT: 901.80 },
-      { date: '2024-06-15', centsPerBushel: 840.00, usdPerMT: 907.20 },
-      { date: '2024-07-15', centsPerBushel: 845.00, usdPerMT: 912.60 },
-      { date: '2024-08-15', centsPerBushel: 848.00, usdPerMT: 915.84 },
-      { date: '2024-09-15', centsPerBushel: 850.00, usdPerMT: 918.00 },
-      { date: '2024-10-15', centsPerBushel: 845.00, usdPerMT: 912.60 },
-      { date: '2024-11-15', centsPerBushel: 840.00, usdPerMT: 907.20 },
-      { date: '2024-12-15', centsPerBushel: 842.00, usdPerMT: 909.36 },
-      // 2025
-      { date: '2025-01-15', centsPerBushel: 845.00, usdPerMT: 912.60 },
-      { date: '2025-02-15', centsPerBushel: 850.00, usdPerMT: 918.00 },
-      { date: '2025-03-15', centsPerBushel: 855.00, usdPerMT: 923.40 },
-      { date: '2025-04-15', centsPerBushel: 852.00, usdPerMT: 920.16 },
-      { date: '2025-05-15', centsPerBushel: 848.00, usdPerMT: 915.84 },
-      { date: '2025-06-15', centsPerBushel: 845.00, usdPerMT: 912.60 },
-      { date: '2025-07-15', centsPerBushel: 850.00, usdPerMT: 918.00 },
-      { date: '2025-08-15', centsPerBushel: 855.00, usdPerMT: 923.40 },
-      { date: '2025-09-15', centsPerBushel: 870.00, usdPerMT: 939.60 }, // This is Sept 2025 YoY baseline
-      { date: '2025-10-15', centsPerBushel: 862.00, usdPerMT: 930.96 },
-      { date: '2025-11-15', centsPerBushel: 865.00, usdPerMT: 934.20 },
-      { date: '2025-12-15', centsPerBushel: 870.00, usdPerMT: 939.60 },
-      // 2026
-      { date: '2026-01-15', centsPerBushel: 872.00, usdPerMT: 941.76 },
-      { date: '2026-02-15', centsPerBushel: 875.00, usdPerMT: 945.00 },
-      { date: '2026-03-15', centsPerBushel: 880.00, usdPerMT: 950.40 },
-      { date: '2026-04-15', centsPerBushel: 878.00, usdPerMT: 948.24 },
-      { date: '2026-05-15', centsPerBushel: 875.00, usdPerMT: 945.00 },
-      { date: '2026-06-15', centsPerBushel: 872.00, usdPerMT: 941.76 },
-      { date: '2026-07-15', centsPerBushel: 870.00, usdPerMT: 939.60 },
-      { date: '2026-08-15', centsPerBushel: 865.00, usdPerMT: 934.20 },
-      { date: '2026-09-15', centsPerBushel: 860.00, usdPerMT: 928.80 } // Latest Month (Sept 2026)
-    ];
-
-    // Filter by timeframe: 6M (6 points), 1Y (12 points), 2Y (24 points), 3Y (all 36 points)
-    let filtered = eurostatData;
-    if (timeframe === '6M') filtered = eurostatData.slice(-6);
-    else if (timeframe === '1Y') filtered = eurostatData.slice(-12);
-    else if (timeframe === '2Y') filtered = eurostatData.slice(-24);
-    else if (timeframe === '3Y') filtered = eurostatData.slice(-36);
-    else filtered = eurostatData.slice(-12); // Default to 1Y
-
-    return {
-      success: true,
-      commodity: 'potato-starch',
-      symbol: 'CN_110813 (Eurostat Comext)',
-      timeframe,
-      range: timeframe,
-      source: 'Eurostat Comext · CN 110813',
-      data: filtered,
-    };
+    return { success: false, commodity: 'potato-starch', symbol: 'unavailable', timeframe,
+      range: timeframe, source: '감자전분 실물 가격 미확인', data: [],
+      dataStatus: 'unavailable', error: '공식 감자 수확량은 농업 생산 대리지표이며 감자전분 시장가격이 아닙니다.' };
   }
 
   if (cleanId === 'tapioca-starch' || cleanId === 'tapioca_starch') {
@@ -316,7 +153,7 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
     else if (timeframe === '5Y' || timeframe === 'ALL') daysToKeep = 1825;
 
     const cutoffMs = nowMs - daysToKeep * 24 * 60 * 60 * 1000;
-    const filtered = weeklyPrices.filter(item => new Date(item.date).getTime() >= cutoffMs);
+    const filtered = weeklyPrices.filter(item => !item.isSynthetic && Number.isFinite(item.price) && item.price > 0 && new Date(item.date).getTime() >= cutoffMs && new Date(item.date).getTime() <= nowMs);
 
     const dataPoints = filtered.map(item => ({
       date: item.date,
@@ -361,15 +198,17 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
 
     const usdMyrRate = getLiveExchangeRate('USD_MYR') || 4.0845;
     const formattedFiltered = filtered.map((pt) => {
-      const cpoUsd = pt.cpoUsd ?? (pt.centsPerBushel && usdMyrRate > 0 ? Number((pt.centsPerBushel / usdMyrRate).toFixed(2)) : pt.usdPerMT);
+      const cpoUsd = pt.cpoUsd ?? pt.usdPerMT;
       const oleinUsd = pt.oleinUsd ?? pt.oleinUsdPerMt;
       return {
         date: pt.date,
+        cpoMyr:pt.cpoMyr,
         centsPerBushel: pt.centsPerBushel,
         usdPerMT: cpoUsd,
         cpoUsd,
         oleinUsd,
         oleinUsdPerMt: oleinUsd,
+        oleinPublisherQuoteDate:pt.oleinPublisherQuoteDate,
         spreadUsd: Number((oleinUsd - cpoUsd).toFixed(2)),
       };
     });
@@ -384,9 +223,12 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
       cpoSourceUrl: palmPayload.cpoSourceUrl || TRADINGVIEW_FCPO_URL,
       oleinSourceUrl: palmPayload.oleinSourceUrl || INVESTING_OLEIN_URL,
       updatedAt: palmPayload.updatedAt,
+      diagnostics:palmPayload.diagnostics,fxPolicy:palmPayload.fxPolicy,
       priceMyr: palmPayload.priceMyr,
       cpoUsdMt: palmPayload.cpoUsdMt,
       oleinUsd: palmPayload.oleinUsd,
+      cpoObservationDate:palmPayload.cpoObservationDate,
+      oleinObservationDate:palmPayload.oleinObservationDate,
       data: formattedFiltered,
     };
   }

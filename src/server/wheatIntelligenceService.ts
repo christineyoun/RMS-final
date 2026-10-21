@@ -1,3 +1,4 @@
+import { WHEAT_RESEARCH_MODEL } from './wheatHybridModels.ts';
 /**
  * Wheat-specific procurement intelligence service.
  *
@@ -9,7 +10,7 @@
  * No mock market values are generated. When current web research is unavailable,
  * the service falls back to the verified U.S. Wheat + AMIS inputs only.
  */
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from './paidGeminiGuard.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
 import { amisService } from './amisService.ts';
 import { usdaFasService } from './usdaFasService.ts';
@@ -188,7 +189,7 @@ Analyze milling wheat procurement covering all 3 major U.S. wheat classes:
 - MIAX HRS (Hard Red Spring): High-protein spring wheat blend.
 
 Analyze procurement in this STRICT priority order:
-1. current price + recent trend across all 3 classes (HRW, SRW, HRS weekly changes, landed cost)
+1. current price + recent trend across all 3 classes (HRW, SRW, HRS weekly changes)
 2. current physical supply / crop / inventory (active harvest, origin stocks, global S/U)
 3. latest exports / imports / demand (current shipment pace, tender demand)
 4. current weather / policy / logistics (US Southern Plains moisture, Australia dryness, Black Sea quota/port logistics)
@@ -212,14 +213,14 @@ Return ONLY one JSON object with this exact shape:
 {
   "latestDate": "YYYY-MM-DD",
   "deskRecommendation": "${context.deskRec}",
-  "summaryParagraph": "Exactly 4 concise Korean sentences following this strict structure: (Sentence 1 - 3-Class Price Level & WoW Trend) '미국산 소맥 시세는 [Report Date] 기준 HRW [HRW Price] USD/MT(주간 [HRW WoW]%), SRW [SRW Price] USD/MT(주간 [SRW WoW]%), HRS [HRS Price] USD/MT(주간 [HRS WoW]%, 한국 도착가 [HRS Landed] USD/MT)로 전반적인 단기 조정 흐름을 나타내고 있습니다.', (Sentence 2 - Supply & Export Pace) '미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다.', (Sentence 3 - Key Drivers) '다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다.', (Sentence 4 - Outlook & Desk Directive) '향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 ${context.deskRec} 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.' All 3 classes (HRW, SRW, HRS) MUST be explicitly mentioned.",
+  "summaryParagraph": "Exactly 4 concise Korean sentences following this strict structure: (Sentence 1 - 3-Class Price Level & WoW Trend) '미국산 소맥 시세는 [Report Date] 기준 HRW [HRW Price] USD/MT(주간 [HRW WoW]%), SRW [SRW Price] USD/MT(주간 [SRW WoW]%), HRS [HRS Price] USD/MT(주간 [HRS WoW]%)로 전반적인 단기 조정 흐름을 나타내고 있습니다.', (Sentence 2 - Supply & Export Pace) '미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다.', (Sentence 3 - Key Drivers) '다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다.', (Sentence 4 - Outlook & Desk Directive) '향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 ${context.deskRec} 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.' All 3 classes (HRW, SRW, HRS) MUST be explicitly mentioned.",
   "bullishFactors": [{"text":"Short, specific, current 1-line Korean upward factor supported by actual data (max 3 items)","affectedRegion":"...","sourceOrg":"...","sourceUrl":"direct original URL","publicationDate":"YYYY-MM-DD"}],
   "bearishFactors": [{"text":"Short, specific, current 1-line Korean downward factor supported by actual data (max 3 items)","affectedRegion":"...","sourceOrg":"...","sourceUrl":"direct original URL","publicationDate":"YYYY-MM-DD"}],
   "watchItems": [{"text":"Short, specific, current 1-line Korean monitoring item supported by actual data (max 3 items)","affectedRegion":"...","sourceOrg":"...","sourceUrl":"direct original URL","publicationDate":"YYYY-MM-DD"}]
 }`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: WHEAT_RESEARCH_MODEL,
         contents: prompt,
         config: { tools: [{ googleSearch: {} }] }
       });
@@ -247,10 +248,9 @@ Return ONLY one JSON object with this exact shape:
     const now = Date.now();
     if (!force && this.cachedData && now < this.cacheExpiresAt) return this.cachedData;
 
-    const [usWheatRes, historyRes, landedRes, amisRes, psdRes, originRes, marketIssues] = await Promise.all([
+    const [usWheatRes, historyRes, amisRes, psdRes, originRes, marketIssues] = await Promise.all([
       usWheatPriceReportService.fetchLatestPriceReport(force),
       usWheatPriceReportService.getPriceHistory(force).catch(() => null),
-      usWheatPriceReportService.getEstimatedKoreaLandedCost(force).catch(() => null),
       amisService.fetchWheatIntelligence(force),
       usdaFasService.fetchWorldPsd('0410000', '2026').catch(() => null),
       originRadarService.getWheatOriginRadar(force).catch(() => null),
@@ -274,7 +274,6 @@ Return ONLY one JSON object with this exact shape:
     const momPct = historyRes?.metrics?.hrw?.momChangePct ?? 1.95;
     const srwPriceMt = historyRes?.metrics?.srw?.latestPriceMt ?? Number(srw?.priceUsdPerMetricTon || 262.35);
     const hrsPriceMt = historyRes?.metrics?.hrs?.latestPriceMt ?? Number(hrs?.priceUsdPerMetricTon || 272.27);
-    const landedUsdMt = landedRes?.estimatedLandedCostUsdMt ?? 301.00;
 
     const amis = amisRes.data;
     const amisIssue = amis?.issueNumber ?? 141;
@@ -301,7 +300,6 @@ Return ONLY one JSON object with this exact shape:
         hrwMoMPct: `${momPct >= 0 ? '+' : ''}${momPct.toFixed(2)}%`,
         srwUsdPerMt: srwPriceMt,
         hrsUsdPerMt: hrsPriceMt,
-        estimatedKoreaLandedCostUsdMt: landedUsdMt,
         pricePosition52Week: 'HRW 189.23~302.03 USD/MT (밴드 상위 87% 구간에서 주간 단기 조정)',
         recentPriceDirection: changeMt < 0 ? 'down_weekly_adjustment' : changeMt > 0 ? 'up_weekly_rebound' : 'flat'
       },
@@ -345,9 +343,8 @@ Return ONLY one JSON object with this exact shape:
 
     const srwWoWPct = historyRes?.metrics?.srw?.wowChangePct ?? (wowPct ?? 0);
     const hrsWoWPct = historyRes?.metrics?.hrs?.wowChangePct ?? (wowPct ?? 0);
-    const hrsLandedUsdMt = 385.50;
 
-    const fallbackSummary = `미국산 소맥 시세는 ${usWheatRes.data.reportDate || 'September 25, 2026'} 기준 HRW ${hrwPriceMt.toFixed(2)} USD/MT(주간 ${wowPct != null ? (wowPct >= 0 ? '+' : '') + wowPct.toFixed(2) : '-0.88'}%), SRW ${srwPriceMt.toFixed(2)} USD/MT(주간 ${srwWoWPct >= 0 ? '+' : ''}${srwWoWPct.toFixed(2)}%), HRS ${hrsPriceMt.toFixed(2)} USD/MT(주간 ${hrsWoWPct >= 0 ? '+' : ''}${hrsWoWPct.toFixed(2)}%, 한국 도착가 ${hrsLandedUsdMt.toFixed(2)} USD/MT)로 전반적인 단기 조정 흐름을 나타내고 있습니다. 미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다. 다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다. 향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 ${fallbackDesk} 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.`;
+    const fallbackSummary = `미국산 소맥 시세는 ${usWheatRes.data.reportDate || 'September 25, 2026'} 기준 HRW ${hrwPriceMt.toFixed(2)} USD/MT(주간 ${wowPct != null ? (wowPct >= 0 ? '+' : '') + wowPct.toFixed(2) : '-0.88'}%), SRW ${srwPriceMt.toFixed(2)} USD/MT(주간 ${srwWoWPct >= 0 ? '+' : ''}${srwWoWPct.toFixed(2)}%), HRS ${hrsPriceMt.toFixed(2)} USD/MT(주간 ${hrsWoWPct >= 0 ? '+' : ''}${hrsWoWPct.toFixed(2)}%)로 전반적인 단기 조정 흐름을 나타내고 있습니다. 미국(생산 53.7M MT) 및 캐나다(36.3M MT)의 봄밀 수확 유입과 미 태평양(PNW) 선적 안정으로 현물 공급 여력은 양호하며, 아시아 제분업계는 조정 구간 위주의 선별 매수를 진행 중입니다. 다만 미 남부 평원지대 파종기 토양 수분 부족, 호주 동부 건조 기상, 러시아 수출 쿼터 및 흑해 항만 물류 제약이 하락폭을 제한하는 핵심 변수로 작용하고 있습니다. 향후 1~3개월간 북미 현물 공급이 상단을 억제하는 가운데 주산지 기상과 흑해 정책에 따른 박스권 등락이 예상되므로, 조달 데스크에서는 ${fallbackDesk} 기조 아래 단기 조정 시 클래스별 필요 물량을 분할 확보할 것을 권고합니다.`;
 
     const validatedSummary = this.validateWheatSummary(
       research?.summaryParagraph || fallbackSummary,

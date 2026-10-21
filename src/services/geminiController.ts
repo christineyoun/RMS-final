@@ -2,7 +2,7 @@ import { LiveMarketUpdate } from '../types';
 import { fetchLivePipelineMetrics } from './externalPipeline';
 import palmOilCache from '../data/cache_palmoil.json';
 import { getCalculatedMetrics } from '../lib/priceCalculator';
-import { calculateDynamicMetrics } from '../utils/landedCostCalculator';
+import { calculateDynamicMetrics } from '../utils/commodityPriceMetrics';
 
 export const getKSTTime = () => {
   return new Date().toLocaleTimeString('en-US', {
@@ -30,10 +30,8 @@ class GeminiController {
         this.fetchLiveMarketData();
       }, 500);
 
-      // Auto sync every 5 minutes (standard commodity market update frequency)
-      this.intervalId = setInterval(() => {
-        this.fetchLiveMarketData();
-      }, 300000);
+      // Stage 1: No automatic periodic Gemini refreshes.
+      // An explicit weekday scheduler will replace this in Stage 2.
     }
   }
 
@@ -77,10 +75,10 @@ class GeminiController {
         }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/history?commodity=corn&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=soybean&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=soybean-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/soybean/price-snapshot${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/soybean-oil/price-snapshot${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/history?commodity=palm-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=sugar&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`/api/sugar/price-snapshot${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/history?commodity=potato-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/history?commodity=tapioca-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       ]);
@@ -101,7 +99,7 @@ class GeminiController {
 
       const soybeanOilPoints = soybeanOilRes?.data || [];
       const soybeanOilLatest = soybeanOilPoints[soybeanOilPoints.length - 1];
-      const liveSoybeanOilPrice = soybeanOilLatest?.usdPerMT || 1486.80;
+      const liveSoybeanOilPrice = soybeanOilLatest?.usdPerMT || 0;
       const soybeanOilMetrics = calculateDynamicMetrics('soybean-oil', liveSoybeanOilPrice, soybeanOilPoints);
 
       const palmPoints = palmRes?.data || palmOilCache.historicalSeries || [];
@@ -109,8 +107,8 @@ class GeminiController {
 
       const sugarPoints = sugarRes?.data || [];
       const sugarLatest = sugarPoints[sugarPoints.length - 1];
-      const liveSugarPrice = sugarLatest?.usdPerMT || getCalculatedMetrics('sugar').priceUsd;
-      const sugarMetrics = calculateDynamicMetrics('sugar', liveSugarPrice, sugarPoints);
+      const liveSugarPrice = sugarLatest?.usdPerMT || 0;
+      const sugarMetrics = {wowPct:sugarRes?.priceInputs?.comparisons?.wow?.pct??null,momPct:sugarRes?.priceInputs?.comparisons?.mom?.pct??null};
 
       const potatoPoints = potatoRes?.data || [];
       const potatoLatest = potatoPoints[potatoPoints.length - 1];
@@ -185,14 +183,14 @@ class GeminiController {
       try {
         const pipeline = await fetchLivePipelineMetrics();
         const defaultCommodities = {
-          wheat: { price: 258.40, unit: 'USD/MT', changeWoW: null, landedKrw: 358 },
-          corn: { price: 189.46, unit: 'USD/MT', changeWoW: null, landedKrw: 274 },
-          soybean: { price: 376.53, unit: 'USD/MT', changeWoW: null, landedKrw: 658 },
-          soybeanOil: { price: 1486.80, unit: 'USD/MT', changeWoW: null, landedKrw: 2064 },
-          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: null, landedKrw: 1545 },
-          sugar: { price: getCalculatedMetrics('sugar').priceUsd, unit: 'USD/MT', changeWoW: null, landedKrw: getCalculatedMetrics('sugar').baseKRW },
-          potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: null, landedKrw: 1290 },
-          tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: null, landedKrw: 1010 }
+          wheat: { price: 258.40, unit: 'USD/MT', changeWoW: null },
+          corn: { price: 189.46, unit: 'USD/MT', changeWoW: null },
+          soybean: { price: 376.53, unit: 'USD/MT', changeWoW: null },
+          soybeanOil: { price: this.currentData?.soybeanOilPrice || 0, unit: 'USD/MT', changeWoW: null },
+          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: null },
+          sugar: { price: 0, unit: 'USD/MT', changeWoW: null },
+          potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: null },
+          tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: null }
         };
 
         let macroScore = 58;
@@ -226,11 +224,11 @@ class GeminiController {
           sugarPrice: defaultCommodities.sugar.price,
           potatoStarchPrice: defaultCommodities.potatoStarch.price,
           tapiocaStarchPrice: defaultCommodities.tapiocaStarch.price,
-          aiBriefSynthesis: `글로벌 소맥 및 유지류 시장은 흑해 수출 회랑 불확실성과 남미 주요 파종지의 가뭄으로 단기 상승 압력에 직면해 있습니다. 실시간 환율(USD/KRW ${pipeline.usdKrw.toLocaleString()}원)과 원양 운임(SCFI ${pipeline.energy.scfi}pt)을 감안한 부산도착원가는 소맥 ₩${defaultCommodities.wheat.landedKrw}/kg, 팜유 ₩${defaultCommodities.palmOil.landedKrw}/kg 수준입니다.`,
+          aiBriefSynthesis: `실시간 환율(USD/KRW ${pipeline.usdKrw.toLocaleString()}원)과 해상운임(SCFI ${pipeline.energy.scfi}pt) 동향은 실제 공급사 견적과 함께 비교해야 합니다.`,
           directives: [
-            { type: 'action', label: '조치 필요 (Action Required)', title: `BMD 하락 구간에서 2025 Q1 팜유 포워드 커버리지(목표 ₩${defaultCommodities.palmOil.landedKrw}/kg 이하) 확보`, source: '출처: RMS 멀티소스 피드 종합 분석' },
+            { type: 'action', label: '조치 필요 (Action Required)', title: '팜유 실물 공급사 견적과 계약 조건 확인 후 구매 시점 결정', source: '출처: RMS 멀티소스 피드 종합 분석' },
             { type: 'watch', label: '주시 (Watch Closely)', title: `미국 농무부(USDA) 캔자스 동계소맥 작황 보고서 및 콘벨트 강우(${pipeline.weather.usCornBelt.precipSumMm}mm) 모니터링`, source: '출처: USDA FAS PSD & Open-Meteo 레이더' },
-            { type: 'favorable', label: '우호적 조건 (Favorable)', title: `로테르담/함부르크발 부산향 스팟 컨테이너 운임 안정 및 감자 전분(₩${defaultCommodities.potatoStarch.landedKrw}/kg) 단가 완충`, source: '출처: EU Agri-food Data Portal' }
+            { type: 'favorable', label: '우호적 조건 (Favorable)', title: '유럽 감자전분 실제 공급사 견적 및 컨테이너 운임 비교', source: '출처: EU Agri-food Data Portal' }
           ],
           citations: [
             { title: 'Frankfurter Exchange Rate Portal', uri: 'https://api.frankfurter.dev/v1/latest' },

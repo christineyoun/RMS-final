@@ -23,7 +23,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
     setIsExporting(true);
     try {
       if (format === 'csv') {
-        const headers = ['ID', '품목명(한글)', 'Name(En)', 'Ticker', '시세', '단위', 'WoW(%)', '추정국내도착가(원/kg)'];
+        const headers = ['ID', '품목명(한글)', 'Name(En)', 'Ticker', '시세', '단위', 'WoW(%)'];
         const rows = commodities.map((c) => [
           c.id,
           c.nameKo,
@@ -31,8 +31,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
           c.ticker,
           c.price,
           c.unit,
-          c.changeWoW,
-          c.landedKrwKg
+          c.changeWoW
         ]);
         const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
         const encodedUri = encodeURI(csvContent);

@@ -136,11 +136,37 @@ export const HeaderSearch = ({ onSelectAsset }: { onSelectAsset?: (asset: any) =
   );
 };
 
+// Stage 3 provides an inexpensive, read-only status endpoint. It does NOT call Gemini.
+interface Stage3RefreshStatus {
+  running?: boolean;
+  lastAttempt?: {
+    status?: string;
+    completed?: string[];
+    finishedAt?: string;
+  } | null;
+  snapshots?: Array<{ key: string; updatedAt: string | null }>;
+}
+
+type DailyUpdateState =
+  | { status: 'loading' | 'none' | 'unavailable' }
+  | { status: 'ready'; completedAt: string; partial: boolean };
+
+function formatDailyUpdateKST(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return '업데이트 시간 확인 불가';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  }).formatToParts(parsed);
+  const value = (key: string) => parts.find(part => part.type === key)?.value || '';
+  return `${value('year')}.${value('month')}.${value('day')} ${value('hour')}:${value('minute')} KST`;
+}
+
 interface HeaderProps {
   commodities: Commodity[];
   currency: Currency;
   onToggleCurrency: (curr: Currency) => void;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: string, hash?: string) => void;
   onOpenExportModal?: () => void;
   onRefreshGemini: () => void;
   isSyncing: boolean;
@@ -165,51 +191,58 @@ export const Header: React.FC<HeaderProps> = ({
   ]);
 
   const highRiskCount = alerts.filter(a => a.severity === 'high').length;
-  const [syncTimestamp, setSyncTimestamp] = useState<string>(getKSTTime());
+  const [dailyUpdate, setDailyUpdate] = useState<DailyUpdateState>({ status: 'loading' });
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [failedSourcesCount, setFailedSourcesCount] = useState<number>(0);
-  const formattedSyncTime = getKSTTime(syncTimestamp || lastSyncTime);
 
   useEffect(() => {
-    if (lastSyncTime && lastSyncTime !== '실시간 LIVE' && lastSyncTime !== '30초 주기') {
-      setSyncTimestamp(lastSyncTime);
-    }
-  }, [lastSyncTime]);
+    let active = true;
+    const loadDailyStatus = async () => {
+      try {
+        const res = await fetch('/api/rms/refresh-status', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Refresh status HTTP ${res.status}`);
+        const data = await res.json() as Stage3RefreshStatus;
+        if (!active) return;
+
+        // Only a finished job with saved outputs is allowed to move the timestamp.
+        // This avoids displaying a new time merely because the page opened or another
+        // market feed updated. During a running job, preserve the prior display.
+        const last = data.lastAttempt;
+        if (data.running) return;
+        if (last?.finishedAt && (last.completed?.length ?? 0) > 0 &&
+            (last.status === 'completed' || last.status === 'partial')) {
+          setDailyUpdate({ status: 'ready', completedAt: last.finishedAt, partial: last.status === 'partial' });
+          return;
+        }
+
+        // Fall back to an actual saved snapshot after a process restart if needed.
+        const latest = (data.snapshots ?? [])
+          .filter(item => item.updatedAt && !Number.isNaN(Date.parse(item.updatedAt)))
+          .sort((a, b) => Date.parse(b.updatedAt!) - Date.parse(a.updatedAt!))[0];
+        if (latest?.updatedAt) {
+          setDailyUpdate({ status: 'ready', completedAt: latest.updatedAt, partial: true });
+        } else {
+          setDailyUpdate({ status: 'none' });
+        }
+      } catch {
+        if (active) setDailyUpdate(prev => prev.status === 'ready' ? prev : { status: 'unavailable' });
+      }
+    };
+    void loadDailyStatus();
+    // This polls metadata only (no Gemini requests). The displayed time stays
+    // constant until another paid refresh is explicitly completed.
+    const poll = window.setInterval(() => { void loadDailyStatus(); }, 60_000);
+    const onFocus = () => { void loadDailyStatus(); };
+    window.addEventListener('focus', onFocus);
+    return () => { active = false; window.clearInterval(poll); window.removeEventListener('focus', onFocus); };
+  }, []);
 
   useEffect(() => {
+    // Continue receiving existing alerts; their timestamps do not affect the daily AI badge.
     const unsubscribe = clientMarketDataService.subscribe((payload: any) => {
-      if (payload.lastUpdated) {
-        setSyncTimestamp(payload.lastUpdated);
-      }
-      setFailedSourcesCount(payload.failedSourcesCount || 0);
-
-      // Inject real alerts from the live telemetry payload if they exist
-      if (payload.alerts && payload.alerts.length > 0) {
-        setAlerts(payload.alerts);
-      }
+      if (payload.alerts && payload.alerts.length > 0) setAlerts(payload.alerts);
     });
     return unsubscribe;
   }, []);
-
-  const handleAiRefresh = async () => {
-    setSyncTimestamp(getKSTTime());
-    try {
-      await Promise.allSettled([
-        onRefreshGemini ? onRefreshGemini() : Promise.resolve(),
-        clientMarketDataService.refresh(),
-        fetch('/api/market-data/refresh', { method: 'POST', cache: 'no-store' }).catch(() => null),
-        fetch('/api/history?commodity=palm-oil&force=true', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/history?commodity=tapioca-starch&force=true', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/history?commodity=corn&force=true', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/history?commodity=soybean&force=true', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/history?commodity=soybean-oil&force=true', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/history?commodity=sugar&force=true', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/uswheat/price-history?force=true', { cache: 'no-store' }).catch(() => null),
-      ]);
-    } catch (e) {
-      console.error('Market data manual refresh error:', e);
-    }
-  };
 
   const handleSelectAsset = (item: any) => {
     if (item.type === 'macro') {
@@ -277,36 +310,25 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Single Live Sync Timestamp Badge */}
-        <button
-          onClick={handleAiRefresh}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-all shadow-2xs ${
-            isSyncing
-              ? 'bg-blue-50 border-blue-200 text-blue-700'
-              : failedSourcesCount > 0
-              ? 'bg-rose-50 border-rose-300 text-[#DF0029] hover:bg-rose-100'
-              : 'bg-blue-50/50 border-blue-200/80 text-blue-700 hover:bg-blue-100/70 hover:border-blue-300'
-          }`}
-          title={
-            failedSourcesCount > 0
-              ? `${failedSourcesCount}개 소스 동기화 실패`
-              : '실시간 데이터 동기화'
-          }
+        {/* System record time, never a claim that every saved AI was generated then. */}
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium shadow-2xs"
+          aria-live="polite"
+          title="완료된 작업 또는 저장 기록의 시각입니다. 개별 AI 분석의 생성 시각이나 모든 데이터의 최신성을 의미하지 않습니다."
         >
-          {isSyncing ? (
-            <span className="flex items-center gap-1.5 font-sans">
-              <span className="w-2 h-2 rounded-full inline-block bg-blue-600 animate-spin"></span>
-              <span className="font-semibold text-blue-700">동기화 중...</span>
-            </span>
+          <span className="h-2 w-2 rounded-full shrink-0 bg-blue-500" />
+          <span className="font-sans">시스템 기록</span>
+          {dailyUpdate.status === 'ready' ? (
+            <>
+              <span className="text-slate-300">·</span>
+              <span className="font-mono font-semibold">{formatDailyUpdateKST(dailyUpdate.completedAt)}</span>
+            </>
           ) : (
-            <span className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse shrink-0" />
-              <span className="font-sans">실시간 동기화 (Live Sync)</span>
-              <span className="text-blue-300">·</span>
-              <span className="font-mono font-semibold">{formattedSyncTime}</span>
+            <span className="font-sans text-slate-500">
+              {dailyUpdate.status === 'loading' ? '확인 중' : dailyUpdate.status === 'none' ? '기록 없음' : '상태 확인 불가'}
             </span>
           )}
-        </button>
+        </div>
       </div>
     </header>
   );

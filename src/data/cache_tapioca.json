@@ -1,13 +1,8 @@
 {
-  "updatedAt": "2026-10-14T08:30:57.134Z",
+  "updatedAt": "2026-10-20T01:34:16.497Z",
   "source": "Thai Tapioca Starch Association (TTSA) Weekly Statistics",
   "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price",
   "weeklyPrices": [
-    {
-      "date": "2021-10-19",
-      "price": 480,
-      "domesticThb": 14.5
-    },
     {
       "date": "2021-10-26",
       "price": 480,

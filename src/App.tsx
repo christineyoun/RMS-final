@@ -1,3 +1,4 @@
+import {soybeanDisplayFactor} from './utils/soybeanPriceSnapshot';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header, getKSTTime } from './components/Header';
@@ -7,17 +8,14 @@ import { ExportReportModal } from './components/ExportReportModal';
 import { COMMODITIES, MACRO_DRIVERS, MARKET_ISSUES } from './data/commoditiesData';
 import { Commodity, LiveMarketUpdate, Currency } from './types';
 import { geminiController } from './services/geminiController';
-import { getLiveExchangeRate, subscribeFxRates, getAllFxRates, FXRates } from './services/currencyService';
-import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from './utils/commodityConversions';
+import { subscribeFxRates, getAllFxRates, fetchLiveFxRates, getDatedDisplayFx, FXRates } from './services/currencyService';
+import { fetchCommodityQuotes } from './services/commodityQuoteSource';
 import { exportGlobalDashboardToPdf } from './utils/exportDashboardPdf';
-import { calculateDynamicMetrics } from './utils/landedCostCalculator';
-import tapiocaCacheFallback from './data/cache_tapioca.json';
-import palmOilCacheFallback from './data/cache_palmoil.json';
 
 export default function App() {
   const [activeView, setActiveView] = useState<string>('main-dashboard');
   const [currency, setCurrency] = useState<Currency>('KRW');
-  const [commodities, setCommodities] = useState<Commodity[]>(COMMODITIES);
+  const [commodities, setCommodities] = useState<Commodity[]>(() => COMMODITIES.map(c => ({...c, price: 0, unit: 'USD / MT', changeWoW: null, changeMoM: null, sparkline: []})));
   const [macroDrivers, setMacroDrivers] = useState(MACRO_DRIVERS);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -28,8 +26,11 @@ export default function App() {
   const [modelVersion, setModelVersion] = useState<string>('gemini-flash-latest');
   const [fxRates, setFxRates] = useState<FXRates>(getAllFxRates());
 
+  const [datedDisplayFx,setDatedDisplayFx]=useState(getDatedDisplayFx);
   useEffect(() => {
-    return subscribeFxRates(setFxRates);
+    const stop = subscribeFxRates(rates=>{setFxRates(rates);setDatedDisplayFx(getDatedDisplayFx());});
+    void fetchLiveFxRates();
+    return stop;
   }, []);
 
   // Intercept Ctrl+P or Cmd+P and trigger html2canvas PDF export
@@ -84,66 +85,8 @@ export default function App() {
         setModelVersion(liveData.modelVersion);
       }
 
-      // Update commodity prices reactively
-      setCommodities((prev) =>
-        prev.map((c) => {
-          if (c.id === 'wheat' && liveData.wheatMetrics) {
-            return {
-              ...c,
-              price: liveData.wheatMetrics.srw.latestPriceMt,
-              changeWoW: liveData.wheatMetrics.srw.wowChangePct, // -3.03% or live
-              changeMoM: liveData.wheatMetrics.srw.momChangePct, // +10.06%
-            };
-          }
-
-          let updatedPrice = c.price;
-          let updatedChangeWoW = c.changeWoW;
-          let updatedChangeMoM = c.changeMoM;
-
-          if (c.id === 'wheat' && liveData.wheatPrice) {
-            updatedPrice = liveData.wheatPrice;
-            if (liveData.wheatMetrics?.srw) {
-              updatedChangeWoW = liveData.wheatMetrics.srw.wowChangePct;
-              updatedChangeMoM = liveData.wheatMetrics.srw.momChangePct;
-            }
-          } else if (c.id === 'corn' && liveData.cornPrice) {
-            updatedPrice = liveData.cornPrice;
-            if (liveData.cornWowChange !== undefined) updatedChangeWoW = liveData.cornWowChange;
-            if (liveData.cornMomChange !== undefined) updatedChangeMoM = liveData.cornMomChange;
-          } else if (c.id === 'soybean' && liveData.soybeanPrice) {
-            updatedPrice = liveData.soybeanPrice;
-            if (liveData.soybeanWowChange !== undefined) updatedChangeWoW = liveData.soybeanWowChange;
-            if (liveData.soybeanMomChange !== undefined) updatedChangeMoM = liveData.soybeanMomChange;
-          } else if (c.id === 'soybean-oil' && liveData.soybeanOilPrice) {
-            updatedPrice = liveData.soybeanOilPrice;
-            if (liveData.soybeanOilWowChange !== undefined) updatedChangeWoW = liveData.soybeanOilWowChange;
-            if (liveData.soybeanOilMomChange !== undefined) updatedChangeMoM = liveData.soybeanOilMomChange;
-          } else if (c.id === 'palm-oil' && liveData.palmOilPrice) {
-            updatedPrice = liveData.palmOilPrice;
-            if (liveData.palmOilWowChange !== undefined) updatedChangeWoW = liveData.palmOilWowChange;
-            if (liveData.palmOilMomChange !== undefined) updatedChangeMoM = liveData.palmOilMomChange;
-          } else if (c.id === 'sugar' && liveData.sugarPrice) {
-            updatedPrice = liveData.sugarPrice;
-            if (liveData.sugarWowChange !== undefined) updatedChangeWoW = liveData.sugarWowChange;
-            if (liveData.sugarMomChange !== undefined) updatedChangeMoM = liveData.sugarMomChange;
-          } else if (c.id === 'potato-starch' && liveData.potatoStarchPrice) {
-            updatedPrice = liveData.potatoStarchPrice;
-            if (liveData.potatoStarchWowChange !== undefined) updatedChangeWoW = liveData.potatoStarchWowChange;
-            if (liveData.potatoStarchMomChange !== undefined) updatedChangeMoM = liveData.potatoStarchMomChange;
-          } else if (c.id === 'tapioca-starch' && liveData.tapiocaStarchPrice) {
-            updatedPrice = liveData.tapiocaStarchPrice;
-            if (liveData.tapiocaStarchWowChange !== undefined) updatedChangeWoW = liveData.tapiocaStarchWowChange;
-            if (liveData.tapiocaStarchMomChange !== undefined) updatedChangeMoM = liveData.tapiocaStarchMomChange;
-          }
-
-          return {
-            ...c,
-            price: updatedPrice,
-            changeWoW: updatedChangeWoW,
-            changeMoM: updatedChangeMoM,
-          };
-        })
-      );
+      // Commodity prices, changes and sparklines are owned solely by fetchCommodityQuotes().
+      // The AI pipeline is not permitted to overwrite price cards.
 
       // Update macro drivers
       setMacroDrivers((prev) =>
@@ -152,7 +95,7 @@ export default function App() {
             return {
               ...d,
               primaryValue: `${liveData.usdKrw.toLocaleString()} ₩`,
-              secondaryValue: `EUR ${liveData.eurKrw?.toLocaleString() || 1485.40}₩`
+              secondaryValue: liveData.eurKrw ? `EUR ${liveData.eurKrw.toLocaleString()}₩` : '--'
             };
           }
           if (d.id === 'energy' && liveData.brent) {
@@ -206,100 +149,34 @@ export default function App() {
     }
   };
 
-  // Unified dynamic metrics synchronization for ALL 8 commodities on startup & Live Sync
-  const syncAllCommodityMetrics = useCallback(async (force: boolean = false) => {
-    try {
-      const [
-        wheatRes,
-        cornRes,
-        soybeanRes,
-        soybeanOilRes,
-        palmRes,
-        sugarRes,
-        potatoRes,
-        tapiocaRes
-      ] = await Promise.all([
-        fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=corn&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=soybean&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=soybean-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=palm-oil&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=sugar&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=potato-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-        fetch(`/api/history?commodity=tapioca-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
-      ]);
-
-      setCommodities((prev) =>
-        prev.map((c) => {
-          let updatedPrice = c.price;
-          let updatedWoW = c.changeWoW;
-          let updatedMoM = c.changeMoM;
-
-          if (c.id === 'wheat') {
-            if (wheatRes?.metrics?.srw) {
-              updatedPrice = wheatRes.metrics.srw.latestPriceMt;
-              updatedWoW = wheatRes.metrics.srw.wowChangePct;
-              updatedMoM = wheatRes.metrics.srw.momChangePct;
-            } else if (wheatRes?.data && wheatRes.data.length >= 2) {
-              const m = calculateDynamicMetrics('wheat', c.price, wheatRes.data);
-              if (m.wowPct != null) updatedWoW = m.wowPct;
-              if (m.momPct != null) updatedMoM = m.momPct;
-            }
-          } else {
-            const resMap: Record<string, any> = {
-              'corn': cornRes,
-              'soybean': soybeanRes,
-              'soybean-oil': soybeanOilRes,
-              'palm-oil': palmRes,
-              'sugar': sugarRes,
-              'potato-starch': potatoRes,
-              'tapioca-starch': tapiocaRes,
-            };
-            const itemRes = resMap[c.id];
-            let seriesData = itemRes?.data;
-            if (!seriesData || seriesData.length < 2) {
-              if (c.id === 'palm-oil') seriesData = palmOilCacheFallback?.historicalSeries;
-              if (c.id === 'tapioca-starch') seriesData = tapiocaCacheFallback?.weeklyPrices;
-            }
-
-            if (seriesData && seriesData.length >= 2) {
-              const latest = seriesData[seriesData.length - 1];
-              const latestPrice = latest?.usdPerMT ?? latest?.cpoUsd ?? latest?.price;
-              if (latestPrice && latestPrice > 0 && c.id !== 'palm-oil') {
-                updatedPrice = latestPrice;
-              }
-              const m = calculateDynamicMetrics(c.id, updatedPrice, seriesData);
-              if (m.wowPct != null) updatedWoW = m.wowPct;
-              if (m.momPct != null) updatedMoM = m.momPct;
-            }
-          }
-
-          return {
-            ...c,
-            price: updatedPrice,
-            changeWoW: updatedWoW,
-            changeMoM: updatedMoM,
-          };
-        })
-      );
-    } catch (err) {
-      console.warn('Initial global metrics sync notice:', err);
-    }
+  // One canonical market snapshot for all eight detail views and Overview cards.
+  // No synthetic fallbacks or recalculations in the Overview component.
+  const syncAllCommodityMetrics = useCallback(async (force = false) => {
+    const quotes = await fetchCommodityQuotes(force);
+    setCommodities(prev => prev.map(c => {
+      const q = quotes[c.id as keyof typeof quotes];
+      if (!q && c.id==='sugar') return c._sugarPriceSnapshot?{...c,_sugarPriceSnapshot:{...c._sugarPriceSnapshot,stale:true,lastError:'Price snapshot endpoint unavailable'}}:{...c,price:0,changeWoW:null,changeMoM:null,sparkline:[]};
+      if (!q) return c.id==='soybean-oil' ? c._soybeanOilPriceSnapshot ? {...c,_soybeanOilPriceSnapshot:{...c._soybeanOilPriceSnapshot,stale:true,lastError:'Price snapshot endpoint unavailable'}} : {...c,price:0,changeWoW:null,changeMoM:null,sparkline:[]} : c; // keep the previous successful snapshot if the source temporarily fails
+      return { ...c, price:q.priceUsdMt, unit:'USD / MT', changeWoW:q.changeWoW,
+        changeMoM:q.changeMoM, sparkline:q.sparkline,
+        ...(c.id==='soybean'?{_soybeanPriceSnapshot:q.soybeanSnapshot}:c.id==='soybean-oil'?{_soybeanOilPriceSnapshot:q.soybeanOilSnapshot}:c.id==='sugar'?{_sugarPriceSnapshot:q.sugarSnapshot}:{}),
+        _canonicalQuoteDate:q.asOf, _canonicalQuoteSource:q.source,
+        _canonicalWowUsdMt:q.changeWoWUsdMt, _canonicalMomUsdMt:q.changeMoMUsdMt };
+    }));
   }, []);
 
-  // Compute dynamic metrics on initial startup
-  useEffect(() => {
-    syncAllCommodityMetrics(false);
-  }, [syncAllCommodityMetrics]);
+  useEffect(() => { void syncAllCommodityMetrics(); }, [syncAllCommodityMetrics]);
 
   const handleRefreshGemini = async () => {
     if (isSyncing) return;
     setIsSyncing(true);
     try {
       // Preserve existing market-price/AI refreshes even if one source fails.
-      const jobs: Promise<unknown>[] = [
+      const isPalmPage=commodities.find(c=>c.path===activeView)?.id==='palm-oil';
+      const jobs: Promise<unknown>[] = isPalmPage ? [fetch('/api/rms/palm/free-refresh',{method:'POST'}).then(async r=>{if(!r.ok)throw Error('Free Palm refresh failed');return r.json();}),fetchLiveFxRates(true)] : [
         Promise.resolve().then(() => geminiController.fetchLiveMarketData(true)),
-        Promise.resolve().then(() => syncAllCommodityMetrics(true))
+        Promise.resolve().then(() => syncAllCommodityMetrics(true)),
+        Promise.resolve().then(() => fetchLiveFxRates(true))
       ];
 
       // Force the active USDA-backed commodity directly from Live Sync.
@@ -328,99 +205,22 @@ export default function App() {
     }
   };
 
-  const handleUpdateCommodityMetrics = useCallback(
-    (commodityId: string, metrics: { price?: number; changeWoW?: number | null; changeMoM?: number | null }) => {
-      setCommodities((prev) =>
-        prev.map((c) => {
-          if (c.id === commodityId) {
-            const updatedPrice = metrics.price !== undefined && metrics.price > 0 ? metrics.price : c.price;
-            const updatedWoW = metrics.changeWoW !== undefined ? metrics.changeWoW : c.changeWoW;
-            const updatedMoM = metrics.changeMoM !== undefined ? metrics.changeMoM : c.changeMoM;
-            
-            return {
-              ...c,
-              price: updatedPrice,
-              changeWoW: updatedWoW,
-              changeMoM: updatedMoM,
-            };
-          }
-          return c;
-        })
-      );
-    },
-    []
-  );
-
-  // Transform commodities based on global currency state
-  const mappedCommodities = useMemo(() => {
-    return commodities.map((c) => {
-      let usdMt = c.price;
-
-      // 1. Convert raw quotes to USD/MT baseline
-      if (c.id === 'palm-oil') {
-        const activeUsdMyr = fxRates.USD_MYR || getLiveExchangeRate('USD_MYR') || 4.0845;
-        usdMt = c.price > 2000 ? c.price / activeUsdMyr : c.price;
-      } else if (c.id === 'potato-starch' || c.unit.includes('EUR/MT') || c.unit.includes('EUR / MT')) {
-        const activeEurUsd = fxRates.EUR_USD || getLiveExchangeRate('EUR') || 1.08;
-        usdMt = c.price * activeEurUsd;
-      } else if (c.id === 'tapioca-starch') {
-        usdMt = c.price || 700;
-      } else if (c.unit.includes('USd/bu')) {
-        usdMt = c.ticker.includes('ZC') ? cornCentsPerBuToUsdPerMt(c.price) : grainCentsPerBuToUsdPerMt(c.price);
-      } else if (c.unit.includes('USc/lb')) {
-        usdMt = centsPerLbToUsdPerMt(c.price);
-      } else if (c.unit.includes('USD/MT') || c.unit.includes('USD')) {
-        usdMt = c.price;
-      }
-
-      // 2. Convert USD/MT baseline to active toggle choice
-      let convertedPrice = usdMt;
-      let newUnit = 'USD / MT';
-
-      const activeUsdKrw = fxRates.USD_KRW || getLiveExchangeRate('KRW') || 1388.5;
-      const activeEurUsd = fxRates.EUR_USD || getLiveExchangeRate('EUR') || 1.08;
-
-      if (currency === 'EUR') {
-        convertedPrice = c.id === 'potato-starch' ? c.price : usdMt / activeEurUsd;
-        newUnit = 'EUR / MT';
-      } else if (currency === 'KRW') {
-        if (c.id === 'palm-oil') {
-          convertedPrice = usdMt * (fxRates.USD_KRW || 1357.1);
-        } else {
-          convertedPrice = usdMt * activeUsdKrw;
-        }
-        newUnit = 'KRW / MT';
-      }
-
-      // 3. Fallback to cache series only if metrics are not yet loaded
-      let computedWoW = c.changeWoW;
-      let computedMoM = c.changeMoM;
-
-      if (computedWoW == null) {
-        if (c.id === 'tapioca-starch' && tapiocaCacheFallback?.weeklyPrices) {
-          const series = tapiocaCacheFallback.weeklyPrices.map(p => ({ usdPerMT: p.price, date: p.date }));
-          const metrics = calculateDynamicMetrics('tapioca-starch', c.price, series);
-          if (metrics.wowPct != null) computedWoW = metrics.wowPct;
-          if (metrics.momPct != null) computedMoM = metrics.momPct;
-        } else if (c.id === 'palm-oil' && palmOilCacheFallback?.historicalSeries) {
-          const series = palmOilCacheFallback.historicalSeries.map(p => ({ usdPerMT: p.usdPerMT, date: p.date }));
-          const metrics = calculateDynamicMetrics('palm-oil', c.price, series);
-          if (metrics.wowPct != null) computedWoW = metrics.wowPct;
-          if (metrics.momPct != null) computedMoM = metrics.momPct;
-        }
-      }
-
-      return {
-        ...c,
-        price: convertedPrice,
-        unit: newUnit,
-        changeWoW: computedWoW,
-        changeMoM: computedMoM,
-        _originalPrice: c.id === 'palm-oil' ? (c.price > 2000 ? c.price : Math.round(c.price * (fxRates.USD_MYR || getLiveExchangeRate('USD_MYR') || 4.0845))) : c.price,
-        _originalUnit: c.unit,
-      };
-    });
-  }, [commodities, currency, fxRates]);
+  // Currency conversion is display-only and happens once in this shared parent.
+  // An unavailable exchange rate shows an unavailable card price, never a hardcoded FX quote.
+  const mappedCommodities = useMemo(() => commodities.map(c => {
+    const price = Number.isFinite(c.price) && c.price > 0 ? c.price : 0;
+    const usdKrw = fxRates.USD_KRW;
+    const eurUsd = fxRates.EUR_USD;
+    const validFx = currency === 'USD' || (currency === 'KRW'
+      ? Number.isFinite(usdKrw) && usdKrw > 0
+      : Number.isFinite(eurUsd) && eurUsd > 0);
+    const soybeanFactor=soybeanDisplayFactor(currency,datedDisplayFx);
+    const converted = (c.id==='soybean'||c.id==='soybean-oil'||c.id==='sugar') ? (price&&Number.isFinite(soybeanFactor)?price*soybeanFactor:0) : !price || !validFx ? 0 : currency === 'KRW'
+      ? price * usdKrw : currency === 'EUR' ? price / eurUsd : price;
+    return { ...c, ...((c.id==='soybean'||c.id==='soybean-oil'||c.id==='sugar')?{_soybeanDisplayFx:datedDisplayFx}:{}), price:converted, unit:`${currency} / MT`,
+      // Detail pages can always refer to the original USD/MT snapshot.
+      _originalPrice:price, _originalUnit:'USD / MT' };
+  }), [commodities, currency, fxRates, datedDisplayFx]);
 
   // Find currently selected commodity if in detail view
   const currentCommodity = mappedCommodities.find((c) => c.path === activeView);
@@ -457,7 +257,13 @@ export default function App() {
               isSyncing={isSyncing}
               aiBriefText={aiBriefText}
               modelVersion={modelVersion}
+              usdKrwRate={fxRates.USD_KRW || 0}
             />
+          ) : currency !== 'USD' && (currentCommodity.id==='soybean' ? !datedDisplayFx : (currency === 'KRW' && !(fxRates.USD_KRW > 0)) || (currency === 'EUR' && !(fxRates.EUR_USD > 0))) ? (
+            <div className="p-6 bg-white rounded-xl border border-slate-200 text-slate-600">
+              환율 데이터를 확인할 수 없어 임의의 환율로 표시하지 않습니다. 잠시 후 다시 확인하거나
+              <button type="button" className="ml-2 underline font-semibold text-slate-800" onClick={() => setCurrency('USD')}>USD/MT로 보기</button>
+            </div>
           ) : (
             <CommodityDetail
               key={currentCommodity.id}
@@ -469,7 +275,6 @@ export default function App() {
               onRefreshGemini={handleRefreshGemini}
               isSyncing={isSyncing}
               modelVersion={modelVersion}
-              onUpdateCommodityMetrics={handleUpdateCommodityMetrics}
             />
           )}
         </div>

@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {SoybeanIntelligenceService} from '../soybeanIntelligenceService.ts';
+import {fetchCommodityQuotes,quoteFromResponse} from '../../services/commodityQuoteSource.ts';
+import {parseDatedDisplayFx,soybeanDisplayFactor} from '../../utils/soybeanPriceSnapshot.ts';
+import {formatCurrencyValue} from '../../utils/commodityPriceMetrics.ts';
+import {observedPriceChanges} from '../../utils/observedPriceChanges.ts';
+import {grainCentsPerBuToUsdPerMt} from '../../utils/commodityConversions.ts';
+const native=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Offline test: all network and paid calls blocked');};
+const protectedFiles=['.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl',...fs.readdirSync('.rms-stage3/snapshots').map(n=>'.rms-stage3/snapshots/'+n)];
+const before=protectedFiles.map(f=>fs.readFileSync(f).toString('base64'));
+try{
+ const today=new Date().toISOString().slice(0,10),date=(days:number)=>new Date(Date.parse(today)-days*86400000).toISOString().slice(0,10);
+ const points=[[31,1328],[7,1283.75],[0,1255.75]].map(([days,raw])=>({date:date(days),centsPerBushel:raw,quoteValue:raw,usdPerMT:Number(grainCentsPerBuToUsdPerMt(raw).toFixed(2)),isProvisional:days===0}));
+ let calls=0,worldCalls=0,fail=false;
+ const fixture=()=>({success:true,commodity:'soybean',symbol:'ZS=F (CBOT Soybean)',source:'CBOT / Yahoo Finance',quoteUnit:'US¢/bu',priceUnit:'USD/MT',fetchedAt:new Date().toISOString(),data:structuredClone(points)});
+ const source=JSON.parse(fs.readFileSync('src/data/usda_world_last_verified_soybean.json','utf8'));
+ const world={success:true,status:'last-verified' as const,data:source.data,checkedAt:source.verifiedAt,verifiedAt:source.verifiedAt};
+ const service=new SoybeanIntelligenceService({history:async()=>{calls++;await new Promise(r=>setTimeout(r,10));if(fail)throw Error('Source outage');return fixture() as any;},world:async()=>{worldCalls++;return world;}});
+ const [a,b]=await Promise.all([service.getSoybeanPriceSnapshot(),service.getSoybeanPriceSnapshot(true)]);
+ assert.equal(calls,1,'simultaneous forced/read requests share one source attempt');assert.equal(worldCalls,1);assert.equal(a,b);
+ const q=quoteFromResponse('soybean',a)!;assert.equal(q.soybeanSnapshot,a);assert.equal(q.priceUsdMt,461.41);assert.equal(q.asOf,today);
+ assert.equal(a.procurementAnalysis.benchmarkPrice.usdPerMT,q.priceUsdMt);assert.equal(a.procurementAnalysis.benchmarkPrice.observationDate,q.asOf);
+ const moves=observedPriceChanges(a.data);assert.equal(a.procurementAnalysis.weeklyChange.wowPct,q.changeWoW);assert.equal(q.changeWoW,moves.wow.pct);assert.equal(q.changeMoM,moves.mom.pct);assert.equal(q.changeWoWUsdMt,moves.wow.amountUsdMt);assert.equal(q.changeMoMUsdMt,moves.mom.amountUsdMt);
+ assert.equal((await service.getSoybeanProcurementAnalysis()).benchmarkPrice.usdPerMT,q.priceUsdMt);assert.equal(calls,1,'procurement and page share cached prices');
+ const fx=parseDatedDisplayFx({base:'USD',date:date(1),rates:{KRW:1329.49,EUR:.89087}},new Date().toISOString())!;
+ assert.equal(fx.observationDate,date(1));assert.equal(fx.sourceUrl.startsWith('https://api.frankfurter.dev/'),true);
+ for(const currency of ['USD','KRW','EUR'] as const){const factor=soybeanDisplayFactor(currency,fx);assert.ok(factor>0);assert.equal(formatCurrencyValue(q.priceUsdMt*factor,currency),formatCurrencyValue(a.data.at(-1)!.usdPerMT*factor,currency));for(const move of [moves.wow,moves.mom]){const rawDifference=(a.data.at(-1)!.usdPerMT-a.data.find(p=>p.date===move.referenceDate)!.usdPerMT)*factor;assert.ok(Math.abs(rawDifference-move.amountUsdMt!*factor)<1e-8);}}
+ assert.ok(Math.abs(soybeanDisplayFactor('EUR',fx)-.89087)<1e-12);assert.ok(Number.isNaN(soybeanDisplayFactor('EUR',null)));assert.equal(soybeanDisplayFactor('USD',null),1);
+ assert.equal(parseDatedDisplayFx({base:'EUR',date:today,rates:{KRW:1,EUR:1}}),null);assert.equal(parseDatedDisplayFx({base:'USD',rates:{KRW:1,EUR:1}}),null);assert.equal(parseDatedDisplayFx({base:'USD',date:date(-1),rates:{KRW:1,EUR:1}}),null);assert.equal(parseDatedDisplayFx({base:'USD',date:today,rates:{KRW:1,EUR:0}}),null);
+ fail=true;const retained=await service.getSoybeanPriceSnapshot(true);assert.equal(calls,2);assert.equal(retained.stale,true);assert.deepEqual(retained.data,a.data);assert.equal(retained.fetchedAt,a.fetchedAt);assert.equal(retained.procurementAnalysis.benchmarkPrice.usdPerMT,q.priceUsdMt);assert.equal(retained.procurementAnalysis.procurementRisk.level,'자료 부족');
+ const empty=new SoybeanIntelligenceService({history:async()=>{throw Error('First retrieval failed');},world:async()=>world});await assert.rejects(empty.getSoybeanPriceSnapshot(),/First retrieval failed/);
+ const urls:string[]=[];globalThis.fetch=async(input:any)=>{const url=String(input);urls.push(url);return Response.json(url.startsWith('/api/soybean/price-snapshot')?a:{success:false});};
+ const batch=await fetchCommodityQuotes(true);assert.equal(batch.soybean?.priceUsdMt,q.priceUsdMt);assert.equal(urls.filter(u=>u.startsWith('/api/soybean/price-snapshot')).length,1);assert.ok(!urls.some(u=>u.includes('commodity=soybean&')));
+ const {fetchLiveFxRates,getDatedDisplayFx}=await import('../../services/currencyService.ts');
+ globalThis.fetch=async(input:any)=>Response.json(String(input).includes('frankfurter.dev')?{base:'USD',date:date(1),rates:{KRW:1329.49,EUR:.89087}}:{});
+ await fetchLiveFxRates(true);const retainedFx=getDatedDisplayFx();assert.equal(retainedFx?.observationDate,date(1));
+ globalThis.fetch=async()=>new Response('',{status:503});await fetchLiveFxRates(true);assert.deepEqual(getDatedDisplayFx(),retainedFx,'outage preserves actual FX date and rates');
+ assert.deepEqual(protectedFiles.map(f=>fs.readFileSync(f).toString('base64')),before,'saved snapshots/paid history unchanged');
+ console.log('PASS: single-flight and cached Soybean history/procurement; raw conversion/dates/provisional status; consistent USD/KRW/EUR price and movements; dated/invalid FX; outage preservation; no paid calls.');
+}finally{globalThis.fetch=native;}

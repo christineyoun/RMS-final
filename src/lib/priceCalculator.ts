@@ -1,3 +1,4 @@
+import { prefixCurrency } from '../utils/currencyFormatting';
 import { getLiveExchangeRate, getAllFxRates } from '../services/currencyService.ts';
 import palmOilCache from '../data/cache_palmoil.json' with { type: 'json' };
 import { centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
@@ -6,18 +7,17 @@ export interface CommodityPriceData {
   benchmarkQuote: number;       // Raw exchange price (USD/MT, EUR/MT, MYR/MT, or KRW/MT)
   currency: 'USD' | 'EUR' | 'MYR' | 'KRW';
   exchangeRateToKRW: number;    // e.g., USD: 1369, EUR: 1520, MYR: 325
-  landedMultiplier: number;     // Freight + handling markup (strictly > 1.0)
 }
 
 export const COMMODITY_CONFIGS: Record<string, CommodityPriceData> = {
-  'wheat':          { benchmarkQuote: 265,    currency: 'USD', exchangeRateToKRW: 1369, landedMultiplier: 1.06 },
-  'corn':           { benchmarkQuote: 216,    currency: 'USD', exchangeRateToKRW: 1369, landedMultiplier: 1.05 },
-  'soybean':        { benchmarkQuote: 495,    currency: 'USD', exchangeRateToKRW: 1369, landedMultiplier: 1.05 },
-  'soybean-oil':    { benchmarkQuote: 920,    currency: 'USD', exchangeRateToKRW: 1388.5, landedMultiplier: 1.074457 },
-  'palm-oil':       { benchmarkQuote: palmOilCache.priceMyr, currency: 'MYR', exchangeRateToKRW: 332.36, landedMultiplier: 1.035 },
-  'sugar':          { benchmarkQuote: 418.00, currency: 'USD', exchangeRateToKRW: 1388.5, landedMultiplier: 1.07856 },
-  'potato-starch':  { benchmarkQuote: 870,    currency: 'EUR', exchangeRateToKRW: 1520, landedMultiplier: 1.07 },
-  'tapioca-starch': { benchmarkQuote: 700,    currency: 'USD', exchangeRateToKRW: 1388.5, landedMultiplier: 1.04 },
+  'wheat':          { benchmarkQuote: 265,    currency: 'USD', exchangeRateToKRW: 1369 },
+  'corn':           { benchmarkQuote: 216,    currency: 'USD', exchangeRateToKRW: 1369 },
+  'soybean':        { benchmarkQuote: 495,    currency: 'USD', exchangeRateToKRW: 1369 },
+  'soybean-oil':    { benchmarkQuote: 920,    currency: 'USD', exchangeRateToKRW: 1388.5 },
+  'palm-oil':       { benchmarkQuote: palmOilCache.priceMyr, currency: 'MYR', exchangeRateToKRW: 332.36 },
+  'sugar':          { benchmarkQuote: 418.00, currency: 'USD', exchangeRateToKRW: 1388.5 },
+  'potato-starch':  { benchmarkQuote: 870,    currency: 'EUR', exchangeRateToKRW: 1520 },
+  'tapioca-starch': { benchmarkQuote: 700,    currency: 'USD', exchangeRateToKRW: 1388.5 },
 };
 
 export function convertCommodityPrice(
@@ -54,7 +54,6 @@ export interface CalculatedMetricsResult {
   priceEurFormatted: string;
   baseQuoteFormatted: string;
   baseKRW: number;
-  landedKRWFormatted: string;
   wowPct: number | null;
   wowPctFormatted: string;
   direction: 'up' | 'down' | 'unchanged';
@@ -115,21 +114,19 @@ export function getCalculatedMetrics(
 
   const priceKrw = Math.round(priceUsd * krwRate);
   const priceEur = Number((priceUsd / 1.08).toFixed(2));
-  const landedKRW = Math.round(priceKrw * config.landedMultiplier);
 
   const direction: 'up' | 'down' | 'unchanged' =
     wowPct != null ? (wowPct > 0 ? 'up' : wowPct < 0 ? 'down' : 'unchanged') : 'unchanged';
 
   return {
     priceUsd,
-    priceUsdFormatted: `$${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    priceUsdFormatted: prefixCurrency(priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), '$'),
     priceKrw,
-    priceKrwFormatted: `₩${priceKrw.toLocaleString('en-US')}`,
+    priceKrwFormatted: prefixCurrency(priceKrw.toLocaleString('en-US'), '₩'),
     priceEur,
-    priceEurFormatted: `€${priceEur.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    priceEurFormatted: prefixCurrency(priceEur.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), '€'),
     baseQuoteFormatted: `${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD / MT`,
     baseKRW: priceKrw,
-    landedKRWFormatted: `₩${landedKRW.toLocaleString('en-US')} / MT`,
     wowPct,
     wowPctFormatted: wowPct != null ? `${wowPct >= 0 ? '+' : ''}${wowPct.toFixed(2)}%` : '--%',
     direction,

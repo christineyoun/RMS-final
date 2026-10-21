@@ -1,0 +1,401 @@
+{
+  "provenance": "Reconstructed from versioned request builders and retained evidence using @google/genai 2.29.0 with mocked HTTP; NOT recovered original wire payloads.",
+  "sdkVersion": "2.29.0",
+  "accepted": {
+    "type": "OBJECT",
+    "properties": {
+      "confidenceScore": {
+        "type": "NUMBER",
+        "minimum": 0,
+        "maximum": 100
+      },
+      "deskRecommendation": {
+        "type": "STRING",
+        "minLength": 4
+      },
+      "executiveSummary": {
+        "type": "STRING",
+        "minLength": 140
+      },
+      "bullishFactors": {
+        "type": "ARRAY",
+        "minItems": 2,
+        "maxItems": 3,
+        "items": {
+          "type": "STRING",
+          "minLength": 4
+        }
+      },
+      "bearishFactors": {
+        "type": "ARRAY",
+        "minItems": 2,
+        "maxItems": 3,
+        "items": {
+          "type": "STRING",
+          "minLength": 4
+        }
+      },
+      "watchItems": {
+        "type": "ARRAY",
+        "minItems": 2,
+        "maxItems": 3,
+        "items": {
+          "type": "STRING",
+          "minLength": 4
+        }
+      },
+      "evidenceContractVersion": {
+        "type": "INTEGER",
+        "minimum": 4,
+        "maximum": 4
+      },
+      "evidenceClaims": {
+        "type": "ARRAY",
+        "items": {
+          "type": "OBJECT",
+          "properties": {
+            "field": {
+              "type": "STRING"
+            },
+            "segments": {
+              "type": "ARRAY",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "kind": {
+                    "type": "STRING",
+                    "enum": [
+                      "fact",
+                      "interpretation",
+                      "conditional",
+                      "recommendation"
+                    ]
+                  },
+                  "text": {
+                    "type": "STRING"
+                  },
+                  "evidenceIds": {
+                    "type": "ARRAY",
+                    "minItems": 1,
+                    "items": {
+                      "type": "STRING",
+                      "enum": [
+                        "psd-28",
+                        "psd-176",
+                        "psd-88",
+                        "psd-20",
+                        "psd-125",
+                        "psd-forecast-stock-balance",
+                        "soybean-zs-2026-09-21",
+                        "soybean-zs-2026-10-13",
+                        "soybean-zs-2026-10-14",
+                        "soybean-zs-2026-10-15",
+                        "soybean-zs-2026-10-16",
+                        "soybean-zs-2026-10-19",
+                        "soybean-zs-2026-10-20",
+                        "soybean-zs-wow-2026-10-13--2026-10-20",
+                        "soybean-zs-mom-2026-09-21--2026-10-20",
+                        "soybean-weather-usa-cb2237ca-2026-10-17",
+                        "soybean-weather-usa-ab395b19-2026-10-17",
+                        "soybean-weather-brazil-721fc6b7-2026-10-17",
+                        "soybean-weather-brazil-d8efef70-2026-10-17",
+                        "soybean-weather-argentina-a1db2745-2026-10-17",
+                        "soybean-weather-argentina-96e1506c-2026-10-17",
+                        "soybean-weather-paraguay-dd12a4d9-2026-10-17",
+                        "soybean-weather-paraguay-b0e7bfaa-2026-10-17",
+                        "article-soybean-2096bd6a545f-export-offer",
+                        "article-soybean-5ad8e9ed2f04-brazil-planting",
+                        "article-soybean-b0ab508416cc-september-us-production",
+                        "article-soybean-abe078d1656b-us-production",
+                        "article-soybean-abe078d1656b-us-exports",
+                        "article-soybean-abe078d1656b-us-stocks"
+                      ]
+                    }
+                  },
+                  "support": {
+                    "type": "ARRAY",
+                    "items": {
+                      "type": "OBJECT",
+                      "properties": {
+                        "evidenceId": {
+                          "type": "STRING",
+                          "enum": [
+                            "psd-28",
+                            "psd-176",
+                            "psd-88",
+                            "psd-20",
+                            "psd-125",
+                            "psd-forecast-stock-balance",
+                            "soybean-zs-2026-09-21",
+                            "soybean-zs-2026-10-13",
+                            "soybean-zs-2026-10-14",
+                            "soybean-zs-2026-10-15",
+                            "soybean-zs-2026-10-16",
+                            "soybean-zs-2026-10-19",
+                            "soybean-zs-2026-10-20",
+                            "soybean-zs-wow-2026-10-13--2026-10-20",
+                            "soybean-zs-mom-2026-09-21--2026-10-20",
+                            "soybean-weather-usa-cb2237ca-2026-10-17",
+                            "soybean-weather-usa-ab395b19-2026-10-17",
+                            "soybean-weather-brazil-721fc6b7-2026-10-17",
+                            "soybean-weather-brazil-d8efef70-2026-10-17",
+                            "soybean-weather-argentina-a1db2745-2026-10-17",
+                            "soybean-weather-argentina-96e1506c-2026-10-17",
+                            "soybean-weather-paraguay-dd12a4d9-2026-10-17",
+                            "soybean-weather-paraguay-b0e7bfaa-2026-10-17",
+                            "article-soybean-2096bd6a545f-export-offer",
+                            "article-soybean-5ad8e9ed2f04-brazil-planting",
+                            "article-soybean-b0ab508416cc-september-us-production",
+                            "article-soybean-abe078d1656b-us-production",
+                            "article-soybean-abe078d1656b-us-exports",
+                            "article-soybean-abe078d1656b-us-stocks"
+                          ]
+                        },
+                        "aspect": {
+                          "type": "STRING",
+                          "enum": [
+                            "price-level",
+                            "interval-change",
+                            "sustained-price-trend",
+                            "inventory-level",
+                            "inventory-change",
+                            "inventory-adequacy",
+                            "stock-balance-forecast",
+                            "production",
+                            "consumption",
+                            "exports",
+                            "production-proxy",
+                            "planting-progress",
+                            "weather-signal",
+                            "crush-input",
+                            "production-input-ratio",
+                            "total-supply",
+                            "modeled-price-scenario"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "evidenceId",
+                        "aspect"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "text",
+                  "evidenceIds",
+                  "support"
+                ]
+              }
+            }
+          },
+          "required": [
+            "field",
+            "segments"
+          ]
+        }
+      }
+    },
+    "required": [
+      "confidenceScore",
+      "deskRecommendation",
+      "executiveSummary",
+      "bullishFactors",
+      "bearishFactors",
+      "watchItems",
+      "evidenceContractVersion",
+      "evidenceClaims"
+    ]
+  },
+  "rejected": {
+    "type": "OBJECT",
+    "properties": {
+      "outputFormat": {
+        "type": "STRING",
+        "enum": [
+          "typed-segments-v1"
+        ]
+      },
+      "evidenceContractVersion": {
+        "type": "INTEGER",
+        "minimum": 4,
+        "maximum": 4
+      },
+      "confidenceScore": {
+        "type": "NUMBER",
+        "minimum": 0,
+        "maximum": 100
+      },
+      "evidenceClaims": {
+        "type": "ARRAY",
+        "items": {
+          "type": "OBJECT",
+          "properties": {
+            "field": {
+              "type": "STRING",
+              "enum": [
+                "deskRecommendation",
+                "executiveSummary",
+                "bullishFactors.0",
+                "bullishFactors.1",
+                "bullishFactors.2",
+                "bearishFactors.0",
+                "bearishFactors.1",
+                "bearishFactors.2",
+                "watchItems.0",
+                "watchItems.1",
+                "watchItems.2"
+              ]
+            },
+            "segments": {
+              "type": "ARRAY",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "kind": {
+                    "type": "STRING",
+                    "enum": [
+                      "fact",
+                      "interpretation",
+                      "conditional",
+                      "recommendation"
+                    ]
+                  },
+                  "text": {
+                    "type": "STRING"
+                  },
+                  "evidenceIds": {
+                    "type": "ARRAY",
+                    "minItems": 1,
+                    "items": {
+                      "type": "STRING",
+                      "enum": [
+                        "psd-28",
+                        "psd-176",
+                        "psd-88",
+                        "psd-20",
+                        "psd-125",
+                        "psd-forecast-stock-balance",
+                        "soybean-zs-2026-09-21",
+                        "soybean-zs-2026-10-13",
+                        "soybean-zs-2026-10-14",
+                        "soybean-zs-2026-10-15",
+                        "soybean-zs-2026-10-16",
+                        "soybean-zs-2026-10-19",
+                        "soybean-zs-2026-10-20",
+                        "soybean-zs-wow-2026-10-13--2026-10-20",
+                        "soybean-zs-mom-2026-09-21--2026-10-20",
+                        "soybean-weather-usa-cb2237ca-2026-10-17",
+                        "soybean-weather-usa-ab395b19-2026-10-17",
+                        "soybean-weather-brazil-721fc6b7-2026-10-17",
+                        "soybean-weather-brazil-d8efef70-2026-10-17",
+                        "soybean-weather-argentina-a1db2745-2026-10-17",
+                        "soybean-weather-argentina-96e1506c-2026-10-17",
+                        "soybean-weather-paraguay-dd12a4d9-2026-10-17",
+                        "soybean-weather-paraguay-b0e7bfaa-2026-10-17",
+                        "article-soybean-2096bd6a545f-export-offer",
+                        "article-soybean-5ad8e9ed2f04-brazil-planting",
+                        "article-soybean-b0ab508416cc-september-us-production",
+                        "article-soybean-abe078d1656b-us-production",
+                        "article-soybean-abe078d1656b-us-exports",
+                        "article-soybean-abe078d1656b-us-stocks"
+                      ]
+                    }
+                  },
+                  "support": {
+                    "type": "ARRAY",
+                    "items": {
+                      "type": "OBJECT",
+                      "properties": {
+                        "evidenceId": {
+                          "type": "STRING",
+                          "enum": [
+                            "psd-28",
+                            "psd-176",
+                            "psd-88",
+                            "psd-20",
+                            "psd-125",
+                            "psd-forecast-stock-balance",
+                            "soybean-zs-2026-09-21",
+                            "soybean-zs-2026-10-13",
+                            "soybean-zs-2026-10-14",
+                            "soybean-zs-2026-10-15",
+                            "soybean-zs-2026-10-16",
+                            "soybean-zs-2026-10-19",
+                            "soybean-zs-2026-10-20",
+                            "soybean-zs-wow-2026-10-13--2026-10-20",
+                            "soybean-zs-mom-2026-09-21--2026-10-20",
+                            "soybean-weather-usa-cb2237ca-2026-10-17",
+                            "soybean-weather-usa-ab395b19-2026-10-17",
+                            "soybean-weather-brazil-721fc6b7-2026-10-17",
+                            "soybean-weather-brazil-d8efef70-2026-10-17",
+                            "soybean-weather-argentina-a1db2745-2026-10-17",
+                            "soybean-weather-argentina-96e1506c-2026-10-17",
+                            "soybean-weather-paraguay-dd12a4d9-2026-10-17",
+                            "soybean-weather-paraguay-b0e7bfaa-2026-10-17",
+                            "article-soybean-2096bd6a545f-export-offer",
+                            "article-soybean-5ad8e9ed2f04-brazil-planting",
+                            "article-soybean-b0ab508416cc-september-us-production",
+                            "article-soybean-abe078d1656b-us-production",
+                            "article-soybean-abe078d1656b-us-exports",
+                            "article-soybean-abe078d1656b-us-stocks"
+                          ]
+                        },
+                        "aspect": {
+                          "type": "STRING",
+                          "enum": [
+                            "price-level",
+                            "interval-change",
+                            "sustained-price-trend",
+                            "inventory-level",
+                            "inventory-change",
+                            "inventory-adequacy",
+                            "stock-balance-forecast",
+                            "production",
+                            "consumption",
+                            "exports",
+                            "production-proxy",
+                            "planting-progress",
+                            "weather-signal",
+                            "crush-input",
+                            "production-input-ratio",
+                            "total-supply",
+                            "modeled-price-scenario"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "evidenceId",
+                        "aspect"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "text",
+                  "evidenceIds",
+                  "support"
+                ]
+              },
+              "minItems": 2
+            }
+          },
+          "required": [
+            "field",
+            "segments"
+          ]
+        },
+        "minItems": 8,
+        "maxItems": 11
+      }
+    },
+    "required": [
+      "outputFormat",
+      "evidenceContractVersion",
+      "confidenceScore",
+      "evidenceClaims"
+    ]
+  }
+}

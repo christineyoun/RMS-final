@@ -1,0 +1,35 @@
+import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import assert from 'node:assert/strict';
+import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
+import {OIL_ORIGIN_POINTS,parseOilOriginPsd,parseOilOriginWeather,buildOilOrigin,SoybeanOilOriginService} from '../soybeanOilOriginService.ts';
+import {ORIGIN_MVP} from '../all8OriginRadarService.ts';import {OriginRadar} from '../../components/OriginRadar.tsx';
+const now=new Date('2026-10-21T12:00:00Z'),p=OIL_ORIGIN_POINTS[3];
+const rows=(country:string)=>[28,88,176].map((attributeId,i)=>({commodityCode:'4232000',countryCode:country,marketYear:"2026",calendarYear:"2026",month:"10",unitId:8,attributeId,value:[684,600,81][i]}));
+const body=(point:typeof p|typeof OIL_ORIGIN_POINTS[number],heat:number[]=Array(9).fill(25))=>({latitude:point.lat,longitude:point.lon,timezone:'UTC',utc_offset_seconds:0,daily_units:{precipitation_sum:'mm',temperature_2m_max:'°C'},daily:{time:Array.from({length:9},(_,i)=>`2026-10-${String(13+i).padStart(2,'0')}`),precipitation_sum:Array(9).fill(0),temperature_2m_max:heat}});
+const supply=parseOilOriginPsd(rows('PA'),p,now)!;assert.equal(supply.production,.684);assert.equal(supply.exports,.6);assert.equal(supply.stocks,.081);assert.equal(supply.period,'2026-10');assert.equal(ORIGIN_MVP['soybean-oil'].points[3].country,'PA');
+for(const patch of [{commodityCode:'2222000'},{countryCode:'PY'},{marketYear:2025},{calendarYear:2027},{unitId:1},{value:null},{value:'684'},{month:11}])assert.equal(parseOilOriginPsd(rows('PA').map(r=>({...r,...patch})),p,now),null,JSON.stringify(patch));
+assert.equal(parseOilOriginPsd([...rows('PA'),rows('PA')[0]],p,now),null);assert.equal(parseOilOriginPsd(rows('PA').slice(1),p,now),null);assert.equal(parseOilOriginPsd(rows('PA').map((r,i)=>({...r,month:i===0?9:10})),p,now),null);
+const weather=parseOilOriginWeather(body(p),p,now)!;assert.equal(weather.daily.length,7);assert.equal(weather.lastDay,'2026-10-20');assert.equal(weather.daily[0].day,'2026-10-14');assert.equal(weather.daily[0].rainMm,0);
+let card=buildOilOrigin(p,supply,weather,now);assert.deepEqual(card.weatherPills?.map(p=>p.label),['특이 없음']);assert.ok(!card.exportComparison);assert.equal(card.marketYear,'2026/27');
+const hot=body(p);hot.daily.temperature_2m_max=[25,35,35,35,25,25,25,25,80];const heat=parseOilOriginWeather(hot,p,now)!;assert.deepEqual(buildOilOrigin(p,supply,heat,now).weatherPills?.map(p=>p.label),['고온 주의']);
+for(const value of [null,undefined,'0',true,-999,Infinity]){const b=body(p);(b.daily.precipitation_sum as any)[2]=value;const w=parseOilOriginWeather(b,p,now)!;assert.equal(w.daily[1].rainMm,null);assert.deepEqual(buildOilOrigin(p,supply,w,now).weatherPills?.map(p=>p.label),['자료 부족']);}
+const partialHeat=structuredClone(hot);(partialHeat.daily.precipitation_sum as any)[2]=null;assert.deepEqual(buildOilOrigin(p,supply,parseOilOriginWeather(partialHeat,p,now)!,now).weatherPills?.map(p=>p.label),['고온 주의','자료 부족']);
+const noTemp=body(p);(noTemp.daily.temperature_2m_max as any)=Array(9).fill(null);assert.deepEqual(buildOilOrigin(p,supply,parseOilOriginWeather(noTemp,p,now)!,now).weatherPills?.map(p=>p.label),['자료 부족']);
+// Rain is descriptive: neither zero nor heavy rain has a defensible drought/flood threshold here.
+const wet=body(p);wet.daily.precipitation_sum.fill(100);assert.deepEqual(buildOilOrigin(p,supply,parseOilOriginWeather(wet,p,now)!,now).weatherPills?.map(p=>p.label),['특이 없음']);assert.match(buildOilOrigin(p,supply,parseOilOriginWeather(wet,p,now)!,now).riskWeather!,/700.0mm/);
+for(const patch of [{latitude:0},{timezone:'invalid'},{utc_offset_seconds:7200},{daily_units:{precipitation_sum:'inch',temperature_2m_max:'°C'}}])assert.equal(parseOilOriginWeather({...body(p),...patch},p,now),null);
+const duplicate=body(p);duplicate.daily.time[1]=duplicate.daily.time[0];assert.equal(parseOilOriginWeather(duplicate,p,now),null);
+const missing=body(p);missing.daily.time[2]='2026-10-12';assert.equal(parseOilOriginWeather(missing,p,now)!.daily[1].rainMm,null);
+for(const w of [undefined,{...weather,retrievalFailed:true},{...weather,checkedAt:'2026-10-10T12:00:00Z'},{...weather,lastDay:'2026-10-22'},{...weather,sourceUrl:'https://example.com'}])assert.ok(buildOilOrigin(p,supply,w,now).weatherPills?.some(p=>p.label==='자료 부족'));
+assert.equal(buildOilOrigin(p,{...supply,commodityCode:'2222000' as any},weather,now).production,'');
+// Supply outages cannot turn weather screening into an overall crop/supply verdict.
+assert.deepEqual(buildOilOrigin(p,undefined,weather,now).weatherPills?.map(p=>p.label),['특이 없음']);
+const prior={...supply,period:'2026-09',exports:.5,rawRecords:rows('PA').map(r=>({...r,month:9,value:r.attributeId===88?500:r.value}))};assert.match(buildOilOrigin(p,supply,weather,now,prior).exportComparison!,/전월/);assert.equal(buildOilOrigin(p,supply,weather,now,{...prior,period:'2026-08'}).exportComparison,undefined);
+const dir=await fs.mkdtemp(path.join(os.tmpdir(),'rms-oil-origin-OFFLINE-'));let calls=0,mode='ok',clock=now;
+const fetcher=async(url:any)=>{calls++;if(mode==='outage')throw Error('OFFLINE HTTP 503');const u=String(url);if(u.includes('api.fas')){const c=u.match(/country\/([^/]+)/)![1];return new Response(JSON.stringify(rows(c)),{status:200});}const point=OIL_ORIGIN_POINTS.find(p=>u.includes('latitude='+p.lat+'&'))!;return new Response(JSON.stringify(mode==='invalid'?{daily:{time:[]}}:body(point)),{status:200});};
+const file=path.join(dir,'radar.json'),service=new SoybeanOilOriginService({file,fetcher:fetcher as typeof fetch,now:()=>clock,key:()=> 'OFFLINE-NOT-A-KEY'});
+const [a,b]=await Promise.all([service.get(),service.get()]);assert.equal(calls,8);assert.deepEqual(a,b);await service.get();assert.equal(calls,8);assert.equal(a.origins.length,4);const before=await fs.readFile(file,'utf8');await new SoybeanOilOriginService({file,fetcher:fetcher as typeof fetch,now:()=>clock,key:()=> 'OFFLINE'}).get();assert.equal(calls,8);assert.equal(await fs.readFile(file,'utf8'),before);
+mode='outage';clock=new Date(+now+3600000);const fallback=await service.get(true);assert.ok(fallback.origins.every(o=>o.production==='0.684M MT'&&o.dataFreshness==='cached'&&o.weatherPills?.some(p=>p.label==='자료 부족')));assert.equal(fallback.origins[3].retrievedAt,now.toISOString());
+mode='invalid';const invalid=await service.get(true);assert.ok(invalid.origins.every(o=>o.weatherPills?.[0].label==='자료 부족'));
+clock=new Date('2026-12-10T12:00:00Z');mode='outage';assert.ok((await service.get(true)).origins.every(o=>!o.production&&o.weatherPills?.[0].label==='자료 부족'));
+const html=renderToStaticMarkup(<OriginRadar commodityId="soybean-oil" origins={[card]}/>);assert.match(html,/국가 생산/);assert.match(html,/국가 수출/);assert.match(html,/이상 없음/);assert.ok(!html.includes('전월 비교 자료 없음'));assert.equal((html.match(/출처:/g)||[]).length,1);assert.ok(!html.includes('피해 판정 아님 ·'));
+console.log('PASS soybeanOilOriginIntegrity: country/commodity/period/units, heat-only model screening, null/partial/stale/outages, independent evidence, cache/restart/single-flight and compact national UI.');

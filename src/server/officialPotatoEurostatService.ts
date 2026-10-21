@@ -30,6 +30,7 @@ export type OfficialPotatoEurostatResponse = {
   scope: string;
   data: OfficialPotatoEurostatRecord | null;
   message?: string;
+  history?: OfficialPotatoEurostatRecord[];
 };
 
 type JsonStat = {
@@ -85,16 +86,17 @@ function coordinateValue(data: JsonStat, values: Record<string, string>): {value
   return { value: raw, status };
 }
 
-export function parseEurostatPotatoes(json: JsonStat, dataset: string, now: Date = new Date()): OfficialPotatoEurostatRecord | null {
-  if (!json || !json.dimension || !json.id || !json.value) return null;
+export function parseEurostatPotatoHistory(json: JsonStat, dataset: string, now: Date = new Date()): OfficialPotatoEurostatRecord[] {
+  const history:OfficialPotatoEurostatRecord[]=[];
+  if (!json || !json.dimension || !json.id || !json.value) return [];
   const cropCodes = dimensionCodes(json, 'crops');
   const availableGeos = dimensionCodes(json, 'geo');
-  if (!cropCodes.includes('R1000') || !COUNTRIES.every(c => availableGeos.includes(c))) return null;
+  if (!cropCodes.includes('R1000') || !COUNTRIES.every(c => availableGeos.includes(c))) return [];
   const measureCodes = dimensionCodes(json, 'strucpro');
   const labels = json.dimension.strucpro?.category?.label;
   const prodCode = structureKey(measureCodes, labels, 'production');
   const areaCode = structureKey(measureCodes, labels, 'area');
-  if (!prodCode || !areaCode || prodCode === areaCode) return null;
+  if (!prodCode || !areaCode || prodCode === areaCode) return [];
   const years = dimensionCodes(json, 'time').filter(x => /^20\d{2}$/.test(x) && Number(x) <= now.getUTCFullYear())
     .sort((a,b) => Number(b) - Number(a));
   for (const year of years) {
@@ -114,24 +116,27 @@ export function parseEurostatPotatoes(json: JsonStat, dataset: string, now: Date
     const production1000MT = countryRows.reduce((sum, x) => sum + x.production1000MT, 0);
     const area1000HA = countryRows.reduce((sum, x) => sum + x.area1000HA, 0);
     const weightedYieldMTHA = production1000MT / area1000HA;
-    return { harvestYear: year, dataset, production1000MT: Number(production1000MT.toFixed(2)),
+    history.push({ harvestYear: year, dataset, production1000MT: Number(production1000MT.toFixed(2)),
       productionMMT: Number((production1000MT / 1000).toFixed(2)),
       area1000HA: Number(area1000HA.toFixed(2)), weightedYieldMTHA: Number(weightedYieldMTHA.toFixed(2)),
       coverage: [...COUNTRIES], countries: countryRows,
-      isEstimateOrProvisional: countryRows.some(x => /[pe]/i.test((x.productionStatus || '') + (x.areaStatus || ''))) };
+      isEstimateOrProvisional: countryRows.some(x => /[pe]/i.test((x.productionStatus || '') + (x.areaStatus || ''))) });
   }
-  return null;
+  return history.sort((a,b)=>a.harvestYear.localeCompare(b.harvestYear));
 }
+export function parseEurostatPotatoes(json: JsonStat,dataset:string,now:Date=new Date()):OfficialPotatoEurostatRecord|null {return parseEurostatPotatoHistory(json,dataset,now).at(-1)||null;}
+
 
 let verified: {data: OfficialPotatoEurostatRecord; verifiedAt: string} | null = null;
 let cacheExpiresAt = 0;
+let verifiedHistory:OfficialPotatoEurostatRecord[]=[];
 
 export async function fetchOfficialPotatoEurostat(force = false): Promise<OfficialPotatoEurostatResponse> {
   const checkedAt = new Date().toISOString();
   const base = { checkedAt, source: 'Eurostat — harvested potatoes, four-country total',
     sourceUrl: POTATO_EUROSTAT_PAGE, scope: 'DE, FR, NL, DK · all potatoes including seed; NOT starch-potato-only or starch production' };
   if (!force && verified && Date.now() < cacheExpiresAt) return {
-    ...base, success: true, dataStatus: 'last-verified', verifiedAt: verified.verifiedAt, data: verified.data,
+    ...base, success: true, dataStatus: 'last-verified', verifiedAt: verified.verifiedAt, data: verified.data, history:verifiedHistory,
     message: 'Last successfully verified Eurostat data returned from short-term cache.' };
   const issues: string[] = [];
   for (const dataset of ['apro_cpnh1', 'apro_cpsh1']) {
@@ -144,11 +149,12 @@ export async function fetchOfficialPotatoEurostat(force = false): Promise<Offici
       });
       if (!response.ok) { issues.push(`${dataset}: HTTP ${response.status}`); continue; }
       const raw = await response.json();
-      const data = parseEurostatPotatoes(raw, dataset);
+      const history = parseEurostatPotatoHistory(raw, dataset);
+      const data = history.at(-1);
       if (!data) { issues.push(`${dataset}: incomplete or incompatible 4-country dataset`); continue; }
-      verified = { data, verifiedAt: checkedAt };
+      verified = { data, verifiedAt: checkedAt };verifiedHistory=history;
       cacheExpiresAt = Date.now() + 30 * 60 * 1000;
-      return {...base, success: true, dataStatus: 'live-verified', verifiedAt: checkedAt, data};
+      return {...base, success: true, dataStatus: 'live-verified', verifiedAt: checkedAt, data, history};
     } catch (e) { issues.push(`${dataset}: ${String((e as Error)?.message || e)}`); }
   }
   if (verified) return { ...base, success: true, dataStatus: 'last-verified', verifiedAt: verified.verifiedAt,

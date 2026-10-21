@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from './paidGeminiGuard.ts';
 import type { DataSourceDefinition, NormalizedMarketData, MarketDataSyncPayload } from '../types.ts';
 import { CENTRAL_SOURCE_REGISTRY, getSourceDefinition } from './sourceRegistry.ts';
 import { usdaFasService } from './usdaFasService.ts';

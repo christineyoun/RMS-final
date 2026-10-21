@@ -1,22 +1,22 @@
 {
   "commodityCode": "4232000",
-  "verifiedAt": "2026-10-14T08:24:53.300Z",
+  "verifiedAt": "2026-10-21T06:42:02.934Z",
   "data": {
     "commodityCode": "4232000",
     "marketYear": "2026",
     "releaseMonth": "10",
-    "source": "USDA FAS PSD Online · authenticated world records",
+    "source": "USDA FAS PSD Online",
     "production1000MT": 75241,
-    "productionMMT": 75.2,
+    "productionMMT": 75.241,
     "domesticConsumption1000MT": 73483,
-    "domesticConsumptionMMT": 73.5,
+    "domesticConsumptionMMT": 73.483,
     "endingStocks1000MT": 6854,
-    "endingStocksMMT": 6.9,
+    "endingStocksMMT": 6.854,
     "beginningStocks1000MT": 6415,
-    "beginningStocksMMT": 6.4,
+    "beginningStocksMMT": 6.415,
     "imports1000MT": 13630,
     "exports1000MT": 14949,
-    "exportsMMT": 14.9,
+    "exportsMMT": 14.949,
     "totalSupply1000MT": 95286,
     "stocksToUseRatio": 9.3,
     "stocksToUseRatioPct": 9.3,
@@ -153,6 +153,6 @@
         "value": 95286
       }
     ],
-    "executiveBrief": "USDA FAS PSD 2026/27 글로벌 대두유: 생산 75.2 MMT, 소비 73.5 MMT, 기말재고 6.9 MMT, 수출 14.9 MMT. 실제 공급사 오퍼와 한국 도착원가는 별도 확인이 필요합니다."
+    "executiveBrief": "USDA PSD 2026/27 · 2026-10 세계 대두유 연간 전망. 기말재고 전망은 실제 월간 재고 변동이나 재고 적정성을 뜻하지 않습니다."
   }
 }
