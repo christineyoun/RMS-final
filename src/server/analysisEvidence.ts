@@ -1,6 +1,6 @@
 import {collectSoybeanOilEvidence} from './soybeanOilAnalysisEvidence.ts';
 import {SOYBEAN_OIL_NEWS_CARDS} from './soybeanOilVerifiedNews.ts';
-import {OIL_ORIGIN_POINTS,oilWeatherUrl} from './soybeanOilOriginService.ts';
+import {OIL_ORIGIN_POINTS,oilWeatherSourceUrl,legacyOilWeatherUrl} from './soybeanOilOriginService.ts';
 /** Read-only evidence adapter. Model output and AI news summaries are never evidence. */
 import fs from 'node:fs';
 import {collectSoybeanPriceWeatherEvidence} from './soybeanAnalysisEvidence.ts';
@@ -26,7 +26,7 @@ export function validAnalysisFact(f:AnalysisFact,id:string,now=new Date()):boole
 }
 export function trustedAnalysisUrl(value:string):boolean {
   try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&
-    (SOYBEAN_OIL_NEWS_CARDS.some(c=>c.originalUrl===u.href)||OIL_ORIGIN_POINTS.some(p=>oilWeatherUrl(p)===u.href)||
+    (SOYBEAN_OIL_NEWS_CARDS.some(c=>c.originalUrl===u.href)||OIL_ORIGIN_POINTS.some(p=>(oilWeatherSourceUrl(p)===u.href||legacyOilWeatherUrl(p)===u.href))||
      u.hostname==='query1.finance.yahoo.com'&&['/v8/finance/chart/ZS%3DF','/v8/finance/chart/ZL%3DF'].includes(u.pathname)&&u.searchParams.get('range')==='5y'&&u.searchParams.get('interval')==='1d'||
      u.hostname==='power.larc.nasa.gov'&&u.pathname==='/api/temporal/daily/point'||
      u.hostname==='commodity-board.com'&&/^\/[a-z0-9-]{20,}\/?$/.test(u.pathname)||

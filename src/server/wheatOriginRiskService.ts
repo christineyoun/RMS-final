@@ -1,15 +1,13 @@
+import {getOriginWeather,parseSharedOpenMeteo,currentSharedWeather,sharedWeatherScreen,sharedWeatherSummary,type SharedWeatherEvidence} from './originWeatherService.ts';
 /**
- * Wheat-only Origin Radar screening based on Open-Meteo daily modeled weather.
+ * Wheat Origin Radar screening using the shared adapter based on Open-Meteo daily modeled weather.
  * Reuses the same Open-Meteo forecast API family already used elsewhere in RMS.
- * Two representative wheat-growing points per origin are sampled once per KST weekday.
+ * Two representative wheat-growing points per origin; shared local-day cache and validation.
  * This is NOT a national crop condition, shipping, or trade-policy risk assessment.
  * No Gemini SDK, paid Gemini requests, or invented weather fallback data.
  * Open-Meteo free API requires non-commercial use; obtain a commercial license for
  * use within a company. See https://open-meteo.com/en/pricing .
  */
-import fs from 'node:fs';
-import {screenObservedWeather,validWeatherDay} from '../utils/originWeatherPills.ts';
-import path from 'node:path';
 import type { OriginRadarResponse, OriginItemDetail } from './originRadarService.ts';
 import { wheatOriginSupplyTrendService } from './wheatOriginSupplyTrendService.ts';
 
@@ -24,6 +22,7 @@ export type PointEvidence = {
   precipLast7Mm: number;
   hotDays: number;
   source: Source;
+  shared?:SharedWeatherEvidence;
   retrievalFailed?:boolean;lastAttemptAt?:string;
   status: 'monitor' | 'no-signal';
 };
@@ -34,7 +33,7 @@ export type RiskCache = {
 };
 
 type Point = { key: Key; label: string; lat: number; lon: number };
-const POINTS: ReadonlyArray<Point> = [
+export const WHEAT_WEATHER_POINTS: ReadonlyArray<Point> = [
   { key:'usa', label:'캔자스(HRW)', lat:38.5, lon:-98.3 },
   { key:'usa', label:'일리노이 남부(SRW)', lat:38.35, lon:-89.4 },
   { key:'australia', label:'서호주', lat:-32.0, lon:117.2 },
@@ -46,10 +45,7 @@ const POINTS: ReadonlyArray<Point> = [
   { key:'russia', label:'크라스노다르', lat:45.1, lon:39.0 },
   { key:'russia', label:'로스토프', lat:47.2, lon:39.7 },
 ];
-const CACHE_DIR = process.env.RMS_ORIGIN_CACHE_DIR || path.join(process.cwd(), '.rms-origin-verified');
-const CACHE_FILE = path.join(CACHE_DIR, 'wheat-openmeteo-risk-v3.json');
-const REQUEST_TIMEOUT_MS = 8500;
-const MS_DAY = 86400000;
+const POINTS=WHEAT_WEATHER_POINTS;
 
 function todayKst(now:Date=new Date()): string {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -58,86 +54,14 @@ function todayKst(now:Date=new Date()): string {
   const get=(type:string)=>parts.find(p=>p.type===type)?.value || '';
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
-function dayShift(day:string,delta:number):string {
-  return new Date(Date.parse(`${day}T12:00:00Z`)+delta*MS_DAY).toISOString().slice(0,10);
-}
-function validRain(v:unknown):v is number { return typeof v==='number' && Number.isFinite(v) && v>=0 && v<500; }
-function validTemp(v:unknown):v is number { return typeof v==='number' && Number.isFinite(v) && v>=-65 && v<=65; }
-
 /** Only accept dated past daily arrays, never forecast rows or fabricated zeros. */
 export function parseOpenMeteoEvidence(body:unknown,key:Key,location:string,checkedAt:string):PointEvidence|null {
-  if (!body || typeof body!=='object') return null;
-  const d=(body as any).daily;
-  if (!Array.isArray(d?.time) || !Array.isArray(d?.precipitation_sum) || !Array.isArray(d?.temperature_2m_max)) return null;
-  const today=todayKst(new Date(checkedAt));
-  const cutoff=dayShift(today,-11);
-  const rows=d.time.map((day:unknown,index:number)=>({
-    day, rain:d.precipitation_sum[index], high:d.temperature_2m_max[index],
-  })).filter((row:{day:unknown;rain:unknown;high:unknown})=>
-    validWeatherDay(row.day) &&
-    row.day<today && row.day>=cutoff && validRain(row.rain) && validTemp(row.high)
-  ).sort((a:{day:string},b:{day:string})=>a.day.localeCompare(b.day));
-  const unique=new Map<string,{day:string;rain:number;high:number}>();
-  for(const row of rows) unique.set(row.day,row);
-  const dates=Array.from(unique.values());
-  const mostRecent=dates.at(-1)?.day;
-  if(!mostRecent || mostRecent<dayShift(today,-4)) return null;
-  const recent=dates.filter(row=>row.day>=dayShift(mostRecent,-6));
-  if(recent.length<5) return null;
-  const total=recent.reduce((sum,row)=>sum+row.rain,0);
-  const hotDays=recent.filter(row=>row.high>=35).length;
-  if(total>2000 || hotDays>7) return null;
-  // Screening thresholds, not a scientifically validated crop damage estimate.
-  const status=total>=90 || hotDays>=3 ? 'monitor':'no-signal';
-  return {key,location,checkedAt,mostRecentDay:mostRecent,days:recent.length,
-    precipLast7Mm:Math.round(total*10)/10,hotDays,source:'Open-Meteo',status};
+  const point=POINTS.find(p=>p.key===key&&p.label===location);if(!point)return null;
+  const shared=parseSharedOpenMeteo(body,point,checkedAt);return shared?asWheatPoint(shared):null;
 }
+function asWheatPoint(shared:SharedWeatherEvidence):PointEvidence {return {key:shared.key as Key,location:shared.location,checkedAt:shared.checkedAt,mostRecentDay:shared.lastDay,days:Math.min(shared.rainfallDays,shared.temperatureDays),precipLast7Mm:shared.precip7mm??NaN,hotDays:shared.hotDays??0,source:'Open-Meteo',retrievalFailed:shared.retrievalFailed,status:(shared.precip7mm!==null&&shared.precip7mm>=90)||(shared.hotDays!==null&&shared.hotDays>=3)?'monitor':'no-signal',shared};}
 
-function loadCache():RiskCache|null {
-  try {
-    const value=JSON.parse(fs.readFileSync(CACHE_FILE,'utf8'));
-    return value?.version===3 && typeof value.checkedDay==='string' &&
-      value.evidence && typeof value.evidence==='object' ? value as RiskCache : null;
-  } catch{return null;}
-}
-function saveCache(data:RiskCache):void {
-  try {
-    fs.mkdirSync(CACHE_DIR,{recursive:true,mode:0o700});
-    const tmp=`${CACHE_FILE}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp,JSON.stringify(data,null,2),{mode:0o600});
-    fs.renameSync(tmp,CACHE_FILE);
-  }catch(err){ console.warn('[Wheat Risk] Could not save Open-Meteo evidence:',String(err)); }
-}
-function makeUrl(point:Point):string {
-  const commercialKey=(process.env.RMS_OPEN_METEO_API_KEY||'').trim();
-  const host=commercialKey?'https://customer-api.open-meteo.com':'https://api.open-meteo.com';
-  const url=new URL('/v1/forecast',host);
-  url.searchParams.set('latitude',String(point.lat));
-  url.searchParams.set('longitude',String(point.lon));
-  url.searchParams.set('daily','precipitation_sum,temperature_2m_max');
-  url.searchParams.set('past_days','8');
-  url.searchParams.set('forecast_days','1');
-  url.searchParams.set('timezone','auto');
-  if(commercialKey) url.searchParams.set('apikey',commercialKey);
-  return url.toString();
-}
-async function fetchPoint(point:Point,now:string):Promise<PointEvidence|null> {
-  try {
-    const response=await fetch(makeUrl(point),{
-      headers:{Accept:'application/json'},signal:AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-    if(!response.ok) return null;
-    return parseOpenMeteoEvidence(await response.json(),point.key,point.label,now);
-  }catch(err){
-    console.warn('[Wheat Risk] Open-Meteo unavailable for',point.key,point.label,String(err).slice(0,100));
-    return null;
-  }
-}
-function recentEnough(point:PointEvidence):boolean {
-  return point?.source==='Open-Meteo' &&
-    Date.now()-Date.parse(point.checkedAt)<3*MS_DAY &&
-    Date.now()-Date.parse(`${point.mostRecentDay}T00:00:00Z`)<7*MS_DAY;
-}
+function recentEnough(p:PointEvidence):boolean {const point=POINTS.find(c=>c.key===p.key&&c.label===p.location);return !!p.shared&&!!point&&currentSharedWeather(p.shared,point);}
 // Display every independently verified location, rather than a min–max range.
 // A zero day-count for extreme heat is deliberately omitted for readability.
 // Heat-day counts remain in the verified evidence and screening logic.
@@ -196,47 +120,17 @@ export function classifyWheatScreen(input: WheatScreenInput, today: string = tod
     /^\d+(?:\.\d+)?M MT$/.test(input.production) &&
     /\d+(?:\.\d+)?M MT$/.test(input.exports) &&
     /\d+(?:\.\d+)?M MT$/.test(input.endingStocks);
-  if (!supplyVerified || validPoints.length < 2) return '자료 부족';
+  if (!supplyVerified || validPoints.length < 2 || validPoints.some(p=>p.days!==7||p.retrievalFailed)) return '자료 부족';
   // This badge means only that the monitored supply/weather indicators show no alert.
   // We do NOT assert all ports, freight lanes and trade policies are safe.
   return '양호';
 }
 
 export class WheatOriginRiskService {
-  private running:Promise<RiskCache>|null=null;
-  private previous:RiskCache|null=null;
-
   private async getRiskData():Promise<RiskCache> {
-    const today=todayKst();
-    if(this.previous?.checkedDay===today) return this.previous;
-    const stored=loadCache();
-    if(stored?.checkedDay===today){this.previous=stored;return stored;}
-    const weekday=new Date(`${today}T03:00:00Z`).getUTCDay();
-    if(weekday===0 || weekday===6){
-      this.previous={version:3,checkedDay:today,evidence:stored?.evidence||{}};
-      return this.previous;
-    }
-    if(this.running) return this.running;
-    this.running=(async()=>{
-      const now=new Date().toISOString();
-      const hits=await Promise.all(POINTS.map(p=>fetchPoint(p,now)));
-      const evidence:RiskCache['evidence']={};
-      for (const hit of hits){
-        if(hit){(evidence[hit.key] ||= []).push(hit);}
-      }
-      // Preserve previously verified recent rows when the API temporarily fails.
-      for(const key of ['usa','australia','canada','eu','russia'] as Key[]){
-        if(!evidence[key]?.length && stored?.evidence[key]){
-          const prior=stored.evidence[key]!.filter(recentEnough);
-          if(prior.length) evidence[key]=prior.map(p=>({...p,retrievalFailed:true,lastAttemptAt:now}));
-        }
-      }
-      const result:RiskCache={version:3,checkedDay:today,evidence};
-      saveCache(result);
-      this.previous=result;
-      return result;
-    })();
-    try{return await this.running;} finally{this.running=null;}
+   const hits=await Promise.all(POINTS.map(p=>getOriginWeather(p,{minimumTemperature:true})));
+   const evidence:RiskCache['evidence']={};for(const hit of hits)if(hit)(evidence[hit.key as Key]||=[]).push(asWheatPoint(hit));
+   return {version:3,checkedDay:todayKst(),evidence};
   }
 
   async enrich(input:OriginRadarResponse):Promise<OriginRadarResponse> {
@@ -244,7 +138,7 @@ export class WheatOriginRiskService {
     const origins=input.origins.map(origin=>{
       const points=(risk.evidence[origin.originKey]||[]).filter(recentEnough);
       const short=points.length
-        ? formatWheatWeatherSummary(origin.originKey,points)
+        ? sharedWeatherSummary(points.flatMap(p=>p.shared?[p.shared]:[]))
         : '기상 자료 확인 중';
       return {...origin,
         // Interim value; the final screening is determined after official export and optional US freight evidence.
@@ -271,8 +165,8 @@ export class WheatOriginRiskService {
         exportYoYPct:origin.exportYoYPct,
       });
       return {...origin,
-        ...screenObservedWeather(points.map(p=>({location:p.location,lastDay:p.mostRecentDay,checkedAt:p.checkedAt,rainfallDays:p.days,temperatureDays:p.days,precipMm:p.precipLast7Mm,hotDays:p.hotDays,retrievalFailed:p.retrievalFailed})),
-          {locations:POINTS.filter(p=>p.key===origin.originKey).map(p=>p.label),heatDays:3,rainMm:90,observationAgeDays:7}),
+        ...sharedWeatherScreen(points.flatMap(p=>p.shared?[p.shared]:[]),POINTS.filter(p=>p.key===origin.originKey),{heatDays:3,rainMm:90}),
+        weatherDataKind:'archived-model',weatherEvidence:points.flatMap(p=>p.shared?[p.shared]:[]),
         status,
         statusColor:status==='양호'?'green' as const:status==='모니터링'?'yellow' as const:
           status==='주의'?'red' as const:'gray' as const,

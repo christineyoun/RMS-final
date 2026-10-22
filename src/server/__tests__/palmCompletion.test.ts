@@ -26,7 +26,7 @@ try{
  const outage=await refreshPalmNews(temp,async()=>new Response('',{status:403}));assert.equal(outage.articles.length,4,'verified originals survive outages');assert.equal(outage.failures.length,4);
  const evidence=await prepareAnalysisEvidence('palm-oil',process.cwd(),new Date(),{fetchSources:false});assert.ok(evidence.facts.some(f=>f.id==='palm-olein-2026-10-19'));assert.equal(evidence.facts.filter(f=>f.id.startsWith('article-')).length,4,'news and AI reuse the same retained original bodies');
  const today=new Date();const dates=Array.from({length:28},(_,i)=>new Date(today.getTime()-(28-i)*86400000).toISOString().slice(0,10));
- const weather=(rain:number[])=>parseMeteoWeather({daily:{time:dates,precipitation_sum:rain}});
+ const weather=(rain:number[])=>parseMeteoWeather({latitude:3.59,longitude:98.67,timezone:'UTC',utc_offset_seconds:0,daily_units:{time:'iso8601',precipitation_sum:'mm',temperature_2m_max:'°C'},daily:{time:dates,precipitation_sum:rain,temperature_2m_max:Array(28).fill(25)}},{key:'indonesia',label:'Sumatra',lat:3.59,lon:98.67},today,true);
  const wet=weather([...Array(21).fill(10),...Array(7).fill(30)])!;assert.equal(wet.baselineMm,70);assert.equal(wet.mm,210);assert.ok(wet.complete);
  const dry=weather([...Array(21).fill(10),...Array(7).fill(1)])!;assert.ok(dry.mm<=dry.baselineMm!*.25);
  const nulls=weather(Array(28).fill(null) as any);assert.equal(nulls,null,'missing precipitation is never zero rain');

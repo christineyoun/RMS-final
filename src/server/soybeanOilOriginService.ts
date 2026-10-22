@@ -1,3 +1,4 @@
+import {getOriginWeather,openMeteoWeatherUrl,parseSharedOpenMeteo,weatherWindowEnd,sharedWeatherScreen} from './originWeatherService.ts';
 /** Oil-specific national PSD with upstream soybean-growing-point weather.
  * No prices, global balance, paid models, schedules or crop-damage inference. */
 import fs from 'node:fs/promises';
@@ -5,7 +6,7 @@ import path from 'node:path';
 import type {OriginRadarResponse,OriginItemDetail} from './originRadarService.ts';
 import {soybeanOilMarketingYear} from '../lib/soybeanOilSupply.ts';
 import {SOYBEAN_HEAT_SCREEN} from './soybeanOriginConditionsService.ts';
-import {screenObservedWeather,insufficientWeather,validWeatherDay} from '../utils/originWeatherPills.ts';
+import {insufficientWeather,validWeatherDay} from '../utils/originWeatherPills.ts';
 export const OIL_ORIGIN_POINTS=[
  {key:'argentina',region:'아르헨티나 (Rosario)',country:'AR',lat:-32.95,lon:-60.66},
  {key:'brazil',region:'브라질 (Mato Grosso)',country:'BR',lat:-12.55,lon:-55.72},
@@ -25,38 +26,37 @@ export function parseOilOriginPsd(rows:unknown,p:Point,now=new Date()):OilCountr
  const production=get(28),exports=get(88),stocks=get(176);if(production===null||exports===null||stocks===null||production<=0)return null;
  return {country:p.country,commodityCode:'4232000',year,period,verifiedAt:now.toISOString(),sourceUrl:`https://api.fas.usda.gov/api/psd/commodity/4232000/country/${p.country}/year/${year}`,production,exports,stocks,rawRecords:rows};
 }
-export type OilWeatherEvidence={source:'Open-Meteo';location:string;coordinates:number[];sourceUrl:string;checkedAt:string;timeZone:string;lastDay:string;daily:{day:string;rainMm:number|null;maxC:number|null}[];rawResponse:any;retrievalFailed?:boolean};
-export function oilWeatherUrl(p:Point){return `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto`;}
-export function parseOilOriginWeather(body:any,p:Point,now=new Date()):OilWeatherEvidence|null{
- const d=body?.daily;if(!Array.isArray(d?.time)||new Set(d.time).size!==d.time.length||!Array.isArray(d.precipitation_sum)||!Array.isArray(d.temperature_2m_max)||d.precipitation_sum.length!==d.time.length||d.temperature_2m_max.length!==d.time.length||body.daily_units?.precipitation_sum!=='mm'||body.daily_units?.temperature_2m_max!=='°C'||!number(body.latitude,-90,90)||!number(body.longitude,-180,180)||Math.abs(body.latitude-p.lat)>.25||Math.abs(body.longitude-p.lon)>.25||typeof body.timezone!=='string'||!Number.isFinite(body.utc_offset_seconds)||Math.abs(body.utc_offset_seconds)>14*3600)return null;
- let today:string;try{today=new Intl.DateTimeFormat('en-CA',{timeZone:body.timezone,year:'numeric',month:'2-digit',day:'2-digit'}).format(now);}catch{return null;}
- const zoneOffset=new Intl.DateTimeFormat('en-US',{timeZone:body.timezone,timeZoneName:'longOffset'}).formatToParts(now).find(p=>p.type==='timeZoneName')!.value;
- const match=zoneOffset.match(/^GMT([+-])(\d{2}):(\d{2})$/),offset=zoneOffset==='GMT'?0:match?(match[1]==='-'?-1:1)*(+match[2]*3600+ +match[3]*60):NaN;
- const localFromOffset=new Date(now.getTime()+body.utc_offset_seconds*1000).toISOString().slice(0,10);if(today!==localFromOffset||offset!==body.utc_offset_seconds)return null;
- const lastDay=new Date(Date.parse(today)-DAY).toISOString().slice(0,10);
- if(d.time.some((v:any)=>!validWeatherDay(v))||!d.time.includes(lastDay))return null;
- const daily=Array.from({length:7},(_,i)=>{const day=new Date(Date.parse(lastDay)+(i-6)*DAY).toISOString().slice(0,10),index=d.time.indexOf(day),rain=d.precipitation_sum[index],heat=d.temperature_2m_max[index];return {day,rainMm:number(rain,0,500)?rain:null,maxC:number(heat,-65,65)?heat:null};});
- return {source:'Open-Meteo',location:p.region,coordinates:[p.lat,p.lon],sourceUrl:oilWeatherUrl(p),checkedAt:now.toISOString(),timeZone:body.timezone,lastDay,daily,rawResponse:body};
+export type OilWeatherEvidence={source:'Open-Meteo';location:string;coordinates:number[];sourceUrl:string;checkedAt:string;timeZone:string;lastDay:string;daily:{day:string;rainMm:number|null;maxC:number|null;minC?:number|null}[];rawResponse:any;retrievalFailed?:boolean};
+/** Original saved-source URLs stay valid for historical provenance; never used for new primary requests. */
+export function legacyOilWeatherUrl(p:Point){return `https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto`;}
+export function oilWeatherUrl(p:Point){return openMeteoWeatherUrl({...p,label:p.region},7,true);}
+export function oilWeatherSourceUrl(p:Point){const u=new URL(oilWeatherUrl(p));u.searchParams.delete('apikey');return u.toString();}
+export function parseOilOriginWeather(body:any,p:Point,now=new Date(),minimumTemperature=true):OilWeatherEvidence|null {
+ const e=parseSharedOpenMeteo(body,{...p,label:p.region},now.toISOString(),7,minimumTemperature);
+ return e?{source:e.source,location:e.location,coordinates:e.coordinates,sourceUrl:e.sourceUrl,checkedAt:e.checkedAt,timeZone:e.timeZone,lastDay:e.lastDay,daily:e.daily.map(d=>({day:d.date,rainMm:d.precipMm,maxC:d.tMaxC,...(minimumTemperature?{minC:d.tMinC??null}:{})})),rawResponse:body}:null;
 }
+
+function previousSharedOilWeatherUrl(p:Point){const u=new URL(oilWeatherSourceUrl(p));u.searchParams.set('daily','precipitation_sum,temperature_2m_max');return u.toString();}
 function validatedWeather(w:OilWeatherEvidence|undefined,p:Point,now:Date){
- if(!w||w.source!=='Open-Meteo'||w.location!==p.region||w.sourceUrl!==oilWeatherUrl(p)||w.coordinates?.[0]!==p.lat||w.coordinates?.[1]!==p.lon||!Number.isFinite(Date.parse(w.checkedAt))||Date.parse(w.checkedAt)>now.getTime()||now.getTime()-Date.parse(w.checkedAt)>=3*DAY)return null;
- const parsed=parseOilOriginWeather(w.rawResponse,p,new Date(w.checkedAt));if(!parsed||JSON.stringify(parsed.daily)!==JSON.stringify(w.daily)||parsed.lastDay!==w.lastDay||parsed.timeZone!==w.timeZone||now.getTime()-Date.parse(w.lastDay)>=4*DAY)return null;return w;
+ if(!w||w.source!=='Open-Meteo'||w.location!==p.region||(w.sourceUrl!==legacyOilWeatherUrl(p)&&w.sourceUrl!==oilWeatherSourceUrl(p)&&w.sourceUrl!==previousSharedOilWeatherUrl(p))||w.coordinates?.[0]!==p.lat||w.coordinates?.[1]!==p.lon||!Number.isFinite(Date.parse(w.checkedAt))||Date.parse(w.checkedAt)>now.getTime()||now.getTime()-Date.parse(w.checkedAt)>=3*DAY)return null;
+ const parsed=parseOilOriginWeather(w.rawResponse,p,new Date(w.checkedAt),w.daily.every(d=>d.minC!==undefined));if(!parsed||JSON.stringify(parsed.daily)!==JSON.stringify(w.daily)||parsed.lastDay!==w.lastDay||parsed.timeZone!==w.timeZone||w.lastDay!==weatherWindowEnd(now,w.timeZone))return null;return w;
 }
 function validatedSupply(s:OilCountryEvidence|undefined,p:Point,now:Date){if(!s||!Number.isFinite(Date.parse(s.verifiedAt))||Date.parse(s.verifiedAt)>now.getTime()||now.getTime()-Date.parse(s.verifiedAt)>45*DAY)return null;const parsed=parseOilOriginPsd(s.rawRecords,p,now);return parsed&&(['country','commodityCode','year','period','production','exports','stocks','sourceUrl'] as const).every(k=>parsed[k]===s[k])?s:null;}
 export function buildOilOrigin(p:Point,s:OilCountryEvidence|undefined,w:OilWeatherEvidence|undefined,now=new Date(),prior?:OilCountryEvidence):OriginItemDetail{
  const supply=validatedSupply(s,p,now),weather=validatedWeather(w,p,now),rainDays=weather?.daily.filter(d=>d.rainMm!==null).length||0,tempDays=weather?.daily.filter(d=>d.maxC!==null).length||0;
  const hotDays=tempDays?weather!.daily.filter(d=>d.maxC!==null&&d.maxC>=SOYBEAN_HEAT_SCREEN.temperatureC).length:null;
  const sum=rainDays===7?weather!.daily.reduce((n,d)=>n+d.rainMm!,0):null;
- const screen=weather?screenObservedWeather([{location:p.region,lastDay:weather.lastDay,checkedAt:weather.checkedAt,rainfallDays:rainDays,temperatureDays:tempDays,precipMm:sum,hotDays,retrievalFailed:weather.retrievalFailed}],{locations:[p.region],heatDays:SOYBEAN_HEAT_SCREEN.minObservedDays,observationAgeDays:4},now.getTime()):insufficientWeather('최근 7일 대표 지점 모델 기상 근거 부족');
+ const shared=weather?parseSharedOpenMeteo(weather.rawResponse,{...p,label:p.region},weather.checkedAt,7,weather.daily.every(d=>d.minC!==undefined)):null;
+ const screen=shared?sharedWeatherScreen([{...shared,retrievalFailed:weather?.retrievalFailed}],[{...p,label:p.region}],{heatDays:SOYBEAN_HEAT_SCREEN.minObservedDays},now):insufficientWeather('최근 7일 대표 지점 모델 기상 근거 부족');
  screen.weatherPills=screen.weatherPills.map(pill=>({...pill,basis:pill.basis+' · 원료 대두 대표 지점 모델 기상 · 반복 고온만 선별, 강수 적정성 미평가'}));
  const goodPrior=supply&&prior&&validatedSupply(prior,p,now)&&prior.year===supply.year&&Date.parse(supply.period+'-01')>Date.parse(prior.period+'-01')&&(+supply.period.slice(0,4)-+prior.period.slice(0,4))*12+(+supply.period.slice(5)-+prior.period.slice(5))===1?prior:null;
  const fmt=(n:number)=>n.toFixed(3)+'M MT';
  return {originKey:p.key,region:p.region,production:supply?fmt(supply.production):'',productionNumericMMT:supply?.production??null,unit:'MMT',marketYear:supply?`${supply.year}/${String(+supply.year+1).slice(-2)}`:'',exports:supply?'수출 '+fmt(supply.exports):'',endingStocks:supply?'기말재고 '+fmt(supply.stocks):'',exportComparison:goodPrior?`전월 ${fmt(goodPrior.exports)} · ${(supply!.exports-goodPrior.exports)>=0?'+':''}${(supply!.exports-goodPrior.exports).toFixed(3)}M MT`:undefined,exportComparisonBasis:goodPrior?`${goodPrior.period} → ${supply!.period}`:undefined,
  ...screen,status:'자료 부족',statusColor:'gray',statusBasis:'기상 표시는 원료 대두 재배지 대표 지점의 모델 자료입니다. 35°C 이상 3일은 기존 대두 RMS 선별 기준이며 생육단계·토양수분·작황 피해·대두유 생산 변화를 판정하지 않습니다.',riskAssessment:'USDA 국가 대두유 연간 수급 전망과 원료 대두 재배지 기상은 별도 근거입니다.',
- riskWeather:weather?`원료 대두 재배지 모델 기상 · 최근 7일: ${sum!==null?sum.toFixed(1)+'mm':`강수 ${rainDays}/7일 확인`} · ${hotDays!==null?`35°C 이상 ${hotDays}일`:'기온 미확인'}${tempDays<7?` · 기온 ${tempDays}/7일 확인`:''}${weather.retrievalFailed?' · 저장 기상(재확인 실패)':''}`:'원료 대두 재배지 기상 자료 부족',
- weatherSource:'Open-Meteo',weatherAsOf:weather?.lastDay,primarySource:'USDA FAS PSD',sourceName:'USDA FAS PSD',sourceOrg:'USDA FAS PSD',sourceReportDate:supply?.period||'',sourceUrl:supply?.sourceUrl||PSD_URL,retrievedAt:supply?.verifiedAt||'',isLive:!!supply&&!supply.retrievalFailed,dataFreshness:supply?(supply.retrievalFailed?'cached':'live'):'unavailable',sourcingInsight:supply?.retrievalFailed?'저장 국가 수급 · 재확인 실패':undefined};
+ riskWeather:weather?`원료 대두 재배지 모델 기상 · 현지 ${shared?.windowStart}~${weather.lastDay}: ${sum!==null?sum.toFixed(1)+'mm':`강수 ${rainDays}/7일 확인`} · ${hotDays!==null?`35°C 이상 ${hotDays}일`:'기온 미확인'}${tempDays<7?` · 기온 ${tempDays}/7일 확인`:''}${weather.retrievalFailed?' · 저장 기상(재확인 실패)':''}`:'원료 대두 재배지 기상 자료 부족',
+ weatherEvidence:shared?{...shared,retrievalFailed:weather?.retrievalFailed}:undefined,weatherDataKind:'archived-model',weatherSource:'Open-Meteo',weatherAsOf:weather?.lastDay,primarySource:'USDA FAS PSD',sourceName:'USDA FAS PSD',sourceOrg:'USDA FAS PSD',sourceReportDate:supply?.period||'',sourceUrl:supply?.sourceUrl||PSD_URL,retrievedAt:supply?.verifiedAt||'',isLive:!!supply&&!supply.retrievalFailed,dataFreshness:supply?(supply.retrievalFailed?'cached':'live'):'unavailable',sourcingInsight:supply?.retrievalFailed?'저장 국가 수급 · 재확인 실패':undefined};
 }
-type State={version:1;supply:Record<string,OilCountryEvidence[]>;weather:Record<string,OilWeatherEvidence>;checkedAt:string;lastAttemptAt:string};
+type State={version:1;supply:Record<string,OilCountryEvidence[]>;weather:Record<string,OilWeatherEvidence>;checkedAt:string;lastAttemptAt:string;minimumTemperatureUpgradeAttempted?:boolean};
 export class SoybeanOilOriginService {
  private pending:Promise<OriginRadarResponse>|null=null;
  constructor(private options:{file?:string;fetcher?:typeof fetch;now?:()=>Date;key?:()=>string}={}){}
@@ -65,16 +65,17 @@ export class SoybeanOilOriginService {
  private async load(force:boolean):Promise<OriginRadarResponse>{
  const now=this.options.now?.()||new Date(),fetcher=this.options.fetcher||fetch;let state:State={version:1,supply:{},weather:{},checkedAt:'',lastAttemptAt:''};
  try{const saved=JSON.parse(await fs.readFile(this.file(),'utf8'));if(saved.version!==1||!saved.supply||!saved.weather)throw Error('Invalid oil origin cache');state=saved;}catch(e){if((e as any).code!=='ENOENT')throw e;}
- const age=now.getTime()-Date.parse(state.lastAttemptAt),retryFailed=Object.values(state.weather).some(w=>w.retrievalFailed)||Object.values(state.supply).some(rows=>rows[0]?.retrievalFailed);
- if(force||!Number.isFinite(age)||age<0||age>(retryFailed?20*60000:3*3600000)){
+ const needsMinimumUpgrade=Object.values(state.weather).some(w=>w.daily.some(d=>d.minC===undefined));
+ const age=now.getTime()-Date.parse(state.lastAttemptAt),retryFailed=Object.values(state.weather).some(w=>w.retrievalFailed||w.daily.some(d=>d.minC==null))||Object.values(state.supply).some(rows=>rows[0]?.retrievalFailed);
+ if(force||needsMinimumUpgrade&&!state.minimumTemperatureUpgradeAttempted||!Number.isFinite(age)||age<0||age>(retryFailed?20*60000:3*3600000)){
  const key=this.options.key?.()??(process.env.USDA_FAS_API_KEY||process.env.USDA_API_KEY||'').trim();
  await Promise.all(OIL_ORIGIN_POINTS.map(async p=>{
  const previous=state.supply[p.country]||[];
  try{if(!key)throw Error('USDA key unavailable');const r=await fetcher(`https://api.fas.usda.gov/api/psd/commodity/4232000/country/${p.country}/year/${soybeanOilMarketingYear(now)}`,{headers:{Accept:'application/json',API_KEY:key,'x-api-key':key},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('USDA HTTP '+r.status);const parsed=parseOilOriginPsd(await r.json(),p,now);if(!parsed)throw Error('Invalid oil country identity/period/units');state.supply[p.country]=[parsed,...previous.filter(v=>v.period!==parsed.period&&validatedSupply(v,p,now))].slice(0,4);}
  catch{state.supply[p.country]=previous.map(v=>({...v,retrievalFailed:true}));}
- try{const r=await fetcher(oilWeatherUrl(p),{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('Open-Meteo HTTP '+r.status);const parsed=parseOilOriginWeather(await r.json(),p,now);if(!parsed){delete state.weather[p.key];}else state.weather[p.key]=parsed;}
+ try{const evidence=await getOriginWeather({...p,label:p.region},{minimumTemperature:true,force,now,fetcher,cacheDir:this.options.file?path.join(path.dirname(this.options.file),'shared-weather'):undefined});const parsed=evidence?parseOilOriginWeather(evidence.rawResponse,p,new Date(evidence.checkedAt)):null;if(!parsed){delete state.weather[p.key];}else state.weather[p.key]={...parsed,...(evidence?.retrievalFailed?{retrievalFailed:true}:{})};}
  catch{if(state.weather[p.key])state.weather[p.key]={...state.weather[p.key],retrievalFailed:true};}
- }));state.checkedAt=now.toISOString();state.lastAttemptAt=state.checkedAt;
+ }));state.minimumTemperatureUpgradeAttempted=true;state.checkedAt=now.toISOString();state.lastAttemptAt=state.checkedAt;
  await fs.mkdir(path.dirname(this.file()),{recursive:true});const temp=this.file()+'.'+process.pid+'.tmp';await fs.writeFile(temp,JSON.stringify(state,null,2));await fs.rename(temp,this.file());
  }
  const origins=OIL_ORIGIN_POINTS.map(p=>{const rows=state.supply[p.country]||[];return buildOilOrigin(p,rows[0],state.weather[p.key],now,rows[1]);});

@@ -1,7 +1,9 @@
+import {withHistoricalWeatherContext} from './originHistoricalWeather.ts';
+import {getOriginWeather,currentSharedWeather,parseSharedOpenMeteo,sharedWeatherSummary,withSharedFreezingRisk,TROPICAL_FREEZING_CROPS,type WeatherPoint,type SharedWeatherEvidence} from './originWeatherService.ts';
 import {soybeanOilOriginService} from './soybeanOilOriginService.ts';
 import {fetchOfficialPotatoEurostat} from './officialPotatoEurostatService.ts';
 import fs from 'node:fs';
-import {screenPalmRain,insufficientWeather,validWeatherDay} from '../utils/originWeatherPills.ts';
+import {screenPalmRain,insufficientWeather,deferredWeatherAssessment} from '../utils/originWeatherPills.ts';
 import path from 'node:path';
 /** Free-first, evidence-only sourcing radar for RMS's five remaining commodities.
  * No Gemini calls; no historical sample numbers masquerading as live supply. */
@@ -15,6 +17,7 @@ export const ORIGIN_MVP:Record<string,Spec> = {
   'potato-starch':{points:[['netherlands','네덜란드 (Groningen)','NL',53.22,6.57],['germany','독일 (Lower Saxony)','GM',52.37,9.73],['denmark','덴마크 (Jutland)','DA',56.27,9.50],['poland','폴란드 (Wielkopolska)','PL',52.41,16.93]].map(p=>({key:String(p[0]),region:String(p[1]),country:String(p[2]),lat:Number(p[3]),lon:Number(p[4])}))},
   'tapioca-starch':{points:[['thailand','태국 (Nakhon Ratchasima)','TH',14.98,102.10],['vietnam','베트남 (Tây Ninh)','VM',11.31,106.10],['cambodia','캄보디아 (Battambang)','CB',13.10,103.20],['laos','라오스 (Savannakhet)','LA',16.56,104.75]].map(p=>({key:String(p[0]),region:String(p[1]),country:String(p[2]),lat:Number(p[3]),lon:Number(p[4])}))}
 };
+function currentWeatherCache(id:string,value:OriginRadarResponse){return value.origins.length===ORIGIN_MVP[id].points.length&&value.origins.every(o=>{const p=ORIGIN_MVP[id].points.find(p=>p.key===o.originKey),e=o.weatherEvidence?.shared||o.weatherEvidence;return !!p&&e?.rainfallDays===7&&e?.temperatureDays===7&&e?.minimumTemperatureDays===7&&!e.retrievalFailed&&currentSharedWeather(e,{...p,label:p.region});});}
 const memory=new Map<string,{at:number,value:OriginRadarResponse}>();
 const format=(n:number)=>`${n.toFixed(2)}M MT`;
 export function parseVerifiedPsd(rows:unknown,code:string,country:string,year:string) {
@@ -40,45 +43,69 @@ async function supply(p:Point,code:string|undefined,year:string){
     return r.ok?parseVerifiedPsd(await r.json(),code,p.country,year):null;
   }catch{return null;}
 }
-export function parseMeteoWeather(body:unknown){
-  const d=(body as any)?.daily;
-  if(!Array.isArray(d?.time)||!Array.isArray(d?.precipitation_sum)||new Set(d.time).size!==d.time.length)return null;
-  const today=new Date().toISOString().slice(0,10);
-  const available=d.time.map((v:string,i:number)=>({day:String(v),mm:typeof d.precipitation_sum[i]==='number'?d.precipitation_sum[i]:NaN}))
-    .filter((v:any)=>validWeatherDay(v.day)&&v.day<today&&Date.parse(v.day)>Date.now()-40*86400000&&Number.isFinite(v.mm)&&v.mm>=0&&v.mm<=500).sort((a:any,b:any)=>a.day.localeCompare(b.day));
-  const rows=available.slice(-7);const baseline=available.slice(-28,-7);const baselineMm=baseline.length===21&&Date.parse(rows[0]?.day)-Date.parse(baseline[0]?.day)===21*86400000?baseline.reduce((n:number,r:any)=>n+r.mm,0)/3:null;
-  if(rows.length<5||Date.parse(rows.at(-1)!.day)<Date.now()-4*86400000)return null;
-  return {mm:rows.reduce((n:number,r:any)=>n+r.mm,0),days:rows.length,day:rows.at(-1)!.day,baselineMm,baselineDays:baseline.length,complete:rows.length===7&&Date.parse(rows.at(-1)!.day)-Date.parse(rows[0].day)===6*86400000,recent:rows,baseline};
+function summarizeMeteoWeather(e:SharedWeatherEvidence|null){
+ if(!e||e.rainfallDays!==7||e.retrievalFailed)return null;
+ const recent=e.daily.map(d=>({day:d.date,mm:d.precipMm!})),base=e.history.slice(0,-7);
+ const baseline=base.map(d=>({day:d.date,mm:d.precipMm!})),baselineComplete=base.length===21&&base.every(d=>d.precipMm!==null);
+ return {mm:e.precip7mm!,days:7,day:e.lastDay,baselineMm:baselineComplete?base.reduce((n,d)=>n+d.precipMm!,0)/3:null,baselineDays:baselineComplete?21:0,complete:true,recent,baseline,evidence:e};
 }
-async function weather(p:Point,extended=false){
-  try{const u=`https://api.open-meteo.com/v1/forecast?latitude=${p.lat}&longitude=${p.lon}&daily=precipitation_sum&past_days=${extended?35:8}&forecast_days=1&timezone=auto`;
-    const r=await fetch(u,{signal:AbortSignal.timeout(9000)});return r.ok?parseMeteoWeather(await r.json()):null;
-  }catch{return null;}
+/** Compatibility entry point delegates to the same source/date/unit validator. */
+export function parseMeteoWeather(body:unknown,point?:WeatherPoint,now=new Date(),extended=false){
+ return point?summarizeMeteoWeather(parseSharedOpenMeteo(body,point,now.toISOString(),extended?28:7)):null;
 }
+async function weather(p:Point,extended=false,force=false,minimumTemperature=false){return getOriginWeather({...p,label:p.region},{historyDays:extended?28:7,force,minimumTemperature});}
+const weatherEvidence=(id:string,e:SharedWeatherEvidence)=>id==='palm-oil'?{shared:e,recent:e.daily.map(d=>({day:d.date,mm:d.precipMm})),baseline:e.history.slice(0,-7).map(d=>({day:d.date,mm:d.precipMm})),model:true,coordinates:e.coordinates,retrievedAt:e.checkedAt}:e;
+
 export function withOriginWeatherPills(id:string,value:OriginRadarResponse):OriginRadarResponse {
-  return {...value,origins:value.origins.map(origin=>({...origin,...(id==='palm-oil'?screenPalmRain((origin as any).weatherEvidence):insufficientWeather('지역 강수 관측은 있으나 이 원자재의 검증된 기상 선별 규칙은 아직 없습니다.'))}))};
+  return {...value,origins:value.origins.map(origin=>{
+    const evidence=origin.weatherEvidence?.shared||origin.weatherEvidence;
+    const point=ORIGIN_MVP[id]?.points.find(p=>p.key===origin.originKey);
+    const verifiedCurrent=!!point&&!!evidence&&currentSharedWeather(evidence,{...point,label:point.region});
+    const recheckFailed=!!origin.weatherEvidence?.retrievalFailed||!!evidence?.retrievalFailed;
+    const current=verifiedCurrent&&!recheckFailed;
+    let screen;
+    if(id==='palm-oil'&&verifiedCurrent&&recheckFailed){
+      // Recompute only from the source-validated retained history, never saved
+      // pill labels or an unverified wrapper. No failed recheck can certify clear.
+      const retained=screenPalmRain({shared:evidence,model:true,retrievedAt:evidence.checkedAt,
+        recent:evidence.daily.map((d:any)=>({day:d.date,mm:d.precipMm})),
+        baseline:evidence.history.slice(0,-7).map((d:any)=>({day:d.date,mm:d.precipMm}))});
+      screen={...retained,weatherPills:[...retained.weatherPills.filter(p=>p.label==='강수 증가'||p.label==='강수 감소').map(p=>({...p,basis:p.basis+' · 저장 기상(재확인 실패) · 새로 확인된 기상 아님'})),
+        ...insufficientWeather(`저장 기상 재확인 실패 · 마지막 검증 ${evidence.checkedAt} · 현재 기상 재확인 필요`).weatherPills]};
+    }
+    else if(!current)screen=insufficientWeather('최근 현지 7일 모델 기상의 출처·기간 또는 재확인 상태 확인 필요');
+    else if(id==='palm-oil')screen=screenPalmRain(origin.weatherEvidence);
+    else if(evidence.rainfallDays!==7||evidence.temperatureDays!==7)
+      screen=insufficientWeather(`기상 확인 필요: 강수 ${evidence.rainfallDays}/7일 · 일최고기온 ${evidence.temperatureDays}/7일`);
+    else {
+      const reason:Record<string,string>={sugar:'생육단계·관개를 반영한 사탕수수 선별 기준 미확정','potato-starch':'토양온도·생육단계를 반영한 원료감자 선별 기준 미확정','tapioca-starch':'정식·생육단계를 반영한 카사바 선별 기준 미확정'};
+      screen=deferredWeatherAssessment('기상 7일 확인(강수 7/7일 · 일최고기온 7/7일) · '+(reason[id]||'품목별 기상 선별 기준 미확정'));
+    }
+    if(point)screen=withSharedFreezingRisk(id,screen,evidence,{...point,label:point.region});
+    return {...origin,...screen};
+  })};
 }
-export async function loadAll8OriginRadar(id:string,force=false):Promise<OriginRadarResponse>{
+async function loadOriginRadarData(id:string,force=false):Promise<OriginRadarResponse>{
   if(id==='soybean-oil')return soybeanOilOriginService.get(force);
   const spec=ORIGIN_MVP[id];if(!spec)throw Error('Unsupported commodity');
-  const cached=memory.get(id);if(!force&&cached&&Date.now()-cached.at<3*3600000)return withOriginWeatherPills(id,cached.value);
+  const cached=memory.get(id);if(!force&&cached&&Date.now()-cached.at<3*3600000&&currentWeatherCache(id,cached.value))return withOriginWeatherPills(id,cached.value);
   const year=String(new Date().getUTCFullYear());
-  const savedFile=path.join(process.env.RMS_ALL8_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'all8-'+id+'.json');
-  let saved:any=null;try{saved=JSON.parse(fs.readFileSync(savedFile,'utf8'));}catch{}
-  if(!force&&saved?.lastUpdated&&Date.now()-Date.parse(saved.lastUpdated)<3*3600000&&Array.isArray(saved.origins))return withOriginWeatherPills(id,saved);
+  const savedFile=path.join(process.env.RMS_ALL8_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'all8-shared-weather-v1-'+id+'.json');
+  let saved:any=null;try{saved=JSON.parse(fs.readFileSync(savedFile,'utf8'));}catch{try{saved=JSON.parse(fs.readFileSync(path.join(path.dirname(savedFile),'all8-'+id+'.json'),'utf8'));}catch{}}
+  if(!force&&fs.existsSync(savedFile)&&saved?.lastUpdated&&Date.now()-Date.parse(saved.lastUpdated)<3*3600000&&Array.isArray(saved.origins)&&currentWeatherCache(id,saved))return withOriginWeatherPills(id,saved);
   const potato=id==='potato-starch'?await fetchOfficialPotatoEurostat(false):null;
   const origins:OriginItemDetail[]=await Promise.all(spec.points.map(async p=>{
-    const [psd,w]=await Promise.all([supply(p,spec.code,year),weather(p,id==='palm-oil') ]);
+    const [psd,e]=await Promise.all([supply(p,spec.code,year),weather(p,id==='palm-oil',force,true) ]);
+    const w=summarizeMeteoWeather(e);
     let s:any=psd;
     const geo=({germany:'DE',netherlands:'NL',denmark:'DK',poland:'PL'} as Record<string,string>)[p.key];
     const country=potato?.success?potato.data?.countries.find(c=>c.country===geo):null;
     if(country)s={production:country.production1000MT/1000,exports:null,endingStocks:null,reportMonth:potato!.data!.harvestYear};
     const previous=saved?.origins?.find((o:any)=>o.originKey===p.key);
-    const priorWeather=previous?.weatherAsOf&&Date.parse(previous.weatherAsOf)>Date.now()-10*86400000?previous:null;
     if(!s&&previous){
-      return {...previous,...(id==='palm-oil'?screenPalmRain(w?{recent:w.recent,baseline:w.baseline,model:true,retrievedAt:new Date().toISOString()}:null):insufficientWeather()),weatherEvidence:id==='palm-oil'&&w?{recent:w.recent,baseline:w.baseline,model:true,coordinates:[p.lat,p.lon],retrievedAt:new Date().toISOString()}:previous.weatherEvidence?{...previous.weatherEvidence,retrievalFailed:true}:undefined,status:'자료 부족',statusColor:'gray',isLive:false,dataFreshness:'cached',
-        riskWeather:w?`기상(최근 ${w.days}일 모델 강수): ${w.mm.toFixed(1)}mm`:priorWeather?.riskWeather||'',
-        weatherSource:w?'Open-Meteo':priorWeather?.weatherSource||'',weatherAsOf:w?.day||priorWeather?.weatherAsOf||''} as OriginItemDetail;
+      return {...previous,...(id==='palm-oil'?screenPalmRain(e?weatherEvidence(id,e):null):insufficientWeather()),weatherEvidence:e?weatherEvidence(id,e):(previous.weatherEvidence?{...previous.weatherEvidence,retrievalFailed:true}:undefined),status:'자료 부족',statusColor:'gray',isLive:false,dataFreshness:'cached',
+        riskWeather:w?`모델 기상(현지 ${w.evidence.windowStart}~${w.day}): ${w.mm.toFixed(1)}mm`:e?sharedWeatherSummary([e]):'모델 기상 자료 부족 (Open-Meteo)',
+        weatherDataKind:'archived-model',weatherSource:'Open-Meteo',weatherAsOf:e?.lastDay||''} as OriginItemDetail;
     }
     const palmScreen=id==='palm-oil'&&w&&w.complete&&w.baselineDays===21&&w.baselineMm!=null;
     const anomalous=palmScreen&&(w.baselineMm>0?(w.mm>=2*w.baselineMm||w.mm<=0.25*w.baselineMm):w.mm>0);
@@ -90,8 +117,8 @@ export async function loadAll8OriginRadar(id:string,force=false):Promise<OriginR
       marketYear:s?`${year}/${String(+year+1).slice(-2)}`:'',unit:'MMT',
       status:id==='palm-oil'?palmStatus:s&&w?'모니터링':'자료 부족',statusColor:id==='palm-oil'?(palmStatus==='양호'?'green':palmStatus==='모니터링'?'yellow':'gray'):s&&w?'yellow':'gray',statusBasis:id==='palm-oil'?(palmScreen?`지역 모델 강수의 직전 3주 주평균 대비 단기 편차 스크리닝: 최근 ${w.mm.toFixed(1)}mm / 기준 ${w.baselineMm!.toFixed(1)}mm. 2배 이상 또는 1/4 이하이면 감시합니다. 팜 생육 임계치·작황 피해·납품 안전 판정이 아닙니다.`:'최근 7일 및 비교 21일 강수 근거가 부족합니다. 확인된 국가 수급은 유지합니다.'):s&&w?'국가 수급과 최근 지역 강수 확인; 생육 피해나 납품 위험은 별도 확인 필요':'위험 분류에 필요한 수급·기상 근거가 부족합니다.',
       riskAssessment:s?'공식 USDA 생산·수출·재고 확인, 위험 분류는 별도 검증 필요':'산지별 공식 생산·수출·재고 미확인',
-      riskWeather:w?`기상(최근 ${w.days}일 모델 강수): ${w.mm.toFixed(1)}mm`+(id==='palm-oil'&&w.baselineMm!=null?` · 직전 3주 주평균 ${w.baselineMm.toFixed(1)}mm`:''):priorWeather?.riskWeather||'',
-      weatherSource:w?'Open-Meteo':priorWeather?.weatherSource||'',weatherAsOf:w?.day||priorWeather?.weatherAsOf||'',weatherEvidence:id==='palm-oil'&&w?{recent:w.recent,baseline:w.baseline,model:true,coordinates:[p.lat,p.lon],retrievedAt:new Date().toISOString()}:previous?.weatherEvidence?{...previous.weatherEvidence,retrievalFailed:true}:undefined,
+      riskWeather:w?`모델 기상(현지 ${w.evidence.windowStart}~${w.day}, ${w.evidence.timeZone}): ${w.mm.toFixed(1)}mm`+(id==='palm-oil'&&w.baselineMm!=null?` · 직전 3주 주평균 ${w.baselineMm.toFixed(1)}mm`:''):e?sharedWeatherSummary([e]):'모델 기상 자료 부족 (Open-Meteo)',
+      weatherDataKind:'archived-model',weatherSource:'Open-Meteo',weatherAsOf:e?.lastDay||'',weatherEvidence:e?weatherEvidence(id,e): (previous?.weatherEvidence?{...previous.weatherEvidence,retrievalFailed:true}:undefined),
       primarySource:s?(country?'Eurostat (원료감자)':'USDA FAS PSD'):w?'Open-Meteo':'',sourceName:s?(country?'Eurostat (원료감자)':'USDA FAS PSD'):w?'Open-Meteo':'',sourceOrg:s?(country?'Eurostat (원료감자)':'USDA FAS'):w?'Open-Meteo':'',
       sourceReportDate:s?.reportMonth||'',sourceUrl:s?(country?potato!.sourceUrl:'https://apps.fas.usda.gov/psdonline/app/index.html'):w?'https://open-meteo.com/':'',
       retrievedAt:new Date().toISOString(),isLive:!!s,dataFreshness:s?'live':w?'cached':'unavailable'
@@ -103,4 +130,9 @@ export async function loadAll8OriginRadar(id:string,force=false):Promise<OriginR
   fs.mkdirSync(path.dirname(savedFile),{recursive:true});const temp=savedFile+'.'+process.pid+'.tmp';
   fs.writeFileSync(temp,JSON.stringify(value,null,2));fs.renameSync(temp,savedFile);
   memory.set(id,{at:Date.now(),value});return value;
+}
+
+export async function loadAll8OriginRadar(id:string,force=false):Promise<OriginRadarResponse>{
+ const result=await loadOriginRadarData(id,force);
+ return withHistoricalWeatherContext(result,ORIGIN_MVP[id].points.map(p=>({...p,label:p.region})));
 }

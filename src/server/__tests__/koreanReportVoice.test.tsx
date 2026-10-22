@@ -22,6 +22,12 @@ for (const id of ['wheat','corn','soybean']) {
 // Oil and the remaining commodities use this same unconditional interpolation
 // in their existing builder. Do not fabricate cross-commodity evidence to test style.
 assert(buildRecoveryAnalysisRequest.toString().includes('${KOREAN_REPORT_VOICE}'));
+assert(KOREAN_REPORT_VOICE.includes('상승 요인(bullishFactors)과 하락 요인(bearishFactors)'));
+assert(KOREAN_REPORT_VOICE.includes('간결한 분석적 명사구'));
+assert(KOREAN_REPORT_VOICE.includes('불필요한 ~습니다/~합니다 종결을 쓰지 말고'));
+assert(KOREAN_REPORT_VOICE.includes('격식체(~습니다'));
+assert(KOREAN_REPORT_VOICE.includes('모니터링 항목(watchItems)'));
+assert(!KOREAN_REPORT_VOICE.includes('완결된 문장'));
 assert.throws(()=>buildPublisherResearchRequest('gemini-3.8-flash','soybean-oil','2026-10-21'),/Unsupported/);
 const examples = {
   wheat:'흑해 수출 위험 모니터링 및 분할 매수 검토',

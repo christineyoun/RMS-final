@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bot, Loader2 } from 'lucide-react';
 import {aiPublisherLabel,aiSourceTooltip,type AiDisplaySource} from '../utils/aiSourcePresentation';
+import {rmsAiEditorial} from '../utils/rmsAiEditorial';
 
 export interface AiRecommendationProps {
   key?: string;
@@ -57,11 +58,16 @@ export default function AiRecommendation({
   watchItems = [],
   researchStatus,
   researchSources = [],
+  researchGeneratedAt,
   isLoading = false,
   isError = false,
   errorMessage = '',
   className = ''
 }: AiRecommendationProps) {
+  const editorial=rmsAiEditorial(commodityId,researchGeneratedAt,researchSources,{
+    deskRecommendation:recommendedCoverage,executiveSummary,bullishFactors,bearishFactors,watchItems,
+  });
+  ({deskRecommendation:recommendedCoverage,executiveSummary,bullishFactors,bearishFactors,watchItems}=editorial.fields);
 
   // Preserve distinct exact URLs, including query-specific publications. A
   // publisher label is presentation only; no source records are rewritten.
@@ -121,7 +127,7 @@ export default function AiRecommendation({
   const defaultSummary = '검증된 분석 자료가 없습니다. 실제 공급사 견적과 공식 수급을 확인하세요.';
 
   return (
-    <div className={`w-full flex flex-col h-full justify-between bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm pdf-section-card min-h-[300px] break-inside-avoid print:break-inside-avoid ${className}`.trim()}>
+    <div data-rms-editorial={editorial.editorial || undefined} className={`w-full flex flex-col h-full justify-between bg-white border border-slate-200 rounded-xl p-5 mb-6 shadow-sm pdf-section-card min-h-[300px] break-inside-avoid print:break-inside-avoid ${className}`.trim()}>
       
       <div className="flex-1">
         {/* Top Header Row */}

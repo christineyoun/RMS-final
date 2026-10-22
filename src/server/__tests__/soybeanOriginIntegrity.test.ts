@@ -3,11 +3,11 @@ import fs from 'node:fs';import os from 'node:os';import path from 'node:path';i
 import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'rms-soybean-origin-test-'));
 process.env.RMS_ORIGIN_CACHE_DIR=temp;
-const {parseNasaSoybeanWeather,enrichSoybeanWithEvidence,isRecentSoybeanWeather,SOYBEAN_WEATHER_POINTS,SoybeanOriginConditionsService}=await import('../soybeanOriginConditionsService.ts');
+const {parseNasaSoybeanWeather,enrichSoybeanWithEvidence,isRecentSoybeanWeather,SOYBEAN_WEATHER_POINTS,NasaSoybeanComparisonService:SoybeanOriginConditionsService}=await import('../soybeanOriginConditionsService.ts');
 const {verifiedSoybeanCountryRows,SoybeanPsdOriginService}=await import('../soybeanPsdOriginService.ts');
 const {OriginRadar}=await import('../../components/OriginRadar.tsx');
 const native=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Unexpected network or paid request');};
-const now=Date.now(),checkedAt=new Date(now).toISOString(),lastDay=new Date(now-3*86400000).toISOString().slice(0,10),year=new Date().getUTCFullYear().toString(),month=checkedAt.slice(0,7);
+const now=Date.now(),checkedAt=new Date(now).toISOString(),lastDay=new Date(now-86400000).toISOString().slice(0,10),year=new Date().getUTCFullYear().toString(),month=checkedAt.slice(0,7);
 const dates=Array.from({length:7},(_,i)=>new Date(Date.parse(lastDay)+(i-6)*86400000).toISOString().slice(0,10).replaceAll('-',''));
 const body=(point:any,rain:unknown[]=Array(7).fill(3),heat:unknown[]=Array(7).fill(25))=>({header:{time_standard:'LST',fill_value:-999},geometry:{coordinates:[point.lon,point.lat]},parameters:{PRECTOTCORR:{units:'mm/day'},T2M_MAX:{units:'C'}},properties:{parameter:{PRECTOTCORR:Object.fromEntries(dates.map((d,i)=>[d,rain[i]])),T2M_MAX:Object.fromEntries(dates.map((d,i)=>[d,heat[i]]))}}});
 const rows=(country:string)=>[28,88,176].map((attributeId,i)=>({commodityCode:'2222000',countryCode:country,marketYear:year,calendarYear:month.slice(0,4),month:month.slice(5),attributeId,unitId:8,value:[11100,7350,355][i]}));

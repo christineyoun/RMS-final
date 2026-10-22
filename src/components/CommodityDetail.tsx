@@ -11,6 +11,7 @@ import { formatPrice, formatStarchSweetenerBenchmark, COMMODITY_CONFIGS, getCalc
 import { sanitizeOklchColorsForCanvas } from '../utils/exportDashboardPdf';
 import { CommodityNews } from './CommodityNews';
 import AiRecommendation from './AiRecommendation';
+import {rmsAiEditorial} from '../utils/rmsAiEditorial';
 import { CommodityWasdeCard } from './CommodityWasdeCard';
 import { OriginRadar } from './OriginRadar';
 import { getLiveExchangeRate, subscribeFxRates, fetchLiveFxRates, getAllFxRates, FXRates } from '../services/currencyService';
@@ -1552,8 +1553,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   // One authoritative recommendation per page: the verified, source-grounded AI
   // recommendation takes precedence once available. Deterministic procurement
   // guidance is the fallback, never a competing second desk recommendation.
+  const editorialRecommendation=aiInsight ? rmsAiEditorial(commodity.id,aiInsight.generatedAt,aiInsight.sources||[],aiInsight).fields.deskRecommendation : undefined;
   const activeDeskRecommendation =
-    aiInsight?.deskRecommendation ||
+    editorialRecommendation ||
     (isCorn && cornAnalysis?.deskRecommendation?.recommendation) ||
     (isSoybean && soybeanAnalysis?.deskRecommendation?.recommendation) ||
     (isSoybeanOil && (soybeanOilAnalysis?.deskRecommendation?.recommendation||'검증 자료 재확인 후 구매 판단')) ||
@@ -3881,7 +3883,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         commodityId={commodity.id}
         currency={commodity.id === 'potato-starch' ? 'EUR' : currency}
         confidenceScore={aiInsight?.confidenceScore ?? 88}
-        recommendedCoverage={activeDeskRecommendation}
+        recommendedCoverage={aiInsight?.deskRecommendation || activeDeskRecommendation}
         researchStatus={aiInsight?.status}
         researchSources={aiInsight?.sources}
         researchGeneratedAt={aiInsight?.generatedAt}

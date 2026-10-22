@@ -1,0 +1,2926 @@
+{
+  "description": "Original Open-Meteo records for all eight existing configurations, retrieved during the 2026-10-21 weather-risk verification. No fabricated weather; OFFLINE mutations live only in the tests.",
+  "now": "2026-10-21T08:51:24.091Z",
+  "configs": {
+    "wheat": [
+      {
+        "key": "usa",
+        "label": "캔자스(HRW)",
+        "lat": 38.5,
+        "lon": -98.3
+      },
+      {
+        "key": "usa",
+        "label": "일리노이 남부(SRW)",
+        "lat": 38.35,
+        "lon": -89.4
+      },
+      {
+        "key": "australia",
+        "label": "서호주",
+        "lat": -32,
+        "lon": 117.2
+      },
+      {
+        "key": "australia",
+        "label": "뉴사우스웨일스",
+        "lat": -33.3,
+        "lon": 147.4
+      },
+      {
+        "key": "canada",
+        "label": "서스캐처원",
+        "lat": 51.5,
+        "lon": -106.5
+      },
+      {
+        "key": "canada",
+        "label": "앨버타",
+        "lat": 51.9,
+        "lon": -112.1
+      },
+      {
+        "key": "eu",
+        "label": "프랑스 보스",
+        "lat": 48.2,
+        "lon": 1.5
+      },
+      {
+        "key": "eu",
+        "label": "독일 작센안할트",
+        "lat": 52,
+        "lon": 11
+      },
+      {
+        "key": "russia",
+        "label": "크라스노다르",
+        "lat": 45.1,
+        "lon": 39
+      },
+      {
+        "key": "russia",
+        "label": "로스토프",
+        "lat": 47.2,
+        "lon": 39.7
+      }
+    ],
+    "corn": [
+      {
+        "key": "usa",
+        "label": "아이오와",
+        "lat": 42.02,
+        "lon": -93.62
+      },
+      {
+        "key": "usa",
+        "label": "일리노이",
+        "lat": 40.11,
+        "lon": -89.25
+      },
+      {
+        "key": "brazil",
+        "label": "마투그로수",
+        "lat": -13.5,
+        "lon": -56.1
+      },
+      {
+        "key": "brazil",
+        "label": "파라나",
+        "lat": -24.5,
+        "lon": -51.5
+      },
+      {
+        "key": "argentina",
+        "label": "코르도바",
+        "lat": -31.42,
+        "lon": -64.18
+      },
+      {
+        "key": "argentina",
+        "label": "산타페",
+        "lat": -31.6,
+        "lon": -60.7
+      },
+      {
+        "key": "ukraine",
+        "label": "폴타바",
+        "lat": 49.59,
+        "lon": 34.55
+      },
+      {
+        "key": "ukraine",
+        "label": "빈니차",
+        "lat": 49.23,
+        "lon": 28.47
+      }
+    ],
+    "soybean": [
+      {
+        "key": "usa",
+        "label": "아이오와",
+        "lat": 42.02,
+        "lon": -93.62
+      },
+      {
+        "key": "usa",
+        "label": "일리노이",
+        "lat": 40.11,
+        "lon": -89.25
+      },
+      {
+        "key": "brazil",
+        "label": "마투그로수",
+        "lat": -13.5,
+        "lon": -56.1
+      },
+      {
+        "key": "brazil",
+        "label": "파라나",
+        "lat": -24.5,
+        "lon": -51.5
+      },
+      {
+        "key": "argentina",
+        "label": "코르도바",
+        "lat": -31.42,
+        "lon": -64.18
+      },
+      {
+        "key": "argentina",
+        "label": "산타페",
+        "lat": -31.6,
+        "lon": -60.7
+      },
+      {
+        "key": "paraguay",
+        "label": "알토파라나",
+        "lat": -25.53,
+        "lon": -54.63
+      },
+      {
+        "key": "paraguay",
+        "label": "이타푸아",
+        "lat": -26.89,
+        "lon": -55.67
+      }
+    ],
+    "soybean-oil": [
+      {
+        "key": "argentina",
+        "region": "아르헨티나 (Rosario)",
+        "country": "AR",
+        "lat": -32.95,
+        "lon": -60.66,
+        "label": "아르헨티나 (Rosario)"
+      },
+      {
+        "key": "brazil",
+        "region": "브라질 (Mato Grosso)",
+        "country": "BR",
+        "lat": -12.55,
+        "lon": -55.72,
+        "label": "브라질 (Mato Grosso)"
+      },
+      {
+        "key": "usa",
+        "region": "미국 (Midwest)",
+        "country": "US",
+        "lat": 41.59,
+        "lon": -93.62,
+        "label": "미국 (Midwest)"
+      },
+      {
+        "key": "paraguay",
+        "region": "파라과이 (Alto Paraná)",
+        "country": "PA",
+        "lat": -25.53,
+        "lon": -54.63,
+        "label": "파라과이 (Alto Paraná)"
+      }
+    ],
+    "palm-oil": [
+      {
+        "key": "indonesia",
+        "region": "인도네시아 (Sumatra)",
+        "country": "ID",
+        "lat": 3.59,
+        "lon": 98.67,
+        "label": "인도네시아 (Sumatra)"
+      },
+      {
+        "key": "malaysia",
+        "region": "말레이시아 (Sabah)",
+        "country": "MY",
+        "lat": 5.84,
+        "lon": 118.11,
+        "label": "말레이시아 (Sabah)"
+      },
+      {
+        "key": "thailand",
+        "region": "태국 (Surat Thani)",
+        "country": "TH",
+        "lat": 9.14,
+        "lon": 99.32,
+        "label": "태국 (Surat Thani)"
+      },
+      {
+        "key": "colombia",
+        "region": "콜롬비아 (Meta)",
+        "country": "CO",
+        "lat": 4.14,
+        "lon": -73.63,
+        "label": "콜롬비아 (Meta)"
+      }
+    ],
+    "sugar": [
+      {
+        "key": "brazil",
+        "region": "브라질 (Center-South)",
+        "country": "BR",
+        "lat": -21.18,
+        "lon": -47.81,
+        "label": "브라질 (Center-South)"
+      },
+      {
+        "key": "india",
+        "region": "인도 (Maharashtra)",
+        "country": "IN",
+        "lat": 16.71,
+        "lon": 74.24,
+        "label": "인도 (Maharashtra)"
+      },
+      {
+        "key": "thailand",
+        "region": "태국 (Nakhon Ratchasima)",
+        "country": "TH",
+        "lat": 14.98,
+        "lon": 102.1,
+        "label": "태국 (Nakhon Ratchasima)"
+      },
+      {
+        "key": "australia",
+        "region": "호주 (Queensland)",
+        "country": "AS",
+        "lat": -19.26,
+        "lon": 146.82,
+        "label": "호주 (Queensland)"
+      }
+    ],
+    "potato-starch": [
+      {
+        "key": "netherlands",
+        "region": "네덜란드 (Groningen)",
+        "country": "NL",
+        "lat": 53.22,
+        "lon": 6.57,
+        "label": "네덜란드 (Groningen)"
+      },
+      {
+        "key": "germany",
+        "region": "독일 (Lower Saxony)",
+        "country": "GM",
+        "lat": 52.37,
+        "lon": 9.73,
+        "label": "독일 (Lower Saxony)"
+      },
+      {
+        "key": "denmark",
+        "region": "덴마크 (Jutland)",
+        "country": "DA",
+        "lat": 56.27,
+        "lon": 9.5,
+        "label": "덴마크 (Jutland)"
+      },
+      {
+        "key": "poland",
+        "region": "폴란드 (Wielkopolska)",
+        "country": "PL",
+        "lat": 52.41,
+        "lon": 16.93,
+        "label": "폴란드 (Wielkopolska)"
+      }
+    ],
+    "tapioca-starch": [
+      {
+        "key": "thailand",
+        "region": "태국 (Nakhon Ratchasima)",
+        "country": "TH",
+        "lat": 14.98,
+        "lon": 102.1,
+        "label": "태국 (Nakhon Ratchasima)"
+      },
+      {
+        "key": "vietnam",
+        "region": "베트남 (Tây Ninh)",
+        "country": "VM",
+        "lat": 11.31,
+        "lon": 106.1,
+        "label": "베트남 (Tây Ninh)"
+      },
+      {
+        "key": "cambodia",
+        "region": "캄보디아 (Battambang)",
+        "country": "CB",
+        "lat": 13.1,
+        "lon": 103.2,
+        "label": "캄보디아 (Battambang)"
+      },
+      {
+        "key": "laos",
+        "region": "라오스 (Savannakhet)",
+        "country": "LA",
+        "lat": 16.56,
+        "lon": 104.75,
+        "label": "라오스 (Savannakhet)"
+      }
+    ]
+  },
+  "records": {
+    "-13.5,-56.1": {
+      "checkedAt": "2026-10-21T08:29:22.331Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-13.5&longitude=-56.1&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -13.532513,
+        "longitude": -56.126373,
+        "generationtime_ms": 12.491822242736816,
+        "utc_offset_seconds": -14400,
+        "timezone": "America/Cuiaba",
+        "timezone_abbreviation": "GMT-4",
+        "elevation": 416,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0.1,
+            20.2,
+            1.6,
+            0.5,
+            0,
+            0.3,
+            0
+          ],
+          "temperature_2m_max": [
+            34.2,
+            35.3,
+            28.8,
+            30.4,
+            30.8,
+            31.4,
+            33.2,
+            34.9
+          ]
+        }
+      }
+    },
+    "-24.5,-51.5": {
+      "checkedAt": "2026-10-21T08:29:22.821Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-24.5&longitude=-51.5&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -24.49912,
+        "longitude": -51.538452,
+        "generationtime_ms": 29.25276756286621,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Sao_Paulo",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 550,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            33.5,
+            20.8,
+            7.5,
+            2,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            23.7,
+            22.1,
+            25.3,
+            26.3,
+            24.5,
+            23.4,
+            23.6,
+            25.5
+          ]
+        }
+      }
+    },
+    "-25.53,-54.63": {
+      "checkedAt": "2026-10-21T08:14:35.349Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-25.53&longitude=-54.63&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto",
+      "body": {
+        "latitude": -25.553602,
+        "longitude": -54.625397,
+        "generationtime_ms": 0.06556510925292969,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Asuncion",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 199,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21"
+          ],
+          "precipitation_sum": [
+            19,
+            12.5,
+            2.1,
+            0.1,
+            0,
+            0,
+            0,
+            0,
+            26.7
+          ],
+          "temperature_2m_max": [
+            24.3,
+            23.7,
+            26.9,
+            26.4,
+            21.6,
+            23.4,
+            24.6,
+            28.4,
+            23.3
+          ]
+        }
+      }
+    },
+    "-26.89,-55.67": {
+      "checkedAt": "2026-10-21T08:29:23.137Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-26.89&longitude=-55.67&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -26.88928,
+        "longitude": -55.67627,
+        "generationtime_ms": 43.62988471984863,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Asuncion",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 250,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            3.1,
+            1.3,
+            1.2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            24.7,
+            24.9,
+            22.8,
+            24.4,
+            22.9,
+            21.7,
+            22.5,
+            27.6
+          ]
+        }
+      }
+    },
+    "-31.42,-64.18": {
+      "checkedAt": "2026-10-21T08:29:22.821Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-31.42&longitude=-64.18&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -31.4587,
+        "longitude": -64.19354,
+        "generationtime_ms": 0.05638599395751953,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Argentina/Cordoba",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 394,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            1.2,
+            5,
+            3,
+            3.6,
+            1.7,
+            0,
+            0.1,
+            0.3
+          ],
+          "temperature_2m_max": [
+            18.1,
+            18.8,
+            19.9,
+            18.3,
+            16.3,
+            18.3,
+            17.8,
+            21.8
+          ]
+        }
+      }
+    },
+    "-31.6,-60.7": {
+      "checkedAt": "2026-10-21T08:29:22.821Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-31.6&longitude=-60.7&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -31.599297,
+        "longitude": -60.682648,
+        "generationtime_ms": 0.05078315734863281,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Argentina/Cordoba",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 18,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            3.5,
+            1.2,
+            0.8,
+            1.1,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            20.7,
+            21.6,
+            20.9,
+            19.6,
+            17.1,
+            18.3,
+            21.1,
+            22.6
+          ]
+        }
+      }
+    },
+    "-32,117.2": {
+      "checkedAt": "2026-10-21T08:29:19.728Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-32&longitude=117.2&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -31.95079,
+        "longitude": 117.21687,
+        "generationtime_ms": 0.849604606628418,
+        "utc_offset_seconds": 28800,
+        "timezone": "Australia/Perth",
+        "timezone_abbreviation": "GMT+8",
+        "elevation": 321,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            3.3,
+            2,
+            0,
+            0,
+            0.2,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            24.9,
+            29,
+            24.6,
+            25.1,
+            25.4,
+            21.7,
+            23,
+            26
+          ]
+        }
+      }
+    },
+    "-33.3,147.4": {
+      "checkedAt": "2026-10-21T08:29:21.377Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-33.3&longitude=147.4&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -33.28647,
+        "longitude": 147.37361,
+        "generationtime_ms": 0.14197826385498047,
+        "utc_offset_seconds": 39600,
+        "timezone": "Australia/Sydney",
+        "timezone_abbreviation": "GMT+11",
+        "elevation": 203,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            2,
+            0,
+            2.8,
+            0.2,
+            0,
+            0,
+            0.1,
+            0
+          ],
+          "temperature_2m_max": [
+            20.2,
+            21.2,
+            20.5,
+            21.4,
+            24,
+            23.9,
+            25.2,
+            26.4
+          ]
+        }
+      }
+    },
+    "38.35,-89.4": {
+      "checkedAt": "2026-10-21T08:29:19.728Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=38.35&longitude=-89.4&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 38.353603,
+        "longitude": -89.411575,
+        "generationtime_ms": 1.1355876922607422,
+        "utc_offset_seconds": -18000,
+        "timezone": "America/Chicago",
+        "timezone_abbreviation": "GMT-5",
+        "elevation": 145,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            9.1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            32.9,
+            25.9,
+            26.8,
+            20.7,
+            15,
+            19.2,
+            22.6,
+            23.1
+          ]
+        }
+      }
+    },
+    "38.5,-98.3": {
+      "checkedAt": "2026-10-21T08:29:19.715Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=38.5&longitude=-98.3&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 38.494526,
+        "longitude": -98.29948,
+        "generationtime_ms": 0.8552074432373047,
+        "utc_offset_seconds": -18000,
+        "timezone": "America/Chicago",
+        "timezone_abbreviation": "GMT-5",
+        "elevation": 530,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0.8,
+            0.4,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            26.4,
+            13.9,
+            14.6,
+            14,
+            16.9,
+            19.7,
+            22,
+            22.6
+          ]
+        }
+      }
+    },
+    "40.11,-89.25": {
+      "checkedAt": "2026-10-21T08:29:22.331Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=40.11&longitude=-89.25&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 40.102486,
+        "longitude": -89.24557,
+        "generationtime_ms": 14.0761137008667,
+        "utc_offset_seconds": -18000,
+        "timezone": "America/Chicago",
+        "timezone_abbreviation": "GMT-5",
+        "elevation": 190,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0.4,
+            1.2,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            32.5,
+            25.7,
+            23.2,
+            14.1,
+            14,
+            17.7,
+            20.6,
+            22.5
+          ]
+        }
+      }
+    },
+    "42.02,-93.62": {
+      "checkedAt": "2026-10-21T08:29:22.331Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=42.02&longitude=-93.62&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 42.022537,
+        "longitude": -93.627495,
+        "generationtime_ms": 3.0690431594848633,
+        "utc_offset_seconds": -18000,
+        "timezone": "America/Chicago",
+        "timezone_abbreviation": "GMT-5",
+        "elevation": 275,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            12.3,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            20.7,
+            15.6,
+            15.1,
+            11.5,
+            16.1,
+            20.3,
+            20.3,
+            22
+          ]
+        }
+      }
+    },
+    "45.1,39": {
+      "checkedAt": "2026-10-21T08:29:21.698Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=45.1&longitude=39&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 45.111904,
+        "longitude": 38.95753,
+        "generationtime_ms": 16.252756118774414,
+        "utc_offset_seconds": 10800,
+        "timezone": "Europe/Moscow",
+        "timezone_abbreviation": "GMT+3",
+        "elevation": 35,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0.1,
+            0,
+            3.6,
+            1.3,
+            1.4,
+            8.5,
+            4.1,
+            0.2
+          ],
+          "temperature_2m_max": [
+            23.5,
+            25.6,
+            22.7,
+            21.6,
+            20.5,
+            22.7,
+            17.4,
+            19.5
+          ]
+        }
+      }
+    },
+    "47.2,39.7": {
+      "checkedAt": "2026-10-21T08:29:22.056Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=47.2&longitude=39.7&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 47.209106,
+        "longitude": 39.722015,
+        "generationtime_ms": 0.06592273712158203,
+        "utc_offset_seconds": 10800,
+        "timezone": "Europe/Moscow",
+        "timezone_abbreviation": "GMT+3",
+        "elevation": 5,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            1.3,
+            3.1,
+            0,
+            3.2,
+            0.9,
+            0
+          ],
+          "temperature_2m_max": [
+            23.2,
+            25.4,
+            23.6,
+            22.1,
+            21.4,
+            21.9,
+            19.1,
+            20
+          ]
+        }
+      }
+    },
+    "48.2,1.5": {
+      "checkedAt": "2026-10-21T08:29:21.697Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=48.2&longitude=1.5&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 48.207523,
+        "longitude": 1.5076035,
+        "generationtime_ms": 13.261675834655762,
+        "utc_offset_seconds": 7200,
+        "timezone": "Europe/Paris",
+        "timezone_abbreviation": "GMT+2",
+        "elevation": 139,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            0,
+            0.5,
+            0,
+            2.8,
+            3.5,
+            2.8
+          ],
+          "temperature_2m_max": [
+            22.2,
+            21,
+            24.2,
+            19.5,
+            15.2,
+            13.7,
+            11.1,
+            12.3
+          ]
+        }
+      }
+    },
+    "49.23,28.47": {
+      "checkedAt": "2026-10-21T08:36:43.656Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=49.23&longitude=28.47&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 49.230312,
+        "longitude": 28.441488,
+        "generationtime_ms": 0.9733438491821289,
+        "utc_offset_seconds": 10800,
+        "timezone": "Europe/Kyiv",
+        "timezone_abbreviation": "GMT+3",
+        "elevation": 257,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0.1,
+            0,
+            0.1,
+            2.7,
+            9.1,
+            14.5,
+            12.7,
+            7.5
+          ],
+          "temperature_2m_max": [
+            11.2,
+            11,
+            10.7,
+            7.3,
+            10.6,
+            12.9,
+            14.5,
+            13.9
+          ]
+        }
+      }
+    },
+    "49.59,34.55": {
+      "checkedAt": "2026-10-21T08:36:43.656Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=49.59&longitude=34.55&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 49.593502,
+        "longitude": 34.548855,
+        "generationtime_ms": 1.087784767150879,
+        "utc_offset_seconds": 10800,
+        "timezone": "Europe/Kyiv",
+        "timezone_abbreviation": "GMT+3",
+        "elevation": 170,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            3,
+            14.2,
+            10,
+            13.7,
+            2.4,
+            14.4,
+            2.3,
+            0
+          ],
+          "temperature_2m_max": [
+            15.6,
+            12,
+            10,
+            15.6,
+            16.2,
+            16.2,
+            17.2,
+            17.1
+          ]
+        }
+      }
+    },
+    "51.5,-106.5": {
+      "checkedAt": "2026-10-21T08:29:21.378Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=51.5&longitude=-106.5&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 51.505146,
+        "longitude": -106.50108,
+        "generationtime_ms": 16.75117015838623,
+        "utc_offset_seconds": -21600,
+        "timezone": "America/Regina",
+        "timezone_abbreviation": "GMT-6",
+        "elevation": 568,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            11,
+            12.7,
+            9.3,
+            18.5,
+            23.3,
+            13,
+            15.3,
+            12.2
+          ]
+        }
+      }
+    },
+    "51.9,-112.1": {
+      "checkedAt": "2026-10-21T08:29:21.378Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=51.9&longitude=-112.1&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 51.905167,
+        "longitude": -112.087,
+        "generationtime_ms": 11.45780086517334,
+        "utc_offset_seconds": -21600,
+        "timezone": "America/Edmonton",
+        "timezone_abbreviation": "GMT-6",
+        "elevation": 850,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            11,
+            15.7,
+            10.5,
+            20.7,
+            21.5,
+            12,
+            10,
+            12.3
+          ]
+        }
+      }
+    },
+    "52,11": {
+      "checkedAt": "2026-10-21T08:29:21.698Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=52&longitude=11&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 51.993618,
+        "longitude": 10.995605,
+        "generationtime_ms": 1.536250114440918,
+        "utc_offset_seconds": 7200,
+        "timezone": "Europe/Berlin",
+        "timezone_abbreviation": "GMT+2",
+        "elevation": 106,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0.7,
+            0,
+            0,
+            0,
+            7.3,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            16.6,
+            15.5,
+            18.2,
+            21.5,
+            15.1,
+            12.4,
+            10.9,
+            8.3
+          ]
+        }
+      }
+    },
+    "3.59,98.67": {
+      "checkedAt": "2026-10-21T08:46:30.539Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=3.59&longitude=98.67&daily=precipitation_sum%2Ctemperature_2m_max&past_days=29&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 3.6203866,
+        "longitude": 98.68613,
+        "generationtime_ms": 3.4662485122680664,
+        "utc_offset_seconds": 25200,
+        "timezone": "Asia/Jakarta",
+        "timezone_abbreviation": "GMT+7",
+        "elevation": 26,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29",
+            "2026-09-30",
+            "2026-10-01",
+            "2026-10-02",
+            "2026-10-03",
+            "2026-10-04",
+            "2026-10-05",
+            "2026-10-06",
+            "2026-10-07",
+            "2026-10-08",
+            "2026-10-09",
+            "2026-10-10",
+            "2026-10-11",
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            1.4,
+            17.6,
+            14,
+            16.3,
+            40.4,
+            1.1,
+            6.2,
+            5.1,
+            28,
+            1,
+            20.2,
+            29,
+            18.5,
+            8.4,
+            8.2,
+            20.7,
+            14.6,
+            8.7,
+            30.4,
+            27,
+            15.8,
+            12.1,
+            13.1,
+            23,
+            7.4,
+            18.6,
+            7.9,
+            37.6,
+            11.4
+          ],
+          "temperature_2m_max": [
+            30.7,
+            29,
+            30.3,
+            31,
+            30.8,
+            31.2,
+            33.2,
+            32.8,
+            27.6,
+            31.2,
+            28.7,
+            30.3,
+            28.6,
+            31.5,
+            29.7,
+            31.7,
+            30.2,
+            31.7,
+            31.2,
+            32.3,
+            28.1,
+            31.9,
+            32,
+            31.4,
+            31.8,
+            28.8,
+            28.9,
+            31.1,
+            30.1
+          ]
+        }
+      }
+    },
+    "5.84,118.11": {
+      "checkedAt": "2026-10-21T08:46:30.540Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=5.84&longitude=118.11&daily=precipitation_sum%2Ctemperature_2m_max&past_days=29&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 5.8699474,
+        "longitude": 118.101585,
+        "generationtime_ms": 7.177472114562988,
+        "utc_offset_seconds": 28800,
+        "timezone": "Asia/Kuching",
+        "timezone_abbreviation": "GMT+8",
+        "elevation": 95,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29",
+            "2026-09-30",
+            "2026-10-01",
+            "2026-10-02",
+            "2026-10-03",
+            "2026-10-04",
+            "2026-10-05",
+            "2026-10-06",
+            "2026-10-07",
+            "2026-10-08",
+            "2026-10-09",
+            "2026-10-10",
+            "2026-10-11",
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            7.5,
+            9.8,
+            0.1,
+            3.9,
+            7.9,
+            1.6,
+            17.7,
+            2.2,
+            2.8,
+            1.8,
+            2.5,
+            9,
+            1.1,
+            2.3,
+            1.8,
+            9.8,
+            13.7,
+            12.2,
+            9.6,
+            24.7,
+            4.4,
+            5.4,
+            0.3,
+            0.4,
+            1.1,
+            0.8,
+            0.8,
+            17.2,
+            8.5
+          ],
+          "temperature_2m_max": [
+            32,
+            30.2,
+            32.2,
+            30.2,
+            31,
+            32.7,
+            31.5,
+            30.8,
+            31.6,
+            32.7,
+            31.5,
+            31.3,
+            32.6,
+            31.5,
+            33.7,
+            30.9,
+            31.6,
+            30.9,
+            30.7,
+            29.3,
+            32.3,
+            31.2,
+            32.9,
+            33,
+            32.8,
+            32.2,
+            31.6,
+            30.6,
+            32
+          ]
+        }
+      }
+    },
+    "9.14,99.32": {
+      "checkedAt": "2026-10-21T08:46:30.540Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=9.14&longitude=99.32&daily=precipitation_sum%2Ctemperature_2m_max&past_days=29&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 9.103691,
+        "longitude": 99.35065,
+        "generationtime_ms": 10.78486442565918,
+        "utc_offset_seconds": 25200,
+        "timezone": "Asia/Bangkok",
+        "timezone_abbreviation": "GMT+7",
+        "elevation": 4,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29",
+            "2026-09-30",
+            "2026-10-01",
+            "2026-10-02",
+            "2026-10-03",
+            "2026-10-04",
+            "2026-10-05",
+            "2026-10-06",
+            "2026-10-07",
+            "2026-10-08",
+            "2026-10-09",
+            "2026-10-10",
+            "2026-10-11",
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            13.3,
+            30.6,
+            14.3,
+            9,
+            5.3,
+            3.5,
+            4.2,
+            8.1,
+            12.6,
+            4.7,
+            1.1,
+            10.6,
+            10.6,
+            25.5,
+            5.2,
+            15.4,
+            16.6,
+            2,
+            3.8,
+            13.1,
+            19.9,
+            17.1,
+            15,
+            6.8,
+            2.1,
+            8.9,
+            5.6,
+            13,
+            16.6
+          ],
+          "temperature_2m_max": [
+            30.7,
+            29,
+            31.8,
+            31.6,
+            31.2,
+            28.5,
+            33.1,
+            33.2,
+            32,
+            32.5,
+            32.1,
+            30.8,
+            32.2,
+            32.5,
+            30,
+            31,
+            30.2,
+            32.3,
+            32,
+            30.7,
+            30,
+            30.1,
+            29.4,
+            31.8,
+            33,
+            33.3,
+            30.9,
+            30.5,
+            31.9
+          ]
+        }
+      }
+    },
+    "4.14,-73.63": {
+      "checkedAt": "2026-10-21T08:46:30.540Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=4.14&longitude=-73.63&daily=precipitation_sum%2Ctemperature_2m_max&past_days=29&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 4.1124783,
+        "longitude": -73.6297,
+        "generationtime_ms": 2.063751220703125,
+        "utc_offset_seconds": -18000,
+        "timezone": "America/Bogota",
+        "timezone_abbreviation": "GMT-5",
+        "elevation": 448,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-09-22",
+            "2026-09-23",
+            "2026-09-24",
+            "2026-09-25",
+            "2026-09-26",
+            "2026-09-27",
+            "2026-09-28",
+            "2026-09-29",
+            "2026-09-30",
+            "2026-10-01",
+            "2026-10-02",
+            "2026-10-03",
+            "2026-10-04",
+            "2026-10-05",
+            "2026-10-06",
+            "2026-10-07",
+            "2026-10-08",
+            "2026-10-09",
+            "2026-10-10",
+            "2026-10-11",
+            "2026-10-12",
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            3.4,
+            5.9,
+            8.5,
+            14.4,
+            2.8,
+            32.9,
+            16,
+            2.9,
+            3.5,
+            31.1,
+            31.7,
+            4.9,
+            0,
+            2.9,
+            11,
+            3.9,
+            6.6,
+            23,
+            15.7,
+            4.9,
+            22.2,
+            12.3,
+            12,
+            4.5,
+            10.9,
+            32.3,
+            5.9,
+            0.2,
+            18.9
+          ],
+          "temperature_2m_max": [
+            30.8,
+            31.4,
+            29.3,
+            29.1,
+            29.6,
+            29.5,
+            28.4,
+            30.7,
+            31.3,
+            28.7,
+            25.3,
+            27.9,
+            30.2,
+            30.9,
+            30.8,
+            27.3,
+            28.1,
+            31,
+            28.2,
+            29.8,
+            27.8,
+            29.7,
+            30.4,
+            30.4,
+            30.6,
+            29.3,
+            29.2,
+            30.3,
+            29
+          ]
+        }
+      }
+    },
+    "-21.18,-47.81": {
+      "checkedAt": "2026-10-21T08:46:30.541Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-21.18&longitude=-47.81&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -21.19508,
+        "longitude": -47.79248,
+        "generationtime_ms": 0.09942054748535156,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Sao_Paulo",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 552,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            2.2,
+            15.2,
+            0.2,
+            10.7,
+            3.1,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            31.5,
+            30.8,
+            29.5,
+            27,
+            27,
+            27,
+            28,
+            30.6
+          ]
+        }
+      }
+    },
+    "16.71,74.24": {
+      "checkedAt": "2026-10-21T08:46:30.541Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=16.71&longitude=74.24&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 16.695957,
+        "longitude": 74.26934,
+        "generationtime_ms": 1.4570951461791992,
+        "utc_offset_seconds": 19800,
+        "timezone": "Asia/Kolkata",
+        "timezone_abbreviation": "GMT+5:30",
+        "elevation": 565,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            0,
+            1.1,
+            6.4,
+            1.2,
+            2.3,
+            0
+          ],
+          "temperature_2m_max": [
+            33.6,
+            33.2,
+            33.4,
+            33.7,
+            31.9,
+            31.6,
+            31.3,
+            32.3
+          ]
+        }
+      }
+    },
+    "14.98,102.1": {
+      "checkedAt": "2026-10-21T08:46:30.542Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=14.98&longitude=102.1&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 15.008787,
+        "longitude": 102.100845,
+        "generationtime_ms": 0.06449222564697266,
+        "utc_offset_seconds": 25200,
+        "timezone": "Asia/Bangkok",
+        "timezone_abbreviation": "GMT+7",
+        "elevation": 186,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            8,
+            13.3,
+            11.8,
+            0.7,
+            0,
+            3.4,
+            0.3,
+            0.7
+          ],
+          "temperature_2m_max": [
+            30.6,
+            29.8,
+            31.7,
+            32,
+            32.7,
+            32.4,
+            32.1,
+            32.4
+          ]
+        }
+      }
+    },
+    "-19.26,146.82": {
+      "checkedAt": "2026-10-21T08:46:30.542Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-19.26&longitude=146.82&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": -19.297012,
+        "longitude": 146.85149,
+        "generationtime_ms": 9.022831916809082,
+        "utc_offset_seconds": 36000,
+        "timezone": "Australia/Brisbane",
+        "timezone_abbreviation": "GMT+10",
+        "elevation": 4,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0.6,
+            0.2,
+            1.5,
+            1.8,
+            3.2,
+            6,
+            2.1,
+            1.4
+          ],
+          "temperature_2m_max": [
+            28.3,
+            28,
+            28.2,
+            27.8,
+            26.6,
+            27.3,
+            27.5,
+            27.7
+          ]
+        }
+      }
+    },
+    "53.22,6.57": {
+      "checkedAt": "2026-10-21T08:46:35.116Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=53.22&longitude=6.57&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 53.211998,
+        "longitude": 6.5829997,
+        "generationtime_ms": 16.912341117858887,
+        "utc_offset_seconds": 7200,
+        "timezone": "Europe/Amsterdam",
+        "timezone_abbreviation": "GMT+2",
+        "elevation": 7,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            4,
+            0,
+            0,
+            8,
+            3.9,
+            5.5,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            17,
+            16.3,
+            18.2,
+            17.2,
+            14.4,
+            11.8,
+            12.9,
+            10.5
+          ]
+        }
+      }
+    },
+    "52.37,9.73": {
+      "checkedAt": "2026-10-21T08:46:35.117Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=52.37&longitude=9.73&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 52.374786,
+        "longitude": 9.724413,
+        "generationtime_ms": 0.15997886657714844,
+        "utc_offset_seconds": 7200,
+        "timezone": "Europe/Berlin",
+        "timezone_abbreviation": "GMT+2",
+        "elevation": 56,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            1.1,
+            0,
+            0,
+            1.3,
+            3.2,
+            1.4,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            15.3,
+            15.8,
+            17.5,
+            21.2,
+            16.4,
+            12.6,
+            11.7,
+            9.9
+          ]
+        }
+      }
+    },
+    "56.27,9.5": {
+      "checkedAt": "2026-10-21T08:46:35.117Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=56.27&longitude=9.5&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 56.27046,
+        "longitude": 9.498795,
+        "generationtime_ms": 27.805685997009277,
+        "utc_offset_seconds": 7200,
+        "timezone": "Europe/Copenhagen",
+        "timezone_abbreviation": "GMT+2",
+        "elevation": 58,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            6.8,
+            0.1,
+            0,
+            2.1,
+            0,
+            0,
+            0,
+            0.9
+          ],
+          "temperature_2m_max": [
+            13.7,
+            13.6,
+            15.6,
+            15.4,
+            12,
+            11.4,
+            11,
+            10
+          ]
+        }
+      }
+    },
+    "52.41,16.93": {
+      "checkedAt": "2026-10-21T08:46:35.117Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=52.41&longitude=16.93&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 52.41825,
+        "longitude": 16.937275,
+        "generationtime_ms": 51.94449424743652,
+        "utc_offset_seconds": 7200,
+        "timezone": "Europe/Warsaw",
+        "timezone_abbreviation": "GMT+2",
+        "elevation": 69,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            0.1,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            12.5,
+            15.6,
+            13.8,
+            16.9,
+            15.9,
+            13.9,
+            10.9,
+            11.5
+          ]
+        }
+      }
+    },
+    "11.31,106.1": {
+      "checkedAt": "2026-10-21T08:46:32.175Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=11.31&longitude=106.1&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 11.282952,
+        "longitude": 106.09431,
+        "generationtime_ms": 0.09560585021972656,
+        "utc_offset_seconds": 25200,
+        "timezone": "Asia/Ho_Chi_Minh",
+        "timezone_abbreviation": "GMT+7",
+        "elevation": 18,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            15,
+            0.4,
+            10.9,
+            0.4,
+            13.9,
+            2.1,
+            3.5,
+            0.6
+          ],
+          "temperature_2m_max": [
+            31.1,
+            32.2,
+            31.9,
+            32.3,
+            31.6,
+            30.7,
+            31.4,
+            31.8
+          ]
+        }
+      }
+    },
+    "13.1,103.2": {
+      "checkedAt": "2026-10-21T08:46:32.175Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=13.1&longitude=103.2&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 13.110721,
+        "longitude": 103.196724,
+        "generationtime_ms": 0.08320808410644531,
+        "utc_offset_seconds": 25200,
+        "timezone": "Asia/Phnom_Penh",
+        "timezone_abbreviation": "GMT+7",
+        "elevation": 10,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            22.7,
+            9.7,
+            10.8,
+            1.5,
+            2.6,
+            12,
+            5.6,
+            4
+          ],
+          "temperature_2m_max": [
+            29.1,
+            30.7,
+            30.7,
+            32.3,
+            32.7,
+            30.1,
+            30.9,
+            31.9
+          ]
+        }
+      }
+    },
+    "16.56,104.75": {
+      "checkedAt": "2026-10-21T08:46:32.176Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=16.56&longitude=104.75&daily=precipitation_sum%2Ctemperature_2m_max&past_days=8&forecast_days=0&timezone=auto&precipitation_unit=mm&temperature_unit=celsius",
+      "body": {
+        "latitude": 16.555359,
+        "longitude": 104.75691,
+        "generationtime_ms": 0.0776052474975586,
+        "utc_offset_seconds": 25200,
+        "timezone": "Asia/Vientiane",
+        "timezone_abbreviation": "GMT+7",
+        "elevation": 143,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20"
+          ],
+          "precipitation_sum": [
+            3.8,
+            0,
+            0,
+            0,
+            0.4,
+            0.2,
+            0.9,
+            0.1
+          ],
+          "temperature_2m_max": [
+            31.4,
+            32,
+            32,
+            32.1,
+            32.5,
+            33.4,
+            32.2,
+            32.9
+          ]
+        }
+      }
+    },
+    "-32.95,-60.66": {
+      "checkedAt": "2026-10-21T08:14:35.349Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-32.95&longitude=-60.66&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto",
+      "body": {
+        "latitude": -32.934975,
+        "longitude": -60.661774,
+        "generationtime_ms": 0.05221366882324219,
+        "utc_offset_seconds": -10800,
+        "timezone": "America/Argentina/Cordoba",
+        "timezone_abbreviation": "GMT-3",
+        "elevation": 28,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21"
+          ],
+          "precipitation_sum": [
+            5.4,
+            0.2,
+            2.2,
+            0.3,
+            0,
+            0,
+            0,
+            0.1,
+            0
+          ],
+          "temperature_2m_max": [
+            18.5,
+            20.3,
+            21.1,
+            18.1,
+            15.3,
+            17.3,
+            19.1,
+            22.5,
+            22
+          ]
+        }
+      }
+    },
+    "-12.55,-55.72": {
+      "checkedAt": "2026-10-21T08:14:35.349Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=-12.55&longitude=-55.72&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto",
+      "body": {
+        "latitude": -12.54833,
+        "longitude": -55.741394,
+        "generationtime_ms": 0.09226799011230469,
+        "utc_offset_seconds": -14400,
+        "timezone": "America/Cuiaba",
+        "timezone_abbreviation": "GMT-4",
+        "elevation": 371,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21"
+          ],
+          "precipitation_sum": [
+            0,
+            2.7,
+            40.4,
+            0.2,
+            0.3,
+            0.1,
+            0.9,
+            0,
+            5.7
+          ],
+          "temperature_2m_max": [
+            35.4,
+            36.6,
+            26.6,
+            31.1,
+            31.7,
+            32.7,
+            33.4,
+            35.1,
+            33.1
+          ]
+        }
+      }
+    },
+    "41.59,-93.62": {
+      "checkedAt": "2026-10-21T08:14:35.349Z",
+      "sourceUrl": "https://api.open-meteo.com/v1/forecast?latitude=41.59&longitude=-93.62&daily=precipitation_sum,temperature_2m_max&past_days=8&forecast_days=1&timezone=auto",
+      "body": {
+        "latitude": 41.59084,
+        "longitude": -93.61574,
+        "generationtime_ms": 0.08821487426757812,
+        "utc_offset_seconds": -18000,
+        "timezone": "America/Chicago",
+        "timezone_abbreviation": "GMT-5",
+        "elevation": 247,
+        "daily_units": {
+          "time": "iso8601",
+          "precipitation_sum": "mm",
+          "temperature_2m_max": "°C"
+        },
+        "daily": {
+          "time": [
+            "2026-10-13",
+            "2026-10-14",
+            "2026-10-15",
+            "2026-10-16",
+            "2026-10-17",
+            "2026-10-18",
+            "2026-10-19",
+            "2026-10-20",
+            "2026-10-21"
+          ],
+          "precipitation_sum": [
+            0,
+            0,
+            6.3,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "temperature_2m_max": [
+            20,
+            16.4,
+            15.5,
+            11.1,
+            15.4,
+            19.3,
+            20,
+            21.8,
+            23.7
+          ]
+        }
+      }
+    }
+  },
+  "legacyCorn": {
+    "version": 2,
+    "checkedAt": "2026-10-20T12:19:38.067Z",
+    "points": [
+      {
+        "version": 2,
+        "key": "usa",
+        "location": "아이오와",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-93.62&latitude=42.02&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 0.01,
+            "tMaxC": 29.12
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 2.99,
+            "tMaxC": 28.21
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 0.17,
+            "tMaxC": 20.09
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 0,
+            "tMaxC": 16.99
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 18.24,
+            "tMaxC": 14.46
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 0.13,
+            "tMaxC": 11.21
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 0,
+            "tMaxC": 15.06
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 21.5,
+        "precip7mm": 21.5,
+        "hotDays": 0
+      },
+      {
+        "version": 2,
+        "key": "usa",
+        "location": "일리노이",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-89.25&latitude=40.11&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 0,
+            "tMaxC": 28.9
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 0.01,
+            "tMaxC": 32.09
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 3.65,
+            "tMaxC": 32.16
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 4.44,
+            "tMaxC": 24.2
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 14,
+            "tMaxC": 23.4
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 0.46,
+            "tMaxC": 13.88
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 0,
+            "tMaxC": 15.23
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 22.6,
+        "precip7mm": 22.6,
+        "hotDays": 0
+      },
+      {
+        "version": 2,
+        "key": "brazil",
+        "location": "마투그로수",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-56.1&latitude=-13.5&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 0.06,
+            "tMaxC": 35.71
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 0,
+            "tMaxC": 38.45
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 0.51,
+            "tMaxC": 39.5
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 4.31,
+            "tMaxC": 38.82
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 13.69,
+            "tMaxC": 34.28
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 6.68,
+            "tMaxC": 34.2
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 2.86,
+            "tMaxC": 34.25
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 28.1,
+        "precip7mm": 28.1,
+        "hotDays": 4
+      },
+      {
+        "version": 2,
+        "key": "brazil",
+        "location": "파라나",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-51.5&latitude=-24.5&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 6.58,
+            "tMaxC": 22.09
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 3.1,
+            "tMaxC": 25.27
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 18.91,
+            "tMaxC": 22.39
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 36.79,
+            "tMaxC": 21.37
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 29.11,
+            "tMaxC": 24.83
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 2.58,
+            "tMaxC": 23.47
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 0,
+            "tMaxC": 21.53
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 97.1,
+        "precip7mm": 97.1,
+        "hotDays": 0
+      },
+      {
+        "version": 2,
+        "key": "argentina",
+        "location": "코르도바",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-64.18&latitude=-31.42&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 0.56,
+            "tMaxC": 16.62
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 1.98,
+            "tMaxC": 13.65
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 2.72,
+            "tMaxC": 16.14
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 7.98,
+            "tMaxC": 16.08
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 2.48,
+            "tMaxC": 15.79
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 2.29,
+            "tMaxC": 15.92
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 2.97,
+            "tMaxC": 17.3
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 21,
+        "precip7mm": 21,
+        "hotDays": 0
+      },
+      {
+        "version": 2,
+        "key": "argentina",
+        "location": "산타페",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=-60.7&latitude=-31.6&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 0,
+            "tMaxC": 20.2
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 0.23,
+            "tMaxC": 19.52
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 0.13,
+            "tMaxC": 22.53
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 0.28,
+            "tMaxC": 21.3
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 0.84,
+            "tMaxC": 21.97
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 0.17,
+            "tMaxC": 19.83
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 0,
+            "tMaxC": 21.18
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 1.7,
+        "precip7mm": 1.7,
+        "hotDays": 0
+      },
+      {
+        "version": 2,
+        "key": "ukraine",
+        "location": "폴타바",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=34.55&latitude=49.59&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 0,
+            "tMaxC": 23.46
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 0,
+            "tMaxC": 24.63
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 0.58,
+            "tMaxC": 17.42
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 12.71,
+            "tMaxC": 12.99
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 28.69,
+            "tMaxC": 10.26
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 10.61,
+            "tMaxC": 13.45
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 2.73,
+            "tMaxC": 16.75
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 55.3,
+        "precip7mm": 55.3,
+        "hotDays": 0
+      },
+      {
+        "version": 2,
+        "key": "ukraine",
+        "location": "빈니차",
+        "source": "NASA POWER",
+        "sourceUrl": "https://power.larc.nasa.gov/api/temporal/daily/point?parameters=PRECTOTCORR%2CT2M_MAX&community=AG&longitude=28.47&latitude=49.23&start=20260920&end=20261019&format=JSON&time-standard=LST",
+        "checkedAt": "2026-10-20T12:19:38.067Z",
+        "lastDay": "2026-10-17",
+        "daily": [
+          {
+            "date": "2026-10-11",
+            "precipMm": 1,
+            "tMaxC": 24.17
+          },
+          {
+            "date": "2026-10-12",
+            "precipMm": 6.88,
+            "tMaxC": 15.59
+          },
+          {
+            "date": "2026-10-13",
+            "precipMm": 0.62,
+            "tMaxC": 11.88
+          },
+          {
+            "date": "2026-10-14",
+            "precipMm": 0,
+            "tMaxC": 13.59
+          },
+          {
+            "date": "2026-10-15",
+            "precipMm": 0.11,
+            "tMaxC": 12.02
+          },
+          {
+            "date": "2026-10-16",
+            "precipMm": 7.21,
+            "tMaxC": 7.95
+          },
+          {
+            "date": "2026-10-17",
+            "precipMm": 1.38,
+            "tMaxC": 12.6
+          }
+        ],
+        "days": 7,
+        "rainfallDays": 7,
+        "temperatureDays": 7,
+        "observedRainMm": 17.2,
+        "precip7mm": 17.2,
+        "hotDays": 0
+      }
+    ]
+  }
+}

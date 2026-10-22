@@ -4,6 +4,7 @@ import React from 'react';import {renderToStaticMarkup} from 'react-dom/server';
 import AiRecommendation from '../../components/AiRecommendation.tsx';
 import {aiPublisherLabel,type AiDisplaySource} from '../../utils/aiSourcePresentation.ts';
 import {RMS_PROCUREMENT_CONDITION} from '../../utils/rmsProcurementCondition.ts';
+import {rmsAiEditorial} from '../../utils/rmsAiEditorial.ts';
 const paths=fs.readdirSync('.rms-stage3/snapshots').map(n=>'.rms-stage3/snapshots/'+n);const hashes=()=>paths.map(p=>createHash('sha256').update(fs.readFileSync(p)).digest('hex'));const before=hashes();
 const source=(url:string,title='Complete original article title'):AiDisplaySource=>({url,title});
 for(const [url,label]of [
@@ -31,8 +32,9 @@ for(const id of ['wheat','corn','soybean','soybean-oil','palm-oil','sugar','pota
 for(const id of ['wheat','corn','soybean','tapioca-starch']){
  const d=JSON.parse(fs.readFileSync('.rms-stage3/snapshots/analysis-'+id+'.json','utf8')).payload.data;
  const $=load(renderToStaticMarkup(<AiRecommendation commodityId={id} researchStatus="cached" researchGeneratedAt={d.generatedAt} recommendedCoverage={d.deskRecommendation} executiveSummary={d.executiveSummary} bullishFactors={d.bullishFactors} bearishFactors={d.bearishFactors} watchItems={d.watchItems} researchSources={d.sources}/>));
- assert($.text().includes(d.executiveSummary));assert.deepEqual($('[data-rms-ai-sources] a').map((_,n)=>$(n).attr('href')).get(),[...new Set(d.sources.map((s:any)=>s.url))]);
- for(const removed of ['RMS 구매 조건','Gemini AI','저장 분석','자료 확인:'])assert(!$.text().includes(removed));
+ const display=rmsAiEditorial(id,d.generatedAt,d.sources,d).fields;
+ assert($.text().includes(display.executiveSummary!));assert.deepEqual($('[data-rms-ai-sources] a').map((_,n)=>$(n).attr('href')).get(),[...new Set(d.sources.map((s:any)=>s.url))]);
+ for(const removed of ['RMS 구매 조건','Gemini AI','저장 분석','자료 확인:','RMS 문체 편집'])assert(!$.text().includes(removed));
 }
 const loading=load(renderToStaticMarkup(<AiRecommendation isLoading researchStatus="cached"/>)).text();assert(!loading.includes('Gemini AI'));assert(!loading.includes('저장 분석'));
 assert.deepEqual(hashes(),before);console.log('PASS universal AI cleanup: all eight cards, four genuine reports, exact/all URLs, duplicate publishers, tooltips and no visible metadata; snapshots unchanged.');

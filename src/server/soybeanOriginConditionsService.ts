@@ -1,5 +1,6 @@
-/** Soybean-only NASA POWER screening. Country PSD totals and point-level gridded
- * weather remain separate. No crop damage, soil moisture or phenology is inferred. */
+import {getOriginWeather,enrichSharedOriginWeather,type SharedWeatherEvidence} from './originWeatherService.ts';
+/** Soybean-only NASA POWER screening. Country PSD totals and point-level reanalysis comparison
+ * weather remain separate. Primary radar weather uses the shared Open-Meteo adapter. No crop damage, soil moisture or phenology is inferred. */
 import fs from 'node:fs';
 import {screenObservedWeather} from '../utils/originWeatherPills.ts';
 import path from 'node:path';
@@ -33,14 +34,14 @@ export const SOYBEAN_WEATHER_POINTS:ReadonlyArray<Point>=[
 export const SOYBEAN_HEAT_SCREEN={temperatureC:35,minObservedDays:3} as const;
 const DAY=86400000,MAX_FETCH_AGE=20*3600000,FAILURE_RETRY=20*60000,MAX_EVIDENCE_AGE=8*DAY;
 // Keep the lossy legacy v1 aggregate cache intact; it cannot establish missing-value safety.
-const CACHE_PATH=path.join(process.env.RMS_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'soybean-nasa-power-v2.json');
+const CACHE_PATH=path.join(process.env.RMS_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'soybean-nasa-power-comparison-v3.json');
 const iso=(date:Date)=>date.toISOString().slice(0,10);
 const advance=(date:string,n:number)=>iso(new Date(Date.parse(date+'T00:00:00Z')+n*DAY));
 const validDay=(date:string)=>/^20\d{2}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(Date.parse(date))&&iso(new Date(date))===date;
 const rainValue=(v:unknown):number|null=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<500?v:null;
 const heatValue=(v:unknown):number|null=>typeof v==='number'&&Number.isFinite(v)&&v>=-65&&v<=65?v:null;
 export function soybeanWeatherUrl(p:Point,now:number):string {
-  const end=iso(new Date(now-DAY)),start=advance(end,-29);
+  const end=iso(new Date(now+Math.round(p.lon/15)*3600000-DAY)),start=advance(end,-29);
   const u=new URL('https://power.larc.nasa.gov/api/temporal/daily/point');
   u.search=new URLSearchParams({parameters:'PRECTOTCORR,T2M_MAX',community:'AG',longitude:String(p.lon),latitude:String(p.lat),start:start.replaceAll('-',''),end:end.replaceAll('-',''),format:'JSON','time-standard':'LST'}).toString();
   return u.toString();
@@ -61,15 +62,12 @@ export function parseNasaSoybeanWeather(body:unknown,point:Point,checkedAt:strin
   const rain=j.parameters?.PRECTOTCORR?.units==='mm/day'?params?.PRECTOTCORR:null;
   const heat=j.parameters?.T2M_MAX?.units==='C'?params?.T2M_MAX:null;
   if(!rain&&!heat)return null;
-  const today=iso(new Date(checkedAt));
-  const dates=[...new Set([...Object.keys(rain||{}),...Object.keys(heat||{})])].map(raw=>/^20\d{6}$/.test(raw)?`${raw.slice(0,4)}-${raw.slice(4,6)}-${raw.slice(6,8)}`:'')
-    .filter(day=>validDay(day)&&day<today&&day>=advance(today,-32)).sort();
-  const last=dates.filter(day=>{const raw=day.replaceAll('-','');return rainValue(rain?.[raw])!==null||heatValue(heat?.[raw])!==null;}).at(-1);
-  if(!last||Date.parse(today)-Date.parse(last)>MAX_EVIDENCE_AGE)return null;
-  // Fixed seven calendar days. Missing one parameter never removes its counterpart
-  // or silently shifts a partial recent window to a more complete older period.
+  const today=iso(new Date(Date.parse(checkedAt)+Math.round(point.lon/15)*3600000));
+  const last=advance(today,-1);
+  // Exact seven completed LST days; provider latency remains missing, never an older replacement week.
   const daily=Array.from({length:7},(_,i)=>{const date=advance(last,i-6),raw=date.replaceAll('-','');
     return {date,precipMm:rainValue(rain?.[raw]),tMaxC:heatValue(heat?.[raw])};});
+  if(daily.every(d=>d.precipMm===null&&d.tMaxC===null))return null;
   return {version:2,key:point.key,location:point.label,source:'NASA POWER',sourceUrl:soybeanWeatherUrl(point,Date.parse(checkedAt)),checkedAt,lastDay:last,daily,...aggregate(daily)};
 }
 export function isRecentSoybeanWeather(p:SoybeanWeatherEvidence,now=Date.now()):boolean {
@@ -111,7 +109,7 @@ export function enrichSoybeanWithEvidence(radar:OriginRadarResponse,points:Soybe
   });
   return {...radar,origins,sourceFooterText:[...new Set([radar.sourceFooterText,...(origins.some(o=>o.weatherSource==='NASA POWER')?['NASA POWER']:[])].filter(Boolean))].join(' · ')};
 }
-export class SoybeanOriginConditionsService {
+export class NasaSoybeanComparisonService {
   private pending:Promise<SoybeanWeatherEvidence[]>|null=null;
   private checkedAt=0;
   private last:SoybeanWeatherEvidence[]=[];
@@ -136,5 +134,9 @@ export class SoybeanOriginConditionsService {
     })();try{return await this.pending;}finally{this.pending=null;}
   }
   async enrich(radar:OriginRadarResponse,force=false):Promise<OriginRadarResponse>{return enrichSoybeanWithEvidence(radar,await this.getEvidence(force));}
+}
+export class SoybeanOriginConditionsService {
+ async getEvidence(force=false):Promise<SharedWeatherEvidence[]> {return (await Promise.all(SOYBEAN_WEATHER_POINTS.map(p=>getOriginWeather(p,{force,minimumTemperature:true})))).filter((p):p is SharedWeatherEvidence=>!!p);}
+ async enrich(radar:OriginRadarResponse,force=false):Promise<OriginRadarResponse>{return enrichSharedOriginWeather(radar,await this.getEvidence(force),SOYBEAN_WEATHER_POINTS,{heatDays:SOYBEAN_HEAT_SCREEN.minObservedDays});}
 }
 export const soybeanOriginConditionsService=new SoybeanOriginConditionsService();

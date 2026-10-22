@@ -1,3 +1,4 @@
+import {getOriginWeather,enrichSharedOriginWeather,type SharedWeatherEvidence} from './originWeatherService.ts';
 /**
  * Corn Origin Radar, freely retrieved NASA POWER daily weather at eight indicative
  * agricultural locations. NASA observations/reanalysis are gridded, not station
@@ -31,7 +32,7 @@ export const CORN_WEATHER_POINTS:ReadonlyArray<Point> = [
 ];
 const POINTS=CORN_WEATHER_POINTS;
 const DAY=86400000;
-const CACHE_PATH=path.join(process.env.RMS_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'corn-nasa-power-v2.json');
+const CACHE_PATH=path.join(process.env.RMS_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'corn-nasa-power-comparison-v3.json');
 const MAX_FETCH_AGE=20*60*60*1000;
 const FAILURE_RETRY=20*60*1000;
 const MAX_EVIDENCE_AGE=8*DAY;
@@ -53,12 +54,11 @@ export function parseNasaCornWeather(body:unknown,point:Point,checkedAt:string):
   const rain=j.parameters?.PRECTOTCORR?.units==='mm/day'?params?.PRECTOTCORR:null;
   const heat=j.parameters?.T2M_MAX?.units==='C'?params?.T2M_MAX:null;
   if(!rain&&!heat)return null;
-  const today=iso(new Date(checkedAt));
-  const dates=[...new Set([...Object.keys(rain||{}),...Object.keys(heat||{})])].filter(raw=>/^20\d{6}$/.test(raw)).map(raw=>raw.slice(0,4)+'-'+raw.slice(4,6)+'-'+raw.slice(6,8))
-    .filter(day=>validWeatherDay(day)&&day<today&&day>=advance(today,-32)).sort();
-  const last=dates.filter(day=>{const raw=day.replaceAll('-','');return rainValue(rain?.[raw])!==null||heatValue(heat?.[raw])!==null;}).at(-1);
-  if(!last||Date.parse(today)-Date.parse(last)>MAX_EVIDENCE_AGE)return null;
+  const today=iso(new Date(Date.parse(checkedAt)+Math.round(point.lon/15)*3600000));
+  const last=advance(today,-1);
+  // Exact seven completed LST days; provider latency remains missing, never an older replacement week.
   const daily=Array.from({length:7},(_,i)=>{const date=advance(last,i-6),raw=date.replaceAll('-','');return {date,precipMm:rainValue(rain?.[raw]),tMaxC:heatValue(heat?.[raw])};});
+  if(daily.every(d=>d.precipMm===null&&d.tMaxC===null))return null;
   return {version:2,key:point.key,location:point.label,source:'NASA POWER',sourceUrl:weatherUrl(point,Date.parse(checkedAt)),checkedAt,lastDay:last,daily,...aggregate(daily)};
 }
 function cacheRead():CornWeatherCache|null {
@@ -86,7 +86,7 @@ export function isRecentCornWeather(p:CornWeatherEvidence,now=Date.now()):boolea
   return (expected.rainfallDays>0||expected.temperatureDays>0)&&Object.entries(expected).every(([k,v])=>p[k]===v);
 }
 function weatherUrl(p:Point,now:number):string {
-  const end=iso(new Date(now-DAY));
+  const end=iso(new Date(now+Math.round(p.lon/15)*3600000-DAY));
   const start=advance(end,-29);
   const u=new URL('https://power.larc.nasa.gov/api/temporal/daily/point');
   for(const [key,v] of Object.entries({parameters:'PRECTOTCORR,T2M_MAX',community:'AG',
@@ -147,7 +147,7 @@ export function enrichCornWithEvidence(radar:OriginRadarResponse,points:CornWeat
   };
 }
 
-export class CornOriginConditionsService {
+export class NasaCornComparisonService {
   private pending:Promise<CornWeatherEvidence[]>|null=null;
   private checkedAt=0;
   private last: CornWeatherEvidence[]=[];
@@ -180,5 +180,9 @@ export class CornOriginConditionsService {
     const points=await this.getEvidence(force);
     return enrichCornWithEvidence(radar,points);
   }
+}
+export class CornOriginConditionsService {
+ async getEvidence(force=false):Promise<SharedWeatherEvidence[]> {return (await Promise.all(CORN_WEATHER_POINTS.map(p=>getOriginWeather(p,{force,minimumTemperature:true})))).filter((p):p is SharedWeatherEvidence=>!!p);}
+ async enrich(radar:OriginRadarResponse,force=false):Promise<OriginRadarResponse>{return enrichSharedOriginWeather(radar,await this.getEvidence(force),CORN_WEATHER_POINTS,{heatDays:3,rainMm:90});}
 }
 export const cornOriginConditionsService=new CornOriginConditionsService();

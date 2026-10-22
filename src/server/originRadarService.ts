@@ -9,6 +9,10 @@
  * 5. Russia / Black Sea: USDA FAS PSD (Primary) & AMIS Trade/Logistics (Supporting)
  */
 
+import {withHistoricalWeatherContext} from './originHistoricalWeather.ts';
+import {WHEAT_WEATHER_POINTS} from './wheatOriginRiskService.ts';
+import {CORN_WEATHER_POINTS} from './cornOriginConditionsService.ts';
+import {SOYBEAN_WEATHER_POINTS} from './soybeanOriginConditionsService.ts';
 import type {WeatherPill} from '../utils/originWeatherPills.ts';
 import { usdaFasService } from './usdaFasService.ts';
 import { wheatVerifiedOriginService } from './wheatVerifiedOriginService.ts';
@@ -32,6 +36,9 @@ export interface OriginItemDetail {
   statusColor: 'green' | 'yellow' | 'red' | 'gray';
   riskWeather?: string;
   weatherSource?: string;
+  weatherDataKind?: string;
+  weatherEvidence?: any;
+  weatherHistoricalContext?: {schemaVersion:number;role:string;canTriggerCurrentAlerts:boolean;points:any[]};
   weatherAsOf?: string;
   weatherPills?: WeatherPill[];
   weatherValidUntil?: string;
@@ -88,19 +95,19 @@ export class OriginRadarService {
 
   public async getWheatOriginRadar(force: boolean = false): Promise<OriginRadarResponse> {
     const verified = await wheatVerifiedOriginService.getWheatOriginRadar(force);
-    return wheatOriginRiskService.enrich(verified);
+    return withHistoricalWeatherContext(await wheatOriginRiskService.enrich(verified),WHEAT_WEATHER_POINTS);
   }
 
   // Corn uses free, published USDA WASDE country rows rather than the PSD sample fallbacks.
   public async getCornOriginRadar(force: boolean = false): Promise<OriginRadarResponse> {
     const supply = await cornWasdeOriginService.getCornOriginRadar(force);
-    return cornOriginConditionsService.enrich(supply, force);
+    return withHistoricalWeatherContext(await cornOriginConditionsService.enrich(supply, force),CORN_WEATHER_POINTS);
   }
 
   // Soybean uses authenticated country PSD observations, not sample baselines.
   public async getSoybeanOriginRadar(force = false): Promise<OriginRadarResponse> {
     const supply = await soybeanPsdOriginService.getSoybeanOriginRadar(force);
-    return soybeanOriginConditionsService.enrich(supply, force);
+    return withHistoricalWeatherContext(await soybeanOriginConditionsService.enrich(supply, force),SOYBEAN_WEATHER_POINTS);
   }
 
   private soybeanOilCachedResult: OriginRadarResponse | null = null;

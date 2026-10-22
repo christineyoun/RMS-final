@@ -1,0 +1,223 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "commodity": "wheat",
+      "snapshot": {
+        "path": ".rms-stage3/snapshots/analysis-wheat.json",
+        "sha256": "fe00db37f43c936a4fbae0fafa876d7085e063c5da96bf6bd0b9422565af82e9",
+        "runId": "2026-10-16-5f04ab8c",
+        "generatedAt": "2026-10-16T05:53:08.574Z"
+      },
+      "review": {
+        "version": "korean-editorial-v2-factor-noun-phrases",
+        "authorizedPurpose": "Owner-requested grammatical and stylistic display standardization; original market interpretations and source-review limitations retained.",
+        "purchasingConditions": "Short recommendation labels must be read with the unchanged purchasing conditions in executiveSummary; no unconditional purchase instruction.",
+        "sourceStatus": "requires-human-review",
+        "factorStyle": "Owner-requested concise analytical noun phrases; v1 preserved in recoverable backup; executive summary, watch items and desk recommendation unchanged."
+      },
+      "sources": [
+        {
+          "title": "USDA — October 2026 Wheat Outlook",
+          "url": "https://www.ers.usda.gov/publications/115627"
+        },
+        {
+          "title": "USDA — October 2026 WASDE",
+          "url": "https://www.usda.gov/oce/commodity/wasde/wasde1026.pdf"
+        },
+        {
+          "title": "ABARES — Australian Crop Report, September 2026",
+          "url": "https://www.agriculture.gov.au/abares/research-topics/agricultural-outlook/australian-crop-report/september-2026"
+        },
+        {
+          "title": "Commodity Board — Russian Weather Risks and USDA Wheat Export Cuts",
+          "url": "https://commodity-board.com/russian-weather-risks-clash-with-usda-wheat-export-cuts"
+        }
+      ],
+      "original": {
+        "deskRecommendation": "분할 매수 검토 및 흑해 수출 리스크 모니터링 (품종별 현물 오퍼·베이시스·운임·환율·국내 도착원가 확인 후 결정)",
+        "executiveSummary": "2026년 10월 9일 발표된 USDA WASDE에 따르면 2026/27년 미국 밀 수출 전망은 전월보다 2,500만 부셸 감소한 7억 5,000만 부셸이며, 기말재고 전망은 2,300만 부셸 증가한 7억 4,000만 부셸입니다. 다만 기말재고는 전년보다 약 20% 낮아 전월 대비 증가만으로 공급이 충분하다고 판단하기는 어렵습니다. USDA는 러시아 밀 수출 전망을 4,000만 톤으로 하향했으며, 흑해 지역의 기상·물류 불확실성은 수출 여건을 살펴야 할 위험 요인입니다. 호주 ABARES의 2026년 9월 전망은 밀 생산량을 2,990만 톤으로 제시했으며, 이는 전년보다 17% 적지만 6월 전망보다 개선된 수치입니다. 해외 선물가격 약세가 곧바로 미국산 현물 베이시스의 하락이나 한국 도착원가의 하락을 뜻하지는 않습니다. 농심은 향후 1~3개월 소요 물량의 분할 매수를 검토하되, 실제 매수 시점과 규모는 품종·규격별 오퍼, 베이시스, 해상 운임, 환율, 국내 도착원가 및 현재 재고 커버리지 확인 후 결정해야 합니다.",
+        "bullishFactors": [
+          "러시아 남부 동계밀 파종지의 건조 조건과 흑해 항로 불확실성은 향후 수출 흐름 및 조달 비용에 상승 위험으로 작용할 수 있습니다.",
+          "미국 밀 기말재고는 전월보다 늘었지만 전년보다 약 20% 낮아 재고 증가만으로 공급 여유를 단정하기 어렵습니다."
+        ],
+        "bearishFactors": [
+          "10월 USDA WASDE는 미국 밀 수출 전망을 전월보다 2,500만 부셸 낮추고 기말재고는 2,300만 부셸 높였습니다. 이는 단기 선물시장에 약세 요인으로 작용할 수 있습니다.",
+          "호주의 9월 작황 전망은 6월보다 개선되었고, 일부 지역의 수확 전망 개선은 공급 우려를 완화할 수 있습니다. 다만 연간 생산량은 전년보다 감소할 것으로 예상됩니다."
+        ],
+        "watchItems": [
+          "후속 USDA WASDE의 미국 밀 수출·재고 및 러시아 수출 전망 변경 여부",
+          "흑해 선적 차질 및 러시아 동계밀 파종 상황, 호주 ABARES 후속 수확 전망",
+          "한국 구매 규격별 현물 오퍼·베이시스·해상 운임·USD/KRW 환율·국내 도착원가와 재고 커버리지"
+        ]
+      },
+      "revised": {
+        "deskRecommendation": "흑해 수출 위험 모니터링 및 분할 매수 검토",
+        "executiveSummary": "2026년 10월 9일 발표된 USDA WASDE에 따르면 2026/27년 미국 밀 수출 전망은 전월보다 2,500만 부셸 감소한 7억 5,000만 부셸이며, 기말재고 전망은 2,300만 부셸 증가한 7억 4,000만 부셸입니다. 다만 기말재고는 전년보다 약 20% 낮아 전월 대비 증가만으로 공급이 충분하다고 판단하기는 어렵습니다. USDA는 러시아 밀 수출 전망을 4,000만 톤으로 하향했으며, 흑해 지역의 기상·물류 불확실성은 수출 여건을 살펴야 할 위험 요인입니다. 호주 ABARES의 2026년 9월 전망은 밀 생산량을 2,990만 톤으로 제시했으며, 이는 전년보다 17% 적지만 6월 전망보다 개선된 수치입니다. 해외 선물가격 약세가 곧바로 미국산 현물 베이시스의 하락이나 한국 도착원가의 하락을 뜻하지는 않습니다. 농심은 향후 1~3개월 소요 물량의 분할 매수를 검토하되, 실제 매수 시점과 규모는 품종·규격별 오퍼, 베이시스, 해상 운임, 환율, 국내 도착원가 및 현재 재고 커버리지 확인 후 결정해야 합니다.",
+        "bullishFactors": [
+          "러시아 남부 동계밀 파종지의 건조 조건과 흑해 항로 불확실성에 따른 향후 수출 흐름 차질 및 조달 비용 상승 위험",
+          "미국 밀 기말재고의 전월 대비 증가에도 전년 대비 약 20% 낮은 수준에 따른 공급 여유 판단의 한계"
+        ],
+        "bearishFactors": [
+          "10월 USDA WASDE의 미국 밀 수출 전망 전월 대비 2,500만 부셸 하향 및 기말재고 2,300만 부셸 상향에 따른 단기 선물시장 약세 가능성",
+          "호주의 9월 작황 전망의 6월 대비 개선 및 일부 지역 수확 전망 개선에 따른 공급 우려 완화 가능성, 다만 연간 생산량은 전년 대비 감소 전망"
+        ],
+        "watchItems": [
+          "후속 USDA WASDE의 미국 밀 수출·재고 및 러시아 수출 전망 변화",
+          "흑해 선적 차질·러시아 동계밀 파종 상황 및 호주 ABARES 후속 수확 전망",
+          "한국 구매 규격별 현물 오퍼·베이시스·해상 운임·USD/KRW 환율·국내 도착원가 및 재고 커버리지"
+        ]
+      }
+    },
+    {
+      "commodity": "corn",
+      "snapshot": {
+        "path": ".rms-stage3/snapshots/analysis-corn.json",
+        "sha256": "cc783d35c5ba68f851fe83fdc75c198b45e63d2d5d4ce75ee2030bb5ac06cc31",
+        "runId": "corn-ai-qa-2026-10-19-53d1bfec",
+        "generatedAt": "2026-10-19T05:18:09.809Z"
+      },
+      "review": {
+        "version": "korean-editorial-v2-factor-noun-phrases",
+        "authorizedPurpose": "Owner-requested grammatical and stylistic display standardization; original market interpretations and source-review limitations retained.",
+        "purchasingConditions": "Short recommendation labels must be read with the unchanged purchasing conditions in executiveSummary; no unconditional purchase instruction.",
+        "sourceStatus": "requires-human-review",
+        "factorStyle": "Owner-requested concise analytical noun phrases; v1 preserved in recoverable backup; executive summary, watch items and desk recommendation unchanged."
+      },
+      "sources": [
+        {
+          "title": "dtnpf.com",
+          "url": "https://www.dtnpf.com/agriculture/web/ag/news/article/2026/10/09/october-wasdes-shocking-rise-corn"
+        },
+        {
+          "title": "helenaagri.com",
+          "url": "https://www.helenaagri.com/fieldlink/market-report/usda-october-2026-crop-report-overview/"
+        },
+        {
+          "title": "cihedging.com",
+          "url": "https://www.cihedging.com/posts/articles/october-2026-wasde-report-summary-and-notes/"
+        },
+        {
+          "title": "dtnpf.com",
+          "url": "https://www.dtnpf.com/agriculture/web/ag/crops/article/2026/10/13/usda-crop-progress-corn-33-harvested"
+        },
+        {
+          "title": "farms.com",
+          "url": "https://www.farms.com/ag-industry-news/corn-commodity-update-for-the-week-ending-oct-16-2026"
+        },
+        {
+          "title": "investing.com",
+          "url": "https://www.investing.com/commodities/us-corn-historical-data"
+        }
+      ],
+      "original": {
+        "deskRecommendation": "수확기 약세 흐름 확인 중 매수 타이밍 분할 저울질 및 단기 관망(Wait-and-See)",
+        "executiveSummary": "2026년 10월 19일 기준, 글로벌 옥수수 시장은 10월 9일 발표된 미국 농무부(USDA) WASDE 보고서의 공급 상향 충격으로 하락 압력을 강하게 받고 있습니다. USDA는 2026/27 마케팅연도 미국 옥수수 생산량을 160억 3,400만 부셸(단수 181.2 bu/acre)로, 기말 재고를 18억 4,900만 부셸로 대폭 상향했습니다. 10월 13일자 NASS 작황 보고서에 따르면 미국 수확 진행률은 33%(5년 평균 39%)로 다소 지연되었으나, 10월 16일 CBOT 12월물(ZCZ26)은 부셸당 474.25센트까지 하락하며 약세장을 연출했습니다. 남미의 경우 브라질 내 에탄올 수요 증가로 인한 수출 여력 축소 우려와 아르헨티나의 수출 경쟁 확대가 공존하고 있습니다. 향후 1~3개월 동안 한국 식품가공용 원료 구매 데스크는 선물가격 하락세만 믿고 일괄 매수에 나서기보다, 미국 산지 수확 진척에 따른 물리적 FOB 베이시스 완화, 해상운임(Ocean Freight), 그리고 고환율(USD/KRW) 변동성을 통합한 원화 도착원가를 정밀 비교하며 분할 분기 커버리지 기회를 모색하는 조건부 관망 대응이 바람직합니다.",
+        "bullishFactors": [
+          "브라질 국내 옥수수 기반 에탄올 공장 증설 및 사료 소비 증가에 따른 가용 수출 물량 압박",
+          "우크라이나 흑해 및 다뉴브 수출 물류 위험 지속과 유럽 일부 지역의 옥수수 감산"
+        ],
+        "bearishFactors": [
+          "USDA 10월 WASDE 보고서에서 확인된 2026/27 마케팅연도 미국 생산량(160.34억 부셸) 및 기말재고(18.49억 부셸)의 대폭 상향 서프라이즈",
+          "CBOT 12월 옥수수 선물이 10월 16일 기준 474.25센트/부셸 수준으로 급락하며 기술적 지지선 이탈 및 펀드 매도세 가속화"
+        ],
+        "watchItems": [
+          "10월 19일 발표 예정인 USDA NASS 주간 수확 진척률 및 중서부 가을철 강수/건조 기상 패턴",
+          "미국 걸프/PNW 및 남미 산지 FOB Cash Basis 호가 변동과 원/달러(USD/KRW) 환율에 따른 실질 원화 도착원가 추이"
+        ]
+      },
+      "revised": {
+        "deskRecommendation": "수확기 약세 확인 중 단기 관망 및 분할 매수 검토",
+        "executiveSummary": "2026년 10월 19일 기준, 글로벌 옥수수 시장은 10월 9일 발표된 미국 농무부(USDA) WASDE 보고서의 공급 전망 상향으로 강한 하방 압력을 받고 있습니다. USDA는 2026/27 마케팅연도 미국 옥수수 생산량을 160억 3,400만 부셸(단수 181.2 bu/acre)로, 기말재고를 18억 4,900만 부셸로 대폭 상향했습니다. 10월 13일자 NASS 작황 보고서에 따르면 미국 수확 진행률은 33%(5년 평균 39%)로 다소 지연되었으나, 10월 16일 CBOT 12월물(ZCZ26)은 부셸당 474.25센트까지 하락하며 약세를 보였습니다. 남미의 경우 브라질 내 에탄올 수요 증가로 인한 수출 여력 축소 우려와 아르헨티나의 수출 경쟁 확대가 공존하고 있습니다. 향후 1~3개월 동안 한국 식품가공용 원료 구매 데스크는 선물가격 하락세만 믿고 일괄 매수에 나서기보다, 미국 산지 수확 진척에 따른 물리적 FOB 베이시스 완화, 해상 운임, 그리고 고환율(USD/KRW) 변동성을 통합한 원화 도착원가를 정밀 비교하며 분기별 소요 물량의 분할 조달 기회를 검토하는 조건부 관망 대응이 바람직합니다.",
+        "bullishFactors": [
+          "브라질 국내 옥수수 기반 에탄올 공장 증설 및 사료 소비 증가에 따른 가용 수출 물량 압박",
+          "우크라이나 흑해 및 다뉴브 수출 물류 위험 지속과 유럽 일부 지역의 옥수수 생산량 감소"
+        ],
+        "bearishFactors": [
+          "USDA 10월 WASDE의 2026/27 마케팅연도 미국 생산량(160.34억 부셸) 및 기말재고(18.49억 부셸)의 예상 밖 대폭 상향",
+          "CBOT 12월 옥수수 선물의 10월 16일 기준 474.25센트/부셸 수준 급락과 기술적 지지선 이탈 및 펀드 매도세 가속화"
+        ],
+        "watchItems": [
+          "10월 19일 발표 예정인 USDA NASS 주간 수확 진척률 및 중서부 가을철 강수·건조 기상 추이",
+          "미국 걸프·PNW 및 남미 산지 FOB 현물 베이시스 호가 변동과 원/달러(USD/KRW) 환율에 따른 실질 원화 도착원가 추이"
+        ]
+      }
+    },
+    {
+      "commodity": "soybean",
+      "snapshot": {
+        "path": ".rms-stage3/snapshots/analysis-soybean.json",
+        "sha256": "71ec75871d83f176ac40caa2e8e4c0d403f2898b4dd47c3a434bea7bebedee92",
+        "runId": "standalone-soybean-a874e58ab620",
+        "generatedAt": "2026-10-21T06:04:07.823Z"
+      },
+      "review": {
+        "version": "korean-editorial-v2-factor-noun-phrases",
+        "authorizedPurpose": "Owner-requested grammatical and stylistic display standardization; original market interpretations and source-review limitations retained.",
+        "purchasingConditions": "Short recommendation labels must be read with the unchanged purchasing conditions in executiveSummary; no unconditional purchase instruction.",
+        "sourceStatus": "requires-human-review",
+        "factorStyle": "Owner-requested concise analytical noun phrases; v1 preserved in recoverable backup; executive summary, watch items and desk recommendation unchanged."
+      },
+      "sources": [
+        {
+          "url": "https://biomassmagazine.com/articles/usda-october-wasde-maintains-forecast-for-2026-27-soybean-oil-use-in-biofuel",
+          "title": "biomassmagazine.com"
+        },
+        {
+          "url": "https://www.global-agriculture.com/global-agriculture/usda-reports-record-soybean-yield-bigger-corn-crop-in-october-forecast/",
+          "title": "global-agriculture.com"
+        },
+        {
+          "url": "https://www.agrolatam.com/usa/news/chicago-grain-futures-close-lower-as-harvest-pressure-hits-corn-soybeans-and-wheat/",
+          "title": "agrolatam.com"
+        },
+        {
+          "url": "https://commodity-board.com/soybeans-hold-firm-as-futures-edge-higher-and-by-products-stabilize",
+          "title": "commodity-board.com"
+        },
+        {
+          "url": "https://www.fas.usda.gov/data/commodities/soybeans",
+          "title": "usda.gov"
+        },
+        {
+          "url": "https://tradingeconomics.com/commodity/soybeans",
+          "title": "tradingeconomics.com"
+        }
+      ],
+      "original": {
+        "deskRecommendation": "관망 견지 및 분할 매수 검토 (단, 물리적 현물 베이시스 및 해상운임·환율 개별 확인 조건부)",
+        "executiveSummary": "2026년 10월 9일 발표된 USDA WASDE 보고서에 따르면 2026/27년도 미국 대두 생산량은 기록적인 에이커당 53.1부셸의 수확고에 힘입어 45억 6,200만 부셸로 상향 조정되었으며, 기말 재고 역시 3억 1,500만 부셸로 늘어나 수급 완화 기조를 나타냈습니다. 시카고상품거래소(CBOT) 대두 선물(11월물 ZSX26)은 10월 20일 기준 부셸당 1,248.25센트로 마감하며 수확기 공급 압력 속에서 약세를 이어가고 있습니다. 남미의 경우 브라질과 아르헨티나의 2026/27 파종기 기상 여건이 전반적으로 순조롭게 출발하고 있으나, 향후 강우 패턴에 대한 관측 불확실성이 상존합니다. 중국의 대두 파쇄 마진 및 수입 수요는 지속 관찰 중이나 대규모 선물 반등을 이끌기에는 모멘텀이 제한적입니다. 국내 식품 가공용 대두 조달 데스크는 선물 가격 하락세만으로 수입 단가 하락을 단정하지 말고, 현물 베이시스(FOB Basis), 해상 운임 및 원/달러(USD/KRW) 환율 변동성을 필수적으로 확인하며 향후 1~3개월 소요분에 대해 보수적인 분할 조달 전략을 취할 것을 권고합니다.",
+        "bullishFactors": [
+          "미국 농무부(USDA) 10월 전망치에서 미국 대두 수출량 1,000만 부셸 상향 조정(16억 9,500만 부셸) 등 견조한 글로벌 수요 유지",
+          "남미 파종기 초기 기상 불확실성 및 엘니뇨 등 중기 강우 분포 변동에 따른 잠재적 생육 리스크"
+        ],
+        "bearishFactors": [
+          "USDA 10월 WASDE 기준 2026/27년도 미국 대두 수확량(45.62억 부셸) 및 단수(53.1 bu/acre) 사상 최대치 전망",
+          "미국 중서부 수확 진행률 진척 및 공급 증가로 인한 CBOT 선물(ZSX26) 1,248.25센트/부셸 수준의 수확기 계절적 하방 압력"
+        ],
+        "watchItems": [
+          "미국 NASS 주간 수확 진척도 및 콘벨트 건조 기상 유지 여부",
+          "브라질 파종 진행 속도 및 브라질/아르헨티나 주요 생산지 강우량 패턴",
+          "국내 도착도 비용 결정을 위한 산지별 물리적 FOB 베이시스, 원/달러(USD/KRW) 환율, 벌크 해상 운임(자료 확인 필요)"
+        ]
+      },
+      "revised": {
+        "deskRecommendation": "관망 유지 및 분할 매수 검토",
+        "executiveSummary": "2026년 10월 9일 발표된 USDA WASDE 보고서에 따르면 2026/27년도 미국 대두 생산량은 기록적인 에이커당 53.1부셸의 단수에 힘입어 45억 6,200만 부셸로 상향 조정되었으며, 기말재고 역시 3억 1,500만 부셸로 늘어나 수급 완화 기조를 나타냈습니다. 시카고상품거래소(CBOT) 대두 선물(11월물 ZSX26)은 10월 20일 기준 부셸당 1,248.25센트로 마감하며 수확기 공급 압력 속에서 약세를 이어가고 있습니다. 남미의 경우 브라질과 아르헨티나의 2026/27 파종기 기상 여건이 전반적으로 순조롭게 출발하고 있으나, 향후 강우 패턴에 대한 관측 불확실성이 남아 있습니다. 중국의 대두 파쇄 마진 및 수입 수요는 지속 관찰 중이나 대규모 선물 반등을 이끌기에는 모멘텀이 제한적입니다. 국내 식품 가공용 대두 조달 데스크는 선물가격 하락세만으로 수입 단가 하락을 단정하지 말고, 현물 베이시스(FOB Basis), 해상 운임 및 원/달러(USD/KRW) 환율 변동성을 필수적으로 확인하며 향후 1~3개월 소요분에 대해 보수적인 분할 조달 전략을 취할 것을 권고합니다.",
+        "bullishFactors": [
+          "미국 농무부(USDA) 10월 전망치의 미국 대두 수출량 1,000만 부셸 상향 조정(16억 9,500만 부셸) 등 견조한 글로벌 수요 유지",
+          "남미 파종기 초기 기상 불확실성 및 엘니뇨 등 중기 강우 분포 변동에 따른 잠재적 생육 위험"
+        ],
+        "bearishFactors": [
+          "USDA 10월 WASDE 기준 2026/27년도 미국 대두 수확량(45.62억 부셸) 및 단수(53.1 bu/acre)의 사상 최대치 전망",
+          "미국 중서부 수확 진척 및 공급 증가에 따른 CBOT 선물(ZSX26) 1,248.25센트/부셸 수준의 수확기 계절적 하방 압력"
+        ],
+        "watchItems": [
+          "미국 NASS 주간 수확 진척도 및 콘벨트 건조 기상 유지 여부",
+          "브라질 파종 진행 속도 및 브라질·아르헨티나 주요 생산지 강우량 추이",
+          "국내 도착원가 결정을 위한 산지별 현물 FOB 베이시스·원/달러(USD/KRW) 환율·벌크 해상 운임(자료 확인 필요)"
+        ]
+      }
+    }
+  ]
+}
