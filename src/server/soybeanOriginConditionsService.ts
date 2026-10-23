@@ -136,7 +136,7 @@ export class NasaSoybeanComparisonService {
   async enrich(radar:OriginRadarResponse,force=false):Promise<OriginRadarResponse>{return enrichSoybeanWithEvidence(radar,await this.getEvidence(force));}
 }
 export class SoybeanOriginConditionsService {
- async getEvidence(force=false):Promise<SharedWeatherEvidence[]> {return (await Promise.all(SOYBEAN_WEATHER_POINTS.map(p=>getOriginWeather(p,{force,minimumTemperature:true})))).filter((p):p is SharedWeatherEvidence=>!!p);}
- async enrich(radar:OriginRadarResponse,force=false):Promise<OriginRadarResponse>{return enrichSharedOriginWeather(radar,await this.getEvidence(force),SOYBEAN_WEATHER_POINTS,{heatDays:SOYBEAN_HEAT_SCREEN.minObservedDays});}
+ async getEvidence(force=false,savedOnly=false):Promise<SharedWeatherEvidence[]> {return (await Promise.all(SOYBEAN_WEATHER_POINTS.map(p=>getOriginWeather(p,{historyDays:28,force,savedOnly,minimumTemperature:true})))).filter((p):p is SharedWeatherEvidence=>!!p);}
+ async enrich(radar:OriginRadarResponse,force=false,savedOnly=false):Promise<OriginRadarResponse>{return enrichSharedOriginWeather(radar,await this.getEvidence(force,savedOnly),SOYBEAN_WEATHER_POINTS,{heatDays:SOYBEAN_HEAT_SCREEN.minObservedDays});}
 }
 export const soybeanOriginConditionsService=new SoybeanOriginConditionsService();

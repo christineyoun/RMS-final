@@ -2,6 +2,7 @@
  * Each Korean card is a curated translation bound to exact original passages. */
 import fs from 'node:fs';import path from 'node:path';import {createHash} from 'node:crypto';import {load} from 'cheerio';
 import {originalArticleFact} from './analysisArticleEvidence.ts';
+import type {AnalysisEvidence} from './analysisEvidence.ts';
 const sha=(s:string)=>createHash('sha256').update(s).digest('hex');
 export const PALM_NEWS_CANDIDATES=[
   {originalUrl:'https://www.briefs.co/news/malaysia-s-palm-oil-output-poised-for-october-record-with-20/',publishedAt:'2026-10-19',title:'말레이시아 10월 팜유 생산량 사상 최고 전망',affectedRegion:'Malaysia',anchors:['20.28 million tons','2025','2027','labor','El Niño'],summary:'Briefs는 업계 관계자를 인용해 말레이시아의 10월 팜유 생산량이 사상 최고를 기록할 수 있다고 보도했습니다. 연간 생산량은 2025년 기록인 2,028만 톤에 도달하거나 넘어설 전망이며, 인력 부족과 엘니뇨의 지연 영향은 2027년 공급 위험으로 제시됐습니다.'},
@@ -25,6 +26,25 @@ export function readVerifiedPalmNews(root=process.cwd(),now=new Date()):any[]{
     if(sha(receipt.html)!==a.receiptSha256||receipt.sourceUrl!==a.originalUrl||!verifyPalmArticle(receipt.html,candidate,now))return [];
     return [{...a,summary:candidate.summary}];
   }catch{return [];}});
+}
+/** Existing retained-original citation supplement, distinct from Gemini grounding.
+ * A receipt must revalidate, and its exact fact must have been supplied to the
+ * request. This supplies document provenance, not blanket factual approval. */
+export function retainedPalmPublisherCitations(report:{executiveSummary?:string;bullishFactors?:string[];bearishFactors?:string[];watchItems?:string[]},evidence:AnalysisEvidence,root=process.cwd(),now=new Date()){
+  if(evidence.commodity!=='palm-oil')return [];
+  const body=[report.executiveSummary,...(report.bullishFactors||[]),...(report.bearishFactors||[]),...(report.watchItems||[])].join(' ');
+  return readVerifiedPalmNews(root,now).flatMap(a=>{
+    const mention=a.originalUrl.includes('821487')?/The Edge|MPOB|말레이시아.*재고/i:a.originalUrl.includes('40027')?/Reuters|로이터|인도네시아.*2027/i:a.originalUrl.includes('sunsirs')?/SunSirs/i:/Briefs/i;
+    if(!mention.test(body))return [];
+    const supplied=evidence.facts.find(f=>f.sourceUrl===a.originalUrl&&f.id.startsWith('article-'));if(!supplied)return [];
+    const r=JSON.parse(fs.readFileSync(path.join(dir(root),'article-'+supplied.recordSha256+'.json'),'utf8'));
+    if(sha(r.html)!==supplied.recordSha256||r.sourceUrl!==a.originalUrl||!verifyPalmArticle(r.html,PALM_NEWS_CANDIDATES.find(c=>c.originalUrl===a.originalUrl)!,now))return [];
+    const fact=originalArticleFact(r.html,a.originalUrl,a.publishedAt,'palm-oil',r.verifiedAt);
+    if(!fact||!evidence.facts.some(f=>JSON.stringify((({referenceContext,...original})=>original)(f))===JSON.stringify(fact)))return [];
+    const reprint=a.originalUrl.includes('40027');
+    return [{url:a.originalUrl,title:a.sourceHeadline,publisher:reprint?'MPOB (Reuters)':a.originalUrl.includes('821487')?'The Edge':a.originalUrl.includes('sunsirs')?'SunSirs':'Briefs',publisherVerified:true,
+      provenance:{kind:reprint?'verified-retained-republication' as const:'verified-retained-original' as const,receiptSha256:fact.recordSha256!,verifiedAt:fact.verifiedAt,evidenceIds:[fact.id],supportedClaims:[fact.text,...(reprint?['Reuters republication on MPOB; not independent MPOB reporting']:[])]}}];
+  });
 }
 const pending=new Map<string,Promise<any>>();
 export function refreshPalmNews(root=process.cwd(),fetcher:typeof fetch=fetch){

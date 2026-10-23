@@ -2,6 +2,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap');
 @import "tailwindcss";
 
+/* Source attribution follows the commodity Global S&D footer (text-xs). */
+:root { --rms-source-font-size: 0.75rem; --rms-source-line-height: 1rem; }
+.rms-source,
+.rms-source :where(span, a) {
+  font-size: var(--rms-source-font-size);
+  line-height: var(--rms-source-line-height);
+  font-weight: 400;
+}
+.rms-source { white-space: normal; overflow-wrap: anywhere; }
+.rms-source a[href],
+a[href] .rms-source,
+a[href].rms-source {
+  font-weight: 600;
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
@@ -50,7 +65,7 @@
 
 /* RMS badge typography: all rounded text pills use a consistent bold weight. */
 @layer components {
-  span[class*="rounded"][class*="px-"][class*="py-"] {
+  span[class*="rounded"][class*="px-"][class*="py-"]:not(.rms-source) {
     font-weight: 700 !important;
   }
 }

@@ -127,14 +127,14 @@ export function classifyWheatScreen(input: WheatScreenInput, today: string = tod
 }
 
 export class WheatOriginRiskService {
-  private async getRiskData():Promise<RiskCache> {
-   const hits=await Promise.all(POINTS.map(p=>getOriginWeather(p,{minimumTemperature:true})));
+  private async getRiskData(savedOnly=false,force=false):Promise<RiskCache> {
+   const hits=await Promise.all(POINTS.map(p=>getOriginWeather(p,{historyDays:28,minimumTemperature:true,savedOnly,force})));
    const evidence:RiskCache['evidence']={};for(const hit of hits)if(hit)(evidence[hit.key as Key]||=[]).push(asWheatPoint(hit));
    return {version:3,checkedDay:todayKst(),evidence};
   }
 
-  async enrich(input:OriginRadarResponse):Promise<OriginRadarResponse> {
-    const risk=await this.getRiskData();
+  async enrich(input:OriginRadarResponse,savedOnly=false,force=false):Promise<OriginRadarResponse> {
+    const risk=await this.getRiskData(savedOnly,force);
     const origins=input.origins.map(origin=>{
       const points=(risk.evidence[origin.originKey]||[]).filter(recentEnough);
       const short=points.length
@@ -144,14 +144,14 @@ export class WheatOriginRiskService {
         // Interim value; the final screening is determined after official export and optional US freight evidence.
         status:'자료 부족' as const,
         statusColor:'gray' as const,
-        riskWeather:short,
-        weatherSource:points.length?'Open-Meteo':undefined,
+        riskWeather:sharedWeatherSummary((risk.evidence[origin.originKey]||[]).flatMap(p=>p.shared?[p.shared]:[])),
+        weatherSource:'Open-Meteo',
         weatherAsOf:points.length?points.map(p=>p.mostRecentDay).sort().at(-1):undefined,
         riskAssessment:'',
       };
     });
     // Cross-check the prior-year supply trend without fabricating missing rows.
-    const supply = await wheatOriginSupplyTrendService.enrich({...input, origins});
+    const supply = await wheatOriginSupplyTrendService.enrich({...input, origins},savedOnly);
     // Deliberately limited to supply + weather. Optional international freight/policy monitoring is not enabled.
     return {...supply,origins:supply.origins.map(origin=>{
       const points=(risk.evidence[origin.originKey]||[]).filter(recentEnough);
@@ -166,7 +166,7 @@ export class WheatOriginRiskService {
       });
       return {...origin,
         ...sharedWeatherScreen(points.flatMap(p=>p.shared?[p.shared]:[]),POINTS.filter(p=>p.key===origin.originKey),{heatDays:3,rainMm:90}),
-        weatherDataKind:'archived-model',weatherEvidence:points.flatMap(p=>p.shared?[p.shared]:[]),
+        weatherDataKind:'archived-model',weatherEvidence:(risk.evidence[origin.originKey]||[]).flatMap(p=>p.shared?[p.shared]:[]),
         status,
         statusColor:status==='양호'?'green' as const:status==='모니터링'?'yellow' as const:
           status==='주의'?'red' as const:'gray' as const,

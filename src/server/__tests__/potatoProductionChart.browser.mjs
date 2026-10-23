@@ -1,0 +1,32 @@
+/** Isolated UI verification using previously collected official data. No APIs or schedulers. */
+import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync} from 'node:child_process';import assert from 'node:assert/strict';import {build} from 'esbuild';import {compile} from '@tailwindcss/node';
+const dir=fs.mkdtempSync(path.join(os.tmpdir(),'rms-potato-chart-browser-'));
+const edge=['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe','C:/Program Files/Microsoft/Edge/Application/msedge.exe'].find(p=>fs.existsSync(p));assert.ok(edge,'Edge required');
+try{
+ const snapshot=JSON.parse(fs.readFileSync(process.argv[2]||'.rms-price-history/potato-production-regions-v2.json','utf8'));assert.ok(snapshot.points?.length,'Verified official snapshot required');
+ // Compile the actual local Tailwind utilities; no remote font imports.
+ const component=fs.readFileSync('src/components/PotatoProductionChart.tsx','utf8');const cssCompiler=await compile('@import "tailwindcss";',{base:process.cwd(),onDependency:()=>{}});const css=cssCompiler.build(component.split(/[\s"'`<>{}=]+/));
+ const source=`import React from 'react';import {createRoot} from 'react-dom/client';import {flushSync} from 'react-dom';import {PotatoProductionChartView} from './src/components/PotatoProductionChart';
+ const snapshot=${JSON.stringify(snapshot)};
+ const root=createRoot(document.getElementById('root'));flushSync(()=>root.render(<PotatoProductionChartView snapshot={snapshot}/>));
+ const check=(v,m)=>{if(!v)throw Error(m)},click=label=>{const b=[...document.querySelectorAll('button')].find(b=>b.textContent===label);check(!!b,label);flushSync(()=>b.click());return b;};
+ try{
+  check(document.querySelectorAll('g[data-region]').length===3,'three default countries');check(!document.querySelector('g[data-region="EU27_2020"]'),'EU initially hidden');
+  check(document.querySelectorAll('[data-summary]').length===3,'three latest summaries');check(!document.querySelector('input[type=checkbox]')&&!document.querySelector('table'),'no checkboxes/table');
+  check(![...document.querySelectorAll('button')].some(b=>/EU27|^(독일|네덜란드|덴마크)$/.test(b.textContent)),'no country or EU filters');
+  check(!!document.querySelector('path[stroke-dasharray="5 4"]'),'absolute estimates dashed');
+  const button=click('변동률 비교(기준연도=100)');check(button.getAttribute('aria-pressed')==='true','indexed mode active');check(!!document.querySelector('[data-index-bases]'),'explicit country baseline years');check(!document.querySelector('path[stroke-dasharray="5 4"]'),'forecasts excluded from index');
+  for(const region of ['DE','NL','DK']){const circles=[...document.querySelectorAll('g[data-region="'+region+'"] circle')];check(circles.length>0,'indexed series '+region);check(Number(circles[0].dataset.displayValue)===100,'first observed baseline '+region);for(const node of circles){const p=snapshot.points.find(p=>p.region===region&&p.year===Number(node.dataset.year));check(p&&(p.status==='Actual'||p.status==='Provisional'),'index from observations only');}check(document.querySelector('[data-index-bases]').textContent.includes(circles[0].dataset.year+'=100'),'baseline year visible');}
+  check(Number(document.querySelector('svg').dataset.axisHigh)-Number(document.querySelector('svg').dataset.axisLow)>=40,'bounded index zoom');
+  for(const mode of ['absolute','indexed']){click(mode==='absolute'?'절대 생산량(MMT)':'변동률 비교(기준연도=100)');for(const label of ['3년','5년','10년','전체']){const b=click(label);check(b.getAttribute('aria-pressed')==='true','period '+label);check(document.querySelectorAll('g[data-region]').length===3,'countries preserved');}flushSync(()=>document.querySelector('svg circle').dispatchEvent(new FocusEvent('focusin',{bubbles:true})));check(document.querySelector('[role=tooltip]')?.textContent.includes('YoY'),'tooltip values');}
+  flushSync(()=>root.render(<PotatoProductionChartView key="empty" snapshot={{version:2,points:[],areas:[]}} failed={true}/>));check(!document.querySelector('svg'),'no synthetic fallback');
+  flushSync(()=>root.render(<PotatoProductionChartView key="preview" snapshot={snapshot}/>));if(location.search.includes('indexed'))click('변동률 비교(기준연도=100)');
+    const axisLabels=[...document.querySelectorAll('[data-axis-year]')],firstYear=Number(axisLabels[0].dataset.axisYear),lastYear=Number(axisLabels.at(-1).dataset.axisYear);for(const label of axisLabels)check(Math.abs(parseFloat(label.style.left)-(Number(label.dataset.axisYear)-firstYear)/(lastYear-firstYear)*100)<.001,'accurate annual X label');
+  check(document.querySelector('svg').getBoundingClientRect().height>=180,'original chart height');check(document.querySelector('section').scrollWidth<=document.querySelector('section').clientWidth,'no horizontal overflow');
+  document.documentElement.dataset.chartTest='PASS';
+ }catch(e){document.documentElement.dataset.chartTest='FAIL';document.getElementById('result').textContent=String(e.stack||e);}
+ `;
+ const output=await build({stdin:{contents:source,resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,format:'iife',platform:'browser',jsx:'automatic'});
+ const file=path.join(dir,'test.html');fs.writeFileSync(file,'<!doctype html><html><head><meta charset="utf-8"><style>'+css+' body{margin:24px;background:#f8fafc;font-family:Arial,"Malgun Gothic",sans-serif} #root{max-width:1100px;margin:auto}</style></head><body><div id="root"></div><pre id="result"></pre><script>'+output.outputFiles[0].text.replace(/<\/script/gi,'<\\/script')+'</script></body></html>');
+ for(const mode of ['absolute','indexed']){const screenshot=path.join(os.tmpdir(),'rms-potato-production-'+mode+'.png');const result=spawnSync(edge,['--headless=new','--disable-gpu','--disable-background-networking','--disable-component-update','--no-first-run','--no-default-browser-check','--disable-extensions','--user-data-dir='+path.join(dir,'profile-'+mode),'--window-size=1280,1000','--screenshot='+screenshot,'--dump-dom','--virtual-time-budget=2500','file:///'+file.replace(/\\/g,'/')+'?'+mode],{encoding:'utf8',timeout:60000,windowsHide:true,maxBuffer:4_000_000});assert.ok(result.stdout?.includes('data-chart-test="PASS"'),(result.stdout?.match(/<pre id="result">([\s\S]*?)<\/pre>/)?.[1]||result.error?.message||result.stderr||'No browser result').slice(0,1500));console.log('PASS: '+mode+' screen, official observations, EU toggle, dynamic range, summaries, periods, tooltip, empty state; screenshot '+screenshot);}
+}finally{try{fs.rmSync(dir,{recursive:true,force:true});}catch{}}

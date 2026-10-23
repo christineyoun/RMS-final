@@ -1,0 +1,95 @@
+{
+  "verifiedAt": "2026-10-22T06:07:12.549Z",
+  "publishedAt": "2026-09-28",
+  "forecastYear": 2026,
+  "previousYear": 2025,
+  "previousPublication": "2026-08-24",
+  "nextScheduledPublication": "2026-10-26",
+  "unit": "t/ha",
+  "scope": "Potatoes including seed potatoes (R1000); EU and named countries, not global",
+  "sources": [
+    {
+      "id": "JRC146189",
+      "publishedAt": "2026-09-28",
+      "url": "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC146189/JRC146189_01.pdf",
+      "page": 27,
+      "sha256": "f96794ea614213d22b3e5d4e4200918e6fd67ef079c307922ea001b8756faa1c"
+    },
+    {
+      "id": "JRC146187",
+      "publishedAt": "2026-08-24",
+      "url": "https://publications.jrc.ec.europa.eu/repository/bitstream/JRC146187/JRC146187_01.pdf",
+      "page": 27,
+      "sha256": "a22e95c75257ca5e5ba12a095beb40ddb93e0d653105f31480ac0341295fac2f"
+    }
+  ],
+  "rows": [
+    {
+      "code": "EU",
+      "country": "유럽연합",
+      "fiveYearMean": 37,
+      "previousYear": 38.9,
+      "previousForecast": 34.6,
+      "forecast": 34.2,
+      "vsMeanPct": -7,
+      "vsYearPct": -12,
+      "monthlyRevisionPct": -1
+    },
+    {
+      "code": "DE",
+      "country": "독일",
+      "fiveYearMean": 43.8,
+      "previousYear": 46,
+      "previousForecast": 37.8,
+      "forecast": 36.9,
+      "vsMeanPct": -16,
+      "vsYearPct": -20,
+      "monthlyRevisionPct": -2
+    },
+    {
+      "code": "FR",
+      "country": "프랑스",
+      "fiveYearMean": 41.5,
+      "previousYear": 42.2,
+      "previousForecast": 38,
+      "forecast": 36,
+      "vsMeanPct": -13,
+      "vsYearPct": -15,
+      "monthlyRevisionPct": -5
+    },
+    {
+      "code": "NL",
+      "country": "네덜란드",
+      "fiveYearMean": 42.9,
+      "previousYear": 46.1,
+      "previousForecast": 41.6,
+      "forecast": 40.8,
+      "vsMeanPct": -5,
+      "vsYearPct": -11,
+      "monthlyRevisionPct": -2
+    },
+    {
+      "code": "DK",
+      "country": "덴마크",
+      "fiveYearMean": 45.5,
+      "previousYear": 48.9,
+      "previousForecast": 44.7,
+      "forecast": 44.7,
+      "vsMeanPct": -2,
+      "vsYearPct": -9,
+      "monthlyRevisionPct": 0
+    },
+    {
+      "code": "PL",
+      "country": "폴란드",
+      "fiveYearMean": 30.7,
+      "previousYear": 32.7,
+      "previousForecast": 30.1,
+      "forecast": 31.5,
+      "vsMeanPct": 3,
+      "vsYearPct": -4,
+      "monthlyRevisionPct": 5
+    }
+  ],
+  "conditions": "여름 고온·건조에 따른 단수 제약 지속. 뒤늦은 강수만으로 기존 생육 손실을 회복하기 어려운 것으로 평가했습니다."
+}

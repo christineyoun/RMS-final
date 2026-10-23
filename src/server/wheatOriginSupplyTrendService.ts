@@ -160,11 +160,11 @@ export class WheatOriginSupplyTrendService {
     })();
     try { return await this.pending; } finally { this.pending=null; }
   }
-  async enrich(input:OriginRadarResponse):Promise<OriginRadarResponse> {
+  async enrich(input:OriginRadarResponse,savedOnly=false):Promise<OriginRadarResponse> {
     const year=Number(input.origins.find(o=>/^\d{4}\/\d{2}$/.test(o.marketYear))?.marketYear.slice(0,4));
     if(!Number.isInteger(year) || year<2020 || year>2100) return input;
-    const previous=await this.previousForYear(year);
-    if(!previous) return input;
+    const previous=savedOnly?load():await this.previousForYear(year);
+    if(!previous||previous.year!==year) return input;
     return {
       ...input,
       origins:input.origins.map(origin=>{

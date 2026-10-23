@@ -4,13 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx watch server.ts",
     "build": "vite build",
     "start": "node server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:integrity": "tsx src/server/__tests__/dataIntegrity.test.ts"
+    "test:integrity": "tsx src/server/__tests__/dataIntegrity.test.ts",
+    "weather:refresh": "node --import tsx scripts/refreshOriginWeather.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

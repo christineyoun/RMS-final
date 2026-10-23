@@ -182,7 +182,7 @@ export class NasaCornComparisonService {
   }
 }
 export class CornOriginConditionsService {
- async getEvidence(force=false):Promise<SharedWeatherEvidence[]> {return (await Promise.all(CORN_WEATHER_POINTS.map(p=>getOriginWeather(p,{force,minimumTemperature:true})))).filter((p):p is SharedWeatherEvidence=>!!p);}
- async enrich(radar:OriginRadarResponse,force=false):Promise<OriginRadarResponse>{return enrichSharedOriginWeather(radar,await this.getEvidence(force),CORN_WEATHER_POINTS,{heatDays:3,rainMm:90});}
+ async getEvidence(force=false,savedOnly=false):Promise<SharedWeatherEvidence[]> {return (await Promise.all(CORN_WEATHER_POINTS.map(p=>getOriginWeather(p,{historyDays:28,force,savedOnly,minimumTemperature:true})))).filter((p):p is SharedWeatherEvidence=>!!p);}
+ async enrich(radar:OriginRadarResponse,force=false,savedOnly=false):Promise<OriginRadarResponse>{return enrichSharedOriginWeather(radar,await this.getEvidence(force,savedOnly),CORN_WEATHER_POINTS,{heatDays:3,rainMm:90});}
 }
 export const cornOriginConditionsService=new CornOriginConditionsService();

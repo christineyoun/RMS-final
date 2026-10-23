@@ -8,7 +8,7 @@ import {AnalysisValidationError} from './groundedAnalysisResponse.ts';
 import {persistAnalysisSnapshot} from './analysisSnapshotPersistence.ts';
 
 // Future commodities require an explicit reviewed allowlist change and new owner approval.
-export const STANDALONE_ANALYSIS_ALLOWLIST:readonly string[]=Object.freeze(['soybean']);
+export const STANDALONE_ANALYSIS_ALLOWLIST:readonly string[]=Object.freeze(['soybean','soybean-oil','palm-oil','sugar','potato-starch']);
 export const STANDALONE_ANALYSIS_REVISION='publisher-search-v1';
 export const STANDALONE_ANALYSIS_CONFIG=Object.freeze({revision:STANDALONE_ANALYSIS_REVISION,acceptance:'wheat-corn-publisher-search',model:'gemini-3.8-flash',maxCalls:1,maxEstimatedUsd:0.25,
   requestDeadlineMs:60000,jobDeadlineMs:75000,maxOutputTokens:8192,thinking:'LOW',evidenceMode:'search',search:true});

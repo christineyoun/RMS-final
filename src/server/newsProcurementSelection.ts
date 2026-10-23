@@ -1,0 +1,40 @@
+import fs from 'node:fs';
+import path from 'node:path';
+/** Selection/editorial policy AFTER existing source verification. No discovery,
+ * provider calls, fact approval, text-length limit or persistent side effects. */
+import {createHash} from 'node:crypto';
+import reviewed from '../data/news_procurement_reviews.json';
+import {assessNewsSummary} from '../utils/newsSummaryQuality.ts';
+type Item={originalUrl:string;publishedAt:string;title:string;summary:string;sourceName?:string;sourceType?:string;unavailable?:boolean;[key:string]:any};
+type ReviewMap=Record<string,Array<{url:string;publishedAt:string;sourceSummarySha256:string;priority:number;theme:string;eventKey:string;decision:string;rationale:string;title?:string;summary?:string}>>;
+const hash=(s:string)=>createHash('sha256').update(s).digest('hex');
+export function selectProcurementNews<T extends Item>(commodity:string,verified:T[],now=Date.now()):T[]{
+ let current:typeof reviewed;try{current=JSON.parse(fs.readFileSync(path.join(process.cwd(),'src/data/news_procurement_reviews.json'),'utf8'));}catch{return [];}
+ if(!current?.reviews)return [];
+ const reviews=current.reviews as ReviewMap;
+ const seen=new Set<string>();
+ const candidates=verified.flatMap((article,index)=>{
+  const url=String(article.originalUrl||'').replace(/\/$/,''),date=Date.parse(article.publishedAt);
+  if(article.unavailable||seen.has(url)||!Number.isFinite(date)||date>now||!assessNewsSummary(article.summary,article.title,commodity).pass)return [];
+  seen.add(url);
+  const r=reviews[commodity]?.find(r=>r.url===article.originalUrl&&r.publishedAt===article.publishedAt&&r.sourceSummarySha256===hash(article.summary));
+  if(r?.decision==='omit')return [];
+  const title=r?.title||article.title,summary=r?.summary||article.summary;
+  // A reviewed cross-commodity summary must identify this crop, like any saved card.
+  if(!assessNewsSummary(summary,title,commodity).pass)return [];
+  const text=title+' '+summary;
+  const promotional=/innovation award|wins? .*award|수상|혁신상|수출 주문.*접수|견적 요청/i.test(text);
+  const driver=/가격|공급|수요|재고|수확|단수|관세|수출|수입|바이오연료|운임|물류|가뭄|강수|생산|price|stock|supply|demand|yield|freight|tariff/i.test(text);
+  if(!r&&(promotional||!driver))return [];
+  const priority=r?.priority??2,credibility=article.sourceType==='official'?3:article.sourceType==='company'?1:2;
+  const age=Math.max(0,(now-date)/86400000),timeliness=age<=14?2:age<=30?1:0;
+  return[{article:{...article,title,summary,...('title_kr' in article?{title_kr:title}:{}),...('summary_kr' in article?{summary_kr:summary}:{}),procurementReview:{kind:'independently-reviewed-news-selection',priority,theme:r?.theme||'market-development',rationale:r?.rationale||'Source-verified commodity-specific market development.',reviewedAt:r?current.reviewedAt:undefined}} as T,priority,credibility,timeliness,index,event:r?.eventKey||title.toLowerCase().replace(/\s+/g,'')}];
+ });
+ // Decision value precedes credibility and age; diversity breaks ties, never fills a quota.
+ const result:T[]=[],events=new Set<string>(),publishers=new Set<string>();
+ while(result.length<4){const left=candidates.filter(c=>!events.has(c.event));if(!left.length)break;
+  left.sort((a,b)=>b.priority-a.priority||b.credibility-a.credibility||b.timeliness-a.timeliness||Number(publishers.has(a.article.sourceName||''))-Number(publishers.has(b.article.sourceName||''))||b.article.publishedAt.localeCompare(a.article.publishedAt)||a.index-b.index);
+  const next=left[0];result.push(next.article);events.add(next.event);publishers.add(next.article.sourceName||'');
+ }
+ return result;
+}

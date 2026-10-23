@@ -1,9 +1,9 @@
 /** Weather-only labels. Supply, exports, crop damage and procurement risk are not inputs. */
 // The shared adapter activates scoped tropical freezing checks; surface-frost, wind and seasonal rainfall-deficit checks remain inactive.
-export const WEATHER_PILL_LABELS=['고온 주의','저온 주의','서리 주의','강수 집중','강수 증가','강수 감소','강수 부족','강풍 주의','특이 없음','자료 부족','판정 보류'] as const;
+export const WEATHER_PILL_LABELS=['고온 주의','저온 주의','강수 부족 주의','강수 과다 주의','서리 주의','강수 집중','강수 증가','강수 감소','강수 부족','강풍 주의','특이 없음','자료 부족','판정 보류'] as const;
 export type WeatherPillLabel=typeof WEATHER_PILL_LABELS[number];
 export interface WeatherPill {label:WeatherPillLabel;basis:string}
-export interface WeatherScreen {weatherPills:WeatherPill[];weatherValidUntil?:string}
+export interface WeatherScreen {weatherPills:WeatherPill[];weatherValidUntil?:string;weatherScreening?:{scope:string;complete:boolean;limitations:string[];sources:string[]}}
 export const insufficientWeather=(basis='검증된 기상 선별 근거 부족'):WeatherScreen=>({weatherPills:[{label:'자료 부족',basis}]});
 export const deferredWeatherAssessment=(basis:string):WeatherScreen=>({weatherPills:[{label:'판정 보류',basis}]});
 export interface ScreenPoint {

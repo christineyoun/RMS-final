@@ -1,3 +1,4 @@
+import {selectProcurementNews} from './newsProcurementSelection.ts';
 /**
  * Market Intelligence Service
  *
@@ -482,26 +483,26 @@ export class MarketIntelligenceService {
 
         // STAGE 1: Retrieve raw search results and capture original source metadata BEFORE summarization
         const COMMODITY_QUERIES: Record<string, string> = {
-          'wheat': 'wheat USDA WASDE U.S. Wheat Associates export price Black Sea grain shipments latest',
-          'corn': 'USDA WASDE corn CBOT futures corn exports ethanol production latest',
-          'soybean': 'soybean USDA oil crops outlook soybean exports Brazil soybean planting CBOT futures latest',
-          'soybean-oil': 'CBOT soybean oil biodiesel renewable diesel demand crush margins latest',
-          'palm-oil': 'MPOB Malaysia palm oil stocks BMD CPO production exports latest',
-          'sugar': 'ICE raw sugar Brazil UNICA cane crush India Thailand sugar production latest',
-          'potato-starch': 'European potato starch potato harvest Starch Europe KMC Avebe market latest',
-          'tapioca-starch': 'Thailand TTSA tapioca starch export prices cassava root Vietnam market latest'
+          'wheat': 'wheat prices USDA IGC AHDB crop weather Black Sea freight trade restrictions fertilizer input costs latest',
+          'corn': 'corn maize USDA CBOT export competition harvest weather ethanol biofuel policy freight latest',
+          'soybean': 'soybean USDA China import tariffs Brazil planting drought crushing biofuel demand export offers latest',
+          'soybean-oil': 'soybean oil CBOT NOPA stocks crush renewable diesel EPA biofuel policy competing palm oil energy freight latest',
+          'palm-oil': 'palm oil MPOB USDA Indonesia Malaysia weather yields biodiesel mandate exports stocks energy latest',
+          'sugar': 'ICE No.11 raw sugar Brazil UNICA cane crushing ethanol allocation India export policy Thailand drought stocks latest',
+          'potato-starch': 'potato starch Europe JRC MARS potato yields industrial starch content processors supply prices energy exports latest',
+          'tapioca-starch': 'tapioca starch TTSA Vietnam China import demand export prices cassava root processing weather mosaic disease supply latest'
         };
         const searchQuery = COMMODITY_QUERIES[key] || `commodity "${key}" latest`; 
         const todayKST = kstDate();
         const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
         const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
         const retrievalPrompt = `Current date in Korea: ${todayKST}.
-Search Google Search for up to ${key === 'wheat' ? '14' : '4'} ACTUAL articles and official reports specifically about ${key}.
-For wheat, collect extra candidates BEFORE filtering, so four distinct articles remain after original-page checks. Cover distinct themes when available: USDA supply and stocks, growing-region weather, export and logistics, futures and prices. Prioritize the newest original publisher HTML articles, not generic databases, homepages, commodity pages, or other crops.
-Prefer news published ${sevenDaysAgo} or later; allow relevant wheat reports back to ${thirtyDaysAgo} only when necessary. Never use a future date.
+Search Google Search for up to ${key === 'wheat' ? '14' : '12'} ACTUAL original articles and official reports with a material procurement connection to ${key}. A direct commodity headline is not required when the source establishes a specific crop/region/season, trade, policy, energy, processing or logistics impact. Do not infer that every geopolitical or agricultural event affects this commodity.
+For wheat, collect extra candidates BEFORE filtering so selection can favor useful distinct developments without filling a quota. Cover distinct themes when available: USDA supply and stocks, growing-region weather, export and logistics, futures and prices. Prioritize the newest original publisher HTML articles, not generic databases, homepages, commodity pages, or other crops.
+Prefer the past 14 days, expand to ${thirtyDaysAgo} when useful, and retain older authoritative reports only when still materially relevant. Procurement decision value precedes credibility, timeliness and distinct-event/publisher diversity. Never use a future date.
 Search query: ${searchQuery}.
 Use the original publisher's specific article/report page, not its homepage or a search results page.
-Return newest reliable direct-article candidates first. For wheat return up to 14 candidates; final selection will independently verify and keep at most 4. Never pad with irrelevant stories or invented links.
+Return the most procurement-useful verifiable candidates first. Prefer original official, industry and publisher sources; explore relevant World Grain, USDA FAS/ERS, IGC, AHDB, KREI and regional-language reporting. Keep secondary attribution explicit. Final selection is zero to four, never a mandatory quota. Reject unrelated technology awards, generic farming and promotional announcements. Never pad or invent links.
 Do not invent article URLs, headline text, dates, publishers, numbers or reports.
 Return ONLY a JSON array of original metadata:
 [{"rawTitle":"verbatim publisher headline","rawSnippet":"factual excerpt", "sourceName":"publisher", "sourceType":"news|official|company", "publishedAt":"YYYY-MM-DD", "originalUrl":"direct publisher article URL", "category":"시장 동향", "affectedRegion":"region"}]
@@ -539,7 +540,7 @@ Never use Google News as sourceName.`;
         // Four independently verified RSS articles need no paid Search/grounding call.
         // Corn is free-first, and fails closed if fewer than four publisher pages verify.
         // Do not pay Gemini Search to try to rescue a failing discovery batch.
-        const skipPaidDiscovery = key === 'corn' || key === 'soybean' || (key === 'wheat' && (freeCheck?.accepted.length || 0) >= 4);
+        const skipPaidDiscovery = key === 'corn' || key === 'soybean' || (key === 'wheat' && (freeCheck?.accepted.length || 0) >= 1);
         const retrievalResp = skipPaidDiscovery ? null : await ai.models.generateContent({
           model: key === 'wheat' ? WHEAT_NEWS_MODEL : 'gemini-3.8-flash',
           contents: retrievalPrompt,
@@ -663,12 +664,12 @@ Never use Google News as sourceName.`;
         const primaryCorn = key==='corn' ? selectCornNews(rankedVerified,4) : [];
         // One paid batch may include two verified backup candidates. If Gemini
         // returns filler or unsupported numbers for one article, reject it and
-        // select four from the remaining grounded outputs WITHOUT another call.
+        // select up to four useful articles from the remaining grounded outputs WITHOUT another call.
         const verifiedLocked: RetrievedSourceMetadata[]=key==='wheat'
           ? selectWheatVerifiedNews(rankedVerified,6)
           : key==='corn' ? selectCornNews(rankedVerified,6)
           : key==='soybean' ? selectSoybeanNews(rankedVerified,6) : rankedVerified;
-        if(key==='wheat')writeNewsAudit({stage:verifiedLocked.length>=4?'ready-to-summarize':'insufficient-verified-articles',
+        if(key==='wheat')writeNewsAudit({stage:verifiedLocked.length>0?'ready-to-summarize':'insufficient-verified-articles',
           retrievedJsonCandidates,groundingChunks:groundedWebSources.length,groundingCandidates,
           feedDiscovery:feedDiscovery?.diagnostics || null, publicDiscovery:publicDiscovery?.diagnostics || null,
           freeCandidates:freeCandidates.length,feedVerified:freeCheck?.accepted.length || 0,skipPaidDiscovery,
@@ -676,25 +677,23 @@ Never use Google News as sourceName.`;
           verification:report?.summary,selectedForSummary:verifiedLocked.length,
           selectedPublishers:[...new Set(verifiedLocked.map(x=>x.sourceName))],
           selectedDates:verifiedLocked.map(x=>x.publishedAt),
-          note:'The page snapshot is not replaced unless four verified Korean summaries survive.'});
+          note:'Only verified substantive Korean summaries are eligible; four is a maximum.'});
         const cornQuality=key==='corn'?cornSelectedQuality(primaryCorn):null;
         if(key==='corn')writeNewsAudit({
-          stage:cornQuality?.readyForReview?'ready-to-summarize':'insufficient-verified-articles',
+          stage:verifiedLocked.length>0?'ready-to-summarize':'insufficient-verified-articles',
           discovery:cornDiscovery?.diagnostics||null, freeVerified:freeCheck?.summary||null,
           selectedForSummary:verifiedLocked.length,quality:cornQuality,
           selected:verifiedLocked.map(x=>({title:x.rawTitle,date:x.publishedAt,
             source:x.sourceName,url:x.originalUrl,chars:x.rawSnippet.length})),
-          note:'No Search grounding; no paid summarization unless four original sources pass.'
+          note:'No Search grounding; existing paid authorization still required; only verified originals are eligible.'
         },'corn');
-        // No paid summarization if original publisher content cannot support all four cards.
+        // No summarization without verified original publisher evidence.
         if(key==='soybean')writeNewsAudit({stage:verifiedLocked.length>=4?'ready-to-summarize':'insufficient-verified-articles',
           discovery:soybeanDiscovery?.diagnostics || null,verification:freeCheck?.summary || null,
           selected:verifiedLocked.map(m=>({source:m.sourceName,title:m.rawTitle,date:m.publishedAt,url:m.originalUrl})),
           distinctPublishers:new Set(verifiedLocked.map(m=>m.sourceName)).size,
           sourceDiversityNote:new Set(verifiedLocked.map(m=>m.sourceName)).size<2?'Limited publisher diversity; all links independently verified.':null},'soybean');
-        if((key==='wheat' && verifiedLocked.length<4) ||
-           (key==='corn' && !cornQuality?.readyForReview) ||
-           (key==='soybean' && verifiedLocked.length<4))return [];
+        if(!verifiedLocked.length)return [];
         if (verifiedLocked.length > 0) {
           const summarizePrompt = `Translate and summarize the following retrieved commodity intelligence items into Korean for a procurement desk.
 ${!['wheat','corn','soybean'].includes(key) ? `The rawSnippet is verified original-publisher HTML article text for ${key}. Use ONLY that text, preserve the precise commodity and distinguish crude versus refined oil, raw sugar versus cane, and starch products versus harvested roots. Do not borrow facts from other commodities or years. If article-specific market developments are absent omit that item. Include an evidenceQuote copied directly from rawSnippet supporting the Korean summary. Return only a JSON array:` : key==='wheat' ? 'The rawSnippet field contains text scraped from the independently verified original publisher page for Wheat. Do not add statistics, crop regions, causal explanations, or claims not supported by that field. Carefully distinguish TOTAL GRAINS (wheat + coarse grains) from WHEAT-ONLY production, exports, trade, or stocks. Never attribute maize supply changes to wheat. If a number cannot be traced to its correct crop and metric in rawSnippet, OMIT that numerical claim. Preserve uncertainty and avoid generic boilerplate. Do NOT alter IDs or invent sources. Return ONLY a JSON array:' : key==='soybean' ? 'Every rawSnippet comes from an independently verified original publisher article specifically about SOYBEANS (not soybean oil alone). Use ONLY that exact source evidence. Never invent production, prices, crops, trade, weather or causal claims. Do not confuse whole soybean beans with processed soybean oil or soymeal; keep reporting years and units precise. Produce specific Korean procurement news, not generic report intros. For each article include an evidenceQuote field with one exact 35+ character English passage copied verbatim from the rawSnippet that directly supports the Korean summary. When evidence cannot support concrete soybean procurement intelligence, omit the article. Return ONLY a JSON array:' : 'The rawSnippet field contains text extracted from independently verified original publisher content for Corn. Treat it as the ONLY evidence. Never invent numbers or causes. Distinguish CORN/MAIZE from WHEAT, SOYBEANS, and total grains; do not move statistics between crops, seasons, geographies, or units. If a specific number cannot be traced to the correct crop and metric in rawSnippet, OMIT it. Preserve uncertainty, accurately report forecast revisions, and avoid generic boilerplate. Do NOT alter IDs or invent sources. For EACH Corn article, identify a specific event, price, production, stocks, demand, shipping, or sourcing change, not a report introduction or description. If the evidence lacks a concrete Corn/maize development, omit that article from the output. Prefer source-exact numbers and units; if unsure omit the number. Do not describe FOB Flat Price tables as an average or mean (평단가/평균) unless the report explicitly supplies an average. Add an evidenceQuote field containing one direct, verbatim English passage copied from rawSnippet (do not translate the quote). Return ONLY a JSON array:'}
@@ -712,8 +711,8 @@ Output schema:
   {
     "rawId": "matching rawId",
     ${key !== 'wheat' ? '"evidenceQuote": "verbatim short English passage from rawSnippet relevant to the commodity market movement",' : ''}
-    "title": "accurate, natural Korean headline (under 45 chars)",
-    "summary": "two specific, useful Korean sentences (roughly 60-130 Korean characters), explaining what changed and why ${key} buyers should care; use only facts from rawSnippet"
+    "title": "accurate, natural Korean headline",
+    "summary": "complete, readable professional Korean explaining the source-verified development, important figures/units/periods, and defensible ${key} procurement implications; no fixed word, character or sentence limit; never truncate useful facts to equalize card heights; use only rawSnippet and preserve forecast uncertainty"
   }
 ]`;
 
@@ -749,7 +748,7 @@ Output schema:
               !sumItem.title || !/[가-힣]/.test(sumItem.title))) return [];
             // Fail closed on recognizable serious numerical attribution errors.
             // Missing an item is safer than publishing a misleading purchasing figure;
-            // Stage 3 retains the prior four-card snapshot if the batch is incomplete.
+            // Failed factual claims are omitted; existing successful snapshots survive failed collections.
             if (key === 'wheat') {
               const risk = wheatSummaryRisk(sumItem!.summary, lockedMeta.rawSnippet);
               if (risk) {
@@ -888,14 +887,13 @@ Output schema:
     }
 
     // Deduplicate by originalUrl first, then normalized title, limit to 4 items
-    const deduplicated = deduplicateArticles(finalArticles)
+    const deduplicated = selectProcurementNews(key,deduplicateArticles(finalArticles)
       .filter(a => assessNewsSummary(a.summary, a.title, key).pass)
-      .sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
-      .slice(0, 4);
+      );
 
-    // A partial, unsuccessful Wheat collection must not poison the whole daily cache.
-    // Stage 3 will only replace its persistent snapshot once four fully checked items exist.
-    if ((key !== 'wheat' && key !== 'corn' && key !== 'soybean') || deduplicated.length === 4)
+    // Cache a verified useful subset without requiring filler to reach four.
+    // An empty failed collection does not displace an earlier successful cache.
+    if (deduplicated.length > 0)
       intelligenceCache.set(key, { articles: deduplicated, expiresAt: now + CACHE_TTL_MS });
     return deduplicated;
   }

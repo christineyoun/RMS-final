@@ -12,7 +12,7 @@ const pills=($:ReturnType<typeof load>)=>{
  const pending=$('[data-weather-assessment]');
  for(const el of pending.toArray()){
   const node=$(el),classes=(node.attr('class')||'').split(/\s+/);
-  assert.equal(node.text(),'판정 보류');assert(node.attr('title'),'assessment reason remains available');
+  assert.equal(node.text(),'판정 보류');assert(node.attr('aria-description'),'assessment reason remains available');
   assert(!classes.some(c=>/^(?:bg-|border(?:-|$)|rounded|px-|py-|font-semibold|rms-status-)/.test(c)),'pending assessment must be plain neutral text');
  }
  assert.equal($('[data-weather-pills] span:not([data-weather-assessment])').filter((_,p)=>$(p).text()==='판정 보류').length,0,'pending must never be a status pill');
@@ -31,7 +31,7 @@ try{
   const minimumMissing=['palm-oil','sugar','tapioca-starch'].includes(id),deferred=minimumMissing||id==='potato-starch';
   for(const o of radar.origins){assert.deepEqual(labels(o),[minimumMissing?'자료 부족':deferred?'판정 보류':'특이 없음'],id+':'+o.originKey);if(minimumMissing){assert(o.weatherPills![0].basis.includes('일최저기온 0/7일'),'old saved observations cannot silently pass a newly enabled variable');}else if(deferred){assert(o.weatherPills![0].basis.includes('기상 7일 확인'));assert(o.weatherPills![0].basis.includes('기준 미확정'));}}
   const $=load(renderToStaticMarkup(<OriginRadar commodityId={id} origins={radar.origins as any}/>));
-  assert.deepEqual(pills($),minimumMissing?radar.origins.map(()=>'판정 보류'):[],id+' actual render: hide clear and policy-only pending');assert.equal($('[data-weather-assessment]').length,minimumMissing?radar.origins.length:0);assert.equal($('[data-weather-pills] span:not([data-weather-assessment])').length,0);assert(!$.text().includes('자료 부족'));assert(!$.text().includes('2026-10-14~2026-10-20'));assert(!/America\/|Australia\/|Europe\/|Asia\//.test($('.origin-card').text()));assert($.text().includes(minimumMissing?'모델 기상:':'모델 기상 · 최근 완료 7일:'));assert(radar.origins.every(o=>o.riskWeather.includes('2026-10-14~2026-10-20')),'original weather dates remain internal');assert($.text().includes('Open-Meteo'));
+  assert.deepEqual(pills($),id==='tapioca-starch'?[]:radar.origins.map(()=>'판정 보류'),id+' complete weather alone does not establish crop-stage safety');assert.equal($('[data-weather-assessment]').length,id==='tapioca-starch'?0:radar.origins.length);assert.equal($('[data-weather-pills] span:not([data-weather-assessment])').length,0);assert(!$.text().includes('자료 부족'));assert(!$.text().includes('2026-10-14~2026-10-20'));assert(!/America\/|Australia\/|Europe\/|Asia\//.test($('.origin-card').text()));assert($.text().includes('최근 7일 강수량:'));assert(radar.origins.every(o=>o.riskWeather.includes('2026-10-14~2026-10-20')),'original weather dates remain internal');assert($.text().includes('Open-Meteo'));
  }
  const corn:WeatherPoint[]=fixture.configs.corn,point=corn.find(p=>p.label==='마투그로수')!,actual=parse(point);
  assert.equal(actual.hotDays,1);assert.deepEqual(actual.daily.filter(d=>d.tMaxC!>=35).map(d=>[d.date,d.tMaxC]),[['2026-10-14',35.3]]);assert.equal(actual.daily.at(-1)!.tMaxC,34.9);
@@ -40,9 +40,9 @@ try{
  const check=(b:any,policy:any={heatDays:3,rainMm:90})=>{const e=parseSharedOpenMeteo(b,point,raw.checkedAt)!;assert(e);return {e,screen:sharedWeatherScreen([e],[point],policy,now)};};
  for(let n=0;n<=3;n++){const b=body();b.daily.temperature_2m_max=Array.from({length:7},(_,i)=>i<n?35:34.9);assert.deepEqual(labels(check(b).screen),[n>=3?'고온 주의':'특이 없음']);}
  const exact=body();exact.daily.precipitation_sum=[90,0,0,0,0,0,0];assert.deepEqual(labels(check(exact).screen),['강수 집중']);exact.daily.precipitation_sum[0]=89.9;assert.deepEqual(labels(check(exact).screen),['특이 없음']);
- const heavy=body();heavy.daily.precipitation_sum=[20,20,20,null,20,20,20] as any;const incomplete=check(heavy);assert.equal(incomplete.e.precip7mm,null);assert.equal(incomplete.e.rainfallDays,6);assert.deepEqual(labels(incomplete.screen),['강수 집중','자료 부족']);assert.deepEqual(pills(rendered(incomplete.screen)),['강수 집중','판정 보류']);
+ const heavy=body();heavy.daily.precipitation_sum=[20,20,20,null,20,20,20] as any;const incomplete=check(heavy);assert.equal(incomplete.e.precip7mm,null);assert.equal(incomplete.e.rainfallDays,6);assert.deepEqual(labels(incomplete.screen),['강수 집중','자료 부족']);assert.deepEqual(pills(rendered(incomplete.screen)),['강수 과다 주의']);
  const lowPartial=body();lowPartial.daily.precipitation_sum[0]=null as any;assert.deepEqual(labels(check(lowPartial).screen),['자료 부족']);assert.deepEqual(pills(rendered(check(lowPartial).screen)),['판정 보류']);
- const hotPartial=body();hotPartial.daily.temperature_2m_max=[35,36,35,null,null,null,null] as any;hotPartial.daily.precipitation_sum.fill(null as any);assert.deepEqual(labels(check(hotPartial).screen),['고온 주의','자료 부족']);assert.deepEqual(pills(rendered(check(hotPartial).screen)),['고온 주의','판정 보류']);
+ const hotPartial=body();hotPartial.daily.temperature_2m_max=[35,36,35,null,null,null,null] as any;hotPartial.daily.precipitation_sum.fill(null as any);assert.deepEqual(labels(check(hotPartial).screen),['고온 주의','자료 부족']);assert.deepEqual(pills(rendered(check(hotPartial).screen)),['고온 주의']);
  for(const value of [null,undefined,'0',false,-999,NaN,Infinity])for(const metric of ['precipitation_sum','temperature_2m_max']){const b=body();(b.daily as any)[metric].fill(value);const s=check(b).screen;assert(!labels(s).includes('특이 없음'));assert(pills(rendered(s)).includes('판정 보류'));}
  const absent=body();delete (absent.daily as any).temperature_2m_max;assert.equal(parseSharedOpenMeteo(absent,point,raw.checkedAt),null);
  const zero=body();zero.daily.precipitation_sum.fill(0);zero.daily.temperature_2m_max.fill(0);assert.deepEqual(labels(check(zero).screen),['특이 없음'],'actual zero remains valid');
@@ -53,6 +53,6 @@ try{
  for(const id of ['sugar','potato-starch','tapioca-starch']){const p=fixture.configs[id][0],e=parse(p),base:any={success:true,origins:[{originKey:p.key,region:p.label,weatherEvidence:e}]};
   const missingRaw=structuredClone(e.rawResponse);missingRaw.daily.temperature_2m_max.fill(null);const missing=parseSharedOpenMeteo(missingRaw,p,e.checkedAt)!;const result=withOriginWeatherPills(id,{...base,origins:[{...base.origins[0],weatherEvidence:missing}]});assert(labels(result.origins[0]).includes('자료 부족'));assert(result.origins[0].weatherPills![0].basis.includes('일최고기온 0/7일'));assert(!result.origins[0].weatherPills![0].basis.includes('기상 7일 확인'));
  }
- const legacy=rendered({weatherPills:[{label:'자료 부족',basis:'강수 6/7일 확인 · 재확인 필요'}]});assert.deepEqual(pills(legacy),['판정 보류']);assert(legacy('[data-weather-pills] span').attr('title')!.includes('강수 6/7일'));assert(!legacy('[data-weather-pills] span').hasClass('rms-status-warning'));
+ const legacy=rendered({weatherPills:[{label:'자료 부족',basis:'강수 6/7일 확인 · 재확인 필요'}]});assert.deepEqual(pills(legacy),['판정 보류']);assert(legacy.text().includes('최근 강수 자료 갱신 대기'));assert(!legacy('[data-weather-pills] span').hasClass('rms-status-warning'));
  console.log('PASS: actual records at 46 configured points across eight commodities; Corn heat/window explanation; exact unchanged thresholds; partial-rain warning retained; missing policy fails closed; missing variables never clear; neutral reasons distinguish complete data/unconfigured policy from incomplete data; dates/sources and warning styles preserved.');
 }finally{globalThis.fetch=native;clock.timers.reset();}

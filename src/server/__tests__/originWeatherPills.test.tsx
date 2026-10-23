@@ -68,7 +68,7 @@ try{
    const saved={...value,lastUpdated:checkedAt};fs.writeFileSync(path.join(temp,'all8-shared-weather-v1-'+id+'.json'),JSON.stringify(saved));const cached=await loadAll8OriginRadar(id);assert.deepEqual(labels(cached.origins[0]),['자료 부족']);
  }
  fixtures.corn.origins=[{...base.origins[0],region:'동시 고온·강수 신호',...screenObservedWeather([{...point('A'),hotDays:4,precipMm:100},point('B')],policy)},...fixtures.corn.origins];
- for(const [id,value] of Object.entries(fixtures) as any){const html=renderToStaticMarkup(<OriginRadar commodityId={id} origins={value.origins}/>);assert.ok(html.includes('data-weather-pills'));assert.ok(!html.includes('>양호</span>'));assert.ok(!html.includes('>모니터링</span>'));assert.equal((html.match(/출처:/g)||[]).length,1);assert.ok(!html.includes('강수 편차 점검'));}
+ for(const [id,value] of Object.entries(fixtures) as any){const html=renderToStaticMarkup(<OriginRadar commodityId={id} origins={value.origins}/>);assert.equal(html.includes('data-weather-pills'),id!=='tapioca-starch');assert.ok(!html.includes('>양호</span>'));assert.ok(!html.includes('>모니터링</span>'));assert.equal((html.match(/출처:/g)||[]).length,1);assert.ok(!html.includes('강수 편차 점검'));}
  const expired=renderToStaticMarkup(<OriginRadar commodityId="corn" origins={[{...base.origins[0],weatherPills:[{label:'특이 없음',basis:'expired'}],weatherValidUntil:date(1)}]}/>);assert.ok(expired.includes('>판정 보류</span>'));assert.ok(!expired.includes('>특이 없음</span>'));
  for(const future of ['저온 주의','서리 주의','강수 부족','강풍 주의']){assert.ok((WEATHER_PILL_LABELS as readonly string[]).includes(future));assert.ok(!JSON.stringify(fixtures).includes(future));}
  fs.writeFileSync(path.join(temp,'fixtures.json'),JSON.stringify(fixtures,null,2));fs.writeFileSync('/tmp/rms-weather-pills-test-out',temp);

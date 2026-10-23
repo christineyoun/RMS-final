@@ -6,6 +6,7 @@
  * Pure/offline, no API calls.
  */
 import {RMS_PROCUREMENT_POLICY,procurementPolicyContradictions} from '../utils/rmsProcurementCondition.ts';
+import {publisherProcurementIssues,publisherAttributionIssues} from './cornAiQuality.ts';
 export interface WheatAiCheckInput {
   deskRecommendation?: string;
   executiveSummary?: string;
@@ -26,6 +27,7 @@ export function wheatAiIntegrityIssues(
     ...(report.bearishFactors || []), ...(report.watchItems || [])].join(' ');
   const issues: string[] = [];
   issues.push(...procurementPolicyContradictions(body));
+  issues.push(...publisherProcurementIssues(report),...publisherAttributionIssues(report,sources));
   const dated = asOf.getTime() >= Date.UTC(2026, 8, 1);
   // A May 2026 Australian forecast must not masquerade as the latest outlook.
   const outdatedAustraliaForecast = sources.some(s =>

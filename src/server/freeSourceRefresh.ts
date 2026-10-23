@@ -1,3 +1,4 @@
+import {fetchOfficialPotatoExportQuote} from './officialPotatoComextService.ts';
 import {refreshSoybeanOilNews} from './soybeanOilVerifiedNews.ts';
 /** Independent free-source clock. It never imports or authorizes Gemini. */
 import fs from 'node:fs';
@@ -5,7 +6,7 @@ import {refreshSoybeanNews} from './soybeanNewsPersistence.ts';
 import {refreshPalmNews} from './palmVerifiedNews.ts';
 import path from 'node:path';
 import { refreshPublicHistory } from './publicPriceHistory.ts';
-import { refreshPotatoProductionHistory } from './potatoProductionHistory.ts';
+import { refreshPotatoProductionHistory,refreshRegionalPotatoProduction } from './potatoProductionHistory.ts';
 import { loadAll8OriginRadar, ORIGIN_MVP } from './all8OriginRadarService.ts';
 import {soybeanOilIntelligenceService} from './soybeanOilIntelligenceService.ts';
 import {soybeanIntelligenceService} from './soybeanIntelligenceService.ts';
@@ -31,10 +32,22 @@ export const soybeanPriceRefreshJob:FreeSourceJob={key:'soybean-history',run:asy
 export const soybeanOilPriceRefreshJob:FreeSourceJob={key:'soybean-oil-history',run:async()=>{const s=await soybeanOilIntelligenceService.getSoybeanOilPriceSnapshot(true,'scheduled');return {lastError:s.lastError,observationDate:s.data.at(-1)?.date,refresh:s.refreshMetadata};}};
 export const soybeanNewsRefreshJob:FreeSourceJob={key:'soybean-news',run:()=>refreshSoybeanNews()};
 export const soybeanOilNewsRefreshJob:FreeSourceJob={key:'soybean-oil-news',run:()=>refreshSoybeanOilNews()};
+/** Uses the same quote singleton as page/manual requests, including in-flight deduplication. */
+export function createPotatoExportQuoteRefreshJob(fetchQuote:typeof fetchOfficialPotatoExportQuote=fetchOfficialPotatoExportQuote):FreeSourceJob {
+  return {key:'potato-export-quote',run:async()=>{
+    const quote=await fetchQuote(true);
+    return {lastError:quote.lastError||(!quote.success||quote.refreshFailed?'Eurostat 감자전분 기준시세 조회 실패':undefined),
+      observationDate:quote.data?.period,
+      refresh:{checkedAt:quote.checkedAt,lastSuccessfulFetchAt:quote.verifiedAt,dataStatus:quote.dataStatus,refreshFailed:quote.refreshFailed}};
+  }};
+}
+export const potatoExportQuoteRefreshJob=createPotatoExportQuoteRefreshJob();
 function freeSourceJobs():FreeSourceJob[]{return [
   {key:'palm-page',run:async()=>{const r=await refreshPalmPageSources();return {...r,lastError:r.results.some(j=>j.status!=='completed')?'Some Palm sources unavailable; saved observations retained':undefined};}},
   {key:'tapioca-history',run:()=>refreshPublicHistory('tapioca-starch')},
   {key:'potato-production-history',run:()=>refreshPotatoProductionHistory()},
+  {key:'potato-production-regions',run:()=>refreshRegionalPotatoProduction()},
+  potatoExportQuoteRefreshJob,
   soybeanPriceRefreshJob,
   soybeanOilPriceRefreshJob,
   soybeanNewsRefreshJob,
@@ -56,7 +69,7 @@ export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;
       save(run);
       run.jobs=await Promise.all(jobs().map(async job=>{
         try{const result:any=await job.run();return {key:job.key,status:result.lastError?'cached':'completed',error:result.lastError,
-          ...((job.key==='soybean-history'||job.key==='soybean-oil-history')?{observationDate:result.observationDate,refresh:result.refresh}:{})};}
+          ...((job.key==='soybean-history'||job.key==='soybean-oil-history'||job.key==='potato-export-quote')?{observationDate:result.observationDate,refresh:result.refresh}:{})};}
         catch(e){return {key:job.key,status:'failed',error:String((e as Error).message)};}
       }));
       run.status=run.jobs.some((j:any)=>j.status!=='completed')?'partial':'completed';run.finishedAt=now().toISOString();save(run);return run;

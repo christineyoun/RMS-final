@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 /**
  * RMS Step 20 — Official Eurostat Comext potato starch trade (CN 11081300).
  * EU27 vs NON-EU partners only: movements between EU states are excluded.
@@ -169,3 +171,142 @@ export async function fetchOfficialPotatoComext(force=false):Promise<PotatoComex
     return {...base,success:false,dataStatus:'unavailable',verifiedAt:null,data:null,message};
   }
 }
+
+// Korea-bound monthly unit value is isolated from the existing extra-EU trade totals.
+export interface PotatoExportUnitValue {
+  productCode: '11081300'; reporter: 'EU27_2020'; partner: 'KR'; flow: '2';
+  period: string; valueEur: number; netWeightMT: number; eurPerMT: number;
+  provisional: boolean;
+}
+export interface PotatoExportQuoteResponse {
+  success: boolean; dataStatus: 'live-verified' | 'last-verified' | 'unavailable';
+  checkedAt: string; verifiedAt: string | null; refreshFailed: boolean; lastError?: string;
+  source: string; sourceUrl: string; data: PotatoExportUnitValue | null;
+  changes?: PotatoExportChanges;
+}
+/** Official monthly export statistical value / net mass, never a physical offer. */
+export function parsePotatoExportSeries(json: JsonStat, now = new Date()): PotatoExportUnitValue[] {
+  const fixed = {freq:'M', reporter:REPORTER, partner:'KR', product:CN, flow:'2'};
+  const expected = [...Object.keys(fixed), 'indicators', 'time'];
+  if (!json?.id || json.id.length !== expected.length || new Set(json.id).size !== expected.length ||
+      !expected.every(d => json.id!.includes(d))) return [];
+  for (const [dimension, code] of Object.entries(fixed)) {
+    const values = codes(json, dimension);
+    if (values.length !== 1 || values[0] !== code) return [];
+  }
+  const indicators = codes(json, 'indicators');
+  if (indicators.length !== 2 || !['VALUE_IN_EUROS', INDICATOR].every(i => indicators.includes(i))) return [];
+  const months = codes(json, 'time');
+  if (!months.length || months.length > 100 || months.some(m => !Number.isFinite(monthSerial(m)))) return [];
+  const current = now.getUTCFullYear()*12 + now.getUTCMonth();
+  const series:PotatoExportUnitValue[]=[];
+  for (const period of [...months].sort().reverse()) {
+    if (monthSerial(period) >= current) continue;
+    const value = lookup(json, {...fixed, indicators:'VALUE_IN_EUROS'}, period);
+    const mass = lookup(json, {...fixed, indicators:INDICATOR}, period);
+    if (!value || !mass || value.value <= 0 || mass.value <= 0) continue;
+    const netWeightMT = mass.value / 10; // QUANTITY_IN_100KG is net mass: 100 kg = 0.1 MT.
+    const eurPerMT = value.value / netWeightMT;
+    if (!Number.isFinite(eurPerMT) || eurPerMT <= 0) continue;
+    series.push({productCode:CN, reporter:REPORTER, partner:'KR', flow:'2', period,
+      valueEur:value.value, netWeightMT, eurPerMT, provisional:/[pe]/i.test(value.status+mass.status)});
+  }
+  return series;
+}
+export function parsePotatoExportUnitValue(json:JsonStat,now=new Date()):PotatoExportUnitValue|null {
+  return parsePotatoExportSeries(json,now)[0]||null;
+}
+export type PotatoExportChange={currentPeriod:string|null;referencePeriod:string|null;referenceEurPerMT:number|null;pct:number|null;amountEurPerMT:number|null;provisional:boolean};
+export type PotatoExportChanges={mom:PotatoExportChange;yoy:PotatoExportChange};
+/** Exact calendar months only: never substitute the closest available observation. */
+export function calculatePotatoExportChanges(current:PotatoExportUnitValue|null,series:PotatoExportUnitValue[],now=new Date()):PotatoExportChanges {
+  current=validExportObservation(current,now)?current:null;
+  const change=(offset:number):PotatoExportChange=>{
+    const referencePeriod=current?serialMonth(monthSerial(current.period)-offset):null;
+    const ref=series.find(p=>p.period===referencePeriod&&validExportObservation(p,now)&&
+      p.productCode===current?.productCode&&p.reporter===current?.reporter&&p.partner===current?.partner&&p.flow===current?.flow);
+    const amount=current&&ref?current.eurPerMT-ref.eurPerMT:null;
+    return {currentPeriod:current?.period||null,referencePeriod,referenceEurPerMT:ref?.eurPerMT??null,
+      pct:amount!==null&&ref?amount/ref.eurPerMT*100:null,amountEurPerMT:amount,provisional:!!(current?.provisional||ref?.provisional)};
+  };
+  return {mom:change(1),yoy:change(12)};
+}
+type ExportQuoteReceipt = {data:PotatoExportUnitValue; verifiedAt:string; series?:PotatoExportUnitValue[]; comparisonPeriod?:string};
+export interface PotatoExportQuoteStore {read:()=>unknown; write:(receipt:ExportQuoteReceipt)=>void}
+function validExportObservation(d:any,now:Date):d is PotatoExportUnitValue {
+  return !!d && d.productCode===CN && d.reporter===REPORTER && d.partner==='KR' && d.flow==='2' &&
+    Number.isFinite(monthSerial(d.period)) && monthSerial(d.period)<now.getUTCFullYear()*12+now.getUTCMonth() &&
+    Number.isFinite(d.valueEur) && d.valueEur>0 && Number.isFinite(d.netWeightMT) && d.netWeightMT>0 &&
+    Number.isFinite(d.eurPerMT) && Math.abs(d.eurPerMT-d.valueEur/d.netWeightMT)<1e-8 &&
+    typeof d.provisional==='boolean';
+}
+function validExportReceipt(raw:any,now:Date):raw is ExportQuoteReceipt {
+  return validExportObservation(raw?.data,now) && Number.isFinite(Date.parse(raw.verifiedAt)) && Date.parse(raw.verifiedAt)<=+now;
+}
+/** Same 30-minute revalidation policy as Comext trade; injected storage keeps tests isolated. */
+export function createPotatoExportQuoteService(options:{fetcher?:typeof fetch; store?:PotatoExportQuoteStore; now?:()=>Date}={}) {
+  let retained:ExportQuoteReceipt|null=null, expires=0, pending:Promise<PotatoExportQuoteResponse>|null=null;
+  const clock=options.now||(()=>new Date());
+  const comparisonView=(receipt:ExportQuoteReceipt|null)=>{
+    const changes=calculatePotatoExportChanges(receipt?.data||null,Array.isArray(receipt?.series)?receipt.series:[],clock());
+    if(receipt?.comparisonPeriod&&receipt.comparisonPeriod>receipt.data.period){
+      for(const [key,offset] of [['mom',1],['yoy',12]] as const)changes[key]={currentPeriod:receipt.comparisonPeriod,referencePeriod:serialMonth(monthSerial(receipt.comparisonPeriod)-offset),referenceEurPerMT:null,pct:null,amountEurPerMT:null,provisional:false};
+    }
+    return changes;
+  };
+  const response=(receipt:ExportQuoteReceipt|null,status:PotatoExportQuoteResponse['dataStatus'],failed=false,lastError?:string):PotatoExportQuoteResponse=>({
+    success:!!receipt, dataStatus:status, checkedAt:clock().toISOString(), verifiedAt:receipt?.verifiedAt||null,
+    refreshFailed:failed, ...(lastError?{lastError}:{}), source:'Eurostat Comext · EU27 → 한국 · CN 11081300 · 월별 평균 수출단가',
+    sourceUrl:POTATO_COMEXT_PAGE, data:receipt?.data||null,
+    changes:comparisonView(receipt)
+  });
+  const readSaved=()=>{
+    try {const saved=options.store?.read();if(validExportReceipt(saved,clock()))retained=saved;}catch{/* Saved-only reads never collect or write. */}
+    return response(retained,retained?'last-verified':'unavailable');
+  };
+  return {saved:readSaved,get(force=false):Promise<PotatoExportQuoteResponse> {
+    if(pending)return pending;
+    if(!retained)try{const saved=options.store?.read();if(validExportReceipt(saved,clock()))retained=saved;}catch{/* Unusable cache never supplies a quote. */}
+    if(!force&&retained&&+clock()<expires)return Promise.resolve(response(retained,'last-verified'));
+    pending=(async()=>{
+      let issue='Eurostat 감자전분 기준시세 조회 실패';
+      try {
+        const query=new URLSearchParams({format:'JSON',freq:'M',reporter:REPORTER,partner:'KR',product:CN,flow:'2',
+          sinceTimePeriod:`${clock().getUTCFullYear()-3}-01`});
+        query.append('indicators','VALUE_IN_EUROS');query.append('indicators',INDICATOR);
+        const res=await (options.fetcher||fetch)(`${COMEXT_API}?${query}`,{
+          headers:{Accept:'application/json','User-Agent':'RMS-Procurement/1.0'},signal:AbortSignal.timeout(15000)});
+        if(!res.ok){issue='Eurostat 감자전분 기준시세 HTTP '+res.status;throw Error(issue);}
+        const raw:JsonStat=await res.json();
+        const series=parsePotatoExportSeries(raw,clock());
+        const data=series[0];
+        if(!data){issue='한국향 수출금액·순중량의 완전한 최신 월별 자료 미확보';throw Error(issue);}
+        // A source regression must not replace a newer verified month.
+        if(retained&&data.period<retained.data.period){issue='이전 기준월 응답으로 마지막 검증값 유지';throw Error(issue);}
+        // A newer published zero/partial/confidential month cannot silently become a comparison against an older month.
+        const comparisonPeriod=codes(raw,'time').filter(period=>monthSerial(period)<clock().getUTCFullYear()*12+clock().getUTCMonth()&&
+          ['VALUE_IN_EUROS',INDICATOR].some(indicators=>lookup({...raw,status:undefined},{freq:'M',reporter:REPORTER,partner:'KR',product:CN,flow:'2',indicators},period)!==null)).sort().at(-1);
+        retained={data,series,comparisonPeriod,verifiedAt:clock().toISOString()};expires=+clock()+CACHE_MS;
+        try{options.store?.write(retained);}catch{return response(retained,'live-verified',false,'검증값 영속 저장 실패 · 메모리 값 유지');}
+        return response(retained,'live-verified');
+      }catch{
+        return response(retained,retained?'last-verified':'unavailable',true,issue);
+      }
+    })().finally(()=>{pending=null;});
+    return pending;
+  }};
+}
+
+const exportQuoteFile=()=>path.join(process.env.RMS_HISTORY_ROOT||process.cwd(),'.rms-price-history','potato-export-unit-value.json');
+const potatoExportQuoteService=createPotatoExportQuoteService({store:{
+  read:()=>JSON.parse(fs.readFileSync(exportQuoteFile(),'utf8')),
+  write:receipt=>{
+    const file=exportQuoteFile(),temp=file+'.'+process.pid+'.tmp';
+    fs.mkdirSync(path.dirname(file),{recursive:true});
+    fs.writeFileSync(temp,JSON.stringify(receipt,null,2));fs.renameSync(temp,file);
+  }
+}});
+export const fetchOfficialPotatoExportQuote=(force=false)=>potatoExportQuoteService.get(force);
+
+/** Normal dashboard/PDF reads only consume the verified saved publication. */
+export const readSavedPotatoExportQuote=()=>potatoExportQuoteService.saved();

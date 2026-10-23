@@ -8,9 +8,11 @@ const now=new Date('2026-10-21T12:30:00Z'),p=fixture.configs.wheat.find((p:any)=
 const e=parseSharedOpenMeteo(raw.body,p,now.toISOString())!;assert(e);const policy={heatDays:3,rainMm:90};
 const s=sharedWeatherScreen([e],[p],policy,now);assert.equal(s.weatherValidUntil,'2026-10-21T13:00:00.000Z','23:30 Sydney must remain valid until midnight, not expire immediately');assert.deepEqual(s.weatherPills.map(p=>p.label),['특이 없음']);
 mock.timers.enable({apis:['Date'],now});try{
- const render=(screen:any)=>renderToStaticMarkup(<OriginRadar commodityId="wheat" origins={[{region:p.label,riskWeather:'Retained weather figures',...screen}]}/>);
- assert(!render(s).includes('>이상 없음</span>')&&!render(s).includes('>판정 보류</span>'),'fresh same-window clear screen has no status label');
- mock.timers.tick(30*60*1000);assert(render(s).includes('>판정 보류</span>'),'exact local midnight invalidates old status');
+ const render=(screen:any)=>renderToStaticMarkup(<OriginRadar commodityId="wheat" origins={[{region:p.label,riskWeather:'Retained weather figures',weatherEvidence:e,...screen}]}/>);
+ assert(!render(s).includes('>이상 없음</span>')&&render(s).includes('>판정 보류</span>'),'weather without crop-stage context does not invent favorable crop conditions');
+ assert(render(s).includes('최근 7일 강수량:'));
+ mock.timers.tick(30*60*1000);assert(render(s).includes('>판정 보류</span>'),'expired screen uses neutral text and dated weather coverage');
+ assert(!render(s).includes('최근 7일 강수량:'));assert(render(s).includes('이전 7일 강수량'),'local midnight retains the values with a compact historical coverage label');
 }finally{mock.timers.reset();}
 for(const [start,zone,end] of [
  ['2026-10-21T12:30:00Z','Australia/Sydney','2026-10-21T13:00:00.000Z'],

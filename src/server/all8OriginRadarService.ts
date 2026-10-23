@@ -1,9 +1,13 @@
+import {createHash} from 'node:crypto';
+import {selectProcurementNews} from './newsProcurementSelection.ts';
+import {readVerifiedTapiocaNews} from './tapiocaVerifiedNews.ts';
+import {readVerifiedSoybeanNews} from './soybeanNewsPersistence.ts';
 import {withHistoricalWeatherContext} from './originHistoricalWeather.ts';
-import {getOriginWeather,currentSharedWeather,parseSharedOpenMeteo,sharedWeatherSummary,withSharedFreezingRisk,TROPICAL_FREEZING_CROPS,type WeatherPoint,type SharedWeatherEvidence} from './originWeatherService.ts';
+import {getOriginWeather,screenCropWeatherEvents,currentSharedWeather,parseSharedOpenMeteo,sharedWeatherSummary,withSharedFreezingRisk,TROPICAL_FREEZING_CROPS,type WeatherPoint,type SharedWeatherEvidence} from './originWeatherService.ts';
 import {soybeanOilOriginService} from './soybeanOilOriginService.ts';
 import {fetchOfficialPotatoEurostat} from './officialPotatoEurostatService.ts';
 import fs from 'node:fs';
-import {screenPalmRain,insufficientWeather,deferredWeatherAssessment} from '../utils/originWeatherPills.ts';
+import {deferredWeatherAssessment,screenPalmRain,insufficientWeather} from '../utils/originWeatherPills.ts';
 import path from 'node:path';
 /** Free-first, evidence-only sourcing radar for RMS's five remaining commodities.
  * No Gemini calls; no historical sample numbers masquerading as live supply. */
@@ -53,18 +57,20 @@ function summarizeMeteoWeather(e:SharedWeatherEvidence|null){
 export function parseMeteoWeather(body:unknown,point?:WeatherPoint,now=new Date(),extended=false){
  return point?summarizeMeteoWeather(parseSharedOpenMeteo(body,point,now.toISOString(),extended?28:7)):null;
 }
-async function weather(p:Point,extended=false,force=false,minimumTemperature=false){return getOriginWeather({...p,label:p.region},{historyDays:extended?28:7,force,minimumTemperature});}
+async function weather(p:Point,extended=false,force=false,minimumTemperature=false){return getOriginWeather({...p,label:p.region},{historyDays:28,force,minimumTemperature});}
 const weatherEvidence=(id:string,e:SharedWeatherEvidence)=>id==='palm-oil'?{shared:e,recent:e.daily.map(d=>({day:d.date,mm:d.precipMm})),baseline:e.history.slice(0,-7).map(d=>({day:d.date,mm:d.precipMm})),model:true,coordinates:e.coordinates,retrievedAt:e.checkedAt}:e;
 
 export function withOriginWeatherPills(id:string,value:OriginRadarResponse):OriginRadarResponse {
   return {...value,origins:value.origins.map(origin=>{
     const evidence=origin.weatherEvidence?.shared||origin.weatherEvidence;
     const point=ORIGIN_MVP[id]?.points.find(p=>p.key===origin.originKey);
+    if(!point)return {...origin,...insufficientWeather(`산지 기상 지점 매핑 누락: ${id}/${origin.originKey}`)};
     const verifiedCurrent=!!point&&!!evidence&&currentSharedWeather(evidence,{...point,label:point.region});
     const recheckFailed=!!origin.weatherEvidence?.retrievalFailed||!!evidence?.retrievalFailed;
     const current=verifiedCurrent&&!recheckFailed;
     let screen;
-    if(id==='palm-oil'&&verifiedCurrent&&recheckFailed){
+    if(id!=='palm-oil')screen=screenCropWeatherEvents(id,evidence,{...point!,label:point!.region});
+    else if(verifiedCurrent&&recheckFailed){
       // Recompute only from the source-validated retained history, never saved
       // pill labels or an unverified wrapper. No failed recheck can certify clear.
       const retained=screenPalmRain({shared:evidence,model:true,retrievedAt:evidence.checkedAt,
@@ -77,17 +83,85 @@ export function withOriginWeatherPills(id:string,value:OriginRadarResponse):Orig
     else if(id==='palm-oil')screen=screenPalmRain(origin.weatherEvidence);
     else if(evidence.rainfallDays!==7||evidence.temperatureDays!==7)
       screen=insufficientWeather(`기상 확인 필요: 강수 ${evidence.rainfallDays}/7일 · 일최고기온 ${evidence.temperatureDays}/7일`);
-    else {
-      const reason:Record<string,string>={sugar:'생육단계·관개를 반영한 사탕수수 선별 기준 미확정','potato-starch':'토양온도·생육단계를 반영한 원료감자 선별 기준 미확정','tapioca-starch':'정식·생육단계를 반영한 카사바 선별 기준 미확정'};
-      screen=deferredWeatherAssessment('기상 7일 확인(강수 7/7일 · 일최고기온 7/7일) · '+(reason[id]||'품목별 기상 선별 기준 미확정'));
+    if(id==='palm-oil'&&point){
+      screen.weatherScreening={scope:'최근 7일 강수의 직전 3주 주평균 대비 편차 및 열대 작물 빙점 노출 선별',
+       complete:current&&evidence.minimumTemperatureDays===7&&evidence.temperatureDays===7&&evidence.rainfallDays===7&&
+        evidence.history.length===28&&evidence.history.every((d:any)=>d.precipMm!==null),
+       limitations:['강수 비율 변화는 가뭄·침수 또는 작황 피해 판정이 아님','열대 산지의 생육단계·배수·토양수분과 실제 피해 미확인'],sources:[evidence?.sourceUrl||'']};
+      screen=withSharedFreezingRisk(id,screen,evidence,{...point,label:point.region});
     }
-    if(point)screen=withSharedFreezingRisk(id,screen,evidence,{...point,label:point.region});
     return {...origin,...screen};
   })};
 }
+/** Reuse published country/crop evidence; never confuse national supply with point weather. */
+export function completeOriginRadar(id:string,value:OriginRadarResponse,root=process.cwd(),now=new Date()):OriginRadarResponse {
+ let potato:any=null,jrc:any=null;
+ let starchSupply:any[]=[];
+ if(id==='potato-starch'||id==='tapioca-starch'){
+  try{const saved=JSON.parse(fs.readFileSync(path.join(root,'src/data/starch_origin_supply_verified.json'),'utf8'));if(Array.isArray(saved.records))starchSupply=saved.records;}catch{}
+ }
+ if(id==='potato-starch'){
+  try{const receipt=JSON.parse(fs.readFileSync(path.join(root,'.rms-stage3/evidence/potato-stats.json'),'utf8'));
+   if(receipt.status===200&&createHash('sha256').update(receipt.body).digest('hex')===receipt.sha256){const saved=JSON.parse(receipt.body);if(saved.success&&saved.data?.coverage?.join(',')==='DE,FR,NL,DK')potato=saved;}}catch{}
+  try{const saved=JSON.parse(fs.readFileSync(path.join(root,'src/data/potato_jrc_monthly_verified.json'),'utf8'));
+   if(saved.publishedAt<=now.toISOString().slice(0,10)&&saved.forecastYear===now.getUTCFullYear())jrc=saved;}catch{}
+ }
+ const planting=['soybean','soybean-oil'].includes(id)?selectProcurementNews('soybean',readVerifiedSoybeanNews(root,now),+now).find(a=>/마토그로소/.test(a.summary)&&/전체 파종.*일정대로/.test(a.summary)):null;
+ const cassava=id==='tapioca-starch'?readVerifiedTapiocaNews(root).filter(a=>a.publishedAt<=now.toISOString().slice(0,10)):[];
+ const completed:OriginRadarResponse={...value,origins:value.origins.map(o=>{
+  const indicators:NonNullable<OriginItemDetail['supplyIndicators']>=[];
+  let context:OriginItemDetail['weatherCropContext'];
+  let publishedSupply:any=null;
+  let production=o.production,productionNumericMMT=o.productionNumericMMT,sourceReportDate=o.sourceReportDate,sourceUrl=o.sourceUrl,marketYear=o.marketYear;
+  if(planting&&o.originKey==='brazil')context={clearSupported:true,basis:'마토그로소 파종이 대체로 일정대로 진행 중이라는 확인과 최근 대표 지점의 기존 기상 선별 결과를 함께 반영합니다.',sourceUrl:planting.originalUrl,publishedAt:planting.publishedAt};
+  if(id==='potato-starch'){
+   const code=({germany:'DE',netherlands:'NL',denmark:'DK',poland:'PL'} as Record<string,string>)[o.originKey];
+   const country=potato?.data?.countries.find((c:any)=>c.country===code),forecast=jrc?.rows.find((r:any)=>r.code===code);
+   if(country){production=(country.production1000MT/1000).toFixed(2)+'M MT (전체 감자)';productionNumericMMT=country.production1000MT/1000;sourceReportDate=potato.data.harvestYear;sourceUrl=potato.sourceUrl;marketYear=potato.data.harvestYear;
+    const prior=potato.history?.find((h:any)=>Number(h.harvestYear)===Number(potato.data.harvestYear)-1)?.countries.find((c:any)=>c.country===code);
+    const change=prior?.production1000MT>0?(country.production1000MT/prior.production1000MT-1)*100:null;
+    indicators.push({text:`${potato.data.harvestYear}년${potato.data.isEstimateOrProvisional?' 잠정':''} · `+(change!==null?`전년 생산 대비 ${change>=0?'+':''}${change.toFixed(1)}%`:`수확면적 ${country.area1000HA}천 ha`),source:'Eurostat',url:potato.sourceUrl,period:potato.data.harvestYear,display:'origin-summary'});
+    indicators.push({text:`${potato.data.harvestYear} 국가 전체 감자 · 면적 ${country.area1000HA}천 ha · 단수 ${country.yieldMTHA}t/ha`,source:'Eurostat',url:potato.sourceUrl,period:potato.data.harvestYear});}
+   if(forecast){indicators.push({text:`JRC ${jrc.forecastYear} 국가 감자 단수 전망 ${forecast.forecast.toFixed(1)}t/ha · 전년 ${forecast.previousYear.toFixed(1)} · 전월 전망 ${forecast.previousForecast.toFixed(1)}`,source:'JRC MARS',url:jrc.sources[0].url,period:jrc.publishedAt});
+    if(forecast.forecast<forecast.fiveYearMean&&/고온|건조/.test(jrc.conditions))context={warningSupported:true,basis:`JRC ${jrc.publishedAt}: ${forecast.country} 전체 감자 단수 전망이 평년보다 낮으며, 해당 생육기의 고온·건조 영향이 보고됐습니다. 현재 주간 강수만으로 피해를 판정한 결과가 아닙니다.`,sourceUrl:jrc.sources[0].url,publishedAt:jrc.publishedAt};}
+  }
+  if(id==='tapioca-starch'){
+   const report=cassava.find(a=>a.id==='tq-2026-10');
+   const text=o.originKey==='thailand'?report?.summary.match(/인용된 NETTA[^.]+\./)?.[0]:o.originKey==='vietnam'?report?.summary.match(/베트남[^.]+\./)?.[0]:null;
+   if(text)indicators.push({text:'원료·가공: '+text,source:report!.sourceName,url:report!.originalUrl,period:report!.publishedAt});
+  }
+  if(id==='potato-starch'||id==='tapioca-starch'){
+   const crop=id==='potato-starch'?'raw-potatoes-including-seed':'fresh-cassava-roots';
+   const record=starchSupply.find(r=>r.commodityId===id&&r.originKey===o.originKey&&r.scope==='national'&&r.crop===crop&&r.unit==='tonnes'&&Number.isFinite(r.productionTonnes)&&r.productionTonnes>0);
+   if(record){
+    publishedSupply=record;productionNumericMMT=record.productionTonnes/1e6;
+    production=(Math.round(record.productionTonnes/10000)/100).toFixed(2)+`M MT (${record.reportingYear}${record.estimateStatus==='forecast'?' 전망':record.estimateStatus==='estimated'?' 추정':''})`;
+    marketYear=record.reportingYear;sourceReportDate=record.source.reportDate||record.reportingYear;sourceUrl=record.source.url;
+    const prior=record.previous,comparable=prior?.scope==='national'&&prior.crop===crop&&prior.unit==='tonnes'&&Number.isFinite(prior.productionTonnes)&&prior.productionTonnes>0;
+    if(comparable){const change=(record.productionTonnes/prior.productionTonnes-1)*100;
+     indicators.push({text:`${prior.reportingYear} ${(Math.round(prior.productionTonnes/10000)/100).toFixed(2)}M MT 대비 ${change>=0?'+':''}${change.toFixed(1)}%`,source:record.source.name,url:record.source.url,period:record.reportingYear,display:'origin-summary'});
+    }
+   }
+  }
+  const cropLabel=id==='sugar'?'사탕수수':id==='tapioca-starch'?'카사바':undefined;
+  return {...o,production,productionNumericMMT,sourceReportDate,sourceUrl,marketYear,supplyIndicators:indicators,weatherCropContext:context,
+    ...(publishedSupply?{primarySource:publishedSupply.source.name,supportingSource:o.weatherSource||'Open-Meteo',sourceName:publishedSupply.source.name,sourceOrg:publishedSupply.source.name,retrievedAt:publishedSupply.source.retrievedAt,isLive:false,dataFreshness:'cached' as const}:{}),
+    ...(cropLabel?{riskWeather:`${cropLabel} 재배지 · ${o.riskWeather||''}`}:{})};
+ })};
+ if(id==='potato-starch'||id==='tapioca-starch')return {...completed,sourcesUsed:completed.origins.map(o=>({origin:o.region,primarySource:o.primarySource,supportingSource:o.supportingSource,sourceOrg:o.sourceOrg,sourceReportDate:o.sourceReportDate,sourceUrl:o.sourceUrl,status:o.dataFreshness})),
+  sourceFooterText:[...new Set(completed.origins.flatMap(o=>[o.sourceOrg,o.weatherSource,...(o.supplyIndicators||[]).map(s=>s.source)]).filter(Boolean))].join(' · ')};
+ return completed;
+}
+
 async function loadOriginRadarData(id:string,force=false):Promise<OriginRadarResponse>{
-  if(id==='soybean-oil')return soybeanOilOriginService.get(force);
+  if(id==='soybean-oil')return soybeanOilOriginService.get(force,!force);
   const spec=ORIGIN_MVP[id];if(!spec)throw Error('Unsupported commodity');
+  if(!force){
+    const dir=process.env.RMS_ALL8_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified');let saved:any;
+    try{saved=JSON.parse(fs.readFileSync(path.join(dir,'all8-shared-weather-v1-'+id+'.json'),'utf8'));}catch{saved={success:true,statusCode:200,lastUpdated:'',origins:spec.points.map(p=>({originKey:p.key,region:p.region,production:'',exports:'',endingStocks:'',dataFreshness:'unavailable'})),sourcesUsed:[],sourceFooterText:''};}
+    const origins=await Promise.all(spec.points.map(async p=>{const previous=saved.origins.find((o:any)=>o.originKey===p.key)||{originKey:p.key,region:p.region};const e=await getOriginWeather({...p,label:p.region},{savedOnly:true,historyDays:28,minimumTemperature:true});return {...previous,region:p.region,weatherEvidence:e?weatherEvidence(id,e):undefined,riskWeather:e?sharedWeatherSummary([e]):'',weatherDataKind:'archived-model',weatherSource:'Open-Meteo',weatherAsOf:e?.lastDay||'',isLive:false,dataFreshness:previous.production?'cached':'unavailable'};}));
+    return withOriginWeatherPills(id,{...saved,origins});
+  }
   const cached=memory.get(id);if(!force&&cached&&Date.now()-cached.at<3*3600000&&currentWeatherCache(id,cached.value))return withOriginWeatherPills(id,cached.value);
   const year=String(new Date().getUTCFullYear());
   const savedFile=path.join(process.env.RMS_ALL8_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'all8-shared-weather-v1-'+id+'.json');
@@ -134,5 +208,9 @@ async function loadOriginRadarData(id:string,force=false):Promise<OriginRadarRes
 
 export async function loadAll8OriginRadar(id:string,force=false):Promise<OriginRadarResponse>{
  const result=await loadOriginRadarData(id,force);
- return withHistoricalWeatherContext(result,ORIGIN_MVP[id].points.map(p=>({...p,label:p.region})));
+ const completed=completeOriginRadar(id,await withHistoricalWeatherContext(result,ORIGIN_MVP[id].points.map(p=>({...p,label:p.region})),{savedOnly:!force}));
+ // Keep the documented geographic limitation in the published result itself,
+ // rather than silently overriding a clear backend result only in the browser.
+ return {...completed,origins:completed.origins.map(o=>o.weatherHistoricalContext?.points.some(p=>p.agriculturalRepresentativeness?.startsWith('unverified:'))?
+  {...o,...deferredWeatherAssessment('대표 지점의 재배지 대표성 미확인 · 기존 지형·격자 불일치 근거 유지'),weatherScreening:o.weatherScreening?{...o.weatherScreening,complete:false}:undefined}:o)};
 }

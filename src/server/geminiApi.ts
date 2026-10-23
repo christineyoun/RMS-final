@@ -1,5 +1,6 @@
 import {sugarPriceSnapshotService} from './sugarPriceSnapshotService.ts';
-import {potatoProductionPayload} from './potatoProductionHistory.ts';
+import {savedGraphHistoryResponse,rememberGraphRefresh} from './savedGraphHistory.ts';
+import {potatoProductionPayload,getRegionalPotatoProduction,readSavedRegionalPotatoProduction} from './potatoProductionHistory.ts';
 import { GoogleGenAI, isPaidGeminiEnabled } from './paidGeminiGuard.ts';
 import dotenv from 'dotenv';
 import fs from 'fs';
@@ -8,7 +9,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { scrapeLiveScfiIndex, getScfiCache } from './scfiScraperService.ts';
 import { fetchOfficialTapiocaQuote } from './officialTapiocaQuoteService.ts';
 import { fetchOfficialPotatoEurostat } from './officialPotatoEurostatService.ts';
-import { fetchOfficialPotatoComext } from './officialPotatoComextService.ts';
+import { fetchOfficialPotatoComext, fetchOfficialPotatoExportQuote, readSavedPotatoExportQuote } from './officialPotatoComextService.ts';
 import { buildPotatoEurostatMarketView } from './potatoEurostatMarketView.ts';
 
 const CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
@@ -566,6 +567,11 @@ Please return a valid JSON object matching this structure EXACTLY (pure JSON wit
 export function createGeminiApiMiddleware() {
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const url = req.url || '';
+    const savedHistory=await savedGraphHistoryResponse(url);
+    if(savedHistory){
+      res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');
+      res.statusCode=savedHistory.status;res.end(JSON.stringify(savedHistory.payload));return;
+    }
 
     // Inspect protection without sending a paid AI request or exposing credentials.
     if (url.startsWith('/api/rms/gemini-cost-status')) {
@@ -663,7 +669,7 @@ export function createGeminiApiMiddleware() {
     }
 
     if (/^\/api\/sugar\/price-snapshot(?:\?|$)/.test(url)) {
-      try {const snapshot=await sugarPriceSnapshotService.getSnapshot(new URL(url,'http://localhost').searchParams.get('force')==='true');res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=200;res.end(JSON.stringify(snapshot));}
+      try {const force=new URL(url,'http://localhost').searchParams.get('force')==='true';const snapshot=await sugarPriceSnapshotService.getSnapshot(force);if(force)await rememberGraphRefresh('sugar',snapshot);res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=200;res.end(JSON.stringify(snapshot));}
       catch {res.setHeader('Content-Type','application/json');res.statusCode=503;res.end(JSON.stringify({success:false,error:'Sugar price snapshot unavailable'}));}return;
     }
     if (/^\/api\/soybean-oil\/price-snapshot(?:\?|$)/.test(url)) {
@@ -917,6 +923,16 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
+    // Potato benchmark only: free, monthly EU27-to-Korea export unit value.
+    if (/^\/api\/starch\/potato-export-quote(\?|$)/.test(url)) {
+      const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';
+      const result = force ? await fetchOfficialPotatoExportQuote(true) : readSavedPotatoExportQuote();
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = result.success ? 200 : 503;
+      res.end(JSON.stringify(result));
+      return;
+    }
     // RMS Step 20 — potato starch Eurostat Comext trade
     if (/^\/api\/starch\/potato-trade(\?|$)/.test(url)) {
       const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';
@@ -928,6 +944,12 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
+    // Graph-only regional series; keep the existing agricultural proxy/SCM route unchanged.
+    if (/^\/api\/potato-starch\/production-regions(?:\?|$)/.test(url)) {
+      const force=new URL(url,'http://localhost').searchParams.get('force')==='true';
+      const data=force?await getRegionalPotatoProduction(true):readSavedRegionalPotatoProduction();
+      res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.statusCode=200;res.end(JSON.stringify(data));return;
+    }
     // Compatibility alias: official agricultural proxy only; never a paid page-view call.
     if (url.startsWith('/api/potato-starch/production')) {
       const result=potatoProductionPayload();
@@ -1080,6 +1102,7 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
         const data = commodity==='soybean'
           ? await soybeanIntelligenceService.getSoybeanPriceSnapshot(force)
           : commodity==='soybean-oil' ? await soybeanOilIntelligenceService.getSoybeanOilPriceSnapshot(force) : commodity==='sugar' ? await sugarPriceSnapshotService.getSnapshot(force) : await fetchHistoricalData(commodity, timeframe, force);
+        if(force&&(commodity==='corn'||commodity==='sugar'))await rememberGraphRefresh(commodity,data);
 
         res.setHeader('Content-Type', 'application/json');
         // force=true should also bypass browser/proxy caches, not just local fetch caches.

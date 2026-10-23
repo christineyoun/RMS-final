@@ -71,45 +71,114 @@ export function currentSharedWeather(e:SharedWeatherEvidence,point:WeatherPoint,
 const hash=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 const pending=new Map<string,Promise<SharedWeatherEvidence|null>>();
 /** Shared persistent read-through cache; old provider caches and raw records stay intact. */
-export async function getOriginWeather(point:WeatherPoint,options:{force?:boolean;historyDays?:number;minimumTemperature?:boolean;cacheDir?:string;now?:Date;fetcher?:typeof fetch}={}):Promise<SharedWeatherEvidence|null> {
+export async function getOriginWeather(point:WeatherPoint,options:{force?:boolean;savedOnly?:boolean;historyDays?:number;minimumTemperature?:boolean;cacheDir?:string;now?:Date;fetcher?:typeof fetch}={}):Promise<SharedWeatherEvidence|null> {
  const now=options.now||new Date(),historyDays=options.historyDays||7,url=openMeteoWeatherUrl(point,historyDays,options.minimumTemperature);
  const dir=options.cacheDir||path.join(process.env.RMS_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'shared-openmeteo-v1');
- const id=hash({point,url:publicUrl(url),historyDays}),file=path.join(dir,id+'.json');let prior:SharedWeatherEvidence|null=null;
- try{const raw=JSON.parse(fs.readFileSync(file,'utf8'));if(currentSharedWeather(raw,point,now))prior=raw;}catch{}
- const complete=prior&&prior.rainfallDays===7&&prior.temperatureDays===7&&(!options.minimumTemperature||prior.minimumTemperatureDays===7)&&!prior.retrievalFailed;
- if(!options.force&&prior&&now.getTime()-Date.parse(prior.lastAttemptAt||prior.checkedAt)<(complete?3*3600000:20*60000))return prior;
+ // Identity is the configured location, not incidental caller properties/order.
+ const identity={key:point.key,label:point.label,lat:point.lat,lon:point.lon};
+ const id=hash({point:identity,url:publicUrl(url),historyDays}),file=path.join(dir,id+'.json');
+ const complete=(e:SharedWeatherEvidence)=>e.rainfallDays===7&&e.temperatureDays===7&&(!options.minimumTemperature||e.minimumTemperatureDays===7)&&
+  e.history.length===historyDays&&e.history.every(d=>d.precipMm!==null);
+ const valid=(raw:SharedWeatherEvidence)=>!!raw&&
+  (raw.sourceUrl===publicUrl(url)||raw.sourceUrl===publicUrl(openMeteoWeatherUrl(point,historyDays,false)))&&
+  currentSharedWeather(raw,point,new Date(raw.checkedAt));
+ // The current index may predate a good receipt, use a legacy key, or be a failed
+ // marker. Recover the latest successful source record without any requests.
+ const candidates:SharedWeatherEvidence[]=[];
+ try{const raw=JSON.parse(fs.readFileSync(file,'utf8'));if(valid(raw)){if(options.savedOnly&&complete(raw)&&!raw.retrievalFailed&&currentSharedWeather(raw,point,now))return raw;candidates.push(raw);}}catch{}
+ try{for(const name of fs.readdirSync(path.join(dir,'receipts')).filter(n=>n.endsWith('.json'))){
+  try{const raw=JSON.parse(fs.readFileSync(path.join(dir,'receipts',name),'utf8'));if(valid(raw))candidates.push(raw);}catch{}
+ }}catch{}
+ candidates.sort((a,b)=>b.lastDay.localeCompare(a.lastDay)||Number(complete(b))-Number(complete(a))||Number(!!a.retrievalFailed)-Number(!!b.retrievalFailed)||b.checkedAt.localeCompare(a.checkedAt));
+ const prior=candidates[0]||null;
+ if(options.savedOnly)return prior;
+ if(!options.force&&prior&&currentSharedWeather(prior,point,now)&&!prior.retrievalFailed&&now.getTime()-Date.parse(prior.checkedAt)<(complete(prior)?3*3600000:20*60000))return prior;
  const lock=file;if(pending.has(lock))return pending.get(lock)!;
  const task=(async()=>{
-  let evidence:SharedWeatherEvidence|null=null,failed=false;
+  let evidence:SharedWeatherEvidence|null=null,error='',attempts=0,receivedStatus='failed';
   for(let attempt=0;attempt<2;attempt++){
-   try{const r=await(options.fetcher||fetch)(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('Open-Meteo HTTP '+r.status);
-    evidence=parseSharedOpenMeteo(await r.json(),point,now.toISOString(),historyDays,options.minimumTemperature);failed=false;
-    // A valid partial response is preserved; never fill it from another provider/window.
-    if(evidence&&((evidence.rainfallDays===7&&evidence.temperatureDays===7&&(!options.minimumTemperature||evidence.minimumTemperatureDays===7))||attempt===1))break;
-   }catch{failed=true;}
+   attempts++;
+   try{const r=await(options.fetcher||fetch)(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(25000)});if(!r.ok)throw Error('Open-Meteo HTTP '+r.status);
+    const candidate=parseSharedOpenMeteo(await r.json(),point,now.toISOString(),historyDays,options.minimumTemperature);
+    if(!candidate)throw Error('Open-Meteo source, coordinates, units, timezone or daily arrays invalid');
+    evidence=candidate;receivedStatus=complete(candidate)?'complete':'partial';
+    if(complete(candidate)){error='';break;}
+    error='Incomplete daily coverage';
+   }catch(e){error=e instanceof Error?e.message:String(e);}
+   if(attempt===0)await new Promise(resolve=>setTimeout(resolve,500));
   }
-  if(!evidence&&failed&&prior)evidence={...prior,retrievalFailed:true,lastAttemptAt:now.toISOString()};
-  if(evidence){fs.mkdirSync(path.join(dir,'receipts'),{recursive:true});
+  fs.mkdirSync(path.join(dir,'receipts'),{recursive:true});
+  if(evidence){
    const receipt=path.join(dir,'receipts',hash(evidence)+'.json');if(!fs.existsSync(receipt))fs.writeFileSync(receipt,JSON.stringify(evidence,null,2),{mode:0o600});
-   const tmp=file+'.'+process.pid+'.tmp';fs.writeFileSync(tmp,JSON.stringify(evidence,null,2),{mode:0o600});fs.renameSync(tmp,file);
-  }else if(fs.existsSync(file)){
-   // Keep the old receipt, but replace the current index so invalid new data cannot certify green.
-   fs.writeFileSync(file,JSON.stringify({unavailable:true,lastAttemptAt:now.toISOString()}),{mode:0o600});
+   // Never replace a complete successful receipt with failure or a partial
+   // response for the same window. Newer partial windows remain truthful.
+   const published=prior&&prior.lastDay===evidence.lastDay&&complete(prior)&&!complete(evidence)?prior:evidence;
+   const tmp=file+'.'+process.pid+'.tmp';fs.writeFileSync(tmp,JSON.stringify(published,null,2),{mode:0o600});fs.renameSync(tmp,file);
+   evidence=published;
   }
+  // Diagnostics are separate from the last good publication. Its observation
+  // dates stay unchanged, so an older retained week can never certify current.
+  fs.writeFileSync(file+'.attempt.json',JSON.stringify({point:identity,url:publicUrl(url),lastAttemptAt:now.toISOString(),attempts,
+   status:receivedStatus,error:error||undefined,retained:!!prior&&(!evidence||evidence===prior)},null,2),{mode:0o600});
+  if(!evidence)evidence=prior;
   return evidence;
  })();pending.set(lock,task);try{return await task;}finally{pending.delete(lock);}
 }
 export function sharedWeatherScreen(points:SharedWeatherEvidence[],configured:ReadonlyArray<WeatherPoint>,policy:{heatDays:number;rainMm?:number},now=new Date()):WeatherScreen {
  const current=points.filter(p=>{const c=configured.find(c=>c.key===p.key&&c.label===p.location);return !!c&&currentSharedWeather(p,c,now);});
  const screen=screenObservedWeather(current.map(p=>({location:p.location,lastDay:p.lastDay,checkedAt:p.checkedAt,rainfallDays:p.rainfallDays,temperatureDays:p.temperatureDays,
-   // The sum of verified days is a lower bound, not a fabricated complete week.
-   // It can prove a rain threshold was exceeded while coverage stays incomplete.
-   precipMm:p.precip7mm??(p.rainfallDays?Number(p.daily.filter(d=>d.precipMm!==null).reduce((sum,d)=>sum+d.precipMm!,0).toFixed(6)):null),
-   hotDays:p.hotDays,retrievalFailed:p.retrievalFailed})),{locations:configured.map(p=>p.label),heatDays:policy?.heatDays,rainMm:policy?.rainMm,observationAgeDays:3,independentlyCurrentLocalWindows:true},now.getTime());
+   precipMm:p.precip7mm,
+   hotDays:p.hotDays,retrievalFailed:p.retrievalFailed})),{locations:configured.map(p=>p.label),heatDays:policy?.heatDays,observationAgeDays:3,independentlyCurrentLocalWindows:true},now.getTime());
+ // Preserve the existing 90mm event screen, but require a complete same-point
+ // comparison and at least twice the preceding 3-week weekly average. This is
+ // concentrated modeled rainfall, not a diagnosis of waterlogging or damage.
+ if(policy.rainMm!==undefined)for(const p of current){
+  const baseline=p.history.length===28&&p.history.slice(0,21).every(d=>d.precipMm!==null)?p.history.slice(0,21).reduce((n,d)=>n+d.precipMm!,0)/3:null;
+  if(p.precip7mm!==null&&baseline!==null&&baseline>0&&p.precip7mm>=policy.rainMm&&p.precip7mm>=2*baseline){
+   screen.weatherPills=screen.weatherPills.filter(p=>p.label!=='특이 없음');
+   screen.weatherPills.push({label:'강수 과다 주의',basis:p.location+' 현지 완료 7일 '+p.precip7mm+'mm / 직전 3주 주평균 '+baseline.toFixed(1)+'mm · 기존 '+policy.rainMm+'mm 및 2배 편차 기준 동시 충족 · 침수·작물 피해 판정 아님'});
+  }
+ }
  screen.weatherPills=screen.weatherPills.map(p=>({...p,basis:p.basis.replaceAll('관측','모델 자료')+' · Open-Meteo 과거 모델 자료, 실측·재분석 아님'}));
  const ends=current.map(p=>weatherWindowExpiry(now,p.timeZone));
  if(ends.length)screen.weatherValidUntil=new Date(Math.min(Date.parse(screen.weatherValidUntil||'9999-01-01'),...ends)).toISOString();
+ screen.weatherScreening={scope:`대표 지점의 35°C 이상 ${policy.heatDays}일 반복 고온${policy.rainMm?` 및 현지 7일 ${policy.rainMm}mm 이상·직전 3주 주평균 2배 이상 누적 강수`:''} 선별`,
+  complete:current.length===configured.length&&configured.length>0&&current.every(p=>p.rainfallDays===7&&p.temperatureDays===7&&p.minimumTemperatureDays===7&&!p.retrievalFailed&&p.history.length===28&&p.history.every(d=>d.precipMm!==null)),
+  limitations:['기존 RMS 기상 사건 선별 기준이며 생육 피해 임계값이 아님','품종·생육단계별 저온·가뭄·침수 노출은 미평가','재배 생육단계·토양수분·관개·포장 피해·조달 안전은 판정하지 않음'],sources:current.map(p=>p.sourceUrl)};
+ if(!screen.weatherScreening.complete&&!screen.weatherPills.some(p=>p.label==='자료 부족')){
+  screen.weatherPills=screen.weatherPills.filter(p=>p.label!=='특이 없음');
+  screen.weatherPills.push({label:'자료 부족',basis:'최근 7일 강수·최고·최저기온 또는 직전 21일 비교 강수의 완전한 원자료 확인 필요'});
+ }
  return screen;
+}
+
+/** Crop-specific, deliberately partial thermal exposure screens. A 2m freezing
+ * event does not establish canopy/soil frost or damage. A completed limited screen may report no event; it never certifies general
+ * crop safety, crop stage or water balance.
+ * Cassava's whole-day Tmax <=10C check follows FAO's growth-stop temperature;
+ * it does not equate a single cool night with sustained growth inhibition.
+ */
+export function screenCropWeatherEvents(id:string,e:SharedWeatherEvidence|undefined,point:WeatherPoint,now=new Date()):WeatherScreen {
+ const crops:Record<string,{name:string;sources:string[]}>={
+  sugar:{name:'사탕수수',sources:['https://www.fao.org/4/i2800e/i2800e.pdf']},
+  'potato-starch':{name:'감자',sources:['https://www.bamis.gov.bd/en/crops/view/52/']},
+  'tapioca-starch':{name:'카사바',sources:['https://www.fao.org/4/x5032e/x5032e01.htm']}
+ };
+ const crop=crops[id];if(!crop)return {weatherPills:[{label:'판정 보류',basis:'품목별 사건 선별 근거 없음'}]};
+ const current=!!e&&currentSharedWeather(e,point,now),daily=current?e.daily:[];
+ const complete=current&&!e.retrievalFailed&&e.rainfallDays===7&&e.temperatureDays===7&&e.minimumTemperatureDays===7&&e.history.length===28&&e.history.every(d=>d.precipMm!==null);
+ const cold=daily.filter(d=>d.tMinC!=null&&d.tMinC<=0),coolDay=id==='tapioca-starch'?daily.filter(d=>d.tMaxC!=null&&d.tMaxC<=10):[];
+ const limitations=[`${crop.name} 생육·수확 단계와 포장별 노출 미확인`,
+  '2m 모델 기온은 지표·토양·괴경 온도나 작물 피해 측정이 아님',
+  '강수 적정성은 토양수분·배수·관개·증발산 근거가 없어 선별하지 않음',
+  id==='potato-starch'?`${[8,9,10].includes(now.getUTCMonth())?'가을 수확기 맥락 · ':''}해당 포장의 미수확 여부·보관 상태 미확인`:'열대 작물의 생육·수확이 혼재하며 특정 정식 시기 미확인'];
+ const coverage=`강수 ${current?e.rainfallDays:0}/7 · 최고기온 ${current?e.temperatureDays:0}/7 · 최저기온 ${current?e.minimumTemperatureDays||0:0}/7 · 비교 강수 ${current?e.history.filter(d=>d.precipMm!==null).length:0}/28`;
+ const basis=cold.length?`${point.label} ${crop.name}: 현지 완료 7일 중 모델 일최저기온 0°C 이하 ${cold.length}일 · 지표 서리·작물 피해 판정 아님`:
+  coolDay.length?`${point.label} 카사바: 모델 일최고기온 10°C 이하 ${coolDay.length}일 · FAO 생육 정지 온도 부근의 종일 저온 노출 선별, 피해 판정 아님`:
+  `${point.label}: ${current?'확인한 저온 사건 없음':'최근 현지 완료 7일 자료 미확인'} · ${coverage} · ${limitations.join(' · ')}`;
+ return {weatherPills:[{label:cold.length||coolDay.length?'저온 주의':complete?'특이 없음':'판정 보류',basis}],
+  ...(current?{weatherValidUntil:new Date(Math.min(weatherWindowExpiry(now,e.timeZone),Date.parse(e.checkedAt)+3*WEATHER_DAY)).toISOString()}:{}),
+  weatherScreening:{scope:`${crop.name} 2m 빙점 노출${id==='tapioca-starch'?' 및 종일 10°C 이하 저온':''} 제한된 사건 선별`,complete,limitations,sources:crop.sources}};
 }
 /** Conservative modeled freezing exposure for tropical perennial crops only.
  * FAO meteorological freezing definition: https://www.fao.org/4/y7223e/y7223e07.htm
@@ -129,7 +198,7 @@ export function withSharedFreezingRisk(id:string,base:WeatherScreen,e:SharedWeat
   pills.push({label:'자료 부족',basis:[...reasons,`${point.label}: 일최저기온 ${valid?e.minimumTemperatureDays||0:0}/7일 · ${valid&&!e.retrievalFailed?'빙점 노출 선별에 필요한 기온 확인 필요':'최근 현지 기간·출처·재확인 상태 확인 필요'}`].join(' · ')});
  }
  const until=valid?Math.min(Date.parse(base.weatherValidUntil||'9999-01-01'),Date.parse(e.checkedAt)+3*WEATHER_DAY,weatherWindowExpiry(now,e.timeZone)):undefined;
- return {weatherPills:pills,...(until!==undefined?{weatherValidUntil:new Date(until).toISOString()}:{})};
+ return {...base,weatherPills:pills,...(!complete&&base.weatherScreening?{weatherScreening:{...base.weatherScreening,complete:false}}:{}),...(until!==undefined?{weatherValidUntil:new Date(until).toISOString()}:{})};
 }
 export function sharedWeatherSummary(points:SharedWeatherEvidence[]):string {
  if(!points.length)return '모델 기상 자료 부족 (Open-Meteo)';
@@ -143,7 +212,7 @@ export function enrichSharedOriginWeather(radar:import('./originRadarService.ts'
   const screen=sharedWeatherScreen(valid,expected,policy,now),clear=screen.weatherPills.every(p=>p.label==='특이 없음'),alert=screen.weatherPills.some(p=>!['자료 부족','판정 보류','특이 없음'].includes(p.label));
   const supplyVerified=origin.dataFreshness!=='unavailable'&&!!origin.production&&!!origin.exports&&!!origin.endingStocks;
   return {...origin,...screen,status:alert?'모니터링' as const:clear&&supplyVerified?'양호' as const:'자료 부족' as const,statusColor:alert?'yellow' as const:clear&&supplyVerified?'green' as const:'gray' as const,
-   riskWeather:sharedWeatherSummary(valid),weatherSource:'Open-Meteo',weatherAsOf:valid.map(p=>p.lastDay).sort()[0],weatherDataKind:'archived-model',weatherEvidence:valid,
+   riskWeather:sharedWeatherSummary(points.filter(p=>expected.some(c=>c.label===p.location))),weatherSource:'Open-Meteo',weatherAsOf:points.filter(p=>expected.some(c=>c.label===p.location)).map(p=>p.lastDay).sort()[0],weatherDataKind:'archived-model',weatherEvidence:points.filter(p=>expected.some(c=>c.label===p.location)),
    statusBasis:'대표 지점의 과거 모델 기상 선별. 실측·재분석·국가 작황·피해·조달 안전 판정 아님. '+valid.map(p=>`${p.location}: ${p.windowStart}~${p.lastDay} ${p.timeZone}; ${p.sourceUrl}; 확인 ${p.checkedAt}`).join('; ')};
  }),sourceFooterText:[...new Set([radar.sourceFooterText?.replace(/ · NASA POWER(?:\(기상\))?/g,''),'Open-Meteo'].filter(Boolean))].join(' · ')};
 }

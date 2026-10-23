@@ -384,7 +384,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
       </div>
 
       {/* Metadata line */}
-      <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60 font-sans">
+      <div className="rms-source flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60 font-sans">
         <span>
           출처: <span className="font-medium text-slate-700">USDA FAS PSD / </span>
           <a

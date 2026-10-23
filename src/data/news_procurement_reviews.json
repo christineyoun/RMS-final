@@ -1,0 +1,412 @@
+{
+  "reviewedAt": "2026-10-22T08:09:23.734Z",
+  "policy": "Procurement value, credibility, timeliness, distinct developments; at most four, never a quota. Editorial summaries are independently reviewed, not generated or Gemini-grounded.",
+  "reviews": {
+    "wheat": [
+      {
+        "url": "https://commodity-board.com/ukrainian-wheat-eases-as-logistics-risks-outweigh-solid-crop",
+        "publishedAt": "2026-10-17",
+        "sourceSummarySha256": "14f35cc184afbcb4800c627ef9461889bd3fcde62f7fb500424393abfb00c1d9",
+        "priority": 4,
+        "theme": "logistics",
+        "eventKey": "wheat-logistics",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Commodity Board는 우크라이나 밀의 일부 FOB·CPT 가격이 약세를 보였다고 전했습니다. 흑해·EU산과의 경쟁, 충분한 국내 물량, 소극적인 매수가 가격을 누르는 반면 오데사 항만·철도·하천 운송 차질은 선적을 제약합니다. 산지 가격의 할인과 실제 조달비용을 구분해 운임·보험료·선적 가능성을 함께 비교할 필요가 있습니다.",
+        "title": "우크라이나 밀 약세…산지 할인과 물류비 부담 병존"
+      },
+      {
+        "url": "https://commodity-board.com/eu-soft-wheat-area-cut-signals-tighter-2027-balance-despite-calm-spot-prices",
+        "publishedAt": "2026-10-16",
+        "sourceSummarySha256": "a10eb514a12acdc9581a19acf2c4f0cf91cca5bad702b84cf43bc926c45b7e25",
+        "priority": 3,
+        "theme": "forward-acreage",
+        "eventKey": "wheat-forward-acreage",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Commodity Board가 인용한 Expana 전망은 2027년 수확용 EU 연질밀 재배면적을 약 2% 축소했습니다. 투입비 상승이 파종 의향을 제한하는 반면 현재 주요 산지 현물은 대체로 안정적입니다. 당장의 공급 부족보다 다음 작기 공급 여유를 줄이는 변수로, 겨울 작물 정착과 이후 단수 전망이 장기 계약 여건을 좌우합니다.",
+        "title": "EU 밀 재배면적 2% 축소 전망…2027년 공급 여유에 변수"
+      },
+      {
+        "url": "https://www.igc.int/en/gmr_summary.aspx",
+        "publishedAt": "2026-10-15",
+        "sourceSummarySha256": "d61104cad597a20a40692936aa72fc2aedf6d34c0f770175a20b218bc5bdb583",
+        "priority": 4,
+        "theme": "balance",
+        "eventKey": "wheat-balance",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "IGC는 2026/27년 세계 전체 곡물 생산 전망을 전월보다 700만 톤 늘린 24억2,700만 톤, 기말재고를 1,100만 톤 늘린 6억1,900만 톤으로 제시했습니다. 다만 밀 교역량은 전년 대비 약 1,500만 톤 감소할 전망이며 밀 수출가격 하위지수는 전월보다 5% 하락했습니다. 전체 곡물 공급 상향을 밀의 공급 확대와 동일시하기보다, 주요 밀 수출국의 가격 경쟁과 수출 여력을 구분해 볼 시점입니다.",
+        "title": "IGC 곡물 공급 상향…밀 교역 감소·수출가격 약세"
+      },
+      {
+        "url": "https://ahdb.org.uk/news/arable-market-report-12-october-2026",
+        "publishedAt": "2026-10-12",
+        "sourceSummarySha256": "549d28951cb32b4c537efc056907f8b38af7e14a54ea5f8b4f1859a03e1cbf08",
+        "priority": 4,
+        "theme": "regional-prices",
+        "eventKey": "wheat-regional-prices",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "AHDB의 10월 12일 보고서에서 영국 11월물 사료용 밀은 톤당 206파운드로 전주보다 0.25파운드 하락했습니다. USDA의 미국 옥수수 공급 상향이 곡물시장에 하방 압력을 가한 반면 흑해 수출 차질은 유럽 가격을 지지했습니다. 대체 수출 경로의 높은 물류비가 산지 간 가격 차이를 만들고 있어, 밀 조달은 선물 하락뿐 아니라 품질별 프리미엄과 도착 원가를 함께 비교해야 합니다.",
+        "title": "곡물 공급 확대와 흑해 운송 차질, 밀 조달비용에 상반된 압력"
+      }
+    ],
+    "corn": [
+      {
+        "url": "https://commodity-board.com/corn-under-dual-pressure-us-harvest-weighs-eu-cash-market-holds-firm",
+        "publishedAt": "2026-10-16",
+        "sourceSummarySha256": "b70ff6e8269864fd7e84df1b39f2482a3733b8d86c848094cbc20a9bde4ffc2d",
+        "priority": 4,
+        "theme": "regional-supply",
+        "eventKey": "corn-regional-supply",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Commodity Board는 미국 수확 물량과 헤지 매도로 CBOT 옥수수가 약 9주 저점에 내려온 반면 유럽 현물은 견조하다고 보도했습니다. 인용된 Expana의 EU 생산 전망은 4,490만 톤으로 종전보다 130만 톤 적습니다. 유럽의 역내 부족과 우크라이나 수출 차질이 지역 가격을 지지하므로, 미국·브라질의 공급 여유가 모든 도착지의 조달비용 하락으로 이어지는 것은 아닙니다."
+      },
+      {
+        "url": "https://grains.org/market_perspectives/market-perspectives-october-15-2026/",
+        "publishedAt": "2026-10-15",
+        "sourceSummarySha256": "34d71ed0b80d590788489124233a097375e7a7636c1f9b86e4715f7393b4c72d",
+        "priority": 4,
+        "theme": "offers-freight",
+        "eventKey": "corn-offers-freight",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "미국곡물·바이오제품협회의 10월 15일 자료에서 CBOT 12월물 옥수수는 부셸당 478.00센트로 전주보다 22.25센트 하락했습니다. 11월 선적 FOB 참고 호가는 걸프 톤당 227.15달러, PNW 242.51달러입니다. 같은 보고서의 5만5,000톤급 일본향 벌크 운임은 걸프 76.75달러, PNW 37.50달러로, 낮은 FOB가 항상 낮은 도착 원가를 뜻하지 않습니다. 오퍼 기반 참고치이며 한국행 실제 운임·공급사 확정 견적과 구분해야 합니다.",
+        "title": "미국 옥수수 FOB·운임 차이, 선적항별 조달 원가 비교"
+      },
+      {
+        "url": "https://www.ers.usda.gov/publications/115628",
+        "publishedAt": "2026-10-14",
+        "sourceSummarySha256": "1919cb5f6c19fca3f695381d0a4b3dfd1a2d7b4e73e9f1dd0b9192830f3227ad",
+        "priority": 4,
+        "theme": "balance",
+        "eventKey": "corn-balance",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "USDA ERS는 2026/27년 미국 옥수수 총공급 전망을 전월보다 4억700만 부셸 늘린 182억 부셸로 제시했습니다. 기초재고는 1억7,300만 부셸, 생산 전망은 2억3,400만 부셸 상향됐으며 생산량은 160억 부셸입니다. 공급 상향이 수요 증가보다 커 기말재고가 늘어나는 구도로, 조달 시 수확기 물량 유입과 수출 판매 속도가 선물·베이시스에 미치는 영향을 함께 살필 필요가 있습니다."
+      },
+      {
+        "url": "https://www.chinimandi.com/esy-2026-27-omcs-invite-bids-for-around-1100-crore-litres-of-ethanol-sugarcane-juice-and-b-heavy-molasses-excluded/",
+        "publishedAt": "2026-10-16",
+        "sourceSummarySha256": "7e4c8a34f9aa34bc40ecd9ebf75eb74acd7e6d22991076bb189616b589e66ab2",
+        "priority": 3,
+        "theme": "ethanol",
+        "eventKey": "corn-ethanol",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection."
+      }
+    ],
+    "soybean": [
+      {
+        "url": "https://commodity-board.com/soybeans-slip-as-harvest-accelerates-and-us-exports-edge-ahead-of-brazil",
+        "publishedAt": "2026-10-19",
+        "sourceSummarySha256": "476df30b8da35e33a8d793394cf88cea229692b89c2c8d45fe0d1fa497eb4572",
+        "priority": 4,
+        "theme": "export-competition",
+        "eventKey": "soybean-export-competition",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Commodity Board는 미국 수확 여건 개선과 기술적 매도로 대두 선물이 약세를 보였다고 전했습니다. 10월 15일 기준 11월 선적 FOB 참고 오퍼는 미국 뉴올리언스 톤당 505.23달러, 브라질 산투스 517.38달러였습니다. 미국산 가격 경쟁력은 개선됐지만 중국의 추가 10% 관세가 수요를 제한합니다. 산지 간 FOB 격차에 운임·관세를 더해 도착 원가와 실제 수출 성약을 비교할 국면입니다."
+      },
+      {
+        "url": "https://commodity-board.com/soybeans-steady-as-futures-firm-but-physical-differentials-diverge",
+        "publishedAt": "2026-10-19",
+        "sourceSummarySha256": "17c6b6921aa61dc00439739315e48d920048dfa5675e7c8e61946930ead99e2b",
+        "priority": 4,
+        "theme": "weather-planting",
+        "eventKey": "soybean-weather-planting",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Commodity Board는 브라질 마토그로소의 2026/27년 대두 파종률을 약 52%로, 5년 평균 약 43%보다 빠르다고 전했습니다. 일부 북부 지역의 건조 우려는 남아 있지만 전체 파종은 대체로 일정대로 진행되고 있다는 평가입니다. 빠른 파종만으로 풍작이 확정되는 것은 아니며, 이후 정기적인 강우와 수출 작황 전망이 남미산 공급 및 미국산과의 경쟁에 영향을 줍니다."
+      },
+      {
+        "url": "https://www.world-grain.com/articles/23333-plenty-of-grain-but-lots-of-questions",
+        "publishedAt": "2026-10-15",
+        "sourceSummarySha256": "f3a211607620fea8d7fdbd453f46752b7912df6d42b49ad7c6918d2a1fcb2214",
+        "priority": 0,
+        "theme": "excluded",
+        "eventKey": "soybean-excluded",
+        "decision": "omit",
+        "rationale": "September production/early-October harvest context duplicates newer USDA and harvest coverage; retained browser record does not preserve the full claimed article body."
+      },
+      {
+        "url": "https://www.ers.usda.gov/topics/crops/soybeans-and-oil-crops/market-outlook",
+        "publishedAt": "2026-10-15",
+        "sourceSummarySha256": "b15f5d8078df32cd5c92c81c322d730c9fd564cba603d2a69c074f5f1820bc65",
+        "priority": 4,
+        "theme": "balance",
+        "eventKey": "soybean-balance",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "USDA ERS의 10월 15일 업데이트는 2026/27년 미국 대두 생산 전망을 2,700만 부셸 늘린 45억6,000만 부셸로 제시했습니다. 수출은 1,000만 부셸 늘어난 약 17억 부셸, 착유는 27억8,000만 부셸로 유지됐고 기말재고는 3억1,500만 부셸입니다. 생산 증가와 수출·가공 수요를 함께 반영한 전망이므로, 공급 확대의 가격 압력과 실수요의 흡수 속도를 구분해 매입 시점을 판단해야 합니다."
+      },
+      {
+        "url": "https://soygrowers.com/news-releases/has-biofuel-demand-replaced-export-demand-in-u-s-soybean-markets/",
+        "publishedAt": "2026-10-14",
+        "sourceSummarySha256": "27a362dd4925e9de34e43af4173c9b46ed9b4d13f00b80a196c87cd6846fa7d3",
+        "priority": 3,
+        "theme": "crush-biofuel",
+        "eventKey": "soybean-crush-biofuel",
+        "decision": "retain",
+        "rationale": "Original ASA analysis directly connects oil biofuel demand to bean crushing and export demand.",
+        "title": "ASA, 바이오연료 착유 수요와 대두 수출 감소의 상쇄 효과 분석",
+        "summary": "미국대두협회(ASA)는 대두유의 바이오연료 수요 확대와 원두 수출 수요 감소가 대두 가격에 미치는 영향을 비교했습니다. 2023/24년 수요를 기준으로 한 모형에서 2026/27년에는 바이오연료 수요 증가가 수출 약화의 가격 효과를 상쇄할 것으로 추정했습니다. 가공용 수요가 원두 수출 감소를 얼마나 흡수하는지가 조달의 중기 변수이며, 잠정 WASDE 전망에 따른 분석을 확정 가격 상승이나 실현된 소비량으로 해석해서는 안 됩니다."
+      }
+    ],
+    "soybean-oil": [
+      {
+        "url": "https://www.fastmarkets.com/insights/us-soybean-oil-demand-moves-up-again-in-september-as-soybean-oil-stocks-slide-to-12-year-low/",
+        "publishedAt": "2026-10-19",
+        "sourceSummarySha256": "a6d9781052d87d9d41143b54a8d86407e581809556cf78395ba9ef6403b77904",
+        "priority": 4,
+        "theme": "stocks-processing",
+        "eventKey": "soybean-oil-stocks-processing",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Fastmarkets가 인용한 NOPA 회원사 9월 대두유 재고는 전월보다 12.3% 감소한 10억5,000만 파운드이며, 압착량은 1억9,630만 부셸로 13개월 저점입니다. 계절적 정비와 미국 중서부 강우에 따른 수확 지연·품질 저하가 일부 공장의 원료 조달을 제약했다고 보도했습니다. 낮은 재고는 공급 완충력을 줄이지만, 재고 감소 전체를 바이오연료 수요 급증으로 해석해서는 안 됩니다. 착유 회복과 실제 바이오연료 가동이 이후 공급·가격의 관건입니다."
+      },
+      {
+        "url": "https://ukragroconsult.com/en/news/soybean-oil-prices-fall-amid-new-us-biofuel-proposals/",
+        "publishedAt": "2026-10-15",
+        "sourceSummarySha256": "89c1b579b999e68473a9957d184def6f887b2ae662ae3fadbf032e0bd66863b3",
+        "priority": 4,
+        "theme": "biofuel-policy",
+        "eventKey": "soybean-oil-biofuel-policy",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "UkrAgroConsult가 S&P Global을 출처로 전한 10월 14일 CBOT 대두유 12월물은 장중 1.34% 하락해 파운드당 67.11센트를 기록했습니다. EPA의 소규모 정유소 면제분 재할당 시점을 둘러싼 불확실성과 미국 신곡 유입이 배경입니다. 당시 제안은 약 7억7,000만 RIN의 의무를 2026·2027년에 나누거나 2027년에 집중하는 방안을 비교했으며 최종 결정은 아니었습니다. 조달 판단은 제안된 수요와 실제 시행 시점을 구분해야 합니다."
+      },
+      {
+        "url": "https://soygrowers.com/news-releases/has-biofuel-demand-replaced-export-demand-in-u-s-soybean-markets/",
+        "publishedAt": "2026-10-14",
+        "sourceSummarySha256": "27a362dd4925e9de34e43af4173c9b46ed9b4d13f00b80a196c87cd6846fa7d3",
+        "priority": 3,
+        "theme": "biofuel-model",
+        "eventKey": "soybean-oil-biofuel-model",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "미국대두협회(ASA)는 바이오연료용 대두유 사용량이 2020년 약 89억 파운드에서 2025년 약 140억 파운드로 늘었다고 분석했습니다. 2023/24년 수요 조건과 비교한 모형에서는 2026/27년 바이오연료 수요 증가가 수출 수요 약화 효과를 상쇄할 것으로 추정했습니다. 착유 투자와 대두유 수요의 중기 지지 요인이지만, 잠정 WASDE 전망과 모형 가정에 따른 결과이므로 확정 가격 상승률이나 매입 목표가로 사용할 수는 없습니다."
+      },
+      {
+        "url": "https://www.ers.usda.gov/publications/115629",
+        "publishedAt": "2026-10-14",
+        "sourceSummarySha256": "4b81c36f5d7b15a6bcb9f7037763fd02ebef435c5e4d0aef292c0bd69436d44f",
+        "priority": 4,
+        "theme": "balance-substitution",
+        "eventKey": "soybean-oil-balance-substitution",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "USDA ERS는 2026/27년 미국 대두유 총공급 전망을 전월보다 8,000만 파운드 낮은 353억 파운드로 조정했습니다. 세계 대두유·유채유 수출 전망은 팜유 공급 축소에 따른 대체 수요를 반영해 상향했습니다. 미국산 공급 여유와 경쟁 유지류의 수급을 함께 봐야 하는 구도로, 연간 수출 전망이 이미 체결된 계약이나 당장 발생한 부족을 의미하지는 않습니다."
+      }
+    ],
+    "palm-oil": [
+      {
+        "url": "https://www.briefs.co/news/malaysia-s-palm-oil-output-poised-for-october-record-with-20/",
+        "publishedAt": "2026-10-19",
+        "sourceSummarySha256": "4a6dad816d49e50e43c22162071de0d42639d71b67f489fb421d30c9d30f54ed",
+        "priority": 0,
+        "theme": "excluded",
+        "eventKey": "palm-oil-excluded",
+        "decision": "omit",
+        "rationale": "Aggregator production outlook overlaps stronger MPOB/USDA supply evidence; retain original receipt but omit from current selection."
+      },
+      {
+        "url": "https://www.sunsirs.com/commodity-news/petail-36906.html",
+        "publishedAt": "2026-10-19",
+        "sourceSummarySha256": "a0ed9801d9c3d055a750538aaa074d6f227171c27f33392e7849e084e1814edd",
+        "priority": 3,
+        "theme": "export-demand",
+        "eventKey": "palm-oil-export-demand",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "SunSirs는 화물 조사기관을 인용해 말레이시아 10월 상반기 팜유 수출이 비교 기간보다 43.2~58.3% 증가했다고 보도했습니다. 공식 월간 확정 실적이 아닌 조사기관 추정치지만, 9월 재고 급증 이후 출하 수요가 재고를 얼마나 흡수하는지 보여주는 단기 지표입니다. 생산 호조와 함께 비교해야 하며 이 수치만으로 재고 감소가 확정된 것은 아닙니다."
+      },
+      {
+        "url": "https://theedgemalaysia.com/node/821487",
+        "publishedAt": "2026-10-12",
+        "sourceSummarySha256": "d1a1d044815d12ac357e7ca5a76f662af0ecbc5e56d7da242abf4029fb6fe5b3",
+        "priority": 4,
+        "theme": "stocks",
+        "eventKey": "palm-oil-stocks",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "The Edge가 인용한 MPOB 발표에서 말레이시아 9월 팜유 재고는 351만 톤으로 전월보다 24.54% 늘었습니다. CPO 생산량은 211만 톤으로 16.48% 증가한 반면 팜유 수출은 122만 톤으로 12.13% 줄었습니다. 단기 공급 여유가 늘어난 가운데 10월 수출 회복이 누적 재고를 얼마나 흡수하는지가 가격과 선적 여건의 핵심입니다."
+      },
+      {
+        "url": "https://prestasisawit.mpob.gov.my/ms/palmnews/news/40027",
+        "publishedAt": "2026-10-01",
+        "sourceSummarySha256": "ec1e5a970d9c06cde8c873d58137d0547dc2db5840d39e9b0be74388cc60cafa",
+        "priority": 4,
+        "theme": "forward-biofuel",
+        "eventKey": "palm-oil-forward-biofuel",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "MPOB가 10월 1일 재게시한 9월 30일 Reuters 보도에서 인도네시아 팜유협회장은 2027년 생산량 5,660만 톤(전년 대비 −3.7%), 바이오디젤 수요 1,740만 톤(+18.5%), 수출 2,650만 톤(−14.9%)을 전망했습니다. 엘니뇨와 국내 연료 수요가 수출 가용량을 줄일 수 있다는 업계 시나리오입니다. 전망 주체와 대상 기간이 USDA의 2026/27년 수급 전망과 달라 직접 비교하지 않습니다. 장기 계약의 공급 위험을 점검하는 업계 전망이며 현재 생산·수출 확정 실적은 아닙니다."
+      },
+      {
+        "url": "https://www.ers.usda.gov/publications/115629",
+        "publishedAt": "2026-10-14",
+        "sourceSummarySha256": "4b81c36f5d7b15a6bcb9f7037763fd02ebef435c5e4d0aef292c0bd69436d44f",
+        "priority": 4,
+        "theme": "weather-yields",
+        "eventKey": "palm-oil-weather-yields",
+        "decision": "retain",
+        "rationale": "Original ERS retained report supplies crop-region-season-specific palm yield and substitution evidence.",
+        "title": "USDA, 인도네시아 팜유 생산 전망 하향…대체 유지류 수요 확대",
+        "summary": "USDA ERS의 10월 보고서는 2026/27년 인도네시아 팜유 생산 전망을 전월보다 220만 톤 낮춘 4,500만 톤으로 제시했습니다. 수마트라·칼리만탄의 건조에 따른 단수 전망 하향이 배경이며, 단수는 ha당 3.21톤으로 종전보다 약 5% 낮습니다. 공급 축소 전망은 대두유·유채유로의 대체 수요에도 반영됐습니다. 산지 작황과 생산 회복 속도가 팜유 수출 가용량 및 경쟁 유지류의 조달 원가를 좌우할 변수입니다."
+      }
+    ],
+    "sugar": [
+      {
+        "url": "https://www.portaldoagronegocio.com.br/agricultura/cana-de-acucar/noticias/stonex-projeta-acucar-acima-de-37-5-milhoes-de-toneladas-no-centro-sul-mas-alerta-para-queda-do-atr",
+        "publishedAt": "2026-10-20",
+        "sourceSummarySha256": "bde7c032e52a2397f2d88a2cad81f574211ea69b109f8a530f96c46d2cc67b18",
+        "priority": 4,
+        "theme": "brazil-crushing",
+        "eventKey": "sugar-brazil-crushing",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection."
+      },
+      {
+        "url": "https://www.chinimandi.com/esy-2026-27-omcs-invite-bids-for-around-1100-crore-litres-of-ethanol-sugarcane-juice-and-b-heavy-molasses-excluded/",
+        "publishedAt": "2026-10-16",
+        "sourceSummarySha256": "b5812980db9d81f4a344f328d292e065c9ef9d34604b6e826817a2b9658e4cff",
+        "priority": 4,
+        "theme": "india-ethanol",
+        "eventKey": "sugar-india-ethanol",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection."
+      },
+      {
+        "url": "https://www.igrain.in/posts/sugar-production-in-thailand-expected-to-decline-by",
+        "publishedAt": "2026-10-20",
+        "sourceSummarySha256": "513b082e77e4c17991f6804d49b5dbfb6def3a63eb6b229874e35478a982fc5f",
+        "priority": 4,
+        "theme": "thai-weather",
+        "eventKey": "sugar-thai-weather",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection."
+      },
+      {
+        "url": "https://ers.usda.gov/publications/115636",
+        "publishedAt": "2026-10-16",
+        "sourceSummarySha256": "effcf2b05dfa9e5cf745d4a4926687e3521e7a4e1c06cd8022dedc1abceb5b71",
+        "priority": 3,
+        "theme": "us-balance",
+        "eventKey": "sugar-us-balance",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "USDA ERS의 10월 전망은 미국 2026/27 회계연도 설탕 공급을 전월보다 11만9,000 STRV 늘린 1,438만7,000 STRV로 제시했습니다. 기말재고는 16만8,000 STRV 증가한 186만5,000 STRV, 재고사용비율은 14.9%입니다. 기초재고 증가와 사용량 감소가 미국 수급을 완화하는 내용으로, 생산·수입 전망 자체는 하향됐습니다. STRV는 원당환산 쇼트톤이며 미국·멕시코 수급을 세계 원당 재고나 ICE No.11 가격 전망으로 확대해석하지 않습니다."
+      }
+    ],
+    "potato-starch": [
+      {
+        "url": "https://www.nieuweoogst.nl/nieuws/2026/10/09/avebe-verhoogt-aardappelprijs-met-10-euro-per-ton",
+        "publishedAt": "2026-10-09",
+        "sourceSummarySha256": "5eb757c35a2fdcbd9101e5ed6ac241b59bb0d01eedf878372426ef006d87c1b0",
+        "priority": 4,
+        "theme": "feedstock-payments",
+        "eventKey": "potato-starch-feedstock-payments",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "Nieuwe Oogst는 Avebe가 이번 가공기 조합원에게 지급하는 전분용 감자 가격을 톤당 10유로 올렸다고 전했습니다. 전분 함량 19% 기준 지급가격은 75유로이며, 공급물량 조정과 가공비 관리가 배경입니다. 전분업계 원료의 경제성을 보여주는 지표지만 완제품 감자전분 판매가격은 아닙니다. JRC 작황 전망·공장 수율과 함께 원료 조달 부담이 실제 제품 오퍼에 전가되는지를 살필 자료입니다."
+      },
+      {
+        "url": "https://www.chemanalyst.com/NewsAndDeals/NewsDetails/tightening-feedstock-availability-supports-european-potato-starch-44823",
+        "publishedAt": "2026-10-05",
+        "sourceSummarySha256": "60512240fe673b8d0cf8ff015750b64656418b7bf6664f4d2f19b41bc7278b3e",
+        "priority": 4,
+        "theme": "finished-price",
+        "eventKey": "potato-starch-finished-price",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "ChemAnalyst는 9월 말 유럽 감자전분 가격이 대체로 안정적이지만 원료감자 확보 여건과 저장 품질이 후속 공급의 변수라고 평가했습니다. 가공업체의 확보 물량과 수요 수준이 단기 시장을 지탱하는 반면, 이후 원료 유입과 저장 중 품질 저하는 가공 수율·납기에 영향을 줄 수 있습니다. 낮아진 작황 전망을 즉각적인 완제품 가격 급등으로 단정하기보다 현재 오퍼와 가공기 공급 조건의 변화를 비교할 국면입니다."
+      },
+      {
+        "url": "https://kmcagro.dk/kmc-avlsnyt/oversigt-over-resultaterne-fra-3-proeveopgravning-2026/",
+        "publishedAt": "2026-09-15",
+        "sourceSummarySha256": "f074f1556b1a5ca96de506e5fafff52fbdf35494d4f0f6211a2a20f0405d3704",
+        "priority": 3,
+        "theme": "starch-yield",
+        "eventKey": "potato-starch-starch-yield",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection.",
+        "summary": "KMC Agro의 9월 14~15일 AKD·AKK 표본조사에서 감자 수량은 평균 614 hkg/ha, 전분 함량은 20.5%로 전년 같은 차수 21.3%보다 낮았습니다. 전분 수량은 125.7 hkg/ha로 전년 134.2 hkg/ha를 밑돌았습니다. 원료감자 양뿐 아니라 전분 함량이 공장의 제품 회수량에 영향을 준다는 자료로, 실제 납기·가공 실적과 함께 볼 지표입니다. 공장별 표본 결과를 덴마크 전체 생산량으로 해석하지 않습니다."
+      },
+      {
+        "url": "https://www.avebe.nl/nieuws/royal-avebe-wint-internationale-innovatieprijs-voor-doorbraak-in-het-droogproces-van-snoepjes/",
+        "publishedAt": "2026-09-11",
+        "sourceSummarySha256": "6c13dfd282af824aaed40663a957872b276822bcd033e7d740fb120648a842bd",
+        "priority": 0,
+        "theme": "excluded",
+        "eventKey": "potato-starch-excluded",
+        "decision": "omit",
+        "rationale": "Confectionery process award does not establish material starch market supply, cost or price development."
+      },
+      {
+        "url": "https://publications.jrc.ec.europa.eu/repository/handle/JRC146189",
+        "publishedAt": "2026-09-28",
+        "sourceSummarySha256": "0cf04017cbb5c334f2c12bd94c3cf0271a9725e85ddbb4fc07e12ef54927a791",
+        "priority": 4,
+        "theme": "crop-feedstock",
+        "eventKey": "potato-starch-crop-feedstock",
+        "decision": "retain",
+        "rationale": "Official same-season EU raw-potato yield downgrade informs starch feedstock exposure; scope kept separate from finished-starch production."
+      }
+    ],
+    "tapioca-starch": [
+      {
+        "url": "https://agridecovietnam.com/cassava-supply-tightens-as-the-prices-of-vietnams-cassava-exports-hit-a-record-high/",
+        "publishedAt": "2026-09-30",
+        "sourceSummarySha256": "645d9ea7f471c5bcf1aa48980f71ce13f9540542265e1c9fcb60f8c6b781310e",
+        "priority": 0,
+        "theme": "excluded",
+        "eventKey": "tapioca-starch-excluded",
+        "decision": "omit",
+        "rationale": "September price narrative superseded by newer dated Vietnam/China bulletin; do not count the credited translation as independent confirmation."
+      },
+      {
+        "url": "https://vietbacagroimex.com/en/posts/tapioca-starch-for-export",
+        "publishedAt": "2026-10-16",
+        "sourceSummarySha256": "371eba1dcc13846e90630928e9bae02652b534cb6990c0fdb1b578fa20259f0a",
+        "priority": 0,
+        "theme": "excluded",
+        "eventKey": "tapioca-starch-excluded",
+        "decision": "omit",
+        "rationale": "Export order solicitation is promotional; no independently established change in market supply or procurement costs."
+      },
+      {
+        "url": "https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price",
+        "publishedAt": "2026-10-20",
+        "sourceSummarySha256": "a79149782416d7d14a4277a5f3105272d5b22d3fbd7c31d7ef6697e1e5b7ccfe",
+        "priority": 4,
+        "theme": "finished-price",
+        "eventKey": "tapioca-starch-finished-price",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection."
+      },
+      {
+        "url": "https://www.tqindustry.com/th/news/thailand-tapioca-cassava-prices-2026-10-07/",
+        "publishedAt": "2026-10-07",
+        "sourceSummarySha256": "b31d458b0972b7ec56d51de19d16af36c92b52ec5b6d7fd34d24d70435f11e6e",
+        "priority": 3,
+        "theme": "processing-inputs",
+        "eventKey": "tapioca-starch-processing-inputs",
+        "decision": "retain",
+        "rationale": "Verified development has a direct commodity-specific procurement connection."
+      },
+      {
+        "url": "https://vietbacagroimex.com/en/posts/cassava-market-reference-bulletin-october-19-2026",
+        "publishedAt": "2026-10-19",
+        "sourceSummarySha256": "c928500285981b91c4a03857cbf20b9907cf5f236cc58fe917a9590bddfc1942",
+        "priority": 4,
+        "theme": "export-demand",
+        "eventKey": "tapioca-starch-export-demand",
+        "decision": "retain",
+        "rationale": "Dated market bulletin distinguishes softer export offers and China buying interest; secondary attributions and observation dates remain explicit."
+      }
+    ]
+  }
+}

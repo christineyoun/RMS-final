@@ -15,3 +15,6 @@ dist/
 .rms-origin-verified/
 .rms-wheat-origin-backups/
 .rms-price-history/
+
+# Ignore local RMS backup and temporary directories
+# /.rms-*/

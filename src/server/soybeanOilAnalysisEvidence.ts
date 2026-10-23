@@ -7,6 +7,28 @@ import {readVerifiedSoybeanOilNews,SOYBEAN_OIL_NEWS_CARDS} from './soybeanOilVer
 import {OIL_ORIGIN_POINTS,buildOilOrigin,parseOilOriginWeather} from './soybeanOilOriginService.ts';
 import {compareAnalysisObservations,validAnalysisFact,type AnalysisFact,type AnalysisEvidence} from './analysisEvidence.ts';
 const sha=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),read=(f:string)=>JSON.parse(fs.readFileSync(f,'utf8'));
+
+/** Citation supplement only, not a generation/output contract or publication.
+ * Rebuild facts from the existing original-document verifier, then require the
+ * exact request-time fact/receipt. Never trust a URL or claimed hash in isolation.
+ * Supported claims describe document scope, not every assertion in a paragraph. */
+export function retainedOilPublisherCitations(report:{executiveSummary?:string;bullishFactors?:string[];bearishFactors?:string[];watchItems?:string[]},evidence:AnalysisEvidence,root=process.cwd(),asOf=new Date()){
+ if(evidence.commodity!=='soybean-oil')return [];
+ const authentic=collectSoybeanOilArticleEvidence(root,asOf).facts;
+ const verified=authentic.filter(f=>evidence.facts.some(original=>JSON.stringify(original)===JSON.stringify(f)));
+ const body=[report.executiveSummary,...(report.bullishFactors||[]),...(report.bearishFactors||[]),...(report.watchItems||[])].join(' ');
+ const statements=[report.executiveSummary,...(report.bullishFactors||[]),...(report.bearishFactors||[]),...(report.watchItems||[])].flatMap(s=>String(s||'').split(/[.!?](?=\s|$)|\n/));
+ const quantities=(text:string)=>[...text.matchAll(/(-?\d[\d,.]*)\s*(billion\s*pounds|million\s*(?:pounds|bushels|MT)|%)/gi)].map(m=>Math.abs(Number(m[1].replaceAll(',','')))+':'+m[2].toLowerCase().replace(/\s+/g,' '));
+ const groups=[
+  {ids:['article-oil-nopa-stocks','article-oil-nopa-stock-change'],mention:/NOPA|Fastmarkets/i,matches:/NOPA|Fastmarkets/i.test(body)&&/1\.05\s*billion\s*pounds/i.test(body)&&/12\.3\s*%/.test(body)&&/9월/.test(body)},
+  {ids:['article-oil-ers-world-exports'],mention:/USDA\s*ERS/i,matches:/USDA\s*ERS/i.test(body)&&/팜유/.test(body)&&/대두유/.test(body)&&/수출.*(?:상향|증가)|대체\s*수요/.test(body)},
+ ];
+ return groups.flatMap(g=>{const facts=g.ids.map(id=>verified.find(f=>f.id===id));if(!g.matches||facts.some(f=>!f))return [];const f=facts[0]!;
+  const allowed=new Set(facts.flatMap(f=>quantities(f!.text)));
+  if(statements.filter(s=>g.mention.test(s)).some(s=>quantities(s).some(q=>!allowed.has(q))))return [];
+  return [{title:f.sourceTitle,url:f.sourceUrl,provenance:{kind:'verified-retained-original' as const,receiptSha256:f.recordSha256!,verifiedAt:f.verifiedAt,evidenceIds:g.ids,supportedClaims:facts.map(f=>f!.text)}}];
+ });
+}
 export function collectSoybeanOilEvidence(root:string,now:Date):AnalysisEvidence{
  const evidence:AnalysisEvidence={commodity:'soybean-oil',facts:[],failures:[]};
  const add=(f:AnalysisFact)=>{if(validAnalysisFact(f,'soybean-oil',now))evidence.facts.push(f);else evidence.failures.push('invalid-oil-evidence:'+f.id);};

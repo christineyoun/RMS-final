@@ -47,7 +47,7 @@ export function evaluateEra5Context(receipt:Era5Receipt,p:{lat:number;lon:number
 }
 export type HistoricalContext=ReturnType<typeof evaluateEra5Context>;
 const inflight=new Map<string,Promise<HistoricalContext>>();
-export async function getEra5Context(p:{lat:number;lon:number},options:{now?:Date;fetcher?:typeof fetch;cacheDir?:string;force?:boolean}={}):Promise<HistoricalContext>{
+export async function getEra5Context(p:{lat:number;lon:number},options:{now?:Date;fetcher?:typeof fetch;cacheDir?:string;force?:boolean;savedOnly?:boolean}={}):Promise<HistoricalContext>{
  const now=options.now||new Date(),ref=pointRef(p),seed=SEED.records.find(r=>r.coordinates[0]===p.lat&&r.coordinates[1]===p.lon),empty={product:'ERA5',model:'era5',coordinates:[p.lat,p.lon],retrievedAt:now.toISOString(),requestUrl:'',body:null} as Era5Receipt;
  if(!ref||!seed)return evaluateEra5Context(empty,p,now);
  let prior:Era5Receipt={product:'ERA5',model:'era5',coordinates:[p.lat,p.lon],retrievedAt:SEED.retrievedAt,requestUrl:SEED.requestUrl,body:seed.body};
@@ -55,7 +55,7 @@ export async function getEra5Context(p:{lat:number;lon:number},options:{now?:Dat
  try{const cached=JSON.parse(fs.readFileSync(file,'utf8'));if(parseEra5Receipt(cached,p,now))prior=cached;}catch{}
  // A future seed/incorrect clock never initiates historical backfill in a live request.
  const priorContext=evaluateEra5Context(prior,p,now),incompleteData=[priorContext['week'],priorContext['fourWeeks']].some(m=>m?.reason?.startsWith('Incomplete ERA5'));
- if(+now<Date.parse(SEED.retrievedAt)||!options.force&&+now-Date.parse(prior.lastAttemptAt||prior.retrievedAt)<(prior.retrievalFailed||incompleteData?20*60000:12*3600000))return priorContext;
+ if(options.savedOnly||+now<Date.parse(SEED.retrievedAt)||!options.force&&+now-Date.parse(prior.lastAttemptAt||prior.retrievedAt)<(prior.retrievalFailed||incompleteData?20*60000:12*3600000))return priorContext;
  const lock=file;if(inflight.has(lock))return inflight.get(lock)!;
  const task=(async()=>{let result:Era5Receipt|null=null;const end=shift(weatherLocalDay(now,ref.timeZone),-1),url=new URL('https://archive-api.open-meteo.com/v1/archive');for(const[k,v]of Object.entries({latitude:String(p.lat),longitude:String(p.lon),start_date:shift(end,-41),end_date:end,daily:'precipitation_sum,temperature_2m_max,temperature_2m_min',models:'era5',timezone:'auto',elevation:'nan',cell_selection:'nearest',precipitation_unit:'mm',temperature_unit:'celsius'}))url.searchParams.set(k,v);
  for(let attempt=0;attempt<2;attempt++){try{const r=await(options.fetcher||fetch)(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('ERA5 HTTP '+r.status);const candidate:Era5Receipt={product:'ERA5',model:'era5',coordinates:[p.lat,p.lon],retrievedAt:now.toISOString(),requestUrl:url.toString(),body:await r.json()};if(parseEra5Receipt(candidate,p,now)){result=candidate;if(evaluateEra5Context(candidate,p,now).status==='dated-context'||attempt===1)break;}}catch{}}

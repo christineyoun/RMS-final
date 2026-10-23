@@ -1,3 +1,4 @@
+import {completeOriginRadar,loadAll8OriginRadar} from './all8OriginRadarService.ts';
 /**
  * Origin Radar Service (주요 조달 산지 및 물류 현황)
  * 
@@ -23,7 +24,7 @@ import { soybeanPsdOriginService } from './soybeanPsdOriginService.ts';
 import { soybeanOriginConditionsService } from './soybeanOriginConditionsService.ts';
 
 export interface OriginItemDetail {
-  originKey: 'usa' | 'australia' | 'canada' | 'eu' | 'russia' | 'brazil' | 'argentina' | 'ukraine' | 'paraguay';
+  originKey: 'usa' | 'australia' | 'canada' | 'eu' | 'russia' | 'brazil' | 'argentina' | 'ukraine' | 'paraguay' | 'indonesia' | 'malaysia' | 'thailand' | 'colombia' | 'netherlands' | 'germany' | 'denmark' | 'poland' | 'vietnam' | 'cambodia' | 'laos';
   region: string;
   production: string;
   productionNumericMMT: number | null;
@@ -62,6 +63,9 @@ export interface OriginItemDetail {
   policySourceDate?: string;
   policySourceUrl?: string;
   statusBasis?: string;
+  supplyIndicators?: Array<{text:string;source:string;url:string;period:string;display?:'origin-summary'}>;
+  weatherCropContext?: {clearSupported?:boolean;warningSupported?:boolean;basis:string;sourceUrl:string;publishedAt:string};
+  weatherScreening?: import('../utils/originWeatherPills.ts').WeatherScreen['weatherScreening'];
 }
 
 export interface OriginRadarResponse {
@@ -94,20 +98,20 @@ export class OriginRadarService {
   }
 
   public async getWheatOriginRadar(force: boolean = false): Promise<OriginRadarResponse> {
-    const verified = await wheatVerifiedOriginService.getWheatOriginRadar(force);
-    return withHistoricalWeatherContext(await wheatOriginRiskService.enrich(verified),WHEAT_WEATHER_POINTS);
+    const verified = await wheatVerifiedOriginService.getWheatOriginRadar(force,!force);
+    return completeOriginRadar('wheat',await withHistoricalWeatherContext(await wheatOriginRiskService.enrich(verified,!force,force),WHEAT_WEATHER_POINTS,{savedOnly:!force}));
   }
 
   // Corn uses free, published USDA WASDE country rows rather than the PSD sample fallbacks.
   public async getCornOriginRadar(force: boolean = false): Promise<OriginRadarResponse> {
-    const supply = await cornWasdeOriginService.getCornOriginRadar(force);
-    return withHistoricalWeatherContext(await cornOriginConditionsService.enrich(supply, force),CORN_WEATHER_POINTS);
+    const supply = await cornWasdeOriginService.getCornOriginRadar(force,!force);
+    return completeOriginRadar('corn',await withHistoricalWeatherContext(await cornOriginConditionsService.enrich(supply, force,!force),CORN_WEATHER_POINTS,{savedOnly:!force}));
   }
 
   // Soybean uses authenticated country PSD observations, not sample baselines.
   public async getSoybeanOriginRadar(force = false): Promise<OriginRadarResponse> {
-    const supply = await soybeanPsdOriginService.getSoybeanOriginRadar(force);
-    return withHistoricalWeatherContext(await soybeanOriginConditionsService.enrich(supply, force),SOYBEAN_WEATHER_POINTS);
+    const supply = await soybeanPsdOriginService.getSoybeanOriginRadar(force,!force);
+    return completeOriginRadar('soybean',await withHistoricalWeatherContext(await soybeanOriginConditionsService.enrich(supply, force,!force),SOYBEAN_WEATHER_POINTS,{savedOnly:!force}));
   }
 
   private soybeanOilCachedResult: OriginRadarResponse | null = null;
@@ -333,44 +337,7 @@ export class OriginRadarService {
    * Retrieve aggregated verified Origin Radar data across all 4 Soybean Oil origins
    */
   public async getSoybeanOilOriginRadar(force: boolean = false): Promise<OriginRadarResponse> {
-    const now = Date.now();
-    if (!force && this.soybeanOilCachedResult && (now - this.soybeanOilLastFetchTime < this.CACHE_TTL_MS)) {
-      return this.soybeanOilCachedResult;
-    }
-
-    const retrievedAt = new Date().toISOString();
-
-    const [argentina, brazil, usa, paraguay] = await Promise.all([
-      this.fetchSoybeanOilArgentinaData(),
-      this.fetchSoybeanOilBrazilData(),
-      this.fetchSoybeanOilUsaData(),
-      this.fetchSoybeanOilParaguayData()
-    ]);
-
-    const origins: OriginItemDetail[] = [argentina, brazil, usa, paraguay];
-
-    const sourcesUsed = origins.map(o => ({
-      origin: o.region,
-      primarySource: o.primarySource,
-      supportingSource: o.supportingSource,
-      sourceOrg: o.sourceOrg,
-      sourceReportDate: o.sourceReportDate,
-      sourceUrl: o.sourceUrl,
-      status: o.dataFreshness
-    }));
-
-    const response: OriginRadarResponse = {
-      success: true,
-      statusCode: 200,
-      lastUpdated: retrievedAt,
-      origins,
-      sourcesUsed,
-      sourceFooterText: 'USDA FAS PSD · WASDE · CONAB · AMIS · USDA ERS · Gemini Search'
-    };
-
-    this.soybeanOilCachedResult = response;
-    this.soybeanOilLastFetchTime = now;
-    return response;
+    return loadAll8OriginRadar('soybean-oil',force);
   }
 }
 

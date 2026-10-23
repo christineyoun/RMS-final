@@ -1,6 +1,9 @@
+import {startPublicationHistory,comparisonFor} from './src/server/overviewMarketHistory.ts';
+import {captureOverviewPublication} from './src/server/overviewPublishedInputs.ts';
 import {refreshSoybeanOilNews} from './src/server/soybeanOilVerifiedNews.ts';
 import {startFreeSourceScheduler,refreshPalmPageSources} from './src/server/freeSourceRefresh.ts';
 import express from 'express';
+import { publicDeploymentGuard } from './src/server/publicDeploymentGuard.mjs';
 import {refreshSoybeanNews} from './src/server/soybeanNewsPersistence.ts';
 import path from 'path';
 import fs from 'fs';
@@ -11,7 +14,17 @@ import { loadAll8OriginRadar, ORIGIN_MVP } from './src/server/all8OriginRadarSer
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  // Public hosting is fail-closed until saved-data and refresh architecture are verified.
+  if (process.env.RMS_PUBLIC_READONLY === '1') {
+    if (process.env.RMS_PUBLIC_DATA_READY !== '1') {
+      throw new Error('RMS public deployment blocked: persistent snapshots and updater are not yet certified.');
+    }
+    if (process.env.GEMINI_API_KEY) {
+      throw new Error('RMS public deployment blocked: Gemini credentials must never be present in the public viewer.');
+    }
+    app.use(publicDeploymentGuard);
+  }
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.post('/api/rms/palm/free-refresh',async(_req,res)=>{try{res.json(await refreshPalmPageSources());}catch{res.status(503).json({success:false,error:'Free Palm source refresh failed; saved data retained'});}});
 
@@ -31,12 +44,16 @@ async function startServer() {
   app.get('/api/rms/origin-radar-all', async (req, res) => {
     const id = typeof req.query.commodity === 'string' ? req.query.commodity : '';
     if (!Object.prototype.hasOwnProperty.call(ORIGIN_MVP, id)) { res.status(400).json({success:false,error:'Unsupported commodity'}); return; }
-    try { res.setHeader('Cache-Control','no-store'); res.json(await loadAll8OriginRadar(id)); }
+    try { res.setHeader('Cache-Control','no-store'); res.json(await loadAll8OriginRadar(id,req.query.force==='true')); }
     catch { res.status(503).json({success:false,error:'Verified origin data unavailable'}); }
   });
 
   // Mount Gemini API and other custom backend routes
-  app.use(createStage3Gateway());
+  const savedGateway=createStage3Gateway();
+  const capture=()=>captureOverviewPublication(savedGateway);
+  app.get('/api/overview/comparison',(_req,res)=>{try{res.setHeader('Cache-Control','no-store');res.json(comparisonFor(capture()));}catch{res.status(503).json({message:'전일 비교 데이터 없음'});}});
+  app.use(savedGateway);
+  if (process.env.RMS_PUBLIC_READONLY !== '1') startPublicationHistory(capture);
   app.use(createGeminiApiMiddleware());
 
   // Vite middleware for development vs static assets for production
@@ -63,8 +80,12 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
-    startStage3Scheduler();
-    startFreeSourceScheduler();
+    if(process.env.RMS_DISABLE_SCHEDULERS==='1'||process.env.RMS_PUBLIC_READONLY==='1'){
+      console.log('[RMS] Scheduled refresh startup disabled for this session; saved settings unchanged.');
+    }else{
+      startStage3Scheduler();
+      startFreeSourceScheduler();
+    }
   });
 }
 

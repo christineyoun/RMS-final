@@ -11,6 +11,7 @@ export interface RetainedPromotionAudit {
   kind:'retained-response-promotion-no-gemini';promotionId:string;authorizationId:string;promotedAt:string;
   originalRunId:string;originalGeneratedAt:string;diagnosticSha256:string;responseSha256:string;groundingSha256:string;
   reviewSha256:string;qualifications:string[];generationTimeBasis:string;sourceReceipts:unknown[];
+  editorialReview?:unknown;
 }
 export function persistAnalysisSnapshot(root:string,id:string,runId:string,payload:any,promotionAudit?:RetainedPromotionAudit){
   assertPaidRunActive(getStage3RunContext());
@@ -20,7 +21,7 @@ export function persistAnalysisSnapshot(root:string,id:string,runId:string,paylo
   const file=path.join(root,'snapshots','analysis-'+id+'.json');
   if(promotionAudit&&(promotionAudit.originalRunId!==runId||promotionAudit.originalGeneratedAt!==payload.data.generatedAt))
     throw new AnalysisValidationError('persistence',['retained-generation-provenance-mismatch']);
-  const body={updatedAt:new Date().toISOString(),runId,sourceStatus:'requires-human-review',payload,...(promotionAudit?{promotionAudit}:{})};
+  const body={updatedAt:new Date().toISOString(),runId,sourceStatus:promotionAudit?.editorialReview?'reviewed-editorial-derivative':'requires-human-review',payload,...(promotionAudit?{promotionAudit}:{})};
   const tmp=file+'.'+process.pid+'.tmp';
   let ownsTemp=false;
   try{

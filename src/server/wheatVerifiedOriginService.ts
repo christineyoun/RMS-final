@@ -166,7 +166,8 @@ export class WheatVerifiedOriginService {
   private pending:Promise<OriginRadarResponse>|null=null;
   private last:OriginRadarResponse|null=null;
   private checkedDay='';
-  async getWheatOriginRadar(force=false):Promise<OriginRadarResponse> {
+  async getWheatOriginRadar(force=false,savedOnly=false):Promise<OriginRadarResponse> {
+    if(savedOnly){const saved=safeReadCache();return response(saved?.marketYear===yearForCrop()?saved.verified:{});}
     if(this.pending) return this.pending;
     const today=kstToday();
     if(!force && this.last && this.checkedDay===today) return this.last;

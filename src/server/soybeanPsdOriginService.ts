@@ -113,7 +113,12 @@ export class SoybeanPsdOriginService {
   private cached:OriginRadarResponse|null=null;
   private checkedAt=0;
   private pending:Promise<OriginRadarResponse>|null=null;
-  async getSoybeanOriginRadar(force=false):Promise<OriginRadarResponse> {
+  async getSoybeanOriginRadar(force=false,savedOnly=false):Promise<OriginRadarResponse> {
+    if(savedOnly){
+      const state=readState(),year=String(new Date().getUTCFullYear());
+      const origins=ORIGINS.map(c=>{const current=state.byCountry[c.country]?.filter(o=>validateStored(o,c.country)&&o.marketYear===year&&monthAge(o.reportMonth)>=0).sort((a,b)=>b.reportMonth.localeCompare(a.reportMonth))[0];return makeItem(c,state,current,current?'cached':'unavailable');});
+      return {success:true,statusCode:200,lastUpdated:origins.map(o=>o.sourceReportDate).sort().at(-1)||'',origins,sourcesUsed:origins.map(o=>({origin:o.region,primarySource:o.primarySource,sourceOrg:o.sourceOrg,sourceReportDate:o.sourceReportDate,sourceUrl:o.sourceUrl,status:o.dataFreshness})),sourceFooterText:'USDA FAS PSD'};
+    }
     const now=Date.now();
     if(!force&&this.cached&&now-this.checkedAt<6*3600000)return this.cached;
     if(this.pending)return this.pending;

@@ -1,3 +1,5 @@
+import {collectPotatoPublisherEvidence} from './potatoAnalysisEvidence.ts';
+import {collectSugarArticleEvidence} from './sugarAnalysisEvidence.ts';
 import {collectSoybeanOilArticleEvidence} from './soybeanOilAnalysisEvidence.ts';
 /** Free original-source preparation for approved AI jobs. Never runs on page views,
  * changes news snapshots, or treats a generated news summary as primary evidence. */
@@ -36,8 +38,15 @@ export function originalArticleFact(html:string,sourceUrl:string,publishedAt:str
     text:`${date} ${title} 원문 인용: “${excerpt}”`,sourceUrl,sourceTitle:title,observedAt:date,verifiedAt,verification:'original-record',recordSha256:sha(html)};
   return validAnalysisFact(fact,id,now)?fact:null;
 }
+function publisherContext(fact:AnalysisFact,html:string,id:string){
+  if(id!=='palm-oil')return fact;
+  const $=load(html);$('script,style,noscript,nav,footer,header,aside').remove();
+  return {...fact,referenceContext:{receiptSha256:sha(html),quote:$('body').text().replace(/\s+/g,' ').trim().slice(0,6500)}};
+}
 export async function prepareAnalysisEvidence(id:string,root=process.cwd(),now=new Date(),options:{fetchSources?:boolean;fetcher?:typeof fetch}={}){
   const evidence=collectAnalysisEvidence(id,root,now),dir=path.join(root,'.rms-stage3/evidence/articles');
+  if(id==='potato-starch'){const originals=collectPotatoPublisherEvidence(root,now);return originals;}
+  if(id==='sugar'){const articles=collectSugarArticleEvidence(root,now);evidence.facts.push(...articles.facts);evidence.failures.push(...articles.failures);return evidence;}
   if(id==='soybean-oil'){const articles=collectSoybeanOilArticleEvidence(root,now);evidence.facts.push(...articles.facts);evidence.failures.push(...articles.failures);return evidence;}
   if(id==='soybean'){const articles=collectSoybeanArticleEvidence(root,now);evidence.facts.push(...articles.facts);evidence.failures.push(...articles.failures);return evidence;}
   let articles:any[]=[];
@@ -49,7 +58,7 @@ export async function prepareAnalysisEvidence(id:string,root=process.cwd(),now=n
     if(fs.existsSync(dir))for(const name of fs.readdirSync(dir).filter(n=>/^article-[a-f0-9]{64}\.json$/.test(n)))try{
       const receipt=JSON.parse(fs.readFileSync(path.join(dir,name),'utf8'));
       if(receipt.sourceUrl!==article.originalUrl||sha(receipt.html)!==receipt.sha256||name!==`article-${receipt.sha256}.json`||now.getTime()-Date.parse(receipt.verifiedAt)>7*86400000)continue;
-      const fact=originalArticleFact(receipt.html,receipt.sourceUrl,article.publishedAt,id,receipt.verifiedAt);if(fact&&validAnalysisFact(fact,id,now))return fact;
+      const fact=originalArticleFact(receipt.html,receipt.sourceUrl,article.publishedAt,id,receipt.verifiedAt);if(fact&&validAnalysisFact(fact,id,now))return publisherContext(fact,receipt.html,id);
     }catch{/* malformed receipt never establishes an assertion */}
     if(options.fetchSources===false){evidence.failures.push('article-original-not-retained:'+article.originalUrl);return null;}
     try{
@@ -63,7 +72,7 @@ export async function prepareAnalysisEvidence(id:string,root=process.cwd(),now=n
       if(!fact)throw Error('date-topic-or-original-passage-not-verified');
       fs.mkdirSync(dir,{recursive:true,mode:0o700});const digest=sha(html),file=path.join(dir,`article-${digest}.json`);
       if(!fs.existsSync(file))fs.writeFileSync(file,JSON.stringify({sourceUrl:article.originalUrl,verifiedAt,sha256:digest,html}),{flag:'wx',mode:0o600});
-      return fact;
+      return publisherContext(fact,html,id);
     }catch(error){evidence.failures.push('article:'+article.originalUrl+':'+String((error as Error).message));return null;}
   }));
   evidence.facts.push(...results.filter((f):f is AnalysisFact=>!!f));

@@ -1,0 +1,224 @@
+{
+  "verifiedAt": "2026-10-23T01:26:08.767Z",
+  "role": "Saved national raw-crop supply evidence for Origin Radar only; no automatic network refresh.",
+  "records": [
+    {
+      "commodityId": "potato-starch",
+      "originKey": "poland",
+      "crop": "raw-potatoes-including-seed",
+      "scope": "national",
+      "unit": "tonnes",
+      "reportingYear": "2025",
+      "estimateStatus": "estimated",
+      "productionTonnes": 7012050,
+      "previous": {
+        "reportingYear": "2024",
+        "productionTonnes": 5920170,
+        "unit": "tonnes",
+        "scope": "national",
+        "crop": "raw-potatoes-including-seed"
+      },
+      "source": {
+        "name": "Eurostat (원료감자)",
+        "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_cpnh1?lang=EN&geo=PL&crops=R1000&sinceTimePeriod=2024&untilTimePeriod=2025",
+        "reportDate": null,
+        "retrievedAt": "2026-10-23T01:15:52.416Z",
+        "receipt": ".rms-research/starch-origin-supply-2026-10-23/sources/poland-eurostat.json",
+        "sha256": "4a9f374ee7a7f268eb808ef8df49709a5334c769306a69d291b289ff65cbe0ba",
+        "dataset": "apro_cpnh1",
+        "cropCode": "R1000",
+        "measure": "HPRD_THS_T",
+        "rawUnit": "thousand tonnes",
+        "rawValues": {
+          "2024": 5920.17,
+          "2025": 7012.05
+        },
+        "flags": {
+          "2024": "",
+          "2025": "e"
+        },
+        "publicationDate": null,
+        "dataUpdatedAt": "2026-09-28T23:00:00+0200"
+      }
+    },
+    {
+      "commodityId": "tapioca-starch",
+      "originKey": "thailand",
+      "crop": "fresh-cassava-roots",
+      "scope": "national",
+      "unit": "tonnes",
+      "reportingYear": "2026/27",
+      "estimateStatus": "forecast",
+      "productionTonnes": 18756912,
+      "previous": {
+        "reportingYear": "2025/26",
+        "productionTonnes": 18582329,
+        "unit": "tonnes",
+        "scope": "national",
+        "crop": "fresh-cassava-roots"
+      },
+      "source": {
+        "name": "TTSA (생산조사단)",
+        "url": "https://thaitapiocastarch.org/assets/upload/doc/pdf/20260911133805_02-ตัวเลขการสำรวจฯ ปี 2569-70 (รายจังหวัด).pdf",
+        "reportDate": "2026-08-07",
+        "retrievedAt": "2026-10-23T01:16:36.674Z",
+        "receipt": ".rms-research/starch-origin-supply-2026-10-23/sources/ttsa-survey.json",
+        "sha256": "e9531958898857c0d06523e1f67b8b92a1f7f57837f8239ddfe2b7ba83c9a97b",
+        "report": "Thai cassava production/trade survey 2026/27",
+        "page": 1,
+        "asOf": "2026-08-07",
+        "publicationDate": null,
+        "publicationDateNote": "Upload path contains 20260911; actual publication day is not independently stated.",
+        "harvestedAreaRai": 6766772,
+        "yieldTonnesPerRai": 2.772,
+        "previousHarvestedAreaRai": 6615283,
+        "previousYieldTonnesPerRai": 2.809
+      }
+    },
+    {
+      "commodityId": "tapioca-starch",
+      "originKey": "vietnam",
+      "crop": "fresh-cassava-roots",
+      "scope": "national",
+      "unit": "tonnes",
+      "reportingYear": "2026/27",
+      "estimateStatus": "forecast",
+      "productionTonnes": 10651530,
+      "previous": {
+        "reportingYear": "2025/26",
+        "productionTonnes": 10546070,
+        "unit": "tonnes",
+        "scope": "national",
+        "crop": "fresh-cassava-roots"
+      },
+      "source": {
+        "name": "AFSIS",
+        "url": "https://old.aptfsis.org/uploads/normal/ACO%20Report%2036/ACO-No.-36-Final.pdf",
+        "reportDate": "2026-06",
+        "retrievedAt": "2026-10-23T01:21:44.732Z",
+        "receipt": ".rms-research/starch-origin-supply-2026-10-23/sources/afsis-aco36.json",
+        "sha256": "90bd7514141ecc9d59f7c7113a9dc1081507d2ee4fb33e2223a36389f6cee191",
+        "report": "ACO No.36, June 2026 edition",
+        "edition": "2026-06",
+        "publicationDate": null,
+        "page": 99,
+        "printedPage": 88,
+        "table": 62,
+        "country": "Vietnam",
+        "rawUnit": "thousand tonnes",
+        "rawProduction": 10651.53,
+        "rawPrevious": 10546.07,
+        "forecastAuthority": "Member-country outlook",
+        "cropDefinitionPage": 94,
+        "harvestCalendarPage": 134
+      }
+    },
+    {
+      "commodityId": "tapioca-starch",
+      "originKey": "cambodia",
+      "crop": "fresh-cassava-roots",
+      "scope": "national",
+      "unit": "tonnes",
+      "reportingYear": "2026/27",
+      "estimateStatus": "forecast",
+      "productionTonnes": 15715800,
+      "previous": {
+        "reportingYear": "2025/26",
+        "productionTonnes": 14986700,
+        "unit": "tonnes",
+        "scope": "national",
+        "crop": "fresh-cassava-roots"
+      },
+      "source": {
+        "name": "AFSIS",
+        "url": "https://old.aptfsis.org/uploads/normal/ACO%20Report%2036/ACO-No.-36-Final.pdf",
+        "reportDate": "2026-06",
+        "retrievedAt": "2026-10-23T01:21:44.732Z",
+        "receipt": ".rms-research/starch-origin-supply-2026-10-23/sources/afsis-aco36.json",
+        "sha256": "90bd7514141ecc9d59f7c7113a9dc1081507d2ee4fb33e2223a36389f6cee191",
+        "report": "ACO No.36, June 2026 edition",
+        "edition": "2026-06",
+        "publicationDate": null,
+        "page": 99,
+        "printedPage": 88,
+        "table": 62,
+        "country": "Cambodia",
+        "rawUnit": "thousand tonnes",
+        "rawProduction": 15715.8,
+        "rawPrevious": 14986.7,
+        "forecastAuthority": "AFSIS Secretariat (asterisk in Table 62)",
+        "cropDefinitionPage": 94,
+        "harvestCalendarPage": 134
+      }
+    },
+    {
+      "commodityId": "tapioca-starch",
+      "originKey": "laos",
+      "crop": "fresh-cassava-roots",
+      "scope": "national",
+      "unit": "tonnes",
+      "reportingYear": "2026/27",
+      "estimateStatus": "forecast",
+      "productionTonnes": 7731500,
+      "previous": {
+        "reportingYear": "2025/26",
+        "productionTonnes": 7685000,
+        "unit": "tonnes",
+        "scope": "national",
+        "crop": "fresh-cassava-roots"
+      },
+      "source": {
+        "name": "AFSIS",
+        "url": "https://old.aptfsis.org/uploads/normal/ACO%20Report%2036/ACO-No.-36-Final.pdf",
+        "reportDate": "2026-06",
+        "retrievedAt": "2026-10-23T01:21:44.732Z",
+        "receipt": ".rms-research/starch-origin-supply-2026-10-23/sources/afsis-aco36.json",
+        "sha256": "90bd7514141ecc9d59f7c7113a9dc1081507d2ee4fb33e2223a36389f6cee191",
+        "report": "ACO No.36, June 2026 edition",
+        "edition": "2026-06",
+        "publicationDate": null,
+        "page": 99,
+        "printedPage": 88,
+        "table": 62,
+        "country": "Lao PDR",
+        "rawUnit": "thousand tonnes",
+        "rawProduction": 7731.5,
+        "rawPrevious": 7685,
+        "forecastAuthority": "Member-country outlook",
+        "cropDefinitionPage": 94,
+        "harvestCalendarPage": 134
+      }
+    }
+  ],
+  "reconciliation": {
+    "thailand": {
+      "selected": "Direct national TTSA production/trade survey with an explicit 2026-08-07 assessment date for 2026/27, paired only with its own 2025/26 estimate. National fresh roots; industry forecast, not an OAE final result.",
+      "alternatives": [
+        {
+          "source": "AFSIS ACO36, June 2026",
+          "year": "2026/27",
+          "productionTonnes": 24026520,
+          "previousYear": "2025/26",
+          "previousProductionTonnes": 24185740,
+          "harvestedAreaHa": 1272930,
+          "yieldTonnesPerHa": 18.88,
+          "page": 99,
+          "harvestedAreaPage": 100
+        },
+        {
+          "source": "TTSA webpage row",
+          "year": "2025/26",
+          "productionTonnes": 18582329,
+          "note": "The row is the prior season in the linked August 2026 survey. Do not relabel it as the 2026/27 forecast."
+        }
+      ],
+      "explanation": "The AFSIS regional outlook and TTSA national survey are distinct forecasts with different harvested-area and yield assumptions; units alone do not reconcile the difference. TTSA is selected as a directly dated national survey, not because its publication can be proved later than AFSIS. The AFSIS June 2026 edition contains citations dated 2026-08-13, so its edition month does not establish actual release date or the statistical cutoff. No cross-source blending or YoY calculation. Neither forecast is an observed final harvest.",
+      "publicationDateCaution": "TTSA explicitly states its assessment date. Its 20260911 upload path and the AFSIS June edition title are not independently verified publication dates; release ordering is unresolved."
+    },
+    "gaps": [
+      "No newly verified product-consistent root export or stock figures selected.",
+      "No existing complete preceding-21-day rainfall baseline for the two starch Origin Radars.",
+      "Country raw-crop production is not production at the representative weather point or finished starch output."
+    ]
+  }
+}

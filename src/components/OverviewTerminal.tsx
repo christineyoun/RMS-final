@@ -1,3 +1,5 @@
+import {loadOverviewIntelligence} from '../utils/overviewIntelligence';
+import {overviewIssueSummary} from '../utils/overviewIssueSummary';
 import React, { useState, useEffect } from 'react';
 import { getPublisherPortalUrl, isInvalidOrSearchUrl } from '../utils/portalUrls';
 import { Download } from 'lucide-react';
@@ -222,7 +224,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     return () => { mounted = false; controller.abort(); };
   }, [isSyncing]);
 
-  const portfolioYears = Array.from(new Set(Object.values(portfolioUsda as UsdaPortfolioData).map(row => row?.marketYear || '').filter(Boolean)));
+  const portfolioPeriod=(id:string,year:string)=>['wheat','corn','soybean','soybean-oil'].includes(id)&&/^20\d{2}$/.test(year)?`${year}/${String(Number(year)+1).slice(-2)}`:year;
+  const portfolioYears = Array.from(new Set(Object.entries(portfolioUsda as UsdaPortfolioData).map(([id,row]) => portfolioPeriod(id,row?.marketYear || '')).filter(Boolean)));
   const portfolioMarketYear = portfolioYears.length === 1 && Object.keys(portfolioUsda).length === USDA_PORTFOLIO.length
     ? portfolioYears[0] : '품목별';
 
@@ -311,59 +314,15 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     return () => { isMounted = false; };
   }, [isSyncing]);
 
-  const riskWeight: Record<string, number> = {
-    'High': 1, // 고위험 first
-    'Med': 2,  // 중위험 second
-    'Low': 3   // 저위험 last
-  };
-
-  const [localMarketIssues, setLocalMarketIssues] = useState<any[]>(() => {
-    return [...marketIssues].sort((a, b) => {
-      return (riskWeight[a.risk] || 99) - (riskWeight[b.risk] || 99);
-    });
-  });
-
-  useEffect(() => {
-    if (marketIssues && marketIssues.length > 0) {
-      const sortedInitial = [...marketIssues].sort((a, b) => {
-        return (riskWeight[a.risk] || 99) - (riskWeight[b.risk] || 99);
-      });
-      setLocalMarketIssues(sortedInitial);
-    }
-  }, [marketIssues]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadMarketIssues = async () => {
-      try {
-        const url = isSyncing ? '/api/scm/live-market-issues?force=true' : '/api/scm/live-market-issues';
-        const res = await fetch(url, { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted && Array.isArray(data) && data.length > 0) {
-            const mapped = data.map((item: any, idx: number) => ({
-              id: `live-issue-${idx}`,
-              title: item.title,
-              risk: item.riskLevel === '고위험' ? 'High' : item.riskLevel === '중위험' ? 'Med' : 'Low',
-              direction: item.impactDirection === '상승' ? 'Bullish' : item.impactDirection === '하락' ? 'Bearish' : 'Neutral',
-              date: formatDateStandard(item.dateStr || item.date),
-              source: item.publisher,
-              url: item.sourceUrl
-            }));
-            const sortedIssues = [...mapped].sort((a, b) => {
-              return (riskWeight[a.risk] || 99) - (riskWeight[b.risk] || 99);
-            });
-            setLocalMarketIssues(sortedIssues);
-          }
-        }
-      } catch (err) {
-        console.warn('Failed to fetch live market issues:', err);
-      }
-    };
-    loadMarketIssues();
-    // No paid-analysis polling on a ten-minute timer.
-    return () => { isMounted = false; };
-  }, [marketIssues, isSyncing]);
+  const [intelligence,setIntelligence]=useState<Awaited<ReturnType<typeof loadOverviewIntelligence>>|null>(null);
+  useEffect(()=>{
+    let disposed=false,active=false;let controller:AbortController|null=null;
+    const update=async()=>{if(disposed||active||document.visibilityState==='hidden')return;active=true;controller=new AbortController();try{const data=await loadOverviewIntelligence(fetch,controller.signal);if(!disposed)setIntelligence(data);}catch(error){if(!disposed)setIntelligence(null);}finally{active=false;}};
+    void update();const timer=window.setInterval(()=>void update(),60000);
+    window.addEventListener('focus',update);document.addEventListener('visibilitychange',update);
+    return()=>{disposed=true;controller?.abort();clearInterval(timer);window.removeEventListener('focus',update);document.removeEventListener('visibilitychange',update);};
+  },[isSyncing]);
+  const localMarketIssues=intelligence?.issues||[];
 
   const [wasdeData, setWasdeData] = useState<any>({
     commodityName: '소맥 (Wheat)',
@@ -544,17 +503,17 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             <div className="flex items-center gap-2 flex-wrap">
               {/* High Risk Warning Badge */}
               <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 px-2.5 h-8 print:h-7 rounded-lg shrink-0">
-                <span className="text-rose-600 font-bold">⚠️ 고위험 3건</span>
+                <span className="text-slate-700 font-bold">주요 이슈 {localMarketIssues.length}건</span>
                 <span className="text-slate-300">/</span>
-                <span className="text-[#EC870C] font-medium">중위험 2건</span>
+                <span className="text-slate-500 font-medium">검증 기사</span>
               </div>
 
               {/* Macro Risk Score Badge */}
               <div className="flex items-center gap-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 px-2.5 h-8 print:h-7 rounded-lg shrink-0">
                 <span className="font-sans font-bold text-slate-900">거시 리스크:</span>
-                <span className="font-mono font-bold text-slate-900" id="risk-score-val">55/100</span>
-                <span className="text-[11px] font-sans font-bold text-[#EC870C] bg-[#fff7ed] border border-[#fed7aa] px-1.5 py-0.5 rounded ml-0.5">
-                  주의
+                <span className="font-mono font-bold text-slate-900" id="overview-risk-score">—</span>
+                <span className="text-[11px] font-sans font-bold text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded ml-0.5">
+                  미평가
                 </span>
               </div>
             </div>
@@ -965,7 +924,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   글로벌 수급 밸런스 (Global S&D Balance)
                 </h3>
               </div>
-              <span className="text-xs text-slate-400 font-medium">Market Year: {portfolioLoading && portfolioYears.length === 0 ? '확인 중' : portfolioMarketYear}</span>
+              <span className="text-xs text-slate-500 font-normal text-right">Market Year: <span className="text-slate-800 font-semibold">{portfolioLoading && portfolioYears.length === 0 ? '확인 중' : portfolioMarketYear}</span></span>
             </div>
             
             <div className="flex-1 flex flex-col justify-center">
@@ -986,7 +945,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="py-2 px-1.5 print:py-1.5 font-semibold text-slate-900 text-xs">
                           {item.name}
-                          <span className="block text-[9px] text-slate-400 font-normal">{record?.marketYear || '—'}</span>
+                          <span className="block text-[9px] text-slate-500 font-normal">Market Year: <span className="text-slate-800 font-semibold">{portfolioPeriod(item.id,record?.marketYear || '—')}</span></span>
                         </td>
                         <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.productionMMT)}</td>
                         <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.consumptionMMT)}</td>
@@ -999,8 +958,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </table>
             </div>
 
-            <div className="text-[10px] text-[#94A3B8] font-normal text-right mt-2 select-none">
-              출처: USDA FAS PSD · 품목별 검증 자료 (미확인 —)
+            <div className="rms-source text-[10px] text-[#94A3B8] font-normal text-right mt-2 select-none">
+              출처: <a href="https://apps.fas.usda.gov/psdonline/app/index.html" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">USDA FAS PSD ↗</a>
             </div>
           </div>
 
@@ -1076,7 +1035,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               ))}
             </div>
 
-            <div className="text-[10px] text-[#94A3B8] font-normal text-right mt-2 select-none">
+            <div className="rms-source text-[10px] text-[#94A3B8] font-normal text-right mt-2 select-none">
               출처: Open-Meteo Agro-Climatic Radar
             </div>
           </div>
@@ -1145,7 +1104,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://www.kebhana.com/cont/mall/mall15/mall1501/index.jsp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1197,7 +1156,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://finance.yahoo.com/quote/BZ=F/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 시세 ↗
                 </a>
@@ -1246,7 +1205,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href="https://www.tradlinx.com/ko/freight-index"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   트레드링스 시세 ↗
                 </a>
@@ -1303,7 +1262,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   href={policyData?.sourceUrl || 'https://www.foodsecurityportal.org/tools/COVID-19-food-trade-policy-tracker'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 동향 ↗
                 </a>
@@ -1313,53 +1272,31 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
           {/* Footer Source */}
           <div className="mt-auto pt-2 print:pt-1 flex justify-end text-xs text-gray-400">
-            <span>출처: Refinitiv · Bloomberg · TradingEconomics</span>
+            <span className="rms-source">출처: Refinitiv · Bloomberg · TradingEconomics</span>
           </div>
         </section>
 
         {/* 2. AI Market Brief & Key Market Issues Split Grid */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 my-4">
           {/* Left Column (7 cols): AI Market Brief & Desk Directives */}
-          <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col justify-between space-y-4">
-            <AiMarketBrief aiBriefText={aiBriefText} />
+          <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-xl p-5 shadow-sm flex flex-col">
+            <AiMarketBrief aiBriefText={intelligence?.brief} />
 
-            <hr className="border-t border-slate-100 my-2" />
-
-            <div className="space-y-2.5">
+            <div className="mt-2 border-t border-slate-100 pt-2 space-y-2.5">
               <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">
                 데스크 구매 실행 지침 (DESK SOURCING DIRECTIVES)
               </span>
               
-              <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="rms-status-negative px-2 py-0.5 bg-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">
-                  조치 필요
-                </span>
-                <span className="text-xs font-bold text-slate-800 break-keep">
-                  현재 BMD 하락 구간에서 2025 Q1 팜유 포워드 커버리지 확보
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="px-2 py-0.5 rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold text-[11px] rounded shrink-0">
-                  주시
-                </span>
-                <span className="text-xs font-bold text-slate-800 break-keep">
-                  미국 농무부(USDA) 캔자스 동계소맥 작황 보고서 발표
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
-                <span className="rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-2 py-0.5 rounded shrink-0">
-                  우호적 조건
-                </span>
-                <span className="text-xs font-bold text-slate-800 break-keep">
-                  로테르담 및 함부르크발 부산항 스팟 컨테이너 운임 안정
-                </span>
-              </div>
+              {(intelligence?.directives||[]).map(d=>(
+                <div key={d.commodity} data-overview-directive={d.commodity} aria-description={d.reason+' · '+d.generatedAt.slice(0,10)} className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
+                  <span className="px-2 py-0.5 bg-[#DF0029] border border-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">{d.name}</span>
+                  <span className="text-xs font-bold text-slate-800 break-keep">{d.recommendation}</span>
+                </div>
+              ))}
             </div>
 
-            <div className="text-[10px] text-slate-400 font-normal text-right pt-2 select-none">
-              출처: Refinitiv · USDA · CBOT · Platts (Gemini AI & RMS 멀티소스 피드 분석)
+            <div className="rms-source mt-4 text-[10px] text-slate-400 font-normal text-right pt-2 select-none">
+              출처: 품목별 RMS AI
             </div>
           </div>
 
@@ -1372,7 +1309,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   <h2 className="text-sm font-bold text-slate-900 break-keep">주요 시장 이슈 (Key Market Issues)</h2>
                 </div>
                 <span className="text-[10px] bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded text-slate-600 font-sans font-medium shrink-0">
-                  5개 활성 모니터링
+                  {localMarketIssues.length}개 활성 모니터링
                 </span>
               </div>
 
@@ -1380,20 +1317,11 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 {localMarketIssues.map((issue) => (
                   <article
                     key={issue.id}
+                    data-overview-issue={issue.url}
                     className="group p-3 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
                   >
                     <div className="flex items-center justify-between">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-sans font-bold border ${
-                          issue.risk === 'High'
-                            ? 'rms-status-negative bg-rose-50 border-rose-200 text-[#DF0029]'
-                            : issue.risk === 'Med'
-                            ? 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold'
-                            : 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-medium text-[10px] px-1.5 py-0.5 rounded shrink-0'
-                        }`}
-                      >
-                        {issue.risk === 'High' ? '고위험' : issue.risk === 'Med' ? '중위험' : '저위험'}
-                      </span>
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded border border-blue-100">{issue.category||'시장 동향'}</span>
                     </div>
 
                     <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors leading-snug break-keep">
@@ -1402,35 +1330,27 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </a>
                     </h4>
 
+                    {issue.summary && (
+                      <p data-overview-issue-summary className="text-xs text-slate-600 leading-relaxed break-keep">
+                        {overviewIssueSummary(issue.summary)}
+                      </p>
+                    )}
+
                     <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-medium text-slate-400">
-                          {formatDateStandard(issue.dateStr || issue.date)}
-                        </span>
-                        <span className="text-slate-300">·</span>
-                        <span className={`font-sans font-semibold text-[10px] ${
-                          issue.direction === 'Bullish' || issue.direction === '상승'
-                            ? 'text-[#DF0029]'
-                            : issue.direction === 'Bearish' || issue.direction === '하락'
-                            ? 'text-[#059669]'
-                            : 'text-slate-500'
-                        }`}>
-                          {issue.direction === 'Bullish' || issue.direction === '상승'
-                            ? '↑ 상승'
-                            : issue.direction === 'Bearish' || issue.direction === '하락'
-                            ? '↓ 하락'
-                            : '→ 보합'}
+                          {formatDateStandard(issue.publishedAt)}
                         </span>
                       </div>
-                      <span className="font-sans text-slate-500 font-medium text-[11px]">{issue.source}</span>
+                      <span className="rms-source font-sans text-slate-500">{issue.source}</span>
                     </div>
                   </article>
                 ))}
               </div>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-normal text-right pt-2 select-none">
-              출처: 글로벌 농산물 인텔리전스 네트워크 & S&P Global
+            <div className="rms-source text-[10px] text-slate-400 font-normal text-right pt-2 select-none">
+              출처: 품목별 Market Intelligence
             </div>
           </div>
         </section>

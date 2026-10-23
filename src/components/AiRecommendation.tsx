@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bot, Loader2 } from 'lucide-react';
-import {aiPublisherLabel,aiSourceTooltip,type AiDisplaySource} from '../utils/aiSourcePresentation';
+import {aiPublisherLabel,aiSourceTooltip,isDirectAiFooterSource,type AiDisplaySource} from '../utils/aiSourcePresentation';
 import {rmsAiEditorial} from '../utils/rmsAiEditorial';
 
 export interface AiRecommendationProps {
@@ -68,10 +68,12 @@ export default function AiRecommendation({
     deskRecommendation:recommendedCoverage,executiveSummary,bullishFactors,bearishFactors,watchItems,
   });
   ({deskRecommendation:recommendedCoverage,executiveSummary,bullishFactors,bearishFactors,watchItems}=editorial.fields);
+  researchSources=editorial.sources;
 
   // Preserve distinct exact URLs, including query-specific publications. A
   // publisher label is presentation only; no source records are rewritten.
   const sourceLinks = Array.from(new Map(researchSources.filter((s) => {
+    if(!isDirectAiFooterSource(s))return false;
     try { return s?.url && ['https:', 'http:'].includes(new URL(s.url).protocol); }
     catch { return false; }
   }).map((s): [string,AiDisplaySource] => [s.url,s])).values());
@@ -214,13 +216,13 @@ export default function AiRecommendation({
       </div>
 
       {/* Footer Citation */}
-      {sourceLinks.length>0&&<div data-rms-ai-sources className="mt-auto pt-4 min-w-0 text-right text-xs text-gray-400 leading-relaxed break-words">
+      {sourceLinks.length>0&&<div data-rms-ai-sources className="rms-source mt-auto pt-4 min-w-0 text-right text-xs text-gray-400 leading-relaxed break-words">
           <span>출처: </span>
           {sourceLinks.map((source, idx) => (
             <React.Fragment key={source.url}>
             {idx>0&&<span aria-hidden="true"> · </span>}
             <a key={`${source.url}-${idx}`} href={source.url} target="_blank" rel="noopener noreferrer"
-               className="whitespace-normal [overflow-wrap:anywhere] text-slate-600 font-semibold no-underline hover:underline focus-visible:underline hover:text-rose-700" title={aiSourceTooltip(source)}>
+               className="whitespace-normal [overflow-wrap:anywhere] text-slate-600 font-semibold no-underline hover:underline focus-visible:underline hover:text-rose-700" aria-description={aiSourceTooltip(source)}>
               {aiPublisherLabel(source)}{'\u00a0'}↗
             </a>
             </React.Fragment>

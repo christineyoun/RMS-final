@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import os from'node:os';import path from'node:path';
+import {publicationRecord,comparePublications,retainPublication,readHistory,comparisonFor,seoulDay,startPublicationHistory}from'../overviewMarketHistory.ts';
+import{captureOverviewPublication}from'../overviewPublishedInputs.ts';import{createStage3Gateway}from'../stage3DailyUpdates.ts';
+const native=fetch;globalThis.fetch=async()=>{throw Error('No external calls');};
+try{
+ const actual=captureOverviewPublication(createStage3Gateway());assert.equal(actual.analyses.length,8);assert.equal(actual.articles.length,28);assert.equal(seoulDay(new Date('2026-10-21T15:00:00Z')),'2026-10-22');
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rms-overview-history-'));
+ assert.equal(retainPublication(actual,root),true);const original=fs.readFileSync(path.join(root,'.rms-stage3/snapshots/overview-market-history',fs.readdirSync(path.join(root,'.rms-stage3/snapshots/overview-market-history'))[0]));assert.equal(retainPublication(actual,root),false);assert.equal(readHistory(root).length,1);assert.equal(comparisonFor(actual,root).message,'전일 비교 데이터 없음');
+ // Explicit OFFLINE comparison fixtures. JRC 34.6/34.2 are retained published
+ // forecast values, but fixture dates are controlled; no invented real daily history.
+ const input=(value:number,date:string,desk='추가 매수 관망')=>[{id:'potato-starch',analysis:{generatedAt:date+'T01:00:00Z',executiveSummary:'TEST FIXTURE',deskRecommendation:desk,bullishFactors:[`EU 감자 단수 전망 ${value} t/ha`],bearishFactors:[],sources:[{title:'JRC MARS',url:'https://publications.jrc.ec.europa.eu/repository/handle/JRC146189'}]},articles:[]}];
+ const prior=publicationRecord(input(34.6,'2026-10-21'),new Date('2026-10-21T12:00:00Z'));let current=publicationRecord(input(34.2,'2026-10-22'),new Date('2026-10-22T12:00:00Z'));
+ let result=comparePublications(current,prior);assert.equal(result.changes[0].kind,'numerical-revision');assert(result.message.includes('34.6')&&result.message.includes('34.2'));assert.equal(result.baselineDate,'2026-10-21');
+ assert(comparePublications(publicationRecord(input(34.6,'2026-10-22'),new Date('2026-10-22T12:00:00Z')),prior).message.includes('전일 대비 주요 시장 변화 없음'));
+ assert.equal(comparePublications(current).message,'전일 비교 데이터 없음');
+ const older={...prior,day:'2026-10-19'};assert(comparePublications(current,older).message.startsWith('2026-10-19 대비'));assert(!comparePublications(current,older).message.includes('전일 대비'));
+ const editorial=structuredClone(prior);editorial.day='2026-10-22';editorial.analyses[0].effective.executiveSummary='Edited wording only';editorial.analyses[0].effective.deskRecommendation='관망 유지';editorial.analyses[0].sources.push({url:'https://example.org/new-citation'});assert.equal(comparePublications(editorial,prior).changes.length,0);
+ current=publicationRecord(input(34.6,'2026-10-22','단기 소요 우선 확보'),new Date('2026-10-22T12:00:00Z'));assert.equal(comparePublications(current,prior).changes[0].kind,'purchasing-stance');
+ const missing={...current,analyses:[]};assert.equal(comparePublications(missing,prior).message,'전일 비교 데이터 없음');
+ const stale=publicationRecord(input(34.2,'2026-10-20'),new Date('2026-10-22T12:00:00Z'));assert.equal(comparePublications(stale,prior).changes.length,0);
+ const period=publicationRecord(input(34.2,'2026-10-22'),new Date('2026-10-22T12:00:00Z'));period.analyses[0].original.bullishFactors=['France 감자 단수 전망 34.2 t/ha'];assert.equal(comparePublications(period,prior).changes.length,0,'Different geography incomparable');
+ const watched=fs.mkdtempSync(path.join(os.tmpdir(),'rms-overview-watch-'));fs.mkdirSync(path.join(watched,'src/data'),{recursive:true});let candidate=actual;const stop=startPublicationHistory(()=>candidate,watched);candidate={...actual,day:current.day,recordedAt:current.recordedAt,fingerprint:current.fingerprint,analyses:current.analyses};candidate=publicationRecord([...input(34.6,'2026-10-22','단기 소요 우선 확보'),...actual.analyses.filter(a=>a.id!=='potato-starch').map(a=>({id:a.id,analysis:{...a.effective,generatedAt:a.generatedAt,sources:a.sources},articles:[]}))],new Date('2026-10-22T12:00:00Z'));fs.writeFileSync(path.join(watched,'src/data/potato_news_verified.json'),'{}');await new Promise(r=>setTimeout(r,750));stop();assert.equal(readHistory(watched).length,2);assert(readHistory(watched).some(r=>r.fingerprint===actual.fingerprint));assert(readHistory(watched).some(r=>r.fingerprint===candidate.fingerprint));
+ assert(original.equals(fs.readFileSync(path.join(root,'.rms-stage3/snapshots/overview-market-history',fs.readdirSync(path.join(root,'.rms-stage3/snapshots/overview-market-history'))[0]))));
+ console.log('PASS all eight real saved readers; Seoul rollover; real-valued offline revision; unchanged; no prior; older date; editorial/citation-only exclusion; stance change; stale/missing/incomparable exclusion; immutable retention; publication-file notification; zero network.');
+}finally{globalThis.fetch=native;}

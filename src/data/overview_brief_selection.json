@@ -1,0 +1,142 @@
+{
+  "reviewedAt": "2026-10-22T10:40:03.878Z",
+  "provenance": "Overview-only excerpt selection from all eight effective published analyses; exact-field matching; original snapshots unchanged",
+  "entries": [
+    {
+      "commodity": "wheat",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "밀은 미국 수출 전망 하향이 구매 여건을 개선하지만 낮은 전년 대비 재고와 흑해 위험이 하락 여력을 제한하는 시장입니다.",
+      "text": "밀은 미국 수출 전망 하향이 구매 여건을 개선하지만 낮은 전년 대비 재고와 흑해 위험이 하락 여력을 제한하는 시장입니다.",
+      "deskRecommendation": "단기 소요 확보·추가 매수 속도 조절"
+    },
+    {
+      "commodity": "corn",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "옥수수는 미국 생산·재고 전망 확대가 가격을 누르고 있어 추가 매수를 기다릴 근거가 더 강합니다.",
+      "text": "옥수수는 미국 생산·재고 전망 확대가 가격을 누르고 있어 추가 매수를 기다릴 근거가 더 강합니다.",
+      "deskRecommendation": "추가 매수 관망·수확 진척에 따라 구매 속도 조절"
+    },
+    {
+      "commodity": "soybean",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "대두는 미국의 기록적 단수와 수확기 공급 확대가 수요 증가를 웃도는 하방 요인으로 작용합니다.",
+      "text": "대두는 미국의 기록적 단수와 수확기 공급 확대가 수요 증가를 웃도는 하방 요인으로 작용합니다.",
+      "deskRecommendation": "수확기 추가 매수 관망·남미 작황 악화 시 확보 전환"
+    },
+    {
+      "commodity": "soybean-oil",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "대두유는 선물 하락에도 미국 회원사 재고 긴축이 겹쳐 있어 단기 소요를 먼저 확보하고 추가 물량은 뒤로 남기는 대응이 적절합니다.",
+      "text": "대두유는 선물 하락에도 미국 회원사 재고 긴축이 겹쳐 있어 단기 소요를 먼저 확보하고 추가 물량은 뒤로 남기는 대응이 적절합니다.",
+      "deskRecommendation": "단기 소요 우선 확보·재고 반등 시 추가 매수 유보"
+    },
+    {
+      "commodity": "palm-oil",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "팜유는 말레이시아의 재고 증가가 확인된 반면 수출 회복은 아직 부분월 집계여서 추가 확보를 늦출 여지가 있습니다.",
+      "text": "팜유는 말레이시아의 재고 증가가 확인된 반면 수출 회복은 아직 부분월 집계여서 추가 확보를 늦출 여지가 있습니다.",
+      "deskRecommendation": "재고 소진 확인 전 추가 확보 유보"
+    },
+    {
+      "commodity": "sugar",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "설탕은 인도의 공급 확대 기대가 단기 약세 요인이지만 브라질·태국의 생산 제약이 남아 있어 필수 물량을 나눠 확보하는 대응이 적절합니다.",
+      "text": "설탕은 인도의 공급 확대 기대가 단기 약세 요인이지만 브라질·태국의 생산 제약이 남아 있어 필수 물량을 나눠 확보하는 대응이 적절합니다.",
+      "deskRecommendation": "필수 물량 분할 확보·인도 공급 확대 시 추가 매수 대기"
+    },
+    {
+      "commodity": "potato-starch",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "감자전분은 원료 작황 악화가 완제품 가격 상승으로 아직 이어지지 않아 장기 선구매를 서두를 근거가 약합니다.",
+      "text": "감자전분은 원료 작황 악화가 완제품 가격 상승으로 아직 이어지지 않아 장기 선구매를 서두를 근거가 약합니다.",
+      "deskRecommendation": "장기 선구매 유보·필수 물량 단계 확보"
+    },
+    {
+      "commodity": "tapioca-starch",
+      "section": "검토 근거",
+      "field": "executiveSummary",
+      "excerpt": "타피오카전분은 고점 대비 가격 조정과 신곡 공급 확대 기대가 중기 매수 대기를 뒷받침합니다.",
+      "text": "타피오카전분은 고점 대비 가격 조정과 신곡 공급 확대 기대가 중기 매수 대기를 뒷받침합니다.",
+      "deskRecommendation": "본수확기 공급 확대 전 단기 충당·중기 매수 대기"
+    },
+    {
+      "commodity": "corn",
+      "section": "오늘의 시장 판단",
+      "field": "executiveSummary",
+      "excerpt": "옥수수는 미국 생산·재고 전망 확대가 가격을 누르고 있어 추가 매수를 기다릴 근거가 더 강합니다.",
+      "text": "옥수수는 미국 생산·재고 전망 확대가 가격을 누르고 있어 추가 매수를 기다릴 근거가 더 강합니다.",
+      "deskRecommendation": "추가 매수 관망·수확 진척에 따라 구매 속도 조절"
+    },
+    {
+      "commodity": "soybean-oil",
+      "section": "오늘의 시장 판단",
+      "field": "executiveSummary",
+      "excerpt": "대두유는 선물 하락에도 미국 회원사 재고 긴축이 겹쳐 있어 단기 소요를 먼저 확보하고 추가 물량은 뒤로 남기는 대응이 적절합니다.",
+      "text": "대두유는 선물 하락에도 미국 회원사 재고 긴축이 겹쳐 있어 단기 소요를 먼저 확보하고 추가 물량은 뒤로 남기는 대응이 적절합니다.",
+      "deskRecommendation": "단기 소요 우선 확보·재고 반등 시 추가 매수 유보"
+    },
+    {
+      "commodity": "corn",
+      "section": "구매 기회",
+      "field": "executiveSummary",
+      "excerpt": "옥수수는 미국 생산·재고 전망 확대가 가격을 누르고 있어 추가 매수를 기다릴 근거가 더 강합니다.",
+      "text": "옥수수는 미국 생산·재고 전망 확대가 가격을 누르고 있어 추가 매수를 기다릴 근거가 더 강합니다.",
+      "deskRecommendation": "추가 매수 관망·수확 진척에 따라 구매 속도 조절"
+    },
+    {
+      "commodity": "palm-oil",
+      "section": "구매 기회",
+      "field": "executiveSummary",
+      "excerpt": "팜유는 말레이시아의 재고 증가가 확인된 반면 수출 회복은 아직 부분월 집계여서 추가 확보를 늦출 여지가 있습니다.",
+      "text": "팜유는 말레이시아의 재고 증가가 확인된 반면 수출 회복은 아직 부분월 집계여서 추가 확보를 늦출 여지가 있습니다.",
+      "deskRecommendation": "재고 소진 확인 전 추가 확보 유보"
+    },
+    {
+      "commodity": "soybean-oil",
+      "section": "공급 위험",
+      "field": "bullishFactors",
+      "excerpt": "NOPA 회원사 2026년 9월 대두유 재고 1.05 billion pounds·전월 대비 12.3% 감소에 따른 회원사 재고 압박",
+      "text": "대두유: NOPA 회원사 2026년 9월 대두유 재고 1.05 billion pounds·전월 대비 12.3% 감소에 따른 회원사 재고 압박",
+      "deskRecommendation": "단기 소요 우선 확보·재고 반등 시 추가 매수 유보"
+    },
+    {
+      "commodity": "potato-starch",
+      "section": "공급 위험",
+      "field": "bullishFactors",
+      "excerpt": "JRC의 EU 감자 단수 하향에 따른 전분용 원료 배정·가공원가 압력 가능성",
+      "text": "감자전분: JRC의 EU 감자 단수 하향에 따른 전분용 원료 배정·가공원가 압력 가능성",
+      "deskRecommendation": "장기 선구매 유보·필수 물량 단계 확보"
+    },
+    {
+      "commodity": "corn",
+      "section": "다음 판단을 바꿀 변수",
+      "field": "watchItems",
+      "excerpt": "수확 지연 심화·공급 전망 하향과 선물 하락세 둔화 동반 시 매수 전환 검토",
+      "text": "옥수수: 수확 지연 심화·공급 전망 하향과 선물 하락세 둔화 동반 시 매수 전환 검토",
+      "deskRecommendation": "추가 매수 관망·수확 진척에 따라 구매 속도 조절"
+    },
+    {
+      "commodity": "soybean-oil",
+      "section": "다음 판단을 바꿀 변수",
+      "field": "watchItems",
+      "excerpt": "NOPA 회원사 월말 재고 반등 시 추가 확보 유보·감소 지속 시 확보 속도 상향",
+      "text": "대두유: NOPA 회원사 월말 재고 반등 시 추가 확보 유보·감소 지속 시 확보 속도 상향",
+      "deskRecommendation": "단기 소요 우선 확보·재고 반등 시 추가 매수 유보"
+    },
+    {
+      "commodity": "potato-starch",
+      "section": "다음 판단을 바꿀 변수",
+      "field": "watchItems",
+      "excerpt": "전분용 감자 입고·공장 출하 감소와 완제품 가격 상승 동반 시 확보 앞당김",
+      "text": "감자전분: 전분용 감자 입고·공장 출하 감소와 완제품 가격 상승 동반 시 확보 앞당김",
+      "deskRecommendation": "장기 선구매 유보·필수 물량 단계 확보"
+    }
+  ]
+}

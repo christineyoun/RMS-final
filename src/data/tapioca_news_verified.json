@@ -1,0 +1,61 @@
+{
+  "reviewedAt": "2026-10-22T07:34:48.700Z",
+  "review": "Owner-requested free original-page verification; retained snapshots unchanged; no Gemini provenance asserted.",
+  "articles": [
+    {
+      "sourceName": "TTSA",
+      "sourceType": "official",
+      "publishedAt": "2026-10-20",
+      "title": "태국 전분 기준가격, FOB 방콕 톤당 690달러로 하락",
+      "affectedRegion": "태국",
+      "summary": "TTSA의 10월 20일 타피오카 전분 기준가격은 FOB 방콕 톤당 690달러, 내수 kg당 21.90바트입니다. 직전 공표일인 10월 6일의 695달러·22.00바트보다 낮아졌습니다. 협회 기준가격의 조정이며 개별 공급사의 확정 오퍼나 실제 거래가격을 뜻하지 않습니다.",
+      "category": "가격동향",
+      "originalUrl": "https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price",
+      "unavailable": false,
+      "id": "ttsa-2026-10",
+      "linkStatus": "verified",
+      "receipt": ".rms-research/corn-tapioca-market-intelligence-2026-10-22/ttsa.json",
+      "receiptSha256": "9b1d2a32d19d61b9558b0dcb6d254d6cbd25b5aff98c011d90dd34bb20573123",
+      "provenance": "independently-verified-original",
+      "retrievedAt": "2026-10-22T07:31:20.418Z"
+    },
+    {
+      "sourceName": "TQ Industry Starch",
+      "sourceType": "company",
+      "publishedAt": "2026-10-07",
+      "title": "태국 일부 산지 원료가격 하락, 전분공장 가동률은 낮은 수준",
+      "affectedRegion": "태국·베트남",
+      "summary": "TQ Industry의 10월 7일 보고서는 전분공장 원가와 연결되는 나콘랏차시마 원료 카사바 가격이 4개 지역에서 하락했다고 전했습니다. 인용된 NETTA의 10월 5일 자료상 공장 평균 가동률은 50% 미만입니다. 베트남 원료 유입은 늘었지만 매입가격은 여전히 높아, 일부 산지의 가격 하락을 전분 공급 정상화로 해석하기는 이릅니다.",
+      "category": "원료·가공",
+      "originalUrl": "https://www.tqindustry.com/th/news/thailand-tapioca-cassava-prices-2026-10-07/",
+      "unavailable": false,
+      "id": "tq-2026-10",
+      "linkStatus": "verified",
+      "receipt": ".rms-research/corn-tapioca-market-intelligence-2026-10-22/tq.json",
+      "receiptSha256": "3c41b49545c23a2326a9ff31b16c21526612b543344a54234b9c0f076c451c49",
+      "provenance": "independently-verified-original",
+      "retrievedAt": "2026-10-22T07:31:47.500Z"
+    },
+    {
+      "sourceName": "Viet Bac Agro",
+      "sourceType": "company",
+      "publishedAt": "2026-10-19",
+      "title": "베트남 전분 수출 호가 하락·중국 매수세 제한",
+      "summary": "Viet Bac의 10월 19일 시장 종합은 VCA의 10월 12일 자료를 재인용해 타피오카 전분 FOB 호치민 호가를 톤당 610~650달러로 제시했습니다. 직전 주보다 약 10달러 낮고 DAF 랑선은 톤당 4,100~4,250위안으로 유지됐습니다. 중국 시장은 원료비가 가격을 지지하지만 매수 관심이 제한적이라는 10월 9~10일 Mysteel 평가를 전했습니다. 수출 호가 약세와 원료비 부담이 공존하므로 FOB·국경도착·중국 내수 가격을 구분해 납기별 오퍼를 비교할 국면입니다. 각 수치는 해당 관측일의 시장 참고치이며 10월 19일 확정 거래가격이 아닙니다.",
+      "category": "수출·수요",
+      "affectedRegion": "베트남·중국",
+      "provenance": "verified-publisher-market-compilation",
+      "attributedSources": [
+        "VCA via TQ Industry, 2026-10-12",
+        "Mysteel, 2026-10-09/10"
+      ],
+      "id": "procurement-tapioca",
+      "originalUrl": "https://vietbacagroimex.com/en/posts/cassava-market-reference-bulletin-october-19-2026",
+      "receipt": ".rms-research/procurement-market-intelligence-2026-10-22/tapioca.json",
+      "receiptSha256": "222a610689496a5a1e7e30304c1340e6c0d83d163e80f46f33672daa2dfc2fee",
+      "linkStatus": "verified",
+      "unavailable": false,
+      "retrievedAt": "2026-10-22T08:04:04.304Z"
+    }
+  ]
+}

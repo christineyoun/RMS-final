@@ -4,6 +4,9 @@
  * demonstration baselines, article inference, or embedded numerical forecasts.
  */
 import type { OriginItemDetail, OriginRadarResponse } from './originRadarService.ts';
+import fs from 'node:fs';
+import path from 'node:path';
+const savedCornFile=()=>path.join(process.env.RMS_ORIGIN_CACHE_DIR||path.join(process.cwd(),'.rms-origin-verified'),'corn-wasde-origin-v1.json');
 
 const WASDE_BASE = 'https://www.usda.gov/oce/commodity/wasde';
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -158,7 +161,15 @@ export class CornWasdeOriginService {
   private lastVerifiedAt=0;
   private pending:Promise<OriginRadarResponse>|null=null;
 
-  async getCornOriginRadar(force=false):Promise<OriginRadarResponse> {
+  async getCornOriginRadar(force=false,savedOnly=false):Promise<OriginRadarResponse> {
+    if(savedOnly){
+      let observation:WasdeCornOriginObservation|null=null;
+      try{const s=JSON.parse(fs.readFileSync(savedCornFile(),'utf8')).observation;
+        if(s&&/^20\d{2}\/\d{2}$/.test(s.marketYear)&&/^20\d{2}-\d{2}$/.test(s.sourceReportDate)&&s.sourceReportDate<=new Date().toISOString().slice(0,7)&&
+          ORIGINS.every(o=>[s.countries[o.key]?.productionMMT,s.countries[o.key]?.exportsMMT,s.countries[o.key]?.endingStocksMMT].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0)))observation=s;
+      }catch{}
+      return renderCornWasdeRadar(observation,observation?'cached':'unavailable');
+    }
     const now=Date.now();
     if(!force && this.checkedAt && now-this.checkedAt<(this.verified?6*60*60*1000:15*60*1000)) {
       return renderCornWasdeRadar(this.verified, this.verified ? 'cached' : 'unavailable');
@@ -190,6 +201,8 @@ export class CornWasdeOriginService {
         const reportEnd=Date.UTC(year,month,0);
         if(now-reportEnd>75*DAY_MS)break;
         this.verified=parsed;
+        fs.mkdirSync(path.dirname(savedCornFile()),{recursive:true});
+        fs.writeFileSync(savedCornFile(),JSON.stringify({version:1,verifiedAt:new Date().toISOString(),observation:parsed},null,2));
         this.lastVerifiedAt=now;
         return renderCornWasdeRadar(parsed,'live');
       } catch {break;}

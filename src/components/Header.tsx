@@ -314,7 +314,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium shadow-2xs"
           aria-live="polite"
-          title="완료된 작업 또는 저장 기록의 시각입니다. 개별 AI 분석의 생성 시각이나 모든 데이터의 최신성을 의미하지 않습니다."
+          aria-description="완료된 작업 또는 저장 기록의 시각입니다. 개별 AI 분석의 생성 시각이나 모든 데이터의 최신성을 의미하지 않습니다."
         >
           <span className="h-2 w-2 rounded-full shrink-0 bg-blue-500" />
           <span className="font-sans">시스템 기록</span>

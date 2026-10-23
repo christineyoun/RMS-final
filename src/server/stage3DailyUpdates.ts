@@ -1,3 +1,12 @@
+import {assessProcurementRisk} from '../utils/procurementRisk.ts';
+import {collectAnalysisEvidence} from './analysisEvidence.ts';
+import {selectProcurementNews} from './newsProcurementSelection.ts';
+import {readVerifiedWheatNews} from './wheatSavedVerifiedNews.ts';
+import {readVerifiedCornNews} from './cornSavedVerifiedNews.ts';
+import {readVerifiedTapiocaNews} from './tapiocaVerifiedNews.ts';
+import {readVerifiedPotatoNews} from './potatoVerifiedNews.ts';
+import {readVerifiedSugarNews} from './sugarVerifiedNews.ts';
+import {rmsAiEditorial} from '../utils/rmsAiEditorial.ts';
 import {readVerifiedSoybeanOilNews} from './soybeanOilVerifiedNews.ts';
 import {standalonePreflight,standaloneContext,runStandaloneAnalysis,standaloneStatus} from './standaloneAnalysis.ts';
 import {promoteRetainedSoybeanResponse} from './retainedSoybeanPromotion.ts';
@@ -90,7 +99,7 @@ function kst() {
 function keyFromRequest(url: string, method: string): string | null {
   let u: URL; try { u=new URL(url,'http://localhost'); } catch { return null; }
   const p=u.pathname;
-  const valid = (value:string) => commoditySet.has(value) ? value : null;
+  const valid = (value:string) => {const id=value.trim().toLowerCase().replace(/_/g,'-');return commoditySet.has(id)?id:null;};
   if (method==='GET' && p.startsWith('/api/ai-analysis/')) {
     const id=valid(decodeURIComponent(p.slice('/api/ai-analysis/'.length)));
     return id ? `analysis-${id}` : null;
@@ -129,13 +138,10 @@ function validateSnapshot(key:string, value:any):boolean {
     if(key==='news-wheat'||key==='news-corn'||key==='news-soybean') {
       const informative = (a:any) => assessNewsSummary(a?.summary || a?.summary_kr,
         a?.title || a?.title_kr, key.slice('news-'.length)).pass;
-      // Do not replace a good saved batch with 1-3 items or an empty batch.
-      // All four need distinct publisher URLs and meaningful Korean summaries.
-      return value.success===true && Array.isArray(articles) && articles.length===4 &&
+      // A substantive verified subset is valid; four is a maximum, never a quota.
+      return value.success===true && Array.isArray(articles) && articles.length>=1 && articles.length<=4 &&
         articles.every((a:any)=>valid(a) && informative(a)) &&
-        new Set(articles.map((a:any)=>String(a.originalUrl).toLowerCase().replace(/\/+$/,''))).size===4 &&
-        (key!=='news-corn'||(new Set(articles.map((a:any)=>String(a.sourceName))).size>=3 &&
-          articles.filter((a:any)=>Date.parse(a.publishedAt)>=Date.now()-15*86400000).length>=3));
+        new Set(articles.map((a:any)=>String(a.originalUrl).toLowerCase().replace(/\/+$/,''))).size===articles.length;
     }
     return value.success===true && Array.isArray(articles) &&
       articles.some((a:any)=>valid(a) && assessNewsSummary(a?.summary||a?.summary_kr,
@@ -184,6 +190,11 @@ function status() {
     snapshots:listSnapshots(),
     caveat:'Requires the RMS server to remain running. Token costs are estimates, not a billing cap.'
   };
+}
+function savedNewsResponse(id:string, verified:any[]) {
+  const articles=selectProcurementNews(id,verified);
+  return {success:true,articles,sourceStatus:'verified-retained-originals',
+    procurementRisk:assessProcurementRisk(id,articles,collectAnalysisEvidence(id).facts)};
 }
 function respond(res:ServerResponse, code:number, body:unknown) {
   res.statusCode=code;
@@ -312,13 +323,17 @@ export function createStage3Gateway() {
   internalSecret=secureToken();
   return (req:IncomingMessage,res:ServerResponse,next:()=>void) => {
     const u=new URL(req.url||'/', 'http://localhost');
+    if(req.method==='GET'&&u.pathname==='/api/market-intelligence'){
+      const id=(u.searchParams.get('commodity')||'wheat').trim().toLowerCase().replace(/_/g,'-');
+      if(!commoditySet.has(id))return respond(res,400,{success:false,error:`Unknown commodity: ${id}`});
+    }
     if(u.pathname==='/api/rms/refresh-status') return respond(res,200,status());
     if(RETIRED_AI_CONTROLS.includes(u.pathname))return respond(res,410,{success:false,error:'Legacy AI execution retired. Use explicit commodity selection and per-run approval through /api/rms/control/standalone-analysis.'});
-    if(u.pathname==='/api/rms/control/promote-retained-soybean'){
+    if(u.pathname==='/api/rms/control/promote-retained-soybean'||u.pathname==='/api/rms/control/promote-retained-soybean-oil'||u.pathname==='/api/rms/control/promote-retained-palm-oil'||u.pathname==='/api/rms/control/promote-retained-sugar'||u.pathname==='/api/rms/control/promote-retained-potato-starch'){
       if(req.method!=='POST'||!isLoopback(req)||req.headers['x-rms-stage3-admin']!==internalSecret)
         return respond(res,403,{success:false,error:'Local owner authorization required.'});
       if(u.search||state.running)return respond(res,409,{success:false,error:'Fixed retained Soybean operation only; runner must be idle.'});
-      try{return respond(res,200,{success:true,...promoteRetainedSoybeanResponse(String(req.headers['x-rms-promotion-approval']||''),String(req.headers['x-rms-authorization-id']||''))});}
+      try{return respond(res,200,{success:true,...promoteRetainedSoybeanResponse(String(req.headers['x-rms-promotion-approval']||''),String(req.headers['x-rms-authorization-id']||''),u.pathname.endsWith('-potato-starch')?'potato-starch':u.pathname.endsWith('-sugar')?'sugar':u.pathname.endsWith('-palm-oil')?'palm-oil':u.pathname.endsWith('-oil')?'soybean-oil':'soybean')});}
       catch(e){return respond(res,409,{success:false,error:String((e as Error).message)});}
     }
     if(u.pathname==='/api/rms/control/standalone-analysis') {
@@ -377,9 +392,14 @@ export function createStage3Gateway() {
         return respond(res,403,{success:false,error:'Paid authorization is restricted to the selected analysis commodity.'});
       return withAuthorizedStage3Run(state.context,()=>next());
     }
-    if(key==='news-soybean-oil')return respond(res,200,{success:true,articles:readVerifiedSoybeanOilNews(),sourceStatus:'verified-retained-originals'});
-    if(key==='news-soybean')return respond(res,200,{success:true,articles:readVerifiedSoybeanNews(),sourceStatus:'verified-retained-originals'});
-    if(key==='news-palm-oil')return respond(res,200,{success:true,articles:readVerifiedPalmNews(),sourceStatus:'verified-retained-originals'});
+    if(key==='news-wheat')return respond(res,200,savedNewsResponse('wheat',readVerifiedWheatNews()));
+    if(key==='news-soybean-oil')return respond(res,200,savedNewsResponse('soybean-oil',readVerifiedSoybeanOilNews()));
+    if(key==='news-soybean')return respond(res,200,savedNewsResponse('soybean',[...readVerifiedSoybeanNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='American Soybean Association')]));
+    if(key==='news-potato-starch')return respond(res,200,savedNewsResponse('potato-starch',readVerifiedPotatoNews()));
+    if(key==='news-corn')return respond(res,200,savedNewsResponse('corn',readVerifiedCornNews()));
+    if(key==='news-tapioca-starch')return respond(res,200,savedNewsResponse('tapioca-starch',readVerifiedTapiocaNews()));
+    if(key==='news-sugar')return respond(res,200,savedNewsResponse('sugar',readVerifiedSugarNews()));
+    if(key==='news-palm-oil')return respond(res,200,savedNewsResponse('palm-oil',[...readVerifiedPalmNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='USDA ERS')]));
     const cached=readSnapshot(key);
     if(cached?.payload) {
       res.setHeader('X-RMS-Data-Updated-At',cached.updatedAt||'');
@@ -396,10 +416,10 @@ export function createStage3Gateway() {
             (commodityId!=='corn' && commodityId!=='wheat' || a.linkStatus==='verified') &&
             assessNewsSummary(a.summary||a.summary_kr,a.title||a.title_kr,commodityId).pass
           );
-          return respond(res,200,{...cached.payload, articles:accepted,
+          return respond(res,200,{...cached.payload, articles:selectProcurementNews(commodityId,accepted),
             verifiedLinkCount:accepted.filter((a:any)=>a.linkStatus==='verified').length,
             qualityFilteredCount:articles.length-accepted.length,
-            qualityStatus:accepted.length===4?'complete':'partial-awaiting-approved-refresh'});
+            qualityStatus:accepted.length?'verified-selection':'no-suitable-verified-news'});
         };
         if(commodityId==='wheat') {
           void sanitizeSavedWheatNews(cached.payload)
@@ -414,7 +434,11 @@ export function createStage3Gateway() {
 
           return respond(res,503,{success:false,status:'unavailable',error:'저장된 AI 분석을 확인할 수 없습니다.'});
         }
-        return respond(res,200,{...cached.payload,data:{...cached.payload.data,status:'cached'}});
+        // The saved snapshot stays immutable. Serve the exact pinned, owner-reviewed
+        // Potato supplement through the same presentation overlay used by the card.
+        const data=cached.payload.data;
+        const editorial=key==='analysis-potato-starch'?rmsAiEditorial('potato-starch',data.generatedAt,data.sources,data):null;
+        return respond(res,200,{...cached.payload,data:{...data,...(editorial?.editorial?{...editorial.fields,sources:editorial.sources,presentationEditorial:{version:editorial.editorial,originalSnapshot:editorial.snapshot}}:{}),status:'cached'}});
       }
       return respond(res,200,cached.payload);
     }

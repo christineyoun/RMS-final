@@ -1,3 +1,5 @@
+import {POTATO_RESEARCH_URL,POTATO_KMC_URL} from './potatoAnalysisEvidence.ts';
+import {collectSugarPriceEvidence,SUGAR_PRICE_URL,SUGAR_RESEARCH_URL} from './sugarAnalysisEvidence.ts';
 import {collectSoybeanOilEvidence} from './soybeanOilAnalysisEvidence.ts';
 import {SOYBEAN_OIL_NEWS_CARDS} from './soybeanOilVerifiedNews.ts';
 import {OIL_ORIGIN_POINTS,oilWeatherSourceUrl,legacyOilWeatherUrl} from './soybeanOilOriginService.ts';
@@ -6,7 +8,7 @@ import fs from 'node:fs';
 import {collectSoybeanPriceWeatherEvidence} from './soybeanAnalysisEvidence.ts';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {parsePsdWorldRows, USDA_WORLD_COMMODITIES} from '../lib/verifiedWorldWasde.ts';
+import {parsePsdWorldRows, getWorldDomesticUseKMT, USDA_WORLD_COMMODITIES} from '../lib/verifiedWorldWasde.ts';
 import {parsePalmHistory, validatePalmPublisher, PRICE_SOURCES} from './publicPriceHistory.ts';
 
 export type AnalysisFact={id:string;commodity:string;topic:string;text:string;sourceUrl:string;sourceTitle:string;
@@ -26,7 +28,7 @@ export function validAnalysisFact(f:AnalysisFact,id:string,now=new Date()):boole
 }
 export function trustedAnalysisUrl(value:string):boolean {
   try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&
-    (SOYBEAN_OIL_NEWS_CARDS.some(c=>c.originalUrl===u.href)||OIL_ORIGIN_POINTS.some(p=>(oilWeatherSourceUrl(p)===u.href||legacyOilWeatherUrl(p)===u.href))||
+    ((u.href===POTATO_RESEARCH_URL||u.href===POTATO_KMC_URL||u.href===SUGAR_PRICE_URL||u.href===SUGAR_RESEARCH_URL||SOYBEAN_OIL_NEWS_CARDS.some(c=>c.originalUrl===u.href))||OIL_ORIGIN_POINTS.some(p=>(oilWeatherSourceUrl(p)===u.href||legacyOilWeatherUrl(p)===u.href))||
      u.hostname==='query1.finance.yahoo.com'&&['/v8/finance/chart/ZS%3DF','/v8/finance/chart/ZL%3DF'].includes(u.pathname)&&u.searchParams.get('range')==='5y'&&u.searchParams.get('interval')==='1d'||
      u.hostname==='power.larc.nasa.gov'&&u.pathname==='/api/temporal/daily/point'||
      u.hostname==='commodity-board.com'&&/^\/[a-z0-9-]{20,}\/?$/.test(u.pathname)||
@@ -76,6 +78,7 @@ export function collectAnalysisEvidence(id:string,root=process.cwd(),now=new Dat
         verification:'original-record',recordSha256:sha(JSON.stringify(row)),
         measure:{metric:label,scope:`world:${year}/${year+1}`,benchmark:spec.code,unit:'천 MT',value:row.value,valueKind:'forecast'}});
     }
+    if(id==='sugar'){const value=getWorldDomesticUseKMT(rows,id);sourceFacts.push({id:'psd-sugar-domestic-use',commodity:id,topic:'설탕(원심분리당)',text:`USDA PSD ${observedAt} 세계 설탕 ${year}/${String(year+1).slice(-2)} 연간 국내사용 전망 ${value} 천 MT = 총분배(178) - 수출(88) - 기말재고(176). 기존 공식 수급표의 합계 항등식으로 계산한 전망이며 10월 월간 실적이 아닙니다.`,sourceUrl:`https://api.fas.usda.gov/api/psd/commodity/0612000/world/year/${year}`,sourceTitle:'USDA FAS PSD',observedAt,verifiedAt:saved.verifiedAt,verification:'original-record',recordSha256:sha(JSON.stringify(rows)),measure:{metric:'소비',scope:`world:${year}/${year+1}`,benchmark:'0612000',unit:'천 MT',value,valueKind:'forecast'}});}
     const begin=sourceFacts.find(f=>f.id==='psd-20'),end=sourceFacts.find(f=>f.id==='psd-176');
     if(begin&&end&&begin.measure!.value>0){
       const pct=Number(((end.measure!.value/begin.measure!.value-1)*100).toFixed(2));
@@ -86,6 +89,7 @@ export function collectAnalysisEvidence(id:string,root=process.cwd(),now=new Dat
     for(const fact of sourceFacts)add(fact);
   }catch(error){evidence.failures.push('USDA:'+String((error as Error).message));}
   if(id==='soybean'){const saved=collectSoybeanPriceWeatherEvidence(root,now);for(const f of saved.facts)add(f);evidence.failures.push(...saved.failures);}
+  if(id==='sugar'){const prices=collectSugarPriceEvidence(root,now);prices.facts.forEach(add);evidence.failures.push(...prices.failures);}
   if(id==='palm-oil'){
     const dir=path.join(root,'.rms-price-history/source-evidence');
     try {
