@@ -1,0 +1,162 @@
+{
+  "commodityCode": "4232000",
+  "verifiedAt": "2026-10-24T15:07:27.916Z",
+  "data": {
+    "commodityCode": "4232000",
+    "marketYear": "2026",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 75241,
+    "productionMMT": 75.241,
+    "domesticConsumption1000MT": 73483,
+    "domesticConsumptionMMT": 73.483,
+    "endingStocks1000MT": 6854,
+    "endingStocksMMT": 6.854,
+    "beginningStocks1000MT": 6415,
+    "beginningStocksMMT": 6.415,
+    "imports1000MT": 13630,
+    "exports1000MT": 14949,
+    "exportsMMT": 14.949,
+    "totalSupply1000MT": 95286,
+    "stocksToUseRatio": 9.3,
+    "stocksToUseRatioPct": 9.3,
+    "rawRecordsCount": 13,
+    "rawRecords": [
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 7,
+        "unitId": 8,
+        "value": 385714
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 181,
+        "unitId": 23,
+        "value": 0.1951
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 6415
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 75241
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 13630
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 95286
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 14949
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 140,
+        "unitId": 8,
+        "value": 18962
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 149,
+        "unitId": 8,
+        "value": 54436
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 161,
+        "unitId": 8,
+        "value": 85
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 73483
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 6854
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 95286
+      }
+    ],
+    "executiveBrief": "USDA PSD 2026/27 · 2026-10 세계 대두유 연간 전망. 기말재고 전망은 실제 월간 재고 변동이나 재고 적정성을 뜻하지 않습니다."
+  },
+  "commodity": "soybean-oil",
+  "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
+  "observationStatus": "as-reported",
+  "retainedFrom": "src/data/usda_soybean_oil_last_verified.json"
+}

@@ -1,0 +1,162 @@
+{
+  "commodity": "soybean",
+  "commodityCode": "2222000",
+  "verifiedAt": "2026-10-25T16:49:17.534Z",
+  "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/2222000/world/year/2025",
+  "observationStatus": "historical-as-reported",
+  "data": {
+    "commodityCode": "2222000",
+    "marketYear": "2025",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 429185,
+    "productionMMT": 429.2,
+    "domesticConsumption1000MT": 432327,
+    "domesticConsumptionMMT": 432.3,
+    "endingStocks1000MT": 124927,
+    "endingStocksMMT": 124.9,
+    "beginningStocks1000MT": 125965,
+    "beginningStocksMMT": 126,
+    "imports1000MT": 188527,
+    "exports1000MT": 186423,
+    "exportsMMT": 186.4,
+    "totalSupply1000MT": 743677,
+    "stocksToUseRatio": 28.9,
+    "stocksToUseRatioPct": 28.9,
+    "areaHarvested1000HA": 142729,
+    "yieldMTHA": 3.007,
+    "rawRecordsCount": 13,
+    "rawRecords": [
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 4,
+        "unitId": 4,
+        "value": 142729
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 125965
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 429185
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 188527
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 743677
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 186423
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 7,
+        "unitId": 8,
+        "value": 375838
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 149,
+        "unitId": 8,
+        "value": 25826
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 161,
+        "unitId": 8,
+        "value": 30663
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 432327
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 124927
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 743677
+      },
+      {
+        "commodityCode": "2222000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 184,
+        "unitId": 26,
+        "value": 3.007
+      }
+    ]
+  }
+}

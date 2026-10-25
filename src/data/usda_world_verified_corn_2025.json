@@ -1,0 +1,182 @@
+{
+  "commodity": "corn",
+  "commodityCode": "0440000",
+  "verifiedAt": "2026-10-25T16:49:16.840Z",
+  "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/0440000/world/year/2025",
+  "observationStatus": "historical-as-reported",
+  "data": {
+    "commodityCode": "0440000",
+    "marketYear": "2025",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 1330621,
+    "productionMMT": 1330.6,
+    "domesticConsumption1000MT": 1301525,
+    "domesticConsumptionMMT": 1301.5,
+    "endingStocks1000MT": 307162,
+    "endingStocksMMT": 307.2,
+    "beginningStocks1000MT": 295641,
+    "beginningStocksMMT": 295.6,
+    "imports1000MT": 198382,
+    "exports1000MT": 215957,
+    "exportsMMT": 216,
+    "totalSupply1000MT": 1824644,
+    "stocksToUseRatio": 23.6,
+    "stocksToUseRatioPct": 23.6,
+    "areaHarvested1000HA": 214936,
+    "yieldMTHA": 6.1908,
+    "rawRecordsCount": 15,
+    "rawRecords": [
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 4,
+        "unitId": 4,
+        "value": 214936
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 295641
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 1330621
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 198382
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 81,
+        "unitId": 8,
+        "value": 200252
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 84,
+        "unitId": 8,
+        "value": 0
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 1824644
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 215957
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 113,
+        "unitId": 8,
+        "value": 209336
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 130,
+        "unitId": 8,
+        "value": 824284
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 192,
+        "unitId": 8,
+        "value": 477241
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 1301525
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 307162
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 1824644
+      },
+      {
+        "commodityCode": "0440000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 184,
+        "unitId": 26,
+        "value": 6.1908
+      }
+    ]
+  }
+}

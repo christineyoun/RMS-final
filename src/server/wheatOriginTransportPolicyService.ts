@@ -126,6 +126,7 @@ function validCached(e:Evidence,now:Date):Evidence {
 export class WheatOriginTransportPolicyService {
   private dayCache:Evidence|null=null;
   private running:Promise<Evidence>|null=null;
+  async getEvidence(){return this.collect();}
   private async collect():Promise<Evidence>{
     const now=new Date();const today=kstDay(now);
     if(this.dayCache?.checkedDay===today)return validCached(this.dayCache,now);

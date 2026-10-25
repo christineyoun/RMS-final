@@ -9,13 +9,21 @@
   font-size: var(--rms-source-font-size);
   line-height: var(--rms-source-line-height);
   font-weight: 400;
+  color: #94a3b8;
 }
-.rms-source { white-space: normal; overflow-wrap: anywhere; }
+.rms-source { white-space: normal; overflow-wrap: normal; word-break: normal; min-width: 0; }
+.rms-source-group { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.35em; row-gap: 0.25rem; }
+.rms-source-entry { display: inline-flex; align-items: baseline; gap: 0.35em; white-space: nowrap; }
 .rms-source a[href],
+.rms-source a[href] :where(span),
 a[href] .rms-source,
 a[href].rms-source {
   font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
+.rms-source a[href]:hover, a[href].rms-source:hover { color: #DF0029; }
 
 @layer base {
   body {

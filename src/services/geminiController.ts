@@ -82,7 +82,10 @@ class GeminiController {
         fetch(`/api/history?commodity=potato-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/history?commodity=tapioca-starch&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)
       ]);
-      const data: any = res || {};
+      // Absence of an owner-approved macro snapshot is not permission to invent values.
+      // React's saved FX/telemetry readers own the current data cards independently.
+      if(!res)return this.currentData;
+      const data: any = res;
 
       const liveWheatPrice = wheatRes?.metrics?.srw?.latestPriceMt || 258.40;
       const liveWheatMetrics = wheatRes?.metrics || null;
@@ -179,72 +182,8 @@ class GeminiController {
 
       return liveUpdate;
     } catch (err) {
-      console.warn('Gemini Controller market data fetch notice (switching to live pipeline metrics):', err);
-      try {
-        const pipeline = await fetchLivePipelineMetrics();
-        const defaultCommodities = {
-          wheat: { price: 258.40, unit: 'USD/MT', changeWoW: null },
-          corn: { price: 189.46, unit: 'USD/MT', changeWoW: null },
-          soybean: { price: 376.53, unit: 'USD/MT', changeWoW: null },
-          soybeanOil: { price: this.currentData?.soybeanOilPrice || 0, unit: 'USD/MT', changeWoW: null },
-          palmOil: { price: palmOilCache.priceMyr, unit: 'MYR/MT', changeWoW: null },
-          sugar: { price: 0, unit: 'USD/MT', changeWoW: null },
-          potatoStarch: { price: 928.80, unit: 'EUR/MT', changeWoW: null },
-          tapiocaStarch: { price: 700.00, unit: 'USD/MT', changeWoW: null }
-        };
-
-        let macroScore = 58;
-        if (pipeline.usdKrw > 1380) macroScore += 4;
-        if (pipeline.weather.southAmerica.riskLevel === 'Elevated') macroScore += 4;
-        const angle = Math.round((macroScore - 50) * 1.8);
-
-        const fallbackUpdate: LiveMarketUpdate = {
-          updatedAt: getKSTTime(),
-          model: 'RMS Multi-Tier Pipeline (Live Benchmarks)',
-          modelVersion: 'gemini-flash-latest',
-          grounded: true,
-          usdKrw: pipeline.usdKrw,
-          eurKrw: pipeline.eurKrw,
-          brent: pipeline.energy.brent,
-          scfi: pipeline.energy.scfi,
-          bdi: pipeline.energy.bdi,
-          macroRiskScore: macroScore,
-          macroRiskLevel: macroScore >= 60 ? 'ELEVATED' : 'MODERATE',
-          macroRiskPointerAngle: angle,
-          weather: pipeline.weather,
-          supplyDemand: pipeline.supplyDemand,
-          wheatPrice: defaultCommodities.wheat.price,
-          cornPrice: defaultCommodities.corn.price,
-          cornWowChange: defaultCommodities.corn.changeWoW,
-          soybeanPrice: defaultCommodities.soybean.price,
-          soybeanWowChange: defaultCommodities.soybean.changeWoW,
-          soybeanOilPrice: defaultCommodities.soybeanOil.price,
-          soybeanOilWowChange: defaultCommodities.soybeanOil.changeWoW,
-          palmOilPrice: defaultCommodities.palmOil.price,
-          sugarPrice: defaultCommodities.sugar.price,
-          potatoStarchPrice: defaultCommodities.potatoStarch.price,
-          tapiocaStarchPrice: defaultCommodities.tapiocaStarch.price,
-          aiBriefSynthesis: `실시간 환율(USD/KRW ${pipeline.usdKrw.toLocaleString()}원)과 해상운임(SCFI ${pipeline.energy.scfi}pt) 동향은 실제 공급사 견적과 함께 비교해야 합니다.`,
-          directives: [
-            { type: 'action', label: '조치 필요 (Action Required)', title: '팜유 실물 공급사 견적과 계약 조건 확인 후 구매 시점 결정', source: '출처: RMS 멀티소스 피드 종합 분석' },
-            { type: 'watch', label: '주시 (Watch Closely)', title: `미국 농무부(USDA) 캔자스 동계소맥 작황 보고서 및 콘벨트 강우(${pipeline.weather.usCornBelt.precipSumMm}mm) 모니터링`, source: '출처: USDA FAS PSD & Open-Meteo 레이더' },
-            { type: 'favorable', label: '우호적 조건 (Favorable)', title: '유럽 감자전분 실제 공급사 견적 및 컨테이너 운임 비교', source: '출처: EU Agri-food Data Portal' }
-          ],
-          citations: [
-            { title: 'Frankfurter Exchange Rate Portal', uri: 'https://api.frankfurter.dev/v1/latest' },
-            { title: 'Open-Meteo Global Crop Weather Radar', uri: 'https://open-meteo.com/' }
-          ],
-          isQuotaExhausted: false
-        };
-
-        this.currentData = fallbackUpdate;
-        this.injectDataIntoElementIds(fallbackUpdate, { commodities: defaultCommodities });
-        this.listeners.forEach((listener) => listener(fallbackUpdate));
-        return fallbackUpdate;
-      } catch (fallbackErr) {
-        console.warn('Fallback pipeline calculation notice:', fallbackErr);
-        return null;
-      }
+      console.warn('Saved market publication unavailable:', err);
+      return this.currentData;
     } finally {
       this.isQuerying = false;
     }
@@ -262,9 +201,6 @@ class GeminiController {
       'wasde-cons': `${update.supplyDemand?.consumptionMMT || 802.1} MMT`,
       'wasde-stocks': `${update.supplyDemand?.endingStocksMMT || 257.4} MMT`,
       'wasde-stu': `${update.supplyDemand?.stocksToUseRatio || 32.1}%`,
-      'driver-fx-val': `${update.usdKrw.toLocaleString()} ₩`,
-      'driver-energy-val': `$${update.brent.toFixed(2)} /bbl`,
-      'driver-freight-val': `${update.scfi.toLocaleString()} pts`,
       'risk-score-val': `${update.macroRiskScore || 58}/100`,
 
       'el-fx-usd-krw': `${update.usdKrw.toLocaleString()} ₩`,

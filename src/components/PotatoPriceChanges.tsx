@@ -1,6 +1,18 @@
+import {useEffect,useState} from 'react';
+import type {Currency} from '../types';
+import type {DatedDisplayFx} from '../utils/soybeanPriceSnapshot';
+import {getDatedDisplayFx,subscribeFxRates} from '../services/currencyService';
+import {potatoDisplayConversion} from '../services/currencyService';
+import {prefixCurrency} from '../utils/currencyFormatting';
 import type {PotatoExportChange,PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 /** Calendar-month trade unit values in EUR/MT. Never changes risk/advice inputs. */
-export function PotatoPriceChanges({quote}:{quote:PotatoExportQuoteResponse|null}) {
+export function PotatoPriceChanges({quote,currency='KRW'}:{quote:PotatoExportQuoteResponse|null;currency?:Currency}) {
+  const [fx,setFx]=useState(getDatedDisplayFx);
+  useEffect(()=>subscribeFxRates(()=>setFx(getDatedDisplayFx())),[]);
+  return <PotatoPriceChangesDisplay quote={quote} currency={currency} fx={fx}/>;
+}
+export function PotatoPriceChangesDisplay({quote,currency='KRW',fx}:{quote:PotatoExportQuoteResponse|null;currency?:Currency;fx?:DatedDisplayFx|null}) {
+  const {displayCurrency,factor,symbol}=potatoDisplayConversion(currency,fx);
   const render=(label:string,c:PotatoExportChange|undefined,first=false)=>{
     const available=c?.pct!=null&&Number.isFinite(c.pct)&&c.amountEurPerMT!=null&&Number.isFinite(c.amountEurPerMT);
     return <div className={first?'border-r border-slate-200/80 pr-2':'pl-1'}>
@@ -10,18 +22,17 @@ export function PotatoPriceChanges({quote}:{quote:PotatoExportQuoteResponse|null
           <span className="material-symbols-outlined text-[14px]">{c.pct! === 0?'remove':c.pct!>0?'arrow_upward':'arrow_downward'}</span>
           <span>{c.pct!>=0?'+':''}{c.pct!.toFixed(2)}%</span>
         </div>
-        <span className="text-[10px] font-mono text-slate-400 block mt-0.5">{c.amountEurPerMT!>=0?'+':'−'}{Math.abs(c.amountEurPerMT!).toFixed(2)} EUR/MT</span>
-      </>:<div className="font-mono text-xs sm:text-sm font-bold text-slate-400 mt-0.5" title="해당 월의 수출금액·순중량 자료 미확보">확인 불가</div>}
-      <span className="text-[10px] font-mono text-slate-400 block mt-0.5" title="비교월 → 최신 통계월">{c?.referencePeriod||'—'} → {c?.currentPeriod||quote?.data?.period||'—'}</span>
-      {available&&c.provisional&&<span className="text-[10px] text-slate-400">잠정치 포함</span>}
+        <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
+          {c.amountEurPerMT!>=0?'+':'−'}{prefixCurrency(displayCurrency==='KRW'?Math.round(Math.abs(c.amountEurPerMT!*factor)).toLocaleString('en-US'):Math.abs(c.amountEurPerMT!*factor).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),symbol)}
+        </span>
+      </>:<div className="font-mono text-xs sm:text-sm font-bold text-slate-400 mt-0.5" aria-description="해당 월의 수출금액·순중량 자료 미확보">확인 불가</div>}
     </div>;
   };
   return <>
-    <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">시세 변동률 (YoY / MoM)</span>
+    <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">시세 변동률 (MoM / YoY)</span>
     <div className="grid grid-cols-2 gap-2 items-center pt-0.5">
-      {render('전년 동월 (YoY)',quote?.changes?.yoy,true)}
-      {render('전월 (MoM)',quote?.changes?.mom)}
+      {render('전월 (MoM)',quote?.changes?.mom,true)}
+      {render('전년 동월 (YoY)',quote?.changes?.yoy)}
     </div>
-    {quote?.refreshFailed&&<span className="text-[10px] text-slate-500 mt-1">갱신 실패 · 마지막 검증값</span>}
   </>;
 }

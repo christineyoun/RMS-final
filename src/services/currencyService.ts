@@ -1,3 +1,4 @@
+import type {Currency} from '../types';
 import {parseDatedDisplayFx,type DatedDisplayFx} from '../utils/soybeanPriceSnapshot';
 let datedDisplayFx:DatedDisplayFx|null=null;
 export const getDatedDisplayFx=()=>datedDisplayFx;
@@ -63,72 +64,21 @@ export function fetchLiveFxRates(force = false): Promise<FXRates> {
   pendingFx = fetchFxNow().finally(() => { pendingFx = null; });
   return pendingFx;
 }
-async function fetchFxNow(): Promise<FXRates> {
-  let updated = false;
-  const newRates: Partial<FXRates> = {};
+async function fetchFxNow():Promise<FXRates>{
+ try{const r=await fetch('/api/rms/free-fx',{cache:'no-store'});if(r.ok){const saved=await r.json(),fx=parseDatedDisplayFx(saved.raw,saved.verifiedAt);if(fx){datedDisplayFx=fx;updateLiveFxRates({USD_KRW:fx.USD_KRW,EUR_USD:fx.EUR_USD,USD_MYR:saved.raw.rates.MYR});}}}catch{/* Retain existing verified FX; page views do not collect. */}
+ return cacheFxRates;
+}
 
-  // 1. Try /api/pipeline/telemetry endpoint
-  try {
-    const res = await fetch('/api/pipeline/telemetry');
-    if (res.ok) {
-      const data = await res.json();
-      const usdKrw = data.usdKrw;
-      const eurKrw = data.eurKrw;
-
-      if (typeof usdKrw === 'number' && usdKrw > 0) {
-        newRates.USD_KRW = usdKrw;
-        updated = true;
-      }
-      if (typeof usdKrw === 'number' && typeof eurKrw === 'number' && usdKrw > 0) {
-        newRates.EUR_USD = Number((eurKrw / usdKrw).toFixed(4));
-        updated = true;
-      }
-
-      if (Array.isArray(data.normalizedData)) {
-        const myrEntry = data.normalizedData.find(
-          (d: any) => d.commodity === 'USD/MYR' || (d.indicator && d.indicator.includes('MYR'))
-        );
-        if (myrEntry && typeof myrEntry.value === 'number' && myrEntry.value > 0) {
-          newRates.USD_MYR = myrEntry.value;
-          updated = true;
-        }
-
-        const eurUsdEntry = data.normalizedData.find(
-          (d: any) => d.commodity === 'EUR/USD' || (d.indicator && d.indicator.includes('EUR/USD'))
-        );
-        if (eurUsdEntry && typeof eurUsdEntry.value === 'number' && eurUsdEntry.value > 0) {
-          newRates.EUR_USD = eurUsdEntry.value;
-          updated = true;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[CurrencyService] Telemetry pipeline fetch notice:', err);
-  }
-
-  // 2. Direct live Frankfurter API fetch for public benchmark
-  try {
-    const res = await fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,EUR,MYR');
-    if (res.ok) {
-      const json = await res.json();
-      if (json && json.rates) {
-        const verifiedFx=parseDatedDisplayFx(json);
-        if(verifiedFx)datedDisplayFx=verifiedFx;
-        if (typeof json.rates.KRW === 'number') newRates.USD_KRW = json.rates.KRW;
-        if (typeof json.rates.MYR === 'number') newRates.USD_MYR = json.rates.MYR;
-        if (typeof json.rates.EUR === 'number' && json.rates.EUR > 0) {
-          newRates.EUR_USD = Number((1 / json.rates.EUR).toFixed(4));
-        }
-        updated = true;
-      }
-    }
-  } catch (err) {
-    console.warn('[CurrencyService] Frankfurter API direct fetch notice:', err);
-  }
-
-  if (updated && Object.keys(newRates).length > 0) {
-    updateLiveFxRates(newRates);
-  }
-
-  return cacheFxRates;
+/** Use only the same dated official FX packet already validated by currencyService. */
+export function potatoEurKrwRate(fx:DatedDisplayFx|null|undefined):number|null {
+  if(!fx||!/^20\d{2}-\d{2}-\d{2}$/.test(fx.observationDate)||!Number.isFinite(Date.parse(fx.observationDate))||fx.observationDate>fx.retrievedAt.slice(0,10)||!fx.sourceUrl.startsWith('https://api.frankfurter.dev/'))return null;
+  if(!Number.isFinite(fx.USD_KRW)||fx.USD_KRW<=0||!Number.isFinite(fx.EUR_USD)||fx.EUR_USD<=0)return null;
+  const rate=fx.USD_KRW*fx.EUR_USD;return Number.isFinite(rate)&&rate>0?rate:null;
+}
+export function potatoDisplayConversion(currency:Currency,fx:DatedDisplayFx|null|undefined) {
+  const validFx=potatoEurKrwRate(fx)!==null;
+  const displayCurrency:Currency=currency==='EUR'||validFx?currency:'EUR';
+  const factor=displayCurrency==='KRW'?potatoEurKrwRate(fx)!:displayCurrency==='USD'?fx!.EUR_USD:1;
+  const symbol=displayCurrency==='KRW'?'₩':displayCurrency==='USD'?'$':'€';
+  return {displayCurrency,factor,symbol};
 }

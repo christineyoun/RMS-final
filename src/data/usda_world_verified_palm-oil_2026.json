@@ -1,0 +1,163 @@
+{
+  "commodity": "palm-oil",
+  "commodityCode": "4243000",
+  "verifiedAt": "2026-10-24T15:07:31.271Z",
+  "data": {
+    "commodityCode": "4243000",
+    "marketYear": "2026",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 78921,
+    "productionMMT": 78.9,
+    "domesticConsumption1000MT": 78059,
+    "domesticConsumptionMMT": 78.1,
+    "endingStocks1000MT": 13697,
+    "endingStocksMMT": 13.7,
+    "beginningStocks1000MT": 15179,
+    "beginningStocksMMT": 15.2,
+    "imports1000MT": 41403,
+    "exports1000MT": 43747,
+    "exportsMMT": 43.7,
+    "totalSupply1000MT": 135503,
+    "stocksToUseRatio": 17.5,
+    "stocksToUseRatioPct": 17.5,
+    "areaHarvested1000HA": 27717,
+    "yieldMTHA": 2.8474,
+    "rawRecordsCount": 13,
+    "rawRecords": [
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 4,
+        "unitId": 4,
+        "value": 27717
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 15179
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 78921
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 41403
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 135503
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 43747
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 140,
+        "unitId": 8,
+        "value": 28190
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 149,
+        "unitId": 8,
+        "value": 49274
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 161,
+        "unitId": 8,
+        "value": 595
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 78059
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 13697
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 135503
+      },
+      {
+        "commodityCode": "4243000",
+        "countryCode": "00",
+        "marketYear": "2026",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 184,
+        "unitId": 26,
+        "value": 2.8474
+      }
+    ]
+  },
+  "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4243000/world/year/2026",
+  "observationStatus": "as-reported",
+  "retainedFrom": "src/data/usda_world_last_verified_palm-oil.json"
+}

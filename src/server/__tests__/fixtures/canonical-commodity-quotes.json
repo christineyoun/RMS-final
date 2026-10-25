@@ -1,0 +1,2480 @@
+{
+  "/api/rms/free-fx": {
+    "raw": {
+      "amount": 1,
+      "base": "USD",
+      "date": "2026-10-23",
+      "rates": {
+        "EUR": 0.89342,
+        "KRW": 1324.45,
+        "MYR": 4.0855
+      }
+    },
+    "verifiedAt": "2026-10-24T15:07:27.046Z"
+  },
+  "/api/uswheat/price-history": {
+    "success": true,
+    "source": "U.S. Wheat Associates",
+    "sourceUrl": "https://uswheat.org/market-information/price-report/",
+    "reportDate": "October 16, 2026",
+    "metrics": {
+      "srw": {
+        "wheatClass": "SRW",
+        "classNameKo": "연질적색소맥",
+        "classNameEn": "Soft Red Winter",
+        "exchange": "CBOT",
+        "contractMonth": "December",
+        "latestPriceMt": 242.69,
+        "latestPriceBu": 6.6,
+        "wowChangeMt": -3.86,
+        "wowChangeBu": -0.11,
+        "wowChangePct": -1.57,
+        "momChangeMt": -19.75,
+        "momChangeBu": -0.54,
+        "momChangePct": -7.53,
+        "wowAvailable": true,
+        "momAvailable": true,
+        "wowReferenceDate": "2026-10-09",
+        "momReferenceDate": "2026-09-18"
+      },
+      "hrw": {
+        "wheatClass": "HRW",
+        "classNameKo": "경질적색소맥",
+        "classNameEn": "Hard Red Winter",
+        "exchange": "KCBT",
+        "contractMonth": "December",
+        "latestPriceMt": 258.67,
+        "latestPriceBu": 7.04,
+        "wowChangeMt": -5.51,
+        "wowChangeBu": -0.15,
+        "wowChangePct": -2.09,
+        "momChangeMt": -29.3,
+        "momChangeBu": -0.8,
+        "momChangePct": -10.17,
+        "wowAvailable": true,
+        "momAvailable": true,
+        "wowReferenceDate": "2026-10-09",
+        "momReferenceDate": "2026-09-18"
+      },
+      "hrs": {
+        "wheatClass": "HRS",
+        "classNameKo": "경질봄소맥",
+        "classNameEn": "Hard Red Spring",
+        "exchange": "MIAX",
+        "contractMonth": "December",
+        "latestPriceMt": 248.57,
+        "latestPriceBu": 6.76,
+        "wowChangeMt": -6.89,
+        "wowChangeBu": -0.19,
+        "wowChangePct": -2.7,
+        "momChangeMt": -23.79,
+        "momChangeBu": -0.65,
+        "momChangePct": -8.73,
+        "wowAvailable": true,
+        "momAvailable": true,
+        "wowReferenceDate": "2026-10-09",
+        "momReferenceDate": "2026-09-18"
+      }
+    },
+    "data": [
+      {
+        "date": "2026-08-14",
+        "reportDate": "August 14, 2026",
+        "contractMonth": "December",
+        "srwMt": 247.92,
+        "hrwMt": 277.13,
+        "hrsMt": 249.21,
+        "srwBu": 6.75,
+        "hrwBu": 7.54,
+        "hrsBu": 6.78
+      },
+      {
+        "date": "2026-08-21",
+        "reportDate": "August 21, 2026",
+        "contractMonth": "December",
+        "srwMt": 256.93,
+        "hrwMt": 283.84,
+        "hrsMt": 266.2,
+        "srwBu": 6.99,
+        "hrwBu": 7.72,
+        "hrsBu": 7.24
+      },
+      {
+        "date": "2026-08-27",
+        "reportDate": "August 27, 2026",
+        "contractMonth": "December",
+        "srwMt": 279.52,
+        "hrwMt": 302.03,
+        "hrsMt": 278.42,
+        "srwBu": 7.61,
+        "hrwBu": 8.22,
+        "hrsBu": 7.58
+      },
+      {
+        "date": "2026-09-04",
+        "reportDate": "September 04, 2026",
+        "contractMonth": "December",
+        "srwMt": 269.69,
+        "hrwMt": 294.77,
+        "hrsMt": 273.74,
+        "srwBu": 7.34,
+        "hrwBu": 8.02,
+        "hrsBu": 7.45
+      },
+      {
+        "date": "2026-09-11",
+        "reportDate": "September 11, 2026",
+        "contractMonth": "December",
+        "srwMt": 266.48,
+        "hrwMt": 293.39,
+        "hrsMt": 273.74,
+        "srwBu": 7.25,
+        "hrwBu": 7.98,
+        "hrsBu": 7.45
+      },
+      {
+        "date": "2026-09-18",
+        "reportDate": "September 18, 2026",
+        "contractMonth": "December",
+        "srwMt": 262.44,
+        "hrwMt": 287.97,
+        "hrsMt": 272.36,
+        "srwBu": 7.14,
+        "hrwBu": 7.84,
+        "hrsBu": 7.41
+      },
+      {
+        "date": "2026-09-25",
+        "reportDate": "September 25, 2026",
+        "contractMonth": "December",
+        "srwMt": 258.4,
+        "hrwMt": 279.98,
+        "hrsMt": 262.16,
+        "srwBu": 7.03,
+        "hrwBu": 7.62,
+        "hrsBu": 7.13
+      },
+      {
+        "date": "2026-10-02",
+        "reportDate": "October 02, 2026",
+        "contractMonth": "December",
+        "srwMt": 250.95,
+        "hrwMt": 270.15,
+        "hrsMt": 256.47,
+        "srwBu": 6.83,
+        "hrwBu": 7.35,
+        "hrsBu": 6.98
+      },
+      {
+        "date": "2026-10-09",
+        "reportDate": "October 09, 2026",
+        "contractMonth": "December",
+        "srwMt": 246.55,
+        "hrwMt": 264.18,
+        "hrsMt": 255.46,
+        "srwBu": 6.71,
+        "hrwBu": 7.19,
+        "hrsBu": 6.95
+      },
+      {
+        "date": "2026-10-16",
+        "reportDate": "October 16, 2026",
+        "contractMonth": "December",
+        "srwMt": 242.69,
+        "hrwMt": 258.67,
+        "hrsMt": 248.57,
+        "srwBu": 6.6,
+        "hrwBu": 7.04,
+        "hrsBu": 6.76
+      }
+    ]
+  },
+  "/api/history?commodity=corn&timeframe=5Y": {
+    "success": true,
+    "commodity": "corn",
+    "symbol": "ZC=F (CBOT Corn)",
+    "source": "CBOT / Yahoo Finance",
+    "quoteUnit": "US¢/bu",
+    "priceUnit": "USD/MT",
+    "fetchedAt": "2026-10-24T15:07:27.550Z",
+    "data": [
+      {
+        "date": "2026-08-19",
+        "quoteValue": 473,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 473,
+        "usdPerMT": 186.21,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-20",
+        "quoteValue": 478.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 478.75,
+        "usdPerMT": 188.47,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-21",
+        "quoteValue": 483.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 483.75,
+        "usdPerMT": 190.44,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-24",
+        "quoteValue": 491.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 491.5,
+        "usdPerMT": 193.49,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-25",
+        "quoteValue": 500.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 500.5,
+        "usdPerMT": 197.04,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-26",
+        "quoteValue": 514,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 514,
+        "usdPerMT": 202.35,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-27",
+        "quoteValue": 510.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 510.25,
+        "usdPerMT": 200.88,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-28",
+        "quoteValue": 512,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 512,
+        "usdPerMT": 201.56,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-31",
+        "quoteValue": 515,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 515,
+        "usdPerMT": 202.75,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-01",
+        "quoteValue": 521.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 521.5,
+        "usdPerMT": 205.3,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-02",
+        "quoteValue": 518.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 518.75,
+        "usdPerMT": 204.22,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-03",
+        "quoteValue": 515.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 515.25,
+        "usdPerMT": 202.84,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-04",
+        "quoteValue": 512,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 512,
+        "usdPerMT": 201.56,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-08",
+        "quoteValue": 511,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 511,
+        "usdPerMT": 201.17,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-09",
+        "quoteValue": 507.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 507.75,
+        "usdPerMT": 199.89,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-10",
+        "quoteValue": 514,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 514,
+        "usdPerMT": 202.35,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-11",
+        "quoteValue": 510.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 510.25,
+        "usdPerMT": 200.88,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-14",
+        "quoteValue": 512,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 512,
+        "usdPerMT": 201.56,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-15",
+        "quoteValue": 535.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 535.75,
+        "usdPerMT": 210.91,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-16",
+        "quoteValue": 534.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 534.25,
+        "usdPerMT": 210.32,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-17",
+        "quoteValue": 530.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 530.5,
+        "usdPerMT": 208.85,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-18",
+        "quoteValue": 527.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 527.5,
+        "usdPerMT": 207.67,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-21",
+        "quoteValue": 543,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 543,
+        "usdPerMT": 213.77,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-22",
+        "quoteValue": 536.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 536.75,
+        "usdPerMT": 211.31,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-23",
+        "quoteValue": 529,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 529,
+        "usdPerMT": 208.26,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-24",
+        "quoteValue": 527.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 527.5,
+        "usdPerMT": 207.67,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-25",
+        "quoteValue": 528.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 528.25,
+        "usdPerMT": 207.96,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-28",
+        "quoteValue": 523,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 523,
+        "usdPerMT": 205.89,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-29",
+        "quoteValue": 522,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 522,
+        "usdPerMT": 205.5,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-30",
+        "quoteValue": 500.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 500.75,
+        "usdPerMT": 197.14,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-01",
+        "quoteValue": 502.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 502.25,
+        "usdPerMT": 197.73,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-02",
+        "quoteValue": 497.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 497.75,
+        "usdPerMT": 195.95,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-05",
+        "quoteValue": 497.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 497.25,
+        "usdPerMT": 195.76,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-06",
+        "quoteValue": 508,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 508,
+        "usdPerMT": 199.99,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-07",
+        "quoteValue": 502,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 502,
+        "usdPerMT": 197.63,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-08",
+        "quoteValue": 500.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 500.25,
+        "usdPerMT": 196.94,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-09",
+        "quoteValue": 479.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 479.75,
+        "usdPerMT": 188.87,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-12",
+        "quoteValue": 483,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 483,
+        "usdPerMT": 190.15,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-13",
+        "quoteValue": 482.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 482.75,
+        "usdPerMT": 190.05,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-14",
+        "quoteValue": 480.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 480.75,
+        "usdPerMT": 189.26,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-15",
+        "quoteValue": 478,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 478,
+        "usdPerMT": 188.18,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-16",
+        "quoteValue": 474.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 474.25,
+        "usdPerMT": 186.7,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-19",
+        "quoteValue": 467,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 467,
+        "usdPerMT": 183.85,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-20",
+        "quoteValue": 462,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 462,
+        "usdPerMT": 181.88,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-21",
+        "quoteValue": 463.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 463.25,
+        "usdPerMT": 182.37,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-22",
+        "quoteValue": 460.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 460.5,
+        "usdPerMT": 181.29,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-23",
+        "quoteValue": 456,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 456,
+        "usdPerMT": 179.52,
+        "isProvisional": true
+      }
+    ]
+  },
+  "/api/soybean/price-snapshot": {
+    "success": true,
+    "commodity": "soybean",
+    "symbol": "ZS=F (CBOT Soybean)",
+    "source": "CBOT / Yahoo Finance",
+    "quoteUnit": "US¢/bu",
+    "priceUnit": "USD/MT",
+    "fetchedAt": "2026-10-24T15:07:27.879Z",
+    "data": [
+      {
+        "date": "2026-08-19",
+        "quoteValue": 1222.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1222.25,
+        "usdPerMT": 449.1,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-20",
+        "quoteValue": 1220.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1220.75,
+        "usdPerMT": 448.55,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-21",
+        "quoteValue": 1225,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1225,
+        "usdPerMT": 450.11,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-24",
+        "quoteValue": 1216,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1216,
+        "usdPerMT": 446.8,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-25",
+        "quoteValue": 1228,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1228,
+        "usdPerMT": 451.21,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-26",
+        "quoteValue": 1254.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1254.25,
+        "usdPerMT": 460.86,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-27",
+        "quoteValue": 1256.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1256.5,
+        "usdPerMT": 461.68,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-28",
+        "quoteValue": 1276.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1276.25,
+        "usdPerMT": 468.94,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-08-31",
+        "quoteValue": 1275.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1275.25,
+        "usdPerMT": 468.57,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-01",
+        "quoteValue": 1306.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1306.75,
+        "usdPerMT": 480.15,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-02",
+        "quoteValue": 1301.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1301.75,
+        "usdPerMT": 478.31,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-03",
+        "quoteValue": 1306.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1306.25,
+        "usdPerMT": 479.96,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-04",
+        "quoteValue": 1293.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1293.75,
+        "usdPerMT": 475.37,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-08",
+        "quoteValue": 1302.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1302.5,
+        "usdPerMT": 478.59,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-09",
+        "quoteValue": 1295.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1295.25,
+        "usdPerMT": 475.92,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-10",
+        "quoteValue": 1316,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1316,
+        "usdPerMT": 483.55,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-11",
+        "quoteValue": 1280.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1280.25,
+        "usdPerMT": 470.41,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-14",
+        "quoteValue": 1285.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1285.25,
+        "usdPerMT": 472.25,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-15",
+        "quoteValue": 1318.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1318.75,
+        "usdPerMT": 484.56,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-16",
+        "quoteValue": 1320.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1320.5,
+        "usdPerMT": 485.2,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-17",
+        "quoteValue": 1319.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1319.75,
+        "usdPerMT": 484.92,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-18",
+        "quoteValue": 1303.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1303.5,
+        "usdPerMT": 478.95,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-21",
+        "quoteValue": 1328,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1328,
+        "usdPerMT": 487.96,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-22",
+        "quoteValue": 1325.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1325.5,
+        "usdPerMT": 487.04,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-23",
+        "quoteValue": 1318,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1318,
+        "usdPerMT": 484.28,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-24",
+        "quoteValue": 1317.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1317.5,
+        "usdPerMT": 484.1,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-25",
+        "quoteValue": 1319,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1319,
+        "usdPerMT": 484.65,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-28",
+        "quoteValue": 1288.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1288.25,
+        "usdPerMT": 473.35,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-29",
+        "quoteValue": 1297.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1297.75,
+        "usdPerMT": 476.84,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-09-30",
+        "quoteValue": 1293,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1293,
+        "usdPerMT": 475.1,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-01",
+        "quoteValue": 1284,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1284,
+        "usdPerMT": 471.79,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-02",
+        "quoteValue": 1278.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1278.25,
+        "usdPerMT": 469.68,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-05",
+        "quoteValue": 1280.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1280.75,
+        "usdPerMT": 470.59,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-06",
+        "quoteValue": 1303,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1303,
+        "usdPerMT": 478.77,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-07",
+        "quoteValue": 1297.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1297.5,
+        "usdPerMT": 476.75,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-08",
+        "quoteValue": 1287.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1287.5,
+        "usdPerMT": 473.08,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-09",
+        "quoteValue": 1292,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1292,
+        "usdPerMT": 474.73,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-12",
+        "quoteValue": 1287.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1287.75,
+        "usdPerMT": 473.17,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-13",
+        "quoteValue": 1283.75,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1283.75,
+        "usdPerMT": 471.7,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-14",
+        "quoteValue": 1277.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1277.25,
+        "usdPerMT": 469.31,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-15",
+        "quoteValue": 1263,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1263,
+        "usdPerMT": 464.07,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-16",
+        "quoteValue": 1261.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1261.25,
+        "usdPerMT": 463.43,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-19",
+        "quoteValue": 1253.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1253.5,
+        "usdPerMT": 460.58,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-20",
+        "quoteValue": 1248.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1248.25,
+        "usdPerMT": 458.65,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T08:47:04.225Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-21",
+        "quoteValue": 1245.25,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1245.25,
+        "usdPerMT": 457.55,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-21T04:12:20.037Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-22",
+        "quoteValue": 1253,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1253,
+        "usdPerMT": 460.4,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-22T04:22:22.594Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      },
+      {
+        "date": "2026-10-23",
+        "quoteValue": 1256.5,
+        "quoteUnit": "US¢/bu",
+        "centsPerBushel": 1256.5,
+        "usdPerMT": 461.68,
+        "isProvisional": true,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZS%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-23T04:10:33.059Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.879Z"
+      }
+    ]
+  },
+  "/api/soybean-oil/price-snapshot": {
+    "success": true,
+    "commodity": "soybean-oil",
+    "symbol": "ZL=F (CBOT Soybean Oil)",
+    "source": "CBOT / Yahoo Finance",
+    "quoteUnit": "US¢/lb",
+    "priceUnit": "USD/MT",
+    "fetchedAt": "2026-10-24T15:07:27.914Z",
+    "data": [
+      {
+        "date": "2026-08-19",
+        "quoteValue": 69.86,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.86,
+        "usdPerMT": 1540.15,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-20",
+        "quoteValue": 71.18,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 71.18,
+        "usdPerMT": 1569.25,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-21",
+        "quoteValue": 69.35,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.35,
+        "usdPerMT": 1528.91,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-24",
+        "quoteValue": 67.13,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.13,
+        "usdPerMT": 1479.96,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-25",
+        "quoteValue": 67.52,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.52,
+        "usdPerMT": 1488.56,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-26",
+        "quoteValue": 67.22,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.22,
+        "usdPerMT": 1481.95,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-27",
+        "quoteValue": 68,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68,
+        "usdPerMT": 1499.14,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-28",
+        "quoteValue": 70.59,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 70.59,
+        "usdPerMT": 1556.24,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-08-31",
+        "quoteValue": 70.5,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 70.5,
+        "usdPerMT": 1554.26,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-01",
+        "quoteValue": 72.37,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 72.37,
+        "usdPerMT": 1595.49,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-02",
+        "quoteValue": 70.5,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 70.5,
+        "usdPerMT": 1554.26,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-03",
+        "quoteValue": 69.5,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.5,
+        "usdPerMT": 1532.21,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-04",
+        "quoteValue": 68.78,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68.78,
+        "usdPerMT": 1516.34,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-08",
+        "quoteValue": 70.18,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 70.18,
+        "usdPerMT": 1547.2,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-09",
+        "quoteValue": 70.01,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 70.01,
+        "usdPerMT": 1543.46,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-10",
+        "quoteValue": 71.28,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 71.28,
+        "usdPerMT": 1571.45,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-11",
+        "quoteValue": 69.01,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.01,
+        "usdPerMT": 1521.41,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-14",
+        "quoteValue": 69.36,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.36,
+        "usdPerMT": 1529.13,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-15",
+        "quoteValue": 69.88,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.88,
+        "usdPerMT": 1540.59,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-16",
+        "quoteValue": 69.19,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.19,
+        "usdPerMT": 1525.38,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-17",
+        "quoteValue": 68.68,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68.68,
+        "usdPerMT": 1514.13,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-18",
+        "quoteValue": 67.7,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.7,
+        "usdPerMT": 1492.53,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-21",
+        "quoteValue": 68.32,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68.32,
+        "usdPerMT": 1506.2,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-22",
+        "quoteValue": 67.37,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.37,
+        "usdPerMT": 1485.25,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-23",
+        "quoteValue": 67.25,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.25,
+        "usdPerMT": 1482.61,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-24",
+        "quoteValue": 66.93,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 66.93,
+        "usdPerMT": 1475.55,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-25",
+        "quoteValue": 67.26,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.26,
+        "usdPerMT": 1482.83,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-28",
+        "quoteValue": 67.11,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.11,
+        "usdPerMT": 1479.52,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-29",
+        "quoteValue": 67.85,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.85,
+        "usdPerMT": 1495.84,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-09-30",
+        "quoteValue": 67.85,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.85,
+        "usdPerMT": 1495.84,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-01",
+        "quoteValue": 66.97,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 66.97,
+        "usdPerMT": 1476.44,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-02",
+        "quoteValue": 68.21,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68.21,
+        "usdPerMT": 1503.77,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-05",
+        "quoteValue": 68.95,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68.95,
+        "usdPerMT": 1520.09,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-06",
+        "quoteValue": 69.58,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 69.58,
+        "usdPerMT": 1533.98,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-07",
+        "quoteValue": 67.42,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.42,
+        "usdPerMT": 1486.36,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-08",
+        "quoteValue": 67.62,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.62,
+        "usdPerMT": 1490.77,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-09",
+        "quoteValue": 67.72,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.72,
+        "usdPerMT": 1492.97,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-12",
+        "quoteValue": 68.3,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 68.3,
+        "usdPerMT": 1505.76,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-13",
+        "quoteValue": 67.67,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.67,
+        "usdPerMT": 1491.87,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-14",
+        "quoteValue": 67.05,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.05,
+        "usdPerMT": 1478.2,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-15",
+        "quoteValue": 67.15,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.15,
+        "usdPerMT": 1480.4,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-16",
+        "quoteValue": 67.13,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 67.13,
+        "usdPerMT": 1479.96,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-19",
+        "quoteValue": 66.69,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 66.69,
+        "usdPerMT": 1470.26,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-20",
+        "quoteValue": 66.73,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 66.73,
+        "usdPerMT": 1471.14,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-20T14:35:59.035Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-21",
+        "quoteValue": 65.97,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 65.97,
+        "usdPerMT": 1454.39,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-21T04:12:20.072Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-22",
+        "quoteValue": 66.74,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 66.74,
+        "usdPerMT": 1471.37,
+        "isProvisional": false,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-22T04:22:22.559Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      },
+      {
+        "date": "2026-10-23",
+        "quoteValue": 66.83,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 66.83,
+        "usdPerMT": 1473.35,
+        "isProvisional": true,
+        "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZL%3DF?range=5y&interval=1d",
+        "firstRetrievedAt": "2026-10-23T04:10:33.115Z",
+        "lastRetrievedAt": "2026-10-24T15:07:27.914Z"
+      }
+    ]
+  },
+  "/api/history?commodity=palm-oil&timeframe=5Y": {
+    "success": true,
+    "commodity": "palm-oil",
+    "symbol": "MYX-FCPO1! · RBD Palm Olein",
+    "source": "CPO · RBD Palm Olein",
+    "data": [
+      {
+        "date": "2026-08-17",
+        "cpoMyr": 4860,
+        "centsPerBushel": 4860,
+        "usdPerMT": 1196.31,
+        "cpoUsd": 1196.31,
+        "oleinUsd": 1175,
+        "oleinUsdPerMt": 1175,
+        "spreadUsd": -21.31
+      },
+      {
+        "date": "2026-08-18",
+        "cpoMyr": 4893,
+        "centsPerBushel": 4893,
+        "usdPerMT": 1205.47,
+        "cpoUsd": 1205.47,
+        "oleinUsd": 1175,
+        "oleinUsdPerMt": 1175,
+        "spreadUsd": -30.47
+      },
+      {
+        "date": "2026-08-19",
+        "cpoMyr": 4961,
+        "centsPerBushel": 4961,
+        "usdPerMT": 1222.67,
+        "cpoUsd": 1222.67,
+        "oleinUsd": 1175,
+        "oleinUsdPerMt": 1175,
+        "spreadUsd": -47.67
+      },
+      {
+        "date": "2026-08-20",
+        "cpoMyr": 5018,
+        "centsPerBushel": 5018,
+        "usdPerMT": 1240.85,
+        "cpoUsd": 1240.85,
+        "oleinUsd": 1175,
+        "oleinUsdPerMt": 1175,
+        "spreadUsd": -65.85
+      },
+      {
+        "date": "2026-08-24",
+        "cpoMyr": 4946,
+        "centsPerBushel": 4946,
+        "usdPerMT": 1223.5,
+        "cpoUsd": 1223.5,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 4.5
+      },
+      {
+        "date": "2026-08-26",
+        "cpoMyr": 4816,
+        "centsPerBushel": 4816,
+        "usdPerMT": 1196.08,
+        "cpoUsd": 1196.08,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 31.92
+      },
+      {
+        "date": "2026-08-27",
+        "cpoMyr": 4894,
+        "centsPerBushel": 4894,
+        "usdPerMT": 1213.49,
+        "cpoUsd": 1213.49,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 14.51
+      },
+      {
+        "date": "2026-09-01",
+        "cpoMyr": 4958,
+        "centsPerBushel": 4958,
+        "usdPerMT": 1227.38,
+        "cpoUsd": 1227.38,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 0.62
+      },
+      {
+        "date": "2026-09-02",
+        "cpoMyr": 4904,
+        "centsPerBushel": 4904,
+        "usdPerMT": 1212.21,
+        "cpoUsd": 1212.21,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 15.79
+      },
+      {
+        "date": "2026-09-03",
+        "cpoMyr": 4929,
+        "centsPerBushel": 4929,
+        "usdPerMT": 1219.6,
+        "cpoUsd": 1219.6,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 8.4
+      },
+      {
+        "date": "2026-09-07",
+        "cpoMyr": 4976,
+        "centsPerBushel": 4976,
+        "usdPerMT": 1229.86,
+        "cpoUsd": 1229.86,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": -1.86
+      },
+      {
+        "date": "2026-09-08",
+        "cpoMyr": 4966,
+        "centsPerBushel": 4966,
+        "usdPerMT": 1222.7,
+        "cpoUsd": 1222.7,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 5.3
+      },
+      {
+        "date": "2026-09-09",
+        "cpoMyr": 4885,
+        "centsPerBushel": 4885,
+        "usdPerMT": 1200.25,
+        "cpoUsd": 1200.25,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "spreadUsd": 27.75
+      },
+      {
+        "date": "2026-09-10",
+        "cpoMyr": 4814,
+        "centsPerBushel": 4814,
+        "usdPerMT": 1184.11,
+        "cpoUsd": 1184.11,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 43.89
+      },
+      {
+        "date": "2026-09-14",
+        "cpoMyr": 4884,
+        "centsPerBushel": 4884,
+        "usdPerMT": 1198.23,
+        "cpoUsd": 1198.23,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 29.77
+      },
+      {
+        "date": "2026-09-17",
+        "cpoMyr": 4898,
+        "centsPerBushel": 4898,
+        "usdPerMT": 1194.93,
+        "cpoUsd": 1194.93,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 33.07
+      },
+      {
+        "date": "2026-09-21",
+        "cpoMyr": 4810,
+        "centsPerBushel": 4810,
+        "usdPerMT": 1179.64,
+        "cpoUsd": 1179.64,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 48.36
+      },
+      {
+        "date": "2026-09-22",
+        "cpoMyr": 4768,
+        "centsPerBushel": 4768,
+        "usdPerMT": 1170.35,
+        "cpoUsd": 1170.35,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 57.65
+      },
+      {
+        "date": "2026-09-23",
+        "cpoMyr": 4772,
+        "centsPerBushel": 4772,
+        "usdPerMT": 1169.61,
+        "cpoUsd": 1169.61,
+        "oleinUsd": 1228,
+        "oleinUsdPerMt": 1228,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 58.39
+      },
+      {
+        "date": "2026-09-24",
+        "cpoMyr": 4672,
+        "centsPerBushel": 4672,
+        "usdPerMT": 1143.14,
+        "cpoUsd": 1143.14,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 24.36
+      },
+      {
+        "date": "2026-09-28",
+        "cpoMyr": 4624,
+        "centsPerBushel": 4624,
+        "usdPerMT": 1132.5,
+        "cpoUsd": 1132.5,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 35
+      },
+      {
+        "date": "2026-09-29",
+        "cpoMyr": 4610,
+        "centsPerBushel": 4610,
+        "usdPerMT": 1129.63,
+        "cpoUsd": 1129.63,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 37.87
+      },
+      {
+        "date": "2026-09-30",
+        "cpoMyr": 4554,
+        "centsPerBushel": 4554,
+        "usdPerMT": 1116.72,
+        "cpoUsd": 1116.72,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 50.78
+      },
+      {
+        "date": "2026-10-01",
+        "cpoMyr": 4535,
+        "centsPerBushel": 4535,
+        "usdPerMT": 1110.3,
+        "cpoUsd": 1110.3,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 57.2
+      },
+      {
+        "date": "2026-10-05",
+        "cpoMyr": 4560,
+        "centsPerBushel": 4560,
+        "usdPerMT": 1115.73,
+        "cpoUsd": 1115.73,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 51.77
+      },
+      {
+        "date": "2026-10-06",
+        "cpoMyr": 4524,
+        "centsPerBushel": 4524,
+        "usdPerMT": 1107.47,
+        "cpoUsd": 1107.47,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 60.03
+      },
+      {
+        "date": "2026-10-07",
+        "cpoMyr": 4661,
+        "centsPerBushel": 4661,
+        "usdPerMT": 1140.17,
+        "cpoUsd": 1140.17,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 27.33
+      },
+      {
+        "date": "2026-10-08",
+        "cpoMyr": 4592,
+        "centsPerBushel": 4592,
+        "usdPerMT": 1122.33,
+        "cpoUsd": 1122.33,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 45.17
+      },
+      {
+        "date": "2026-10-12",
+        "cpoMyr": 4682,
+        "centsPerBushel": 4682,
+        "usdPerMT": 1146.43,
+        "cpoUsd": 1146.43,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 21.07
+      },
+      {
+        "date": "2026-10-13",
+        "cpoMyr": 4700,
+        "centsPerBushel": 4700,
+        "usdPerMT": 1150.27,
+        "cpoUsd": 1150.27,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 17.23
+      },
+      {
+        "date": "2026-10-14",
+        "cpoMyr": 4619,
+        "centsPerBushel": 4619,
+        "usdPerMT": 1131.41,
+        "cpoUsd": 1131.41,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": 36.09
+      },
+      {
+        "date": "2026-10-15",
+        "cpoMyr": 4769,
+        "centsPerBushel": 4769,
+        "usdPerMT": 1168.16,
+        "cpoUsd": 1168.16,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": -0.66
+      },
+      {
+        "date": "2026-10-19",
+        "cpoMyr": 4797,
+        "centsPerBushel": 4797,
+        "usdPerMT": 1175.02,
+        "cpoUsd": 1175.02,
+        "oleinUsd": 1167.5,
+        "oleinUsdPerMt": 1167.5,
+        "oleinPublisherQuoteDate": "2026-10-19",
+        "spreadUsd": -7.52
+      }
+    ]
+  },
+  "/api/sugar/price-snapshot": {
+    "success": true,
+    "commodity": "sugar",
+    "symbol": "SB=F (ICE Sugar)",
+    "source": "ICE Futures U.S. / Yahoo Finance",
+    "quoteUnit": "US¢/lb",
+    "priceUnit": "USD/MT",
+    "fetchedAt": "2026-10-24T15:07:30.642Z",
+    "data": [
+      {
+        "date": "2026-08-19",
+        "quoteValue": 17.55,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.55,
+        "usdPerMT": 386.91,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-20",
+        "quoteValue": 17.52,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.52,
+        "usdPerMT": 386.25,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-21",
+        "quoteValue": 17.61,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.61,
+        "usdPerMT": 388.23,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-24",
+        "quoteValue": 17.65,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.65,
+        "usdPerMT": 389.12,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-25",
+        "quoteValue": 17.27,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.27,
+        "usdPerMT": 380.74,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-26",
+        "quoteValue": 17.59,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.59,
+        "usdPerMT": 387.79,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-27",
+        "quoteValue": 18.19,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.19,
+        "usdPerMT": 401.02,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-28",
+        "quoteValue": 17.56,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.56,
+        "usdPerMT": 387.13,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-08-31",
+        "quoteValue": 17.81,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.81,
+        "usdPerMT": 392.64,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-01",
+        "quoteValue": 18.36,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.36,
+        "usdPerMT": 404.77,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-02",
+        "quoteValue": 18.7,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.7,
+        "usdPerMT": 412.26,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-03",
+        "quoteValue": 18.07,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.07,
+        "usdPerMT": 398.38,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-04",
+        "quoteValue": 18.07,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.07,
+        "usdPerMT": 398.38,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-08",
+        "quoteValue": 18.1,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.1,
+        "usdPerMT": 399.04,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-09",
+        "quoteValue": 18.4,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.4,
+        "usdPerMT": 405.65,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-10",
+        "quoteValue": 18.73,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.73,
+        "usdPerMT": 412.93,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-11",
+        "quoteValue": 18.15,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.15,
+        "usdPerMT": 400.14,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-14",
+        "quoteValue": 18.16,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.16,
+        "usdPerMT": 400.36,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-15",
+        "quoteValue": 17.94,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.94,
+        "usdPerMT": 395.51,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-16",
+        "quoteValue": 17.97,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.97,
+        "usdPerMT": 396.17,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-17",
+        "quoteValue": 17.42,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.42,
+        "usdPerMT": 384.05,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-18",
+        "quoteValue": 17.36,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.36,
+        "usdPerMT": 382.72,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-21",
+        "quoteValue": 17.48,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.48,
+        "usdPerMT": 385.37,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-22",
+        "quoteValue": 17.59,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.59,
+        "usdPerMT": 387.79,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-23",
+        "quoteValue": 17.75,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.75,
+        "usdPerMT": 391.32,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-24",
+        "quoteValue": 17.58,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.58,
+        "usdPerMT": 387.57,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-25",
+        "quoteValue": 17.5,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.5,
+        "usdPerMT": 385.81,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-28",
+        "quoteValue": 17.46,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.46,
+        "usdPerMT": 384.93,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-29",
+        "quoteValue": 17.82,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.82,
+        "usdPerMT": 392.86,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-09-30",
+        "quoteValue": 17.63,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 17.63,
+        "usdPerMT": 388.67,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-01",
+        "quoteValue": 18.94,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 18.94,
+        "usdPerMT": 417.56,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-02",
+        "quoteValue": 19.93,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 19.93,
+        "usdPerMT": 439.38,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-05",
+        "quoteValue": 20.73,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.73,
+        "usdPerMT": 457.02,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-06",
+        "quoteValue": 20.82,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.82,
+        "usdPerMT": 459,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-07",
+        "quoteValue": 20.83,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.83,
+        "usdPerMT": 459.22,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-08",
+        "quoteValue": 20.15,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.15,
+        "usdPerMT": 444.23,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-09",
+        "quoteValue": 20.25,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.25,
+        "usdPerMT": 446.44,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-12",
+        "quoteValue": 20.85,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.85,
+        "usdPerMT": 459.66,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-13",
+        "quoteValue": 21.11,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 21.11,
+        "usdPerMT": 465.4,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-14",
+        "quoteValue": 20.84,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.84,
+        "usdPerMT": 459.44,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-15",
+        "quoteValue": 21.13,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 21.13,
+        "usdPerMT": 465.84,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-16",
+        "quoteValue": 20.85,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.85,
+        "usdPerMT": 459.66,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-19",
+        "quoteValue": 20.57,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.57,
+        "usdPerMT": 453.49,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-20",
+        "quoteValue": 20.52,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.52,
+        "usdPerMT": 452.39,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-21",
+        "quoteValue": 20.45,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.45,
+        "usdPerMT": 450.85,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-22",
+        "quoteValue": 20.13,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.13,
+        "usdPerMT": 443.79,
+        "isProvisional": false
+      },
+      {
+        "date": "2026-10-23",
+        "quoteValue": 20.24,
+        "quoteUnit": "US¢/lb",
+        "centsPerBushel": 20.24,
+        "usdPerMT": 446.22,
+        "isProvisional": true
+      }
+    ]
+  },
+  "/api/starch/potato-export-quote": {
+    "success": true,
+    "dataStatus": "last-verified",
+    "checkedAt": "2026-10-25T16:16:33.806Z",
+    "verifiedAt": "2026-10-24T15:07:33.428Z",
+    "refreshFailed": false,
+    "source": "Eurostat Comext · EU27 → 한국 · CN 11081300 · 월별 평균 수출단가",
+    "sourceUrl": "https://ec.europa.eu/eurostat/databrowser/view/DS-045409/default/table?lang=en",
+    "data": {
+      "productCode": "11081300",
+      "reporter": "EU27_2020",
+      "partner": "KR",
+      "flow": "2",
+      "period": "2026-08",
+      "valueEur": 4663967,
+      "netWeightMT": 6942.700999999999,
+      "eurPerMT": 671.7799023751708,
+      "provisional": false
+    },
+    "changes": {
+      "mom": {
+        "currentPeriod": "2026-08",
+        "referencePeriod": "2026-07",
+        "referenceEurPerMT": 642.0131984161901,
+        "pct": 4.6364629313561485,
+        "amountEurPerMT": 29.766703958980656,
+        "provisional": false
+      },
+      "yoy": {
+        "currentPeriod": "2026-08",
+        "referencePeriod": "2025-08",
+        "referenceEurPerMT": 920.3025321832923,
+        "pct": -27.00444920199616,
+        "amountEurPerMT": -248.52262980812156,
+        "provisional": false
+      }
+    }
+  },
+  "/api/history?commodity=tapioca-starch&timeframe=5Y": {
+    "success": true,
+    "commodity": "tapioca-starch",
+    "symbol": "TTSA_FOB_BANGKOK",
+    "source": "Thai Tapioca Starch Association · FOB Bangkok",
+    "data": [
+      {
+        "date": "2026-08-18",
+        "usdPerMT": 705,
+        "centsPerBushel": 705,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-08-25",
+        "usdPerMT": 705,
+        "centsPerBushel": 705,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-09-01",
+        "usdPerMT": 705,
+        "centsPerBushel": 705,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-09-08",
+        "usdPerMT": 705,
+        "centsPerBushel": 705,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-09-15",
+        "usdPerMT": 700,
+        "centsPerBushel": 700,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-09-22",
+        "usdPerMT": 700,
+        "centsPerBushel": 700,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-09-29",
+        "usdPerMT": 700,
+        "centsPerBushel": 700,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-10-06",
+        "usdPerMT": 695,
+        "centsPerBushel": 695,
+        "isSynthetic": false
+      },
+      {
+        "date": "2026-10-20",
+        "usdPerMT": 690,
+        "centsPerBushel": 690,
+        "isSynthetic": false
+      }
+    ]
+  }
+}

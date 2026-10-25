@@ -1,3 +1,7 @@
+import {dailyFreeSourceJobs,publishDailyOverview} from './freeDailyJobs.ts';
+import {withFreeNetwork} from './freeRefreshNetwork.ts';
+import {readFreeJson,writeFreeJson,observationFingerprint} from './freeDailyPublication.ts';
+import {randomUUID} from 'node:crypto';
 import {fetchOfficialPotatoExportQuote} from './officialPotatoComextService.ts';
 import {refreshSoybeanOilNews} from './soybeanOilVerifiedNews.ts';
 /** Independent free-source clock. It never imports or authorizes Gemini. */
@@ -24,7 +28,7 @@ export function freeRefreshDay(now=new Date()){
   return {day:`${values.year}-${values.month}-${values.day}`,hour:Number(values.hour),weekday:!['Sat','Sun'].includes(values.weekday)};
 }
 export function freeRefreshDue(now=new Date(),settings=freeRefreshSettings(),lastDay=read('free-source-refresh.json')?.day){const t=freeRefreshDay(now);return settings.enabled&&t.weekday&&t.hour>=settings.hourKST&&t.day!==lastDay;}
-export interface FreeSourceJob {key:string;run:()=>Promise<any>}
+export interface FreeSourceJob {key:string;commodity?:string;source?:string;cadenceHours?:number;run:()=>Promise<any>}
 export const soybeanPriceRefreshJob:FreeSourceJob={key:'soybean-history',run:async()=>{
   const snapshot=await soybeanIntelligenceService.getSoybeanPriceSnapshot(true,'scheduled');
   return {lastError:snapshot.lastError,observationDate:snapshot.data.at(-1)?.date,refresh:snapshot.refreshMetadata};
@@ -42,44 +46,54 @@ export function createPotatoExportQuoteRefreshJob(fetchQuote:typeof fetchOfficia
   }};
 }
 export const potatoExportQuoteRefreshJob=createPotatoExportQuoteRefreshJob();
-function freeSourceJobs():FreeSourceJob[]{return [
-  {key:'palm-page',run:async()=>{const r=await refreshPalmPageSources();return {...r,lastError:r.results.some(j=>j.status!=='completed')?'Some Palm sources unavailable; saved observations retained':undefined};}},
-  {key:'tapioca-history',run:()=>refreshPublicHistory('tapioca-starch')},
-  {key:'potato-production-history',run:()=>refreshPotatoProductionHistory()},
-  {key:'potato-production-regions',run:()=>refreshRegionalPotatoProduction()},
-  potatoExportQuoteRefreshJob,
-  soybeanPriceRefreshJob,
-  soybeanOilPriceRefreshJob,
-  soybeanNewsRefreshJob,
-  soybeanOilNewsRefreshJob,
-  ...Object.keys(ORIGIN_MVP).filter(id=>id!=='palm-oil').map(id=>({key:'origin-'+id,run:()=>loadAll8OriginRadar(id,true)})),
-];}
+export const freeSourceJobs=dailyFreeSourceJobs;
 /** Injectable clock/storage/jobs let offline tests exercise the actual scheduler without touching other commodities. */
-export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;jobs?:()=>FreeSourceJob[]}={}){
-  const directory=options.directory||root(),now=options.now||(()=>new Date()),jobs=options.jobs||freeSourceJobs;
-  const readRun=(file:string)=>{try{return JSON.parse(fs.readFileSync(path.join(directory,file),'utf8'));}catch{return null;}};
-  const save=(value:any)=>{fs.mkdirSync(directory,{recursive:true});const dest=path.join(directory,'free-source-refresh.json'),temp=dest+'.'+process.pid+'.tmp';fs.writeFileSync(temp,JSON.stringify(value,null,2));fs.renameSync(temp,dest);};
-  let active:Promise<any>|null=null;
-  const refresh=async()=>{
-    if(active)return active;
-    active=(async()=>{
-      const run:any={day:freeRefreshDay(now()).day,startedAt:now().toISOString(),kind:'free-public-sources',status:'running',jobs:[]};
-      fs.mkdirSync(directory,{recursive:true});
-      const previous=readRun('free-source-refresh.json');if(previous)fs.appendFileSync(path.join(directory,'free-source-refresh-history.jsonl'),JSON.stringify(previous)+'\n');
-      save(run);
-      run.jobs=await Promise.all(jobs().map(async job=>{
-        try{const result:any=await job.run();return {key:job.key,status:result.lastError?'cached':'completed',error:result.lastError,
-          ...((job.key==='soybean-history'||job.key==='soybean-oil-history'||job.key==='potato-export-quote')?{observationDate:result.observationDate,refresh:result.refresh}:{})};}
-        catch(e){return {key:job.key,status:'failed',error:String((e as Error).message)};}
-      }));
-      run.status=run.jobs.some((j:any)=>j.status!=='completed')?'partial':'completed';run.finishedAt=now().toISOString();save(run);return run;
-    })();try{return await active;}finally{active=null;}
-  };
-  const check=()=>{
-    const cfg=readRun('settings.json')||{},settings={enabled:cfg.freeAutoEnabled===true,hourKST:Number.isInteger(cfg.scheduleHourKST)?cfg.scheduleHourKST:9};
-    return !active&&freeRefreshDue(now(),settings,readRun('free-source-refresh.json')?.day||'')?refresh():Promise.resolve(null);
-  };
-  return {refresh,check};
+export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;jobs?:()=>FreeSourceJob[];publish?:(run:any)=>Promise<any>}={}){
+ const directory=options.directory||root(),now=options.now||(()=>new Date()),jobs=options.jobs||freeSourceJobs;
+ const readRun=(file:string)=>readFreeJson(file,directory),save=(v:any)=>writeFreeJson('free-source-refresh.json',v,directory);
+ let active:Promise<any>|null=null;
+ const refresh=(trigger='manual'):Promise<any>=>{
+  if(active)return active;
+  active=(async()=>{
+   fs.mkdirSync(directory,{recursive:true});const lock=path.join(directory,'free-source-refresh.lock'),nonce=randomUUID();
+   const live=(pid:number)=>{try{process.kill(pid,0);return true;}catch(e){return (e as NodeJS.ErrnoException).code!=='ESRCH';}};
+   try{fs.writeFileSync(lock,JSON.stringify({pid:process.pid,nonce}),{flag:'wx'});}catch{
+    const recovery=lock+'.recovery';
+    try{fs.writeFileSync(recovery,JSON.stringify({pid:process.pid,nonce}),{flag:'wx'});}catch{const stale=readRun('free-source-refresh.lock.recovery');if(stale&&!live(stale.pid)&&readRun('free-source-refresh.lock.recovery')?.nonce===stale.nonce)try{fs.unlinkSync(recovery);}catch{}return null;}
+    try{const old=readRun('free-source-refresh.lock');if(!old||live(old.pid))return null;fs.renameSync(lock,lock+'.abandoned-'+nonce);fs.writeFileSync(lock,JSON.stringify({pid:process.pid,nonce}),{flag:'wx'});}catch{return null;}finally{if(readRun('free-source-refresh.lock.recovery')?.nonce===nonce)fs.unlinkSync(recovery);}
+   }
+   try{
+    const day=freeRefreshDay(now()).day,previous=readRun('free-source-refresh.json');
+    if(trigger==='scheduled'&&previous?.day===day&&previous.status!=='running')return null;
+    const resumed=previous?.day===day&&previous.status==='running';
+    if(previous&&!resumed)fs.appendFileSync(path.join(directory,'free-source-refresh-history.jsonl'),JSON.stringify(previous)+'\n');
+    const run:any=resumed?{...previous,id:previous.id||nonce,resumedAt:now().toISOString()}:{day,id:nonce,trigger,startedAt:now().toISOString(),kind:'free-public-sources',status:'running',jobs:[]};save(run);
+    const observations=readRun('free-source-observations.json')||{jobs:{}},oldJobs=observations.jobs||{};
+    const tasks=jobs();let next=0;
+    const worker=async()=>{while(next<tasks.length){const job=tasks[next++];if(resumed&&run.jobs.some((r:any)=>r.key===job.key))continue;
+     const prior=oldJobs[job.key],startedAt=now().toISOString();let row:any={key:job.key,commodity:job.commodity||job.key,source:job.source||job.key,attemptedAt:startedAt};
+     if(job.cadenceHours&&prior?.lastVerifiedAt&&Date.parse(startedAt)-Date.parse(prior.lastVerifiedAt)<job.cadenceHours*3600000){row={...row,status:'unchanged',reason:'Verified publication retained within source check cadence',observationDate:prior.observationDate,lastVerifiedAt:prior.lastVerifiedAt};}
+     else try{const value=await job.run(),publication=value.publication??value;
+      const error=value.lastError||value.refreshFailed&&value.message||value.success===false&&value.message||value.stale&&value.lastError;
+      const observationDate=value.observationDate||value.data?.at?.(-1)?.date||value.data?.period||value.reportDate||value.quote?.date||null;
+      const fingerprint=observationFingerprint(publication),changed=!prior||prior.fingerprint!==fingerprint;
+      row={...row,...(value.refresh?{refresh:value.refresh}:{}),status:error?(observationDate||prior?'retained-old-data':'failed'):changed?'success':'unchanged',observationDate:observationDate||prior?.observationDate||null,lastVerifiedAt:error?prior?.lastVerifiedAt||value.verifiedAt||null:value.verifiedAt||startedAt,error:error||undefined};
+      if(!error)oldJobs[job.key]={fingerprint,observationDate,lastVerifiedAt:value.verifiedAt||startedAt,lastPublishedAt:changed?startedAt:prior?.lastPublishedAt};
+     }catch(e){row={...row,status:prior?'retained-old-data':'failed',observationDate:prior?.observationDate||null,lastVerifiedAt:prior?.lastVerifiedAt||null,error:(e as Error).message};}
+     row.finishedAt=now().toISOString();run.jobs.push(row);save(run);writeFreeJson('free-source-observations.json',{...observations,jobs:oldJobs},directory);
+    }};
+    const network=await withFreeNetwork(async()=>{await Promise.all([worker(),worker(),worker()]);return null;},row=>fs.appendFileSync(path.join(directory,'free-source-requests.jsonl'),JSON.stringify({runId:run.id,...row})+'\n'));run.requests=network.requests;
+    run.status=run.jobs.some((j:any)=>j.status==='failed'||j.status==='retained-old-data')?'partial':'completed';
+    run.completed=run.jobs.filter((j:any)=>j.status==='success'||j.status==='unchanged').map((j:any)=>j.key);run.finishedAt=now().toISOString();
+    try{run.publication=await(options.publish||(options.jobs?async()=>null:publishDailyOverview))(run);}catch(e){run.status='partial';run.publicationError=(e as Error).message;}
+    const changed=run.jobs.some((j:any)=>j.status==='success');
+    writeFreeJson('free-source-observations.json',{...observations,jobs:oldJobs,lastSuccessfulRefreshAt:run.completed.length?run.finishedAt:observations.lastSuccessfulRefreshAt,lastPublicationAt:changed?run.finishedAt:observations.lastPublicationAt},directory);save(run);return run;
+   }finally{if(readRun('free-source-refresh.lock')?.nonce===nonce)fs.unlinkSync(lock);}
+  })();active=active.finally(()=>{active=null;});return active;
+ };
+ const check=()=>{const cfg=readRun('settings.json')||{},s={enabled:cfg.freeAutoEnabled===true,hourKST:9},last=readRun('free-source-refresh.json');
+  return !active&&freeRefreshDue(now(),s,last?.status==='running'?'':last?.day||'')?refresh('scheduled'):Promise.resolve(null);};
+ return {refresh,check};
 }
 const runner=createFreeSourceRunner();
 export const refreshFreeSources=runner.refresh;

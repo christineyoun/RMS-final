@@ -1,0 +1,208 @@
+{
+  "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+  "retrievedAt": "2026-10-25T16:46:36.600Z",
+  "receiptPath": ".rms-research/supply-previous-year-2026-10-26/tapioca_production.json",
+  "receiptSha256": "3b497bf70e267dc7daf1f6051b95d2bcb6cf913eb4a3bc6563f4f510996775a4",
+  "rows": [
+    {
+      "marketYear": "2025/2026",
+      "plantedAreaRai": 6615283,
+      "yieldMtPerRai": 2.809,
+      "productionTonnes": 18582329,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2024/2025",
+      "plantedAreaRai": 8445471,
+      "yieldMtPerRai": 2.958,
+      "productionTonnes": 24983311,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2023/2024",
+      "plantedAreaRai": 8033480,
+      "yieldMtPerRai": 2.716,
+      "productionTonnes": 21820671,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2022/2023",
+      "plantedAreaRai": 9023585,
+      "yieldMtPerRai": 2.956,
+      "productionTonnes": 26675755,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2021/2022",
+      "plantedAreaRai": 10060895,
+      "yieldMtPerRai": 3.332,
+      "productionTonnes": 33522353,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2020/2021",
+      "plantedAreaRai": 9507007,
+      "yieldMtPerRai": 3.327,
+      "productionTonnes": 31632109,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2019/2020",
+      "plantedAreaRai": 8701451,
+      "yieldMtPerRai": 2.908,
+      "productionTonnes": 25303981,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2018/2019",
+      "plantedAreaRai": 8560391,
+      "yieldMtPerRai": 3.371,
+      "productionTonnes": 28859005,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2017/2018",
+      "plantedAreaRai": 8025131,
+      "yieldMtPerRai": 3.474,
+      "productionTonnes": 27875464,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2016/2017",
+      "plantedAreaRai": 8910021,
+      "yieldMtPerRai": 3.472,
+      "productionTonnes": 30935529,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2015/2016",
+      "plantedAreaRai": 8919803,
+      "yieldMtPerRai": 3.426,
+      "productionTonnes": 30557857,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2014/2015",
+      "plantedAreaRai": 8697948,
+      "yieldMtPerRai": 3.864,
+      "productionTonnes": 33610487,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2013/2014",
+      "plantedAreaRai": 8656942,
+      "yieldMtPerRai": 3.492,
+      "productionTonnes": 30227542,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2012/2013",
+      "plantedAreaRai": 8138953,
+      "yieldMtPerRai": 3.474,
+      "productionTonnes": 28275565,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2011/2012",
+      "plantedAreaRai": 7911323,
+      "yieldMtPerRai": 3.362,
+      "productionTonnes": 26601090,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2010/2011",
+      "plantedAreaRai": 7096173,
+      "yieldMtPerRai": 3.088,
+      "productionTonnes": 21912416,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2009/2010",
+      "plantedAreaRai": 7302839,
+      "yieldMtPerRai": 3.013,
+      "productionTonnes": 22005740,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2008/2009",
+      "plantedAreaRai": 8292146,
+      "yieldMtPerRai": 3.628,
+      "productionTonnes": 30088024,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2007/2008",
+      "plantedAreaRai": 7397098,
+      "yieldMtPerRai": 3.401,
+      "productionTonnes": 25155797,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    },
+    {
+      "marketYear": "2006/2007",
+      "plantedAreaRai": 7201243,
+      "yieldMtPerRai": 3.668,
+      "productionTonnes": 26411233,
+      "scope": "Thailand cassava; October–September crop year",
+      "status": "TTSA published crop survey; original report status retained",
+      "sourceUrl": "https://www.thaitapiocastarch.org/en/information/statistics/tapioca_production",
+      "retrievedAt": "2026-10-25T16:46:36.600Z"
+    }
+  ]
+}

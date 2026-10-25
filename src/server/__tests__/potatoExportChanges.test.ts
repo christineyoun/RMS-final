@@ -34,7 +34,7 @@ const quote=await service.get();assert.equal(quote.changes?.mom.pct,10);assert.e
 await service.get();assert.equal(calls,1);fail=true;
 const fallback=await createPotatoExportQuoteService({fetcher,store,now:()=>now}).get();assert.deepEqual(fallback.changes,quote.changes);assert.ok(fallback.refreshFailed);
 delete saved.series;const old=await createPotatoExportQuoteService({fetcher,store,now:()=>now}).get();assert.equal(old.changes?.mom.pct,null,'old cache must not invent comparisons');
-const markup=renderToStaticMarkup(createElement(PotatoPriceChanges,{quote}));for(const label of ['YoY','MoM','37.50%','10.00%','2025-08','2026-07','2026-08','EUR/MT'])assert.ok(markup.includes(label),label);assert.ok(!markup.includes('WoW'));
+const markup=renderToStaticMarkup(createElement(PotatoPriceChanges,{quote}));for(const label of ['YoY','MoM','37.50%','10.00%'])assert.ok(markup.includes(label),label);assert.ok(!markup.includes('WoW'));
 assert.ok(renderToStaticMarkup(createElement(PotatoPriceChanges,{quote:null})).includes('확인 불가'));
 console.log('PASS: exact calendar comparisons, source scope/units, missing/zero/confidential values, null current, persistent comparisons, legacy cache, rendering');
 if(process.argv[2]){
@@ -42,3 +42,5 @@ if(process.argv[2]){
  const c=calculatePotatoExportChanges(current,rows);for(const change of [c.mom,c.yoy]){const r=rows.find(p=>p.period===change.referencePeriod);assert.ok(r);assert.equal(change.pct,(current.eurPerMT-r.eurPerMT)/r.eurPerMT*100);}
  console.log('OFFICIAL RESPONSE VERIFIED:',JSON.stringify({current,mom:c.mom,yoy:c.yoy}));
 }
+
+for(const hidden of ['2025-08','2026-07','2026-08'])assert(!markup.includes(hidden));

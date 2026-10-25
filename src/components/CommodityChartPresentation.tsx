@@ -4,7 +4,7 @@ import type {HTMLAttributes,ReactNode} from 'react';
 export const chartPresentation={
  section:'w-full bg-white p-5 rounded-lg shadow-sm border border-[#e5e7eb] space-y-4 pdf-section-block print:p-3 print:mt-4 overflow-visible',
  header:'flex items-center justify-between w-full mb-4',
- controls:'flex items-center gap-1 bg-[#f3f4f6] p-0.5 rounded border border-[#e5e7eb] shrink-0 pdf-hide',
+ controls:'flex items-center gap-1 bg-[#f3f4f6] p-0.5 rounded border border-[#e5e7eb] shrink-0 self-start pdf-hide',
  canvas:'@container/chart h-68 sm:h-76 w-full bg-[#fafbfc] border border-[#f3f4f6] rounded-lg p-4 flex flex-col justify-between relative overflow-visible select-none',
  legend:'sm:@max-[640px]/chart:h-8 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#6b7280] font-mono gap-3 relative z-10 bg-[#fafbfc] w-full',
  legendItems:'flex items-center gap-3 shrink-0',

@@ -1,3 +1,4 @@
+import {withSavedDataRead} from './src/server/freeRefreshNetwork.ts';
 import {startPublicationHistory,comparisonFor} from './src/server/overviewMarketHistory.ts';
 import {captureOverviewPublication} from './src/server/overviewPublishedInputs.ts';
 import {refreshSoybeanOilNews} from './src/server/soybeanOilVerifiedNews.ts';
@@ -24,8 +25,17 @@ async function startServer() {
     }
     app.use(publicDeploymentGuard);
   }
+  // Source refreshes are local administration only; cross-origin browser requests fail closed.
+  app.use((req,res,next)=>{
+    const u=new URL(req.url,'http://localhost');
+    const mutation=/refresh|\/control\//.test(u.pathname)&&u.pathname!=='/api/rms/refresh-status'||u.searchParams.get('force')==='true'||u.searchParams.get('forceRefresh')==='true';
+    if(mutation){const local=['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||'');const host=req.headers.host||'';
+      if(!local||! /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/.test(host)||req.headers.origin&&req.headers.origin!=='http://'+host){res.status(403).json({success:false,error:'Local same-origin administration required'});return;}}
+    next();
+  });
   const PORT = Number(process.env.PORT) || 3000;
 
+  app.use((req,_res,next)=>{const u=new URL(req.url,'http://localhost');const explicit=u.searchParams.get('force')==='true'||u.searchParams.get('forceRefresh')==='true'||/refresh|\/control\//.test(u.pathname)&&u.pathname!=='/api/rms/refresh-status';if(explicit)next();else withSavedDataRead(next);});
   app.post('/api/rms/palm/free-refresh',async(_req,res)=>{try{res.json(await refreshPalmPageSources());}catch{res.status(503).json({success:false,error:'Free Palm source refresh failed; saved data retained'});}});
 
   app.post('/api/rms/soybean-oil/news-refresh',async(req,res)=>{

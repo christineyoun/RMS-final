@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import {savedGraphHistoryResponse} from './savedGraphHistory.ts';
 import type {
   CornProcurementAnalysisData,
 } from '../types.ts';
@@ -32,7 +34,9 @@ export class CornIntelligenceService {
 
     try {
       // 1. Fetch live CBOT Corn futures series (ZC=F)
-      const historyRes = await fetchHistoricalData('corn', '3M');
+      const saved=await savedGraphHistoryResponse('/api/history?commodity=corn&timeframe=5Y');
+      if(saved?.status!==200)throw Error('Verified saved Corn history unavailable');
+      const historyRes=saved.payload;
       const dataPoints = (historyRes.data || []).filter((p: any) =>
         /^\d{4}-\d{2}-\d{2}$/.test(String(p.date || '')) &&
         !p.isSynthetic && Number.isFinite(Number(p.usdPerMT)) && Number(p.usdPerMT) > 0
@@ -57,7 +61,8 @@ export class CornIntelligenceService {
         absoluteChangeUsdMt > 0 ? 'up' : absoluteChangeUsdMt < 0 ? 'down' : 'unchanged';
 
       // 3. Fetch official USDA FAS PSD dataset for World Corn (0440000, 2026)
-      const psdRes = await usdaFasService.fetchWorldPsd('0440000', '2026');
+      const world=JSON.parse(fs.readFileSync('src/data/usda_world_last_verified_corn.json','utf8'));
+      const psdRes={data:world.data};
       const psdData = psdRes.data;
       const ratio = psdData?.stocksToUseRatioPct;
       const stocksAvailable = typeof ratio === 'number' && Number.isFinite(ratio) && ratio > 0;

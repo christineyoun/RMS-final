@@ -1,26 +1,13 @@
-export const getTimestamp = (): { yyyymmdd: string; hhmm: string } => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  return {
-    yyyymmdd: `${year}${month}${day}`,
-    hhmm: `${hours}${minutes}`,
-  };
-};
+import { getDailyPublicationIssue } from './dailyPublicationIssue';
+import { issuePdfFilename, stampPdfIssue } from './pdfPublication';
 
-export const getCategoryReportPdfFilename = (category: string): string => {
-  const { yyyymmdd, hhmm } = getTimestamp();
+export const getCategoryReportPdfFilename = (category: string, issue: string): string => {
   const cat = (category || '').toLowerCase().trim();
-
   let categoryName = 'Global_Overview';
   if (cat === 'grains' || cat === 'grain') categoryName = 'Grains_Report';
   else if (cat === 'oils' || cat === 'oil') categoryName = 'Oils_Report';
   else if (cat === 'starches' || cat === 'starch' || cat.includes('sweetener')) categoryName = 'Starches_Report';
-
-  return `Nongshim_RMS_${categoryName}_${yyyymmdd}_${hhmm}.pdf`;
+  return issuePdfFilename(categoryName, issue);
 };
 
 // Inlines parent document style rules into clonedDoc to guarantee published production build rendering
@@ -51,6 +38,7 @@ export const exportCategoryFilteredPdf = async (category: string = 'all'): Promi
   const page2El = document.querySelector('.overview-page-2') as HTMLElement | null;
 
   if (!page1El || !page2El) return;
+  const issue = await getDailyPublicationIssue();
 
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready;
@@ -139,7 +127,8 @@ export const exportCategoryFilteredPdf = async (category: string = 'all'): Promi
   pdf.addPage();
   pdf.addImage(imgData2, 'PNG', marginX, marginY, contentWidth, imgHeight2, undefined, 'FAST');
 
-  const filename = getCategoryReportPdfFilename(category);
+  stampPdfIssue(pdf, issue);
+  const filename = getCategoryReportPdfFilename(category, issue);
   try {
     pdf.save(filename);
   } catch {

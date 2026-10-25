@@ -260,10 +260,10 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 </div>
 
                 {/* Footer Divider & Bottom Bar: Date (Left) & Source (Right) */}
-                <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                <div className="pt-2.5 border-t border-slate-100 flex flex-wrap gap-2 items-center justify-between text-xs text-slate-400">
                   <span className="text-[11px] font-medium text-slate-400">{formatPublicationDate(item.publishedAt)}</span>
                   <span className="rms-source px-2 py-0.5 bg-slate-100 text-slate-600 rounded border border-slate-200">
-                    {marketIntelligenceSourceLabel(item.sourceName, item.originalUrl)}
+                    {marketIntelligenceSourceLabel(item.sourceName, item.originalUrl)}{'\u00a0'}↗
                   </span>
                 </div>
               </a>

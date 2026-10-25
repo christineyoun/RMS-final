@@ -1,0 +1,29 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+import {parseYahooBrentDaily} from '../geminiApi.ts';
+import {parseScfiPublication,getScfiCache,scrapeLiveScfiIndex} from '../scfiScraperService.ts';
+import {policyRecordPresentation} from '../../utils/overviewMacroPresentation.ts';
+import {overviewMacroFromSaved,dailyFreeSourceJobs} from '../freeDailyJobs.ts';
+import {readFreePublication} from '../freeDailyPublication.ts';
+const dir='.rms-research/macro-functionality-2026-10-25',brentReceipt=JSON.parse(fs.readFileSync(dir+'/brent-receipt.json','utf8')),sseReceipt=JSON.parse(fs.readFileSync(dir+'/scfi-receipt.json','utf8'));
+const original=globalThis.fetch;let network=0;globalThis.fetch=async()=>{network++;throw Error('External collection forbidden in offline tests');};
+try{
+ for(const r of [brentReceipt,sseReceipt])assert.equal(createHash('sha256').update(r.body).digest('hex'),r.sha256);
+ const raw=JSON.parse(brentReceipt.body),b=parseYahooBrentDaily(raw,brentReceipt.retrievedAt);assert.equal(b.sessionDate,'2026-10-23');assert.equal(b.previousSessionDate,'2026-10-22');assert(Math.abs(b.currentPrice-111.7)<.00001);assert(Math.abs(b.previousPrice!-113.17)<.00001);assert.equal(b.pctChange,(b.currentPrice/b.previousPrice!-1)*100);assert.equal(b.pctChange!.toFixed(2),'-1.30');assert.equal(b.officialSettlement,false);
+ const wrong=structuredClone(raw);wrong.chart.result[0].meta.symbol='CC=F';assert.throws(()=>parseYahooBrentDaily(wrong,brentReceipt.retrievedAt),/identity/);
+ const missing=structuredClone(raw);missing.chart.result[0].indicators.quote[0].close[19]=null;const m=parseYahooBrentDaily(missing,brentReceipt.retrievedAt);assert.equal(m.previousPrice,undefined);assert.equal(m.pctChange,null,'no bridge over missing preceding close');
+ const latestMissing=structuredClone(raw);latestMissing.chart.result[0].indicators.quote[0].close[20]=null;assert.throws(()=>parseYahooBrentDaily(latestMissing,brentReceipt.retrievedAt),/No completed/);
+ const live=structuredClone(raw);live.chart.result[0].meta.regularMarketTime=Date.parse('2026-10-23T14:59:00Z')/1000;live.chart.result[0].meta.currentTradingPeriod.regular={start:Date.parse('2026-10-23T04:00Z')/1000,end:Date.parse('2026-10-23T21:00Z')/1000};const prior=parseYahooBrentDaily(live,'2026-10-23T15:00:00Z');assert.equal(prior.sessionDate,'2026-10-22','exclude current provisional bar');assert.equal(prior.provisionalQuote?.kind,'provisional-futures-quote');
+ const s=parseScfiPublication(sseReceipt.body,new Date(sseReceipt.retrievedAt));assert.equal(s.scfiPoints,3681.34);assert.equal(s.previousPoints,3679.58);assert.equal(s.observationDate,'2026-10-23');assert.equal(s.previousObservationDate,'2026-10-16');assert.equal(s.changeStr,'+0.05%');assert(Math.abs(s.changePct-.04783154599166117)<1e-10);
+ assert.throws(()=>parseScfiPublication(sseReceipt.body.replace(/<title>[\s\S]*?<\/title>/,'<title>CCFI</title>')),/Not an SCFI/);assert.throws(()=>parseScfiPublication(sseReceipt.body.replaceAll('2026-10-23','2099-10-23')),/dates/);assert.throws(()=>parseScfiPublication(sseReceipt.body.replaceAll('3681.34','3800.00')),/difference/);
+ const cacheBefore=fs.readFileSync('src/data/cache_scfi.json','utf8');assert.equal(getScfiCache().scfiPoints,null);assert((await scrapeLiveScfiIndex(true)).lastError?.includes('authorization'));assert.equal(network,0,'licensing block makes no repeated feed requests');assert.equal(fs.readFileSync('src/data/cache_scfi.json','utf8'),cacheBefore);
+ const fixtures=[
+  {title:'OFFLINE TEST: industry forecast',summary:'업계가 수출 감소 가능성을 전망했습니다.',recordKind:'industry-outlook',statusType:'neutral',procurementImplication:'수출 가용량을 주시할 필요가 있습니다.',procurementStatus:'가용량 주시 (중립)'},
+  {title:'OFFLINE TEST: effective measure',summary:'원문에서 수입 관세 인하 시행을 확인했습니다.',recordKind:'effective',statusType:'favorable',procurementImplication:'해당 원산지와 적용 품목의 관세 부담이 줄어듭니다.',procurementStatus:'적용 품목 부담 완화'},
+  {title:'OFFLINE TEST: proposal',summary:'수출 제한 방안이 제안됐습니다.',recordKind:'proposed',statusType:'warning',procurementImplication:'제안 확정 여부와 선적 조건을 점검할 필요가 있습니다.',procurementStatus:'제안 검토 주의'}
+ ];
+ const rendered=fixtures.map(policyRecordPresentation);assert.deepEqual(rendered.map(r=>r.statusType),['neutral','favorable','warning']);assert.deepEqual(rendered.map(r=>r.classificationLabel),['중립적','우호적','주의']);assert(rendered[0].summary.includes('확정된 정부 조치가 아닌'));assert(rendered[1].summary.includes('시행 범위와 조건'));assert(rendered[2].summary.includes('확정·시행된 조치가 아닙니다'));assert.equal(new Set(rendered.map(r=>r.title)).size,3);assert.equal(new Set(rendered.map(r=>r.summary)).size,3);assert.equal(policyRecordPresentation({title:'OFFLINE TEST',statusType:'favorable'}).statusType,'neutral','no favorable interpretation without supported implication');
+ fs.writeFileSync(dir+'/offline-policy-fixtures.json',JSON.stringify(rendered.map(r=>({...r,sourceUrl:'https://example.org/offline-test',sourceName:'OFFLINE TEST FIXTURE',publishedAt:'2026-10-23'})),null,2));
+ assert(readFreePublication().data.energy.history.every((r:any)=>r.receiptSha256&&fs.existsSync(r.receiptPath)),'all retained daily observations have original receipt references');
+ const macro=overviewMacroFromSaved(readFreePublication().data);assert.equal(macro.energy?.brentChange?.toFixed(2),'2.80');assert.equal(macro.freight,null);assert.equal(macro.scfiStatus,'permission-required');assert.equal(dailyFreeSourceJobs().find(j=>j.key==='freight')?.cadenceHours,168);assert.equal(network,0);
+ console.log('PASS original feed receipt hashes, two real Brent sessions, missing/provisional bars, SCFI identity/dates/consecutive columns/WoW, licensing block without network or cache mutation, dynamic policy outlook/effective/proposed fixtures, saved projection and existing weekly job.');
+}finally{globalThis.fetch=original;}

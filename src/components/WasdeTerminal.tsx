@@ -1,3 +1,4 @@
+import {SourceAttribution} from './SourceAttribution';
 import React, { useState, useEffect } from 'react';
 import { BarChart2 } from 'lucide-react';
 
@@ -241,7 +242,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
             Market Year: <strong className="text-slate-700 font-bold">2026</strong>
           </span>
           {isLoading && (
-            <span className="relative flex h-2 w-2" title="동기화 중">
+            <span className="relative flex h-2 w-2" aria-description="동기화 중">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
             </span>
@@ -384,19 +385,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
       </div>
 
       {/* Metadata line */}
-      <div className="rms-source flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200/60 font-sans">
-        <span>
-          출처: <span className="font-medium text-slate-700">USDA FAS PSD / </span>
-          <a
-            href="https://www.usda.gov/about-usda/general-information/staff-offices/office-chief-economist/commodity-markets/wasde-report"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
-          >
-            Official WASDE Release ↗
-          </a>
-        </span>
-      </div>
+      <SourceAttribution className="pt-1 border-t border-slate-200/60" entries={[{label:'USDA FAS PSD'},{label:'Official WASDE Release',url:'https://www.usda.gov/about-usda/general-information/staff-offices/office-chief-economist/commodity-markets/wasde-report'}]}/>
     </div>
   );
 };

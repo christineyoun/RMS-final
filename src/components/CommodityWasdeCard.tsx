@@ -1,3 +1,6 @@
+import tapiocaSupplyHistory from '../data/tapioca_supply_history_verified.json';
+import {parseSoybeanOilSupply} from '../lib/soybeanOilSupply';
+import {SourceAttribution} from './SourceAttribution';
 import {PotatoRawSupplyCard} from './PotatoRawSupplyCard';
 import {verifiedSoybeanOilSupply,soybeanOilCrushIndicators,type SoybeanOilSupplyResult} from '../lib/soybeanOilSupply';
 import React, { useState, useEffect } from 'react';
@@ -20,8 +23,8 @@ export interface CommodityWasdeCardProps {
  * Do not mix small kMT numbers from an API response with MMT numbers supplied by
  * an unrelated / cached commodity summary (a previous wheat fallback bug).
  */
-export function normalizeVerifiedSoybeanOilWasde(payload: any, status: unknown, verifiedAt = ''): WasdeRecord | null {
-  const data=verifiedSoybeanOilSupply({success:true,status:status as any,data:payload,verifiedAt,checkedAt:verifiedAt});if(!data)return null;
+export function normalizeVerifiedSoybeanOilWasde(payload: any, status: unknown, verifiedAt = '', historical=false): WasdeRecord | null {
+  const data=historical&&['live-verified','last-verified'].includes(String(status))?parseSoybeanOilSupply(payload?.rawRecords,Number(payload?.marketYear),new Date(),true):verifiedSoybeanOilSupply({success:true,status:status as any,data:payload,verifiedAt,checkedAt:verifiedAt});if(!data)return null;
   const period=String(data.rawRecords[0].calendarYear)+'-'+data.releaseMonth.padStart(2,'0');
   return {commodity:'soybean-oil',marketYear:data.marketYear,productionMMT:data.productionMMT,productionKMT:data.production1000MT,consumptionMMT:data.domesticConsumptionMMT,consumptionKMT:data.domesticConsumption1000MT,endingStocksMMT:data.endingStocksMMT,stocksToUseRatio:data.stocksToUseRatioPct,exportsMMT:data.exportsMMT,exportsKMT:data.exports1000MT,areaHarvestedMHA:0,areaHarvestedKHA:0,yieldMTHA:0,yieldKGHA:0,lastUpdated:verifiedAt,source:'USDA FAS PSD',executiveBrief:data.executiveBrief,reportPeriod:period,...soybeanOilCrushIndicators(data)};
 }
@@ -41,6 +44,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   const isVerifiedUsdaCommodity = isSoybeanOil || USDA_WORLD_IDS.includes(normalizedId);
 
   const [data, setData] = useState<WasdeRecord>(baseline);
+  const [previousData,setPreviousData]=useState<WasdeRecord|null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   // Treat the bundled soybean-oil PSD baseline as unverified, not as a live USDA observation.
   const [verifiedWorldPsd, setVerifiedWorldPsd] = useState(false);
@@ -54,6 +58,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
 
   // RMS Step 18 — Eurostat potato harvest statistics
   type PotatoSourceData = { harvestYear: string; dataset: string; productionMMT: number; area1000HA: number; weightedYieldMTHA: number; coverage: string[]; isEstimateOrProvisional: boolean };
+  const [potatoHistory,setPotatoHistory]=useState<PotatoSourceData[]>([]);
   const [potatoSourceData, setPotatoSourceData] = useState<PotatoSourceData | null>(null);
   const [potatoSourceStatus, setPotatoSourceStatus] = useState<'loading' | 'live-verified' | 'last-verified' | 'unavailable'>('loading');
   useEffect(() => {
@@ -71,7 +76,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
           Number.isFinite(d.productionMMT) && d.productionMMT > 0 &&
           Number.isFinite(d.area1000HA) && d.area1000HA > 0 &&
           Number.isFinite(d.weightedYieldMTHA) && d.weightedYieldMTHA > 0) {
-        setPotatoSourceData(d); setPotatoSourceStatus(json.dataStatus);
+        setPotatoSourceData(d); setPotatoHistory(json.history||[]);setPotatoSourceStatus(json.dataStatus);
       } else { setPotatoSourceData(null); setPotatoSourceStatus('unavailable'); }
     }).catch(() => {if(active){setPotatoSourceData(null); setPotatoSourceStatus('unavailable');}});
     return () => {active = false;};
@@ -170,14 +175,28 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
     };
   }, [normalizedId, customBrief, verifiedSupply, isSoybeanOil, isVerifiedUsdaCommodity, isSyncing, refreshRevision]);
 
+  useEffect(()=>{
+    if(!isVerifiedUsdaCommodity||!verifiedWorldPsd)return;
+    let active=true;setPreviousData(null);
+    const year=Number(data.marketYear)-1;
+    if(!Number.isInteger(year))return;
+    fetch('/api/usda/'+normalizedId+'?marketYear='+year,{cache:'no-store'}).then(r=>r.json()).then(json=>{
+      if(!active||Number(json.data?.marketYear)!==year)return;
+      const record=isSoybeanOil?normalizeVerifiedSoybeanOilWasde(json.data,json.dataStatus,json.verifiedAt,true):normalizeVerifiedOtherCommodityWasde(json.data,json.dataStatus,json.verifiedAt,normalizedId);
+      if(record)setPreviousData(record);
+    }).catch(()=>{});
+    return ()=>{active=false;};
+  },[normalizedId,data.marketYear,verifiedWorldPsd,isSoybeanOil,isVerifiedUsdaCommodity,refreshRevision]);
+
   const isPotatoStarch = normalizedId === 'potato-starch' || normalizedId === 'potato_starch';
 
   const showSupplyFigures = !isVerifiedUsdaCommodity || (verifiedWorldPsd && verifiedCommodityId === normalizedId && data.commodity === normalizedId);
 
-  if (isPotatoStarch) return <PotatoRawSupplyCard data={potatoSourceData} className={className}/>;
+  if (isPotatoStarch) return <PotatoRawSupplyCard data={potatoSourceData} history={potatoHistory} className={className}/>;
 
   const isTapiocaStarch = normalizedId === 'tapioca-starch' || normalizedId === 'tapioca_starch';
 
+  const tapiocaCurrent=tapiocaSupplyHistory.rows.find(r=>r.marketYear==='2025/2026');
   if (isTapiocaStarch) {
     return (
       <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className || ''}`.trim()}>
@@ -188,18 +207,13 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
             <div className="flex items-center gap-1.5 min-w-0 flex-1">
               <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
               <h3 className="text-base font-bold text-slate-900 break-keep">
-                글로벌 수급 밸런스 (Global S&D Balance - Tapioca Starch)
+                글로벌 수급 밸런스 (Global S&D Balance)
               </h3>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-slate-500 font-normal whitespace-normal text-right">
-                Market Year: <span className="text-slate-800 font-semibold">2025/26 · 참고 추정치</span>
-              </span>
             </div>
           </div>
 
-          {/* Dynamic 6-Grid S&D Telemetry Card */}
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] wasde-grid gap-3">
+          <div className="text-xs text-slate-500" data-supply-year="current">Market Year: {tapiocaCurrent?.marketYear.replace(/\/20(\d{2})$/, '/$1')||'—'}</div>
+          <div data-supply-grid="current" className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] wasde-grid gap-3">
             {/* Box 1: 카사바 생산량 (Cassava Production) */}
             <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
               <span className="text-[10px] text-[#6b7280] block font-sans">카사바 생산량 (Cassava Production)</span>
@@ -267,28 +281,84 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
             </div>
           </div>
 
-          <p className="text-xs text-[#4b5563] bg-[#f9fafb] p-2.5 rounded border border-[#e5e7eb] leading-relaxed break-keep">
-            {tapiocaQuote ? `TTSA 발표일 ${tapiocaQuote.date}: 방콕 FOB 타피오카 전분 기준가 ${tapiocaQuote.usdPerMt.toFixed(2)} USD/MT. ` : 'TTSA 공식 주간 가격 확인 불가. '}카사바 생산·수출·면적·단수는 2025/26 참고 추정치입니다. FOB 가격과 실제 공급사 견적 및 한국향 운송조건는 별도입니다.
-          </p>
         </div>
 
         {/* Footer Source */}
-        <div className="rms-source mt-auto pt-4 flex justify-end text-xs text-gray-400">
-          <span>
-            출처:{' '}
-            <a
-              href="https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
-            >
-              TTSA ↗
-            </a>
-          </span>
-        </div>
+        <SourceAttribution className="mt-auto pt-4 justify-end" entries={[{label:'TTSA',url:'https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price'},{label:'TTSA 생산 통계',url:tapiocaSupplyHistory.sourceUrl}]}/>
       </div>
     );
   }
+
+  const yearLabel=(year:string)=>['wheat','corn','soybean','soybean-oil'].includes(normalizedId)&&/^20\d{2}$/.test(year)?year+'/'+String(Number(year)+1).slice(-2):year;
+  const renderSupplyGrid=(data:WasdeRecord,showSupplyFigures:boolean,previous=false)=>(
+    <div data-supply-grid={previous?'previous':'current'} className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] wasde-grid gap-3">
+          {/* Box 1: 총생산 (Production) */}
+          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
+            <span className="text-[10px] text-[#6b7280] block font-sans">총생산 (Production)</span>
+            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-prod"}>
+              {showSupplyFigures ? <>{data.productionMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : (previous?'—':'데이터 없음')}
+            </span>
+            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
+              {showSupplyFigures ? <>{data.productionKMT.toLocaleString('en-US')} kMT</> : "—"}
+            </span>
+          </div>
+
+          {/* Box 2: 총소비 (Consumption) */}
+          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
+            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">Domestic Consumption (총소비)</span>
+            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-cons"}>
+              {showSupplyFigures ? <>{data.consumptionMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : (previous?'—':'데이터 없음')}
+            </span>
+            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
+              {showSupplyFigures ? <>{data.consumptionKMT.toLocaleString('en-US')} kMT</> : "—"}
+            </span>
+          </div>
+
+          {/* Box 3: 기말재고 (Ending Stocks) */}
+          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
+            <span className="text-[10px] text-[#6b7280] block font-sans">기말재고 (Ending Stocks)</span>
+            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-stocks"}>
+              {showSupplyFigures ? <>{data.endingStocksMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : (previous?'—':'데이터 없음')}
+            </span>
+            <span className="text-[10px] font-mono text-slate-600 font-medium block mt-0.5" id={previous?undefined:"commodity-wasde-stu"}>
+              {showSupplyFigures ? <>재고율 {data.stocksToUseRatio.toFixed(1)}% (S/U)</> : "—"}
+            </span>
+          </div>
+
+          {/* Box 4: 총수출량 (Exports) */}
+          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
+            <span className="text-[10px] text-[#6b7280] block font-sans">총수출량 (Exports)</span>
+            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-exports"}>
+              {showSupplyFigures ? <>{data.exportsMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : (previous?'—':'데이터 없음')}
+            </span>
+            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
+              {showSupplyFigures ? <>{data.exportsKMT.toLocaleString('en-US')} kMT</> : "—"}
+            </span>
+          </div>
+
+          {/* Box 5: 수확면적 (Area Harvested) */}
+          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
+            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">{isSoybeanOil ? '원료 대두 압착량 (연간 전망)' : 'Area Harvested (수확 면적)'}</span>
+            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-area"}>
+              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?(data.crush1000MT/1000).toFixed(3)+' MMT':(previous?'—':'N/A') : !showSupplyFigures || !data.areaHarvestedMHA ? (previous?'—':'N/A') : <>{data.areaHarvestedMHA.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M HA</>}
+            </span>
+            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
+              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?data.crush1000MT.toLocaleString('en-US')+' kMT':(previous?'—':'공식 압착량 미확인') : !showSupplyFigures || !data.areaHarvestedKHA ? (previous?'—':'공식 면적 미연동') : <>{data.areaHarvestedKHA.toLocaleString('en-US')} kHA</>}
+            </span>
+          </div>
+
+          {/* Box 6: 단수/수확량 (Yield) */}
+          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
+            <span className="text-[10px] text-[#6b7280] block font-sans">{isSoybeanOil ? '생산/압착량 환산율' : '단수/수확량 (Yield)'}</span>
+            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-yield"}>
+              {isSoybeanOil ? showSupplyFigures&&data.oilCrushRatioPct!==undefined?data.oilCrushRatioPct.toFixed(2)+'%':(previous?'—':'N/A') : !showSupplyFigures || !data.yieldMTHA ? (previous?'—':'N/A') : <>{data.yieldMTHA.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT/HA</>}
+            </span>
+            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
+              {isSoybeanOil ? '생산 ÷ 압착량 · 연간 전망' : !showSupplyFigures || !data.yieldKGHA ? (previous?'—':'공식 단수 미연동') : <>{data.yieldKGHA.toLocaleString('en-US')} kg/HA</>}
+            </span>
+          </div>
+        </div>
+  );
 
   return (
     <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className || ''}`.trim()}>
@@ -299,113 +369,28 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
           <div className="flex items-center gap-1.5 min-w-0 flex-1">
             <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
             <h3 className="text-base font-bold text-slate-900 break-keep">
-              글로벌 수급 밸런스 (Global S&D Balance){commodityName ? ` - ${commodityName}` : ''}
+              글로벌 수급 밸런스 (Global S&D Balance)
             </h3>
             {isLoading && (
-              <span className="relative flex h-2 w-2 ml-1 shrink-0" title="동기화 중">
+              <span className="relative flex h-2 w-2 ml-1 shrink-0" aria-description="동기화 중">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4F46E5]"></span>
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-500 font-normal whitespace-normal text-right">
-              Market Year: <span className="text-slate-800 font-semibold">{!showSupplyFigures ? '—' : (['wheat', 'corn', 'soybean','soybean-oil'].includes(normalizedId) && /^20\d{2}$/.test(String(data.marketYear)) ? `${data.marketYear}/${String(Number(data.marketYear) + 1).slice(-2)}` : (data.marketYear || '—'))}</span>
-            </span>
-          </div>
         </div>
 
         {/* Dynamic 6-Grid S&D Telemetry Card */}
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] wasde-grid gap-3">
-          {/* Box 1: 총생산 (Production) */}
-          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans">총생산 (Production)</span>
-            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id="commodity-wasde-prod">
-              {showSupplyFigures ? <>{data.productionMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : "데이터 없음"}
-            </span>
-            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {showSupplyFigures ? <>{data.productionKMT.toLocaleString('en-US')} kMT</> : "—"}
-            </span>
-          </div>
+        <div className="text-xs text-slate-500" data-supply-year="current">Market Year: {!showSupplyFigures?'—':yearLabel(data.marketYear)}</div>
+        {renderSupplyGrid(data,showSupplyFigures)}
+        <div className="text-xs text-slate-500" data-supply-year="previous">Market Year: {yearLabel(String(Number(data.marketYear)-1))}</div>
+        {renderSupplyGrid(previousData||data,!!previousData,true)}
 
-          {/* Box 2: 총소비 (Consumption) */}
-          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">Domestic Consumption (총소비)</span>
-            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id="commodity-wasde-cons">
-              {showSupplyFigures ? <>{data.consumptionMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : "데이터 없음"}
-            </span>
-            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {showSupplyFigures ? <>{data.consumptionKMT.toLocaleString('en-US')} kMT</> : "—"}
-            </span>
-          </div>
 
-          {/* Box 3: 기말재고 (Ending Stocks) */}
-          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans">기말재고 (Ending Stocks)</span>
-            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id="commodity-wasde-stocks">
-              {showSupplyFigures ? <>{data.endingStocksMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : "데이터 없음"}
-            </span>
-            <span className="text-[10px] font-mono text-slate-600 font-medium block mt-0.5" id="commodity-wasde-stu">
-              {showSupplyFigures ? <>재고율 {data.stocksToUseRatio.toFixed(1)}% (S/U)</> : "—"}
-            </span>
-          </div>
-
-          {/* Box 4: 총수출량 (Exports) */}
-          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans">총수출량 (Exports)</span>
-            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id="commodity-wasde-exports">
-              {showSupplyFigures ? <>{data.exportsMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : "데이터 없음"}
-            </span>
-            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {showSupplyFigures ? <>{data.exportsKMT.toLocaleString('en-US')} kMT</> : "—"}
-            </span>
-          </div>
-
-          {/* Box 5: 수확면적 (Area Harvested) */}
-          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">{isSoybeanOil ? '원료 대두 압착량 (연간 전망)' : 'Area Harvested (수확 면적)'}</span>
-            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id="commodity-wasde-area">
-              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?(data.crush1000MT/1000).toFixed(3)+' MMT':'N/A' : !showSupplyFigures || !data.areaHarvestedMHA ? 'N/A' : <>{data.areaHarvestedMHA.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M HA</>}
-            </span>
-            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?data.crush1000MT.toLocaleString('en-US')+' kMT':'공식 압착량 미확인' : !showSupplyFigures || !data.areaHarvestedKHA ? '공식 면적 미연동' : <>{data.areaHarvestedKHA.toLocaleString('en-US')} kHA</>}
-            </span>
-          </div>
-
-          {/* Box 6: 단수/수확량 (Yield) */}
-          <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans">{isSoybeanOil ? '생산/압착량 환산율' : '단수/수확량 (Yield)'}</span>
-            <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id="commodity-wasde-yield">
-              {isSoybeanOil ? showSupplyFigures&&data.oilCrushRatioPct!==undefined?data.oilCrushRatioPct.toFixed(2)+'%':'N/A' : !showSupplyFigures || !data.yieldMTHA ? 'N/A' : <>{data.yieldMTHA.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT/HA</>}
-            </span>
-            <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {isSoybeanOil ? '생산 ÷ 압착량 · 연간 전망' : !showSupplyFigures || !data.yieldKGHA ? '공식 단수 미연동' : <>{data.yieldKGHA.toLocaleString('en-US')} kg/HA</>}
-            </span>
-          </div>
-        </div>
-
-        {/* Executive Brief */}
-        {(showSupplyFigures && (data.executiveBrief || customBrief)) && (
-          <p className="text-xs text-[#4b5563] bg-[#f9fafb] p-2.5 rounded border border-[#e5e7eb] leading-relaxed">
-            {data.executiveBrief || customBrief}
-          </p>
-        )}
       </div>
 
       {/* Footer Source — the underlying verifiedAt stays available for freshness checks. */}
-      <div className="rms-source mt-auto pt-4 flex justify-end text-right text-xs text-gray-400">
-        <span className="block w-full break-keep" title={isVerifiedUsdaCommodity && usdaVerifiedAt ? `USDA 자료 검증일: ${usdaVerifiedAt.slice(0, 10)}` : undefined}>
-          출처:{' '}
-          <a
-            href="https://apps.fas.usda.gov/psdonline/app/index.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
-          >
-            USDA FAS PSD Online ↗
-          </a>
-        </span>
-      </div>
+      <SourceAttribution className="mt-auto pt-4 justify-end text-right" aria-description={isVerifiedUsdaCommodity && usdaVerifiedAt ? 'USDA 자료 검증일: '+usdaVerifiedAt.slice(0,10) : undefined} entries={[{label:'USDA FAS PSD Online',url:'https://apps.fas.usda.gov/psdonline/app/index.html'}]}/>
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import {policyRecordPresentation} from '../utils/overviewMacroPresentation.ts';
+import {readFreePublication,freeRefreshStatus} from './freeDailyPublication.ts';
 import {assessProcurementRisk} from '../utils/procurementRisk.ts';
 import {collectAnalysisEvidence} from './analysisEvidence.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
@@ -170,7 +172,7 @@ function status() {
   const s=settings(); const t=kst(); const ledger=readJson(ledgerFile);
   return {
     stage:'weekday-snapshots', paidGeminiCalls:'BLOCKED_ON_PAGE_VIEW',
-    freeSources:freeRefreshSettings(),
+    freeSources:{...freeRefreshSettings(),...freeRefreshStatus()},
     autoEnabled:false, mode:s.mode, scheduleHourKST:s.scheduleHourKST,
     timezone:'Asia/Seoul', todayKST:t.day, weekday:!['Sat','Sun'].includes(t.weekday),
     lastAttempt:ledger ?? null, running:state.running,
@@ -400,6 +402,14 @@ export function createStage3Gateway() {
     if(key==='news-tapioca-starch')return respond(res,200,savedNewsResponse('tapioca-starch',readVerifiedTapiocaNews()));
     if(key==='news-sugar')return respond(res,200,savedNewsResponse('sugar',readVerifiedSugarNews()));
     if(key==='news-palm-oil')return respond(res,200,savedNewsResponse('palm-oil',[...readVerifiedPalmNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='USDA ERS')]));
+    if(key==='trade-policy'){
+      const p=readFreePublication()?.data?.transportPolicy?.policy;
+      if(p?.url&&p?.publishedOn)return respond(res,200,policyRecordPresentation({...p,title:p.title,summary:p.summary||p.title,recordKind:p.recordKind||'announcement',publishedAt:p.publishedOn,sourceUrl:p.url,sourceName:'Federal Register'}));
+      // The legacy Indonesia tax snapshot has no original dated receipt. Use the
+      // existing verified editorial as a clearly labelled industry outlook only.
+      const a=readVerifiedPalmNews().find((a:any)=>a.originalUrl==='https://prestasisawit.mpob.gov.my/ms/palmnews/news/40027');
+      return respond(res,200,policyRecordPresentation(a?{title:a.title,displayTitle:'인도네시아 팜유 수출 가용량 감소 전망',summary:'인도네시아 업계는 2027년 생산 감소와 바이오디젤 수요 증가를 전망했습니다.',procurementImplication:'수출 가용량이 줄 수 있어 공급처 오퍼와 선적 조건을 주시할 필요가 있습니다.',procurementStatus:'수출 가용량 주시 (중립)',recordKind:'industry-outlook',statusType:'neutral',publishedAt:a.publishedAt,sourceUrl:a.originalUrl,sourceName:'MPOB · Reuters'}:{title:'통상 정책',summary:'새 공식 발표가 확인되지 않았습니다.',statusType:'neutral',statusTag:'판정 보류'}));
+    }
     const cached=readSnapshot(key);
     if(cached?.payload) {
       res.setHeader('X-RMS-Data-Updated-At',cached.updatedAt||'');
@@ -440,6 +450,7 @@ export function createStage3Gateway() {
         const editorial=key==='analysis-potato-starch'?rmsAiEditorial('potato-starch',data.generatedAt,data.sources,data):null;
         return respond(res,200,{...cached.payload,data:{...data,...(editorial?.editorial?{...editorial.fields,sources:editorial.sources,presentationEditorial:{version:editorial.editorial,originalSnapshot:editorial.snapshot}}:{}),status:'cached'}});
       }
+      if(key==='macro-overview'){const data=readFreePublication()?.data,raw=data?.fx?.raw;if(raw)return respond(res,200,{...cached.payload,usdKrw:raw.rates.KRW,eurKrw:raw.rates.KRW/raw.rates.EUR,...(data.energy?.observationDate?{brent:data.energy.currentPrice}:{}),...(data.freight?.observationDate?{scfi:data.freight.scfiPoints}:{}),freeDataObservationDate:raw.date});}
       return respond(res,200,cached.payload);
     }
     if(key.startsWith('news-') && remainingIds.includes(key.slice(5)))

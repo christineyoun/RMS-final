@@ -37,7 +37,9 @@ export async function rememberGraphRefresh(id:string,payload:any){
  if(id==='corn')retainCornGraphHistory(payload);
  if(id==='sugar'){
   const {validateSugarHistory}=await import('./sugarPriceSnapshotService.ts');validateSugarHistory(payload);
-  manualSnapshots.set(id,structuredClone(payload));
+  const file=path.join(process.env.RMS_HISTORY_ROOT||process.cwd(),'.rms-price-history/sugar.json');
+  fs.mkdirSync(path.dirname(file),{recursive:true});let prior:any;try{prior=JSON.parse(fs.readFileSync(file,'utf8')).payload;}catch{}
+  if(!prior||Date.parse(payload.fetchedAt)>=Date.parse(prior.fetchedAt)){const points=new Map((prior?.data||[]).map((p:any)=>[p.date,p]));for(const p of payload.data)points.set(p.date,p);const saved={...payload,data:[...points.values()].sort((a:any,b:any)=>a.date.localeCompare(b.date))};const tmp=file+'.'+process.pid+'.tmp';fs.writeFileSync(tmp,JSON.stringify({version:1,payload:saved},null,2));fs.renameSync(tmp,file);manualSnapshots.set(id,structuredClone(saved));}
  }
 }
 function savedWheat(){
@@ -63,6 +65,7 @@ async function savedHistory(id:string,timeframe:string):Promise<any>{
  }
  if(id==='sugar'){
   if(manualSnapshots.has(id))return structuredClone(manualSnapshots.get(id));
+  const store=path.join(process.env.RMS_HISTORY_ROOT||process.cwd(),'.rms-price-history/sugar.json');if(fs.existsSync(store)){const saved=JSON.parse(fs.readFileSync(store,'utf8'));const {validateSugarHistory}=await import('./sugarPriceSnapshotService.ts');if(saved.version===1)return validateSugarHistory(saved.payload);}
   const receipt=JSON.parse(fs.readFileSync(path.join(process.cwd(),'.rms-stage3/evidence/sugar-price.json'),'utf8'));
   if(receipt.status!==200||createHash('sha256').update(receipt.body).digest('hex')!==receipt.sha256||!Number.isFinite(Date.parse(receipt.retrievedAt))||Date.parse(receipt.retrievedAt)>Date.now())throw Error('Saved Sugar price receipt integrity failed');
   const payload=JSON.parse(receipt.body);

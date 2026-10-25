@@ -1,3 +1,6 @@
+import {getRecommendationColor} from '../utils/recommendationPresentation';
+export {getRecommendationColor} from '../utils/recommendationPresentation';
+import {SourceAttribution} from './SourceAttribution';
 import React from 'react';
 import { Bot, Loader2 } from 'lucide-react';
 import {aiPublisherLabel,aiSourceTooltip,isDirectAiFooterSource,type AiDisplaySource} from '../utils/aiSourcePresentation';
@@ -25,28 +28,6 @@ export interface AiRecommendationProps {
   className?: string;
 }
 
-export const getRecommendationColor = (text: string,commodityId?:string) => {
-  if(commodityId==='palm-oil')return 'bg-slate-50 border border-slate-200 text-slate-700 font-semibold px-2.5 py-1 rounded-md';
-  if (!text) return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
-
-  // Tier 1: HIGH RISK / TIGHT BUFFER (Solid Red)
-  if (text.includes('30~45일') || text.includes('즉시') || text.includes('조치 필요')) {
-    return 'rms-status-negative bg-[#DF0029] text-white font-bold px-2.5 py-1 rounded-md shadow-xs';
-  }
-
-  // Tier 2: EXTENDED LONG-TERM LOCK (Soft Green - 60~75d)
-  if (text.includes('60~75일') || text.includes('60일') || text.includes('75일') || text.includes('우호적') || text.includes('유럽 수입 계약')) {
-    return 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
-  }
-
-  // Tier 3: HYBRID SPOT/FORWARD / CAUTION (주의 / 중위험 / 스팟/선도)
-  if (text.includes('주의') || text.includes('중위험') || text.includes('스팟/선도') || text.includes('혼합')) {
-    return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
-  }
-
-  // Tier 4: FLEXIBLE SPLIT-BUY / CAUTION (Soft Orange - 45~60d, 분할 구매, 스팟/선도)
-  return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
-};
 
 export default function AiRecommendation({
   commodityId,
@@ -151,7 +132,7 @@ export default function AiRecommendation({
         {/* Coverage Recommendation Badge */}
         <div className="flex items-center gap-2 mt-2 mb-4">
           <span className="text-xs font-semibold text-slate-500">데스크 권고:</span>
-          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getRecommendationColor(recommendedCoverage,commodityId)}`}>
+          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getRecommendationColor(recommendedCoverage)}`}>
             {recommendedCoverage}
           </span>
         </div>
@@ -216,18 +197,8 @@ export default function AiRecommendation({
       </div>
 
       {/* Footer Citation */}
-      {sourceLinks.length>0&&<div data-rms-ai-sources className="rms-source mt-auto pt-4 min-w-0 text-right text-xs text-gray-400 leading-relaxed break-words">
-          <span>출처: </span>
-          {sourceLinks.map((source, idx) => (
-            <React.Fragment key={source.url}>
-            {idx>0&&<span aria-hidden="true"> · </span>}
-            <a key={`${source.url}-${idx}`} href={source.url} target="_blank" rel="noopener noreferrer"
-               className="whitespace-normal [overflow-wrap:anywhere] text-slate-600 font-semibold no-underline hover:underline focus-visible:underline hover:text-rose-700" aria-description={aiSourceTooltip(source)}>
-              {aiPublisherLabel(source)}{'\u00a0'}↗
-            </a>
-            </React.Fragment>
-          ))}
-      </div>}
+      {sourceLinks.length>0&&<SourceAttribution data-rms-ai-sources className="mt-auto pt-4 justify-end text-right" entries={sourceLinks.map(source=>({label:aiPublisherLabel(source),url:source.url,description:aiSourceTooltip(source)}))}/>}
+
     </div>
   );
 }

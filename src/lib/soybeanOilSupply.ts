@@ -2,8 +2,8 @@
 import type {UsdaWheatWorldSummary,UsdaPsdRawRecord} from '../server/usdaFasService';
 export type SoybeanOilSupplyResult={success:boolean;status:'live-verified'|'last-verified'|'unavailable';data?:UsdaWheatWorldSummary;verifiedAt?:string;checkedAt:string;marketYear?:string;message?:string;refreshFailed?:boolean};
 export const soybeanOilMarketingYear=(now=new Date())=>now.getUTCMonth()>=9?now.getUTCFullYear():now.getUTCFullYear()-1;
-export function parseSoybeanOilSupply(input:unknown,year=soybeanOilMarketingYear(),now=new Date()):UsdaWheatWorldSummary|null {
- const rows=(Array.isArray(input)?input:(input as any)?.data) as UsdaPsdRawRecord[];if(!Array.isArray(rows)||!rows.length||year!==soybeanOilMarketingYear(now))return null;
+export function parseSoybeanOilSupply(input:unknown,year=soybeanOilMarketingYear(),now=new Date(),historical=false):UsdaWheatWorldSummary|null {
+ const rows=(Array.isArray(input)?input:(input as any)?.data) as UsdaPsdRawRecord[];if(!Array.isArray(rows)||!rows.length||(historical?year<2010||year>=soybeanOilMarketingYear(now):year!==soybeanOilMarketingYear(now)))return null;
  const attrs=new Map<number,number>(),periods=new Set<string>();
  for(const r of rows){if(!r||r.commodityCode!=='4232000'||r.countryCode!=='00'||Number(r.marketYear)!==year||!/^20\d{2}$/.test(String(r.calendarYear))||!Number.isInteger(Number(r.month))||Number(r.month)<1||Number(r.month)>12||typeof r.value!=='number'||!Number.isFinite(r.value)||r.value<0)return null;
   const period=String(r.calendarYear)+'-'+String(r.month).padStart(2,'0');periods.add(period);

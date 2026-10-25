@@ -159,7 +159,9 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
       date: item.date,
       usdPerMT: item.price,
       centsPerBushel: item.price,
-      isSynthetic: item.isSynthetic || false
+      isSynthetic: item.isSynthetic || false,
+      provenance: item.provenance,
+      sourceUrl: item.sourceUrl
     }));
 
     return {

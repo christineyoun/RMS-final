@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 /**
  * Live authenticated USDA world PSD for Wheat, Corn, Soybean, Palm Oil & Sugar.
  * Unlike the legacy generic /api/usda route, this module NEVER treats a static
@@ -99,7 +100,8 @@ async function refresh(id: string, force: boolean): Promise<PsdOtherResult> {
       lastAttempt.set(id, Date.now());
       try {
         await fs.mkdir(path.dirname(cacheFile(id)), { recursive: true });
-        await fs.writeFile(cacheFile(id), JSON.stringify(snapshot, null, 2));
+        const tmp=cacheFile(id)+'.'+process.pid+'.tmp';await fs.writeFile(tmp, JSON.stringify(snapshot, null, 2));await fs.rename(tmp,cacheFile(id));
+        await fs.writeFile(path.join(path.dirname(cacheFile(id)),`usda_world_verified_${id}_${year}.json`),JSON.stringify({...snapshot,sourceUrl:`${BASE_URL}/commodity/${snapshot.commodityCode}/world/year/${year}`,observationStatus:'as-reported'},null,2));
       } catch (e) { console.warn(`[USDA ${id}] Unable to write cache`, e); }
       return { success: true, status: 'live-verified', checkedAt, verifiedAt: checkedAt,
         marketYear: data.marketYear, data };
@@ -117,3 +119,28 @@ export async function fetchOtherCommodityWorldPsd(id: string, force = false): Pr
   return request;
 }
 export const _verifyOtherWorldPsd = summaryFor;
+
+/** Explicit, year-specific historical read; never overwrites the current verified snapshot. */
+export async function fetchHistoricalWorldPsd(id:string,year:number){
+ const code=id==='soybean-oil'?'4232000':USDA_WORLD_COMMODITIES[id]?.code;
+ if(!code||!Number.isInteger(year)||year<2010||year>=new Date().getUTCFullYear())throw Error('Unsupported historical PSD year');
+ const key=(process.env.USDA_FAS_API_KEY||process.env.USDA_API_KEY||'').trim();if(!key)throw Error('USDA API key unavailable');
+ let sourceUrl=`${BASE_URL}/commodity/${code}/world/year/${year}`;const retrievedAt=new Date().toISOString();
+ const options={headers:{Accept:'application/json',API_KEY:key,'x-api-key':key},signal:AbortSignal.timeout(12000),cache:'no-store' as const};
+ let response:Response;
+ try{response=await fetch(sourceUrl,options);}catch{
+  // Same official PSD API, documented host/base path in USDA's OpenData Swagger.
+  sourceUrl=`https://apps.fas.usda.gov/OpenData/api/psd/commodity/${code}/world/year/${year}`;
+  response=await fetch(sourceUrl,{...options,signal:AbortSignal.timeout(12000)});
+ }
+ const body=await response.text();
+ const receipt={sourceUrl,retrievedAt,status:response.status,sha256:createHash('sha256').update(body).digest('hex'),body};
+ const file=path.join(process.cwd(),'.rms-stage3','evidence',`usda-${id}-${year}.json`);
+ await fs.writeFile(file,JSON.stringify(receipt,null,2));
+ if(!response.ok)throw Error(`USDA historical HTTP ${response.status}`);
+ const raw=JSON.parse(body),data=id==='soybean-oil'?(await import('../lib/soybeanOilSupply.ts')).parseSoybeanOilSupply(raw,year,new Date(),true):summaryFor(raw,id,year);
+ if(!data)throw Error('Historical PSD identity, units or balance validation failed');
+ const saved={commodity:id,commodityCode:code,verifiedAt:retrievedAt,sourceUrl,observationStatus:'historical-as-reported',data};
+ await fs.writeFile(path.join(process.cwd(),'src','data',`usda_world_verified_${id}_${year}.json`),JSON.stringify(saved,null,2));
+ return saved;
+}

@@ -9,6 +9,8 @@ export interface TtsaWeeklyPrice {
   price: number; // FOB Bangkok USD/MT
   domesticThb?: number; // THB/kg
   isSynthetic?: boolean;
+  provenance?: string;
+  sourceUrl?: string;
 }
 
 export interface TtsaSupplyBalance {
@@ -172,7 +174,7 @@ export class TtsaService {
     let history=loadPublicHistory('tapioca-starch');
     const requested=typeof timeframe==='boolean'?timeframe:force;
     if(requested && (!history.lastCheckedAt||Date.now()-Date.parse(history.lastCheckedAt)>6*3600000))history=await refreshPublicHistory('tapioca-starch');
-    return history.points.filter(p=>p.benchmark==='tapioca-fob').map(p=>({date:p.date,price:p.value,domesticThb:p.domesticThb}));
+    return history.points.filter(p=>p.benchmark==='tapioca-fob').map(p=>({date:p.date,price:p.value,domesticThb:p.domesticThb,provenance:p.provenance,sourceUrl:p.sourceUrl}));
   }
 
   private parseTtsaHtml(html: string): TtsaWeeklyPrice[] {

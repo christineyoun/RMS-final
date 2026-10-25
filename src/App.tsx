@@ -1,4 +1,3 @@
-import {soybeanDisplayFactor} from './utils/soybeanPriceSnapshot';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header, getKSTTime } from './components/Header';
@@ -9,7 +8,7 @@ import { COMMODITIES, MACRO_DRIVERS, MARKET_ISSUES } from './data/commoditiesDat
 import { Commodity, LiveMarketUpdate, Currency } from './types';
 import { geminiController } from './services/geminiController';
 import { subscribeFxRates, getAllFxRates, fetchLiveFxRates, getDatedDisplayFx, FXRates } from './services/currencyService';
-import { fetchCommodityQuotes } from './services/commodityQuoteSource';
+import { fetchCommodityQuotes, mapCommodityForDisplay } from './services/commodityQuoteSource';
 import { exportGlobalDashboardToPdf } from './utils/exportDashboardPdf';
 
 export default function App() {
@@ -159,13 +158,21 @@ export default function App() {
       if (!q) return c.id==='soybean-oil' ? c._soybeanOilPriceSnapshot ? {...c,_soybeanOilPriceSnapshot:{...c._soybeanOilPriceSnapshot,stale:true,lastError:'Price snapshot endpoint unavailable'}} : {...c,price:0,changeWoW:null,changeMoM:null,sparkline:[]} : c; // keep the previous successful snapshot if the source temporarily fails
       return { ...c, price:q.priceUsdMt, unit:'USD / MT', changeWoW:q.changeWoW,
         changeMoM:q.changeMoM, sparkline:q.sparkline,
-        ...(c.id==='soybean'?{_soybeanPriceSnapshot:q.soybeanSnapshot}:c.id==='soybean-oil'?{_soybeanOilPriceSnapshot:q.soybeanOilSnapshot}:c.id==='sugar'?{_sugarPriceSnapshot:q.sugarSnapshot}:{}),
+        ...(c.id==='tapioca-starch'?{changeYoY:q.changeYoY,_canonicalYoyUsdMt:q.changeYoYUsdMt,_canonicalYoyReferenceDate:q.yoyReferenceDate}:{}),
+        ...(c.id==='potato-starch'?{_potatoExportQuote:q.potatoSnapshot}:c.id==='soybean'?{_soybeanPriceSnapshot:q.soybeanSnapshot}:c.id==='soybean-oil'?{_soybeanOilPriceSnapshot:q.soybeanOilSnapshot}:c.id==='sugar'?{_sugarPriceSnapshot:q.sugarSnapshot}:{}),
         _canonicalQuoteDate:q.asOf, _canonicalQuoteSource:q.source,
         _canonicalWowUsdMt:q.changeWoWUsdMt, _canonicalMomUsdMt:q.changeMoMUsdMt };
     }));
   }, []);
 
-  useEffect(() => { void syncAllCommodityMetrics(); }, [syncAllCommodityMetrics]);
+  useEffect(() => {
+    // Saved-only reads update the shared model on navigation, focus and publication checks.
+    void syncAllCommodityMetrics();
+    const reload=()=>{void syncAllCommodityMetrics();};
+    const timer=window.setInterval(reload,60_000);
+    window.addEventListener('focus',reload);
+    return ()=>{window.clearInterval(timer);window.removeEventListener('focus',reload);};
+  }, [syncAllCommodityMetrics,activeView]);
 
   const handleRefreshGemini = async () => {
     if (isSyncing) return;
@@ -207,20 +214,9 @@ export default function App() {
 
   // Currency conversion is display-only and happens once in this shared parent.
   // An unavailable exchange rate shows an unavailable card price, never a hardcoded FX quote.
-  const mappedCommodities = useMemo(() => commodities.map(c => {
-    const price = Number.isFinite(c.price) && c.price > 0 ? c.price : 0;
-    const usdKrw = fxRates.USD_KRW;
-    const eurUsd = fxRates.EUR_USD;
-    const validFx = currency === 'USD' || (currency === 'KRW'
-      ? Number.isFinite(usdKrw) && usdKrw > 0
-      : Number.isFinite(eurUsd) && eurUsd > 0);
-    const soybeanFactor=soybeanDisplayFactor(currency,datedDisplayFx);
-    const converted = (c.id==='soybean'||c.id==='soybean-oil'||c.id==='sugar') ? (price&&Number.isFinite(soybeanFactor)?price*soybeanFactor:0) : !price || !validFx ? 0 : currency === 'KRW'
-      ? price * usdKrw : currency === 'EUR' ? price / eurUsd : price;
-    return { ...c, ...((c.id==='soybean'||c.id==='soybean-oil'||c.id==='sugar')?{_soybeanDisplayFx:datedDisplayFx}:{}), price:converted, unit:`${currency} / MT`,
-      // Detail pages can always refer to the original USD/MT snapshot.
-      _originalPrice:price, _originalUnit:'USD / MT' };
-  }), [commodities, currency, fxRates, datedDisplayFx]);
+  const mappedCommodities = useMemo(() => commodities.map(c =>
+    mapCommodityForDisplay(c,currency,datedDisplayFx)
+  ), [commodities,currency,datedDisplayFx]);
 
   // Find currently selected commodity if in detail view
   const currentCommodity = mappedCommodities.find((c) => c.path === activeView);
@@ -259,7 +255,7 @@ export default function App() {
               modelVersion={modelVersion}
               usdKrwRate={fxRates.USD_KRW || 0}
             />
-          ) : currency !== 'USD' && (currentCommodity.id==='soybean' ? !datedDisplayFx : (currency === 'KRW' && !(fxRates.USD_KRW > 0)) || (currency === 'EUR' && !(fxRates.EUR_USD > 0))) ? (
+          ) : currentCommodity.id!=='potato-starch' && currency !== 'USD' && (currentCommodity.id==='soybean' ? !datedDisplayFx : (currency === 'KRW' && !(fxRates.USD_KRW > 0)) || (currency === 'EUR' && !(fxRates.EUR_USD > 0))) ? (
             <div className="p-6 bg-white rounded-xl border border-slate-200 text-slate-600">
               환율 데이터를 확인할 수 없어 임의의 환율로 표시하지 않습니다. 잠시 후 다시 확인하거나
               <button type="button" className="ml-2 underline font-semibold text-slate-800" onClick={() => setCurrency('USD')}>USD/MT로 보기</button>

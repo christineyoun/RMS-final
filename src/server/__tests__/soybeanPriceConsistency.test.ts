@@ -7,7 +7,7 @@ import {formatCurrencyValue} from '../../utils/commodityPriceMetrics.ts';
 import {observedPriceChanges} from '../../utils/observedPriceChanges.ts';
 import {grainCentsPerBuToUsdPerMt} from '../../utils/commodityConversions.ts';
 const native=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Offline test: all network and paid calls blocked');};
-const protectedFiles=['.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl',...fs.readdirSync('.rms-stage3/snapshots').map(n=>'.rms-stage3/snapshots/'+n)];
+const protectedFiles=['.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl',...fs.readdirSync('.rms-stage3/snapshots').filter(n=>fs.statSync('.rms-stage3/snapshots/'+n).isFile()).map(n=>'.rms-stage3/snapshots/'+n)];
 const before=protectedFiles.map(f=>fs.readFileSync(f).toString('base64'));
 try{
  const today=new Date().toISOString().slice(0,10),date=(days:number)=>new Date(Date.parse(today)-days*86400000).toISOString().slice(0,10);
@@ -33,7 +33,7 @@ try{
  const urls:string[]=[];globalThis.fetch=async(input:any)=>{const url=String(input);urls.push(url);return Response.json(url.startsWith('/api/soybean/price-snapshot')?a:{success:false});};
  const batch=await fetchCommodityQuotes(true);assert.equal(batch.soybean?.priceUsdMt,q.priceUsdMt);assert.equal(urls.filter(u=>u.startsWith('/api/soybean/price-snapshot')).length,1);assert.ok(!urls.some(u=>u.includes('commodity=soybean&')));
  const {fetchLiveFxRates,getDatedDisplayFx}=await import('../../services/currencyService.ts');
- globalThis.fetch=async(input:any)=>Response.json(String(input).includes('frankfurter.dev')?{base:'USD',date:date(1),rates:{KRW:1329.49,EUR:.89087}}:{});
+ globalThis.fetch=async(input:any)=>Response.json(String(input)==='/api/rms/free-fx'?{raw:{base:'USD',date:date(1),rates:{KRW:1329.49,EUR:.89087}},verifiedAt:new Date().toISOString()}:{});
  await fetchLiveFxRates(true);const retainedFx=getDatedDisplayFx();assert.equal(retainedFx?.observationDate,date(1));
  globalThis.fetch=async()=>new Response('',{status:503});await fetchLiveFxRates(true);assert.deepEqual(getDatedDisplayFx(),retainedFx,'outage preserves actual FX date and rates');
  assert.deepEqual(protectedFiles.map(f=>fs.readFileSync(f).toString('base64')),before,'saved snapshots/paid history unchanged');

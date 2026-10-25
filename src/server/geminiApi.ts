@@ -1,3 +1,5 @@
+import {createHash} from 'node:crypto';
+import {savedFreeDataResponse} from './savedFreeDataResponse.ts';
 import {sugarPriceSnapshotService} from './sugarPriceSnapshotService.ts';
 import {savedGraphHistoryResponse,rememberGraphRefresh} from './savedGraphHistory.ts';
 import {potatoProductionPayload,getRegionalPotatoProduction,readSavedRegionalPotatoProduction} from './potatoProductionHistory.ts';
@@ -93,45 +95,51 @@ let potatoGroundingCooldownUntil = 0;
 let cachedPotatoResponse: any = null;
 
 // Crude Oil & Energy Live Cache
-const energyCache = new Map<string, { currentPrice: number; pctChange: number; expiresAt: number }>();
+const energyCache = new Map<string, { currentPrice: number; pctChange: number|null; observationDate?:string; sourceUrl?:string; previousPrice?:number;previousObservationDate?:string; expiresAt: number }>();
 
-export async function fetchLiveCrudeOilData(ticker: string = 'BZ=F', fallbackPrice: number = 101.40): Promise<{ currentPrice: number; pctChange: number }> {
-  const now = Date.now();
-  const cached = energyCache.get(ticker);
-  if (cached && now < cached.expiresAt) {
-    return cached;
-  }
+/** Quote metadata and chart bars can use different reference bases. Display only
+ * a coherent source-reported quote change; never mix it with a historical bar. */
+export function parseYahooBrentQuote(meta:any,retrievedAt:string) {
+ const valid=(v:any)=>typeof v==='number'&&Number.isFinite(v);
+ const stamp=meta?.regularMarketTime*1000;
+ if(!Number.isFinite(Date.parse(retrievedAt)))return null;
+ if(meta?.symbol!=='BZ=F'||meta.currency!=='USD'||meta.instrumentType!=='FUTURE'||!valid(meta.regularMarketPrice)||meta.regularMarketPrice<=0||!Number.isFinite(stamp)||stamp<=0||stamp>Date.parse(retrievedAt))return null;
+ const price=meta.regularMarketPrice,change=meta.fulldayChange,pct=meta.regularMarketChangePercent;
+ const reference=valid(change)?price-change:null;
+ const coherent=valid(change)&&valid(pct)&&valid(meta.fulldayPrice)&&Math.abs(meta.fulldayPrice-price)<=.005&&valid(meta.fulldayChangePercent)&&Math.abs(meta.fulldayChangePercent-pct)<=.001&&reference!==null&&reference>0&&Math.abs(change/reference*100-pct)<=.001;
+ const observationDate=new Date(stamp).toISOString();
+ return {price,observationDate,sessionDate:new Intl.DateTimeFormat('en-CA',{timeZone:meta.exchangeTimezoneName,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(stamp)),pctChange:coherent?pct:null,changeAmount:coherent?change:null,referencePrice:coherent?reference:null,referencePriceKind:'implied-from-published-quote-change',referenceSessionDate:null,comparisonBasis:coherent?'provider-reported-quote-change':'quote-change-unverified',contractIdentity:{symbol:meta.symbol,name:meta.longName||meta.shortName||'',exchange:meta.exchangeName||'',contractSymbol:meta.contractSymbol||null,expiry:meta.expireDate||null},rolloverVerified:false,officialSettlement:false};
+}
 
-  try {
-    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=2d`;
-    const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-      },
-      signal: AbortSignal.timeout(5000)
-    });
+export type BrentDailyObservation={sessionDate:string;observationDate:string;price:number};
+export function parseYahooBrentDaily(body:any,retrievedAt:string) {
+ const result=body?.chart?.result?.[0],meta=result?.meta,now=Date.parse(retrievedAt);
+ if(!Number.isFinite(now)||meta?.symbol!=='BZ=F'||meta.currency!=='USD'||meta.instrumentType!=='FUTURE'||meta.dataGranularity!=='1d'||!Array.isArray(result.timestamp))throw Error('BZ=F daily USD futures identity not verified');
+ const day=(time:number)=>new Intl.DateTimeFormat('en-CA',{timeZone:meta.exchangeTimezoneName,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time));
+ const today=day(now),closes=result.indicators?.quote?.[0]?.close;
+ if(!Array.isArray(closes)||closes.length!==result.timestamp.length)throw Error('Incomplete Brent daily chart');
+ const rows=result.timestamp.map((t:number,i:number)=>({sessionDate:day(t*1000),observationDate:new Date(t*1000).toISOString(),price:closes[i]}));
+ if(rows.some((r:BrentDailyObservation,i:number)=>i>0&&r.sessionDate<=rows[i-1].sessionDate))throw Error('Nonconsecutive/duplicate Brent chart order');
+ const currentPeriod=meta.currentTradingPeriod?.regular;
+ const complete=(r:BrentDailyObservation)=>r.sessionDate<today||r.sessionDate===today&&currentPeriod&&day(currentPeriod.start*1000)===r.sessionDate&&now>=(currentPeriod.end*1000+15*60000);
+ // Never bridge a missing daily close. The reference must be the immediately
+ // preceding bar, not the first close in the requested chart range.
+ const completed=rows.filter(complete),latest=completed.at(-1),prior=completed.at(-2);
+ const positive=(r:any)=>!!r&&typeof r.price==='number'&&Number.isFinite(r.price)&&r.price>0;
+ if(!positive(latest))throw Error('No completed dated Yahoo daily Brent close');
+ const previous=positive(prior)?prior:null;
+ return {quoteDisplay:parseYahooBrentQuote(meta,retrievedAt),currentPrice:latest.price,pctChange:previous?(latest.price/previous.price-1)*100:null,observationDate:latest.observationDate,sessionDate:latest.sessionDate,...(previous?{previousPrice:previous.price,previousObservationDate:previous.observationDate,previousSessionDate:previous.sessionDate}:{}),comparisonBasis:'provider-daily-close',benchmark:'BZ=F',unit:'USD/bbl',officialSettlement:false,observations:completed.filter(positive),provisionalQuote:typeof meta.regularMarketPrice==='number'&&Number.isFinite(meta.regularMarketPrice)&&Number.isFinite(meta.regularMarketTime)&&meta.regularMarketTime*1000<=now?{price:meta.regularMarketPrice,observationDate:new Date(meta.regularMarketTime*1000).toISOString(),kind:'provisional-futures-quote'}:null};
+}
 
-    if (response.ok) {
-      const json = await response.json();
-      const result = json.chart.result?.[0];
-      if (result?.meta) {
-        const currentPrice = result.meta.regularMarketPrice;
-        const prevClose = result.meta.chartPreviousClose || result.meta.previousClose;
-        if (typeof currentPrice === 'number' && typeof prevClose === 'number' && prevClose > 0) {
-          const pctChange = ((currentPrice - prevClose) / prevClose) * 100;
-          const data = { currentPrice, pctChange };
-          energyCache.set(ticker, { ...data, expiresAt: now + 300000 }); // 5 min cache
-          return data;
-        }
-      }
-    }
-  } catch (err: any) {
-    console.warn(`[fetchLiveCrudeOilData notice for ${ticker}]:`, err?.message);
-  }
-
-  const fallback = { currentPrice: fallbackPrice, pctChange: 0.45 };
-  return fallback;
+export async function fetchLiveCrudeOilData(ticker='BZ=F',_fallbackPrice=0):Promise<any> {
+ if(ticker!=='BZ=F')throw Error('Only the verified BZ=F daily-close collector is configured');
+ const now=Date.now(),cached=energyCache.get(ticker);if(cached&&now<cached.expiresAt)return cached;
+ const sourceUrl='https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=1mo';
+ const response=await fetch(sourceUrl,{signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error('Yahoo Brent HTTP '+response.status);
+ const body=await response.text(),retrievedAt=new Date().toISOString(),parsed=parseYahooBrentDaily(JSON.parse(body),retrievedAt);
+ const receiptSha256=createHash('sha256').update(body).digest('hex'),receiptPath='.rms-stage3/evidence/brent/'+receiptSha256+'.json';
+ fs.mkdirSync(path.dirname(receiptPath),{recursive:true});if(!fs.existsSync(receiptPath))fs.writeFileSync(receiptPath,JSON.stringify({sourceUrl,retrievedAt,status:response.status,body,sha256:receiptSha256},null,2));
+ const data={...parsed,sourceUrl,retrievedAt,receiptSha256,receiptPath};energyCache.set(ticker,{...data,expiresAt:now+300000});return data;
 }
 
 export async function fetchLiveExchangeRates(): Promise<{ usdKrw: number; eurKrw: number; change: string }> {
@@ -567,6 +575,8 @@ Please return a valid JSON object matching this structure EXACTLY (pure JSON wit
 export function createGeminiApiMiddleware() {
   return async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
     const url = req.url || '';
+    const dailySaved=await savedFreeDataResponse(url,req.method||'GET');
+    if(dailySaved){res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');res.statusCode=dailySaved.status;res.end(JSON.stringify(dailySaved.payload));return;}
     const savedHistory=await savedGraphHistoryResponse(url);
     if(savedHistory){
       res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');

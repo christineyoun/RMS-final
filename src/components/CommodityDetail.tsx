@@ -1,10 +1,14 @@
+import { getDailyPublicationIssue } from '../utils/dailyPublicationIssue';
+import { issuePdfFilename, stampPdfIssue } from '../utils/pdfPublication';
+import {commodityBenchmarkDisplay,commodityComparisonDisplay} from '../services/commodityQuoteSource';
+import {getRecommendationColor} from '../utils/recommendationPresentation';
 import {ChartCanvas, ChartSummaryCard, ChartTooltip, ChartRedGradient, chartSmoothPath, chartValueBounds, chartButtonClass, chartPresentation} from './CommodityChartPresentation';
 import {PotatoProductionChart} from './PotatoProductionChart';
-import {PotatoPriceChanges} from './PotatoPriceChanges';
+import {PotatoPriceChangesDisplay} from './PotatoPriceChanges';
 import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 import PotatoBenchmarkValue from './PotatoBenchmarkValue';
 import {soybeanDisplayFactor} from '../utils/soybeanPriceSnapshot';
-import { prefixCurrency } from '../utils/currencyFormatting';
+import { prefixCurrency, priceUnit } from '../utils/currencyFormatting';
 import {latestCommonPalmSpread,palmClosingRange} from '../utils/palmPriceIntegrity';
 import {ChartEndpointLabels} from './ChartEndpointLabels';
 import { observedPriceChanges } from '../utils/observedPriceChanges';
@@ -92,19 +96,6 @@ interface CommodityDetailProps {
 const palmCpoUsdPerMt = (point: { usdPerMT?: number; cpoUsd?: number }): number =>
   point.cpoUsd ?? point.usdPerMT ?? NaN;
 
-const getPdfFilename = (nameEn: string) => {
-  const cleanName = nameEn.trim().replace(/\s+/g, '');
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  const yyyymmdd = `${year}${month}${day}`;
-  const hhmm = `${hours}${minutes}`;
-  return `Nongshim_RMS_${cleanName}_${yyyymmdd}_${hhmm}.pdf`;
-};
-
 // Helper function for contract month mapping
 const formatContractMonth = (monthStr: string) => {
   if (!monthStr) return '';
@@ -117,27 +108,6 @@ const formatContractMonth = (monthStr: string) => {
   return months[monthStr] || monthStr;
 };
 
-const getRecommendationColor = (text: string) => {
-  if (!text) return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
-
-  // Tier 1: HIGH RISK / TIGHT BUFFER (Solid Red)
-  if (text.includes('30~45일') || text.includes('즉시') || text.includes('조치 필요')) {
-    return 'rms-status-negative bg-[#DF0029] text-white font-bold px-2.5 py-1 rounded-md shadow-xs';
-  }
-
-  // Tier 2: FAVORABLE / EXTENDED LOCK (Solid Green - Max 75d)
-  if (text.includes('60~75일') || text.includes('60일') || text.includes('75일') || text.includes('우호적')) {
-    return 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-semibold px-2.5 py-1 rounded-md';
-  }
-
-  // Tier 3: HYBRID SPOT/FORWARD / CAUTION (주의 / 중위험 / 스팟/선도)
-  if (text.includes('주의') || text.includes('중위험') || text.includes('스팟/선도') || text.includes('혼합')) {
-    return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
-  }
-
-  // Tier 4: STANDARD FLEXIBLE (Soft Light Orange - 45~60d)
-  return 'rms-status-warning bg-[#fff7ed] border border-[#fed7aa] text-[#EC870C] font-semibold px-2.5 py-1 rounded-md';
-};
 
 interface ChartPoint {
   date: string;
@@ -599,7 +569,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   'palm_oil': 'Bursa Malaysia FCPO · Investing.com',
   'sugar': 'ICE (SB)',
   'potato-starch': 'Eurostat · 원료감자 생산 대리지표',
-  'tapioca-starch': 'TTSA FOB Bangkok',
+  'tapioca-starch': 'TTSA (TS)',
 };
 
 export const getExchangeInfo = (commodityId: string) => {
@@ -712,7 +682,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const selectedCurrency = currency;
   const exchangeRate = selectedCurrency === 'KRW' ? (fxRates.USD_KRW || 1388.5) : selectedCurrency === 'EUR' ? (1 / (fxRates.EUR_USD || 1.08)) : 1;
   const currencySymbol = selectedCurrency === 'KRW' ? '₩' : selectedCurrency === 'EUR' ? '€' : '$';
-  const currencyLabel = currency === 'KRW' ? 'KRW/MT' : currency === 'EUR' ? 'EUR/MT' : 'USD/MT';
+  const currencyLabel = priceUnit(currency, currencySymbol);
 
   const formatPriceValue = (usdVal: number, decimals: number = 2) => {
     const converted = usdVal * exchangeRate;
@@ -750,7 +720,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const isPalmOil = commodity.id === 'palm-oil' || commodity.id === 'palmoil' || commodity.id === 'palm_oil';
   const isSugar = commodity.id === 'sugar';
   const isPotatoStarch = commodity.id === 'potato-starch';
-  const [potatoExportQuote,setPotatoExportQuote]=useState<PotatoExportQuoteResponse|null>(null);
+  const potatoExportQuote=commodity._potatoExportQuote||null;
   const isTapiocaStarch = commodity.id === 'tapioca-starch' || commodity.id === 'tapioca_starch';
 
   // CBOT & Commodity Live & Historical Price Report State
@@ -812,12 +782,12 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     if(!Number.isFinite(currentSpread))return '정규화 벤치마크 차이: --';
     const sign = currentSpread >= 0 ? '+' : '';
     if (currency === 'KRW') {
-      return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(Math.round(currentSpread).toLocaleString('en-US'), '₩')} KRW/MT`;
+      return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(Math.round(currentSpread).toLocaleString('en-US'), '₩')}${currencyLabel}`;
     }
     if (currency === 'EUR') {
-      return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(currentSpread.toFixed(2), '€')} EUR/MT`;
+      return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(currentSpread.toFixed(2), '€')}${currencyLabel}`;
     }
-    return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(currentSpread.toFixed(2), '$')} USD/MT`;
+    return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(currentSpread.toFixed(2), '$')}${currencyLabel}`;
   }, [currency, currentSpread, commonPalmSpread?.date]);
 
   const formatPalmPrice = (val: number) => {
@@ -1644,6 +1614,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // Use the same canonical quote and FX snapshot as Overview; no local price override.
   const effectiveBasePrice = commodity.price;
+  const benchmarkDisplay=commodityBenchmarkDisplay(commodity,currency);
 
   const dynamicKpiMetrics = useMemo(() => {
     // Percentage and absolute moves come from the same dated source observations.
@@ -1657,9 +1628,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       usdMt != null && Number.isFinite(usdMt) && fxFactor != null
         ? usdMt * fxFactor : null;
     return {
-      wowPct, momPct,
-      wowAmount: wowPct == null ? null : convertedMove(commodity._canonicalWowUsdMt),
-      momAmount: momPct == null ? null : convertedMove(commodity._canonicalMomUsdMt),
+      wowPct: isTapiocaStarch?momPct:wowPct, momPct:isTapiocaStarch?commodity.changeYoY??null:momPct,
+      wowAmount: isTapiocaStarch?(momPct==null?null:convertedMove(commodity._canonicalMomUsdMt)):wowPct == null ? null : convertedMove(commodity._canonicalWowUsdMt),
+      momAmount: isTapiocaStarch?(commodity.changeYoY==null?null:convertedMove(commodity._canonicalYoyUsdMt)):momPct == null ? null : convertedMove(commodity._canonicalMomUsdMt),
     };
   }, [commodity, effectiveBasePrice]);
 
@@ -2402,6 +2373,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     try {
       setIsExportingPdf(true);
+      const issue = await getDailyPublicationIssue();
 
       if (document.fonts && document.fonts.ready) {
         await document.fonts.ready;
@@ -2510,7 +2482,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       pdf.addPage();
       pdf.addImage(imgData2, 'PNG', margin, margin, imgHeight2>277?contentWidth*277/imgHeight2:contentWidth, fitImageHeight(imgHeight2), undefined, 'FAST');
 
-      const filename = getPdfFilename(commodity.nameEn);
+      stampPdfIssue(pdf, issue);
+      const filename = issuePdfFilename(commodity.nameEn, issue);
       try {
         pdf.save(filename);
       } catch {
@@ -2583,7 +2556,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   {isWheat
                     ? 'CBOT: SRW · KCBT: HRW · MIAX: HRS'
                     : isPalmOil
-                    ? 'Bursa Malaysia · FCPO / FPOL'
+                    ? 'Bursa FCPO · RBD Olein'
                     : isCorn
                     ? 'CBOT: CC1'
                     : isSoybean
@@ -2593,7 +2566,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     : isSugar
                     ? 'ICE: SB'
                     : isPotatoStarch
-                    ? 'Eurostat Comext · 생산 통계'
+                    ? 'Eurostat · JRC MARS'
                     : isTapiocaStarch
                     ? 'TTSA: TS'
                     : commodity.ticker}
@@ -2613,34 +2586,32 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             {/* Card 1: Benchmark Price */}
             <div id="scm-benchmark-price-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">
-                {isWheat ? '기준 시세 (CBOT SRW)' : '기준 시세'}
+                기준 시세
               </span>
-              {isPotatoStarch ? <PotatoBenchmarkValue isSyncing={isSyncing} onQuote={setPotatoExportQuote} /> : <>
+              {isPotatoStarch ? <PotatoBenchmarkValue currency={currency} quote={potatoExportQuote} fx={commodity._canonicalDisplayFx} /> : <>
               <div className="flex items-baseline gap-1 min-w-0 flex-wrap sm:flex-nowrap">
                 <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 whitespace-nowrap">
-                  {(isPotatoStarch || !(effectiveBasePrice > 0) || (isWheat && !usWheatHistory?.metrics?.srw)) ? '--' : `${prefixCurrency(formatConvertedPrice(effectiveBasePrice), currencySymbol)}`}
+                  {benchmarkDisplay.value}
                 </span>
                 <span className="text-[10px] font-normal text-slate-500 font-mono whitespace-nowrap">
                   {currencyLabel}
                 </span>
               </div>
-              <p className={isSoybeanOil ? "text-[11px] text-slate-500 font-mono mt-1 leading-tight whitespace-normal break-words" : "text-[11px] text-slate-500 font-mono mt-1 leading-tight whitespace-nowrap overflow-hidden text-ellipsis"}>
-                {SOURCE_LABELS[commodity.id] || commodity.ticker} · {isSugar?'ICE: SB BENCHMARK':commodity.gradeEn}
-              </p>
+
               </>}
             </div>
 
             {/* Card 2: WoW & MoM Side-by-Side with Exact Amount Below */}
             <div id="scm-weekly-change-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
-              {isPotatoStarch ? <PotatoPriceChanges quote={potatoExportQuote} /> : <>
+              {isPotatoStarch ? <PotatoPriceChangesDisplay quote={potatoExportQuote} currency={currency} fx={commodity._canonicalDisplayFx} /> : <>
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1">
-                시세 변동률 (WoW / MoM)
+                {isTapiocaStarch?'시세 변동률 (MoM / YoY)':'시세 변동률 (WoW / MoM)'}
               </span>
 
               <div className="grid grid-cols-2 gap-2 items-center pt-0.5">
                 {/* Left: WoW */}
                 <div className="border-r border-slate-200/80 pr-2">
-                  <span className="text-[10px] font-medium text-slate-400 block font-sans">주간 (WoW)</span>
+                  <span className="text-[10px] font-medium text-slate-400 block font-sans">{isTapiocaStarch?'전월 (MoM)':'주간 (WoW)'}</span>
                   {dynamicKpiMetrics?.wowPct != null ? (
                     <>
                       <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
@@ -2649,7 +2620,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                         <span className="material-symbols-outlined text-[14px]">
                           {dynamicKpiMetrics.wowPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
                         </span>
-                        <span>{dynamicKpiMetrics.wowPct >= 0 ? `+${dynamicKpiMetrics.wowPct.toFixed(2)}%` : `${dynamicKpiMetrics.wowPct.toFixed(2)}%`}</span>
+                        <span>{commodityComparisonDisplay(commodity,isTapiocaStarch?'mom':'wow')}</span>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
                         {dynamicKpiMetrics.wowAmount != null
@@ -2666,7 +2637,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
                 {/* Right: MoM */}
                 <div className="pl-1">
-                  <span className="text-[10px] font-medium text-slate-400 block font-sans">전월 (MoM)</span>
+                  <span className="text-[10px] font-medium text-slate-400 block font-sans">{isTapiocaStarch?'전년 동기 (YoY)':'전월 (MoM)'}</span>
                   {dynamicKpiMetrics?.momPct != null ? (
                     <>
                       <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
@@ -2675,7 +2646,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                         <span className="material-symbols-outlined text-[14px]">
                           {dynamicKpiMetrics.momPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
                         </span>
-                        <span>{dynamicKpiMetrics.momPct >= 0 ? `+${dynamicKpiMetrics.momPct.toFixed(2)}%` : `${dynamicKpiMetrics.momPct.toFixed(2)}%`}</span>
+                        <span>{commodityComparisonDisplay(commodity,isTapiocaStarch?'yoy':'mom')}</span>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
                         {dynamicKpiMetrics.momAmount != null
@@ -2696,7 +2667,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             {/* Card 3: Desk Recommendation */}
             <div id="scm-desk-recommendation-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1.5">데스크 권고</span>
-              <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${isPalmOil?'bg-slate-50 border border-slate-200 text-slate-700':getRecommendationColor(activeDeskRecommendation)}`}>
+              <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
                 {activeDeskRecommendation}
               </span>
             </div>
@@ -2740,7 +2711,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 {isWheat ? '가격 추이 분석' : isPotatoStarch ? '원료감자 생산량 대리지표 · 전분 가격 아님' : '가격 추이 및 기술적 지표'} <span className="text-sm font-bold text-slate-900 ml-1">({isPotatoStarch ? 'Raw Potato Production Trend' : 'Price Trend Analysis'})</span>
               </h3>
               {isWheat && (
-                <span className="rms-source">출처: <a
+                <span className="rms-source inline-flex items-baseline gap-1">출처: <a
                   href={usWheatHistory?.sourceUrl || EXTERNAL_CHART_URLS['wheat'] || "https://uswheat.org/market-information/price-report/"}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -2754,7 +2725,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             <div className="flex items-center gap-2 flex-wrap text-xs text-gray-400 font-sans ml-1">
               {isWheat ? (
                 <>
-                  <span className="font-sans font-normal" title={(usWheatHistory as any)?.sourceStatus === 'unavailable' ? '원본 가격 자료 재확인 필요 · 마지막 저장 자료 표시 중' : undefined}>Report Date: <span className="font-normal text-gray-500">{usWheatHistory?.reportDate || '데이터 확인 중'}</span></span>
+                  <span className="font-sans font-normal" aria-description={(usWheatHistory as any)?.sourceStatus === 'unavailable' ? '원본 가격 자료 재확인 필요 · 마지막 저장 자료 표시 중' : undefined}>Report Date: <span className="font-normal text-gray-500">{usWheatHistory?.reportDate || '데이터 확인 중'}</span></span>
                   {isUsWheatFailed && (
                     <span className="rms-status-negative text-[10px] font-semibold text-[#DF0029] bg-red-50 px-1.5 py-0.5 rounded border border-red-200">
                       업데이트 실패 (이전 데이터 유지)
@@ -2768,7 +2739,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     href="https://www.investing.com/commodities/palm-oil"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
+                    className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
                   >
                     Bursa FCPO ↗
                   </a>
@@ -2777,26 +2748,26 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     href="https://www.investing.com/commodities/rbd-palm-olein"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:underline flex items-center gap-0.5 text-gray-400 hover:text-[#2563EB] transition-colors font-normal font-sans"
+                    className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#2563EB] transition-colors font-normal font-sans"
                   >
                     RBD Olein ↗
                   </a>
                 </div>
               ) : isPotatoStarch ? (
-                <span className="rms-source">출처: <a
+                <span className="rms-source inline-flex items-baseline gap-1">출처: <a
                   href="https://joint-research-centre.ec.europa.eu/monitoring-agricultural-resources-mars/jrc-mars-bulletin_en"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
+                  className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
                 >
                   Eurostat · 전체 감자 수확량 (전분 가격 아님) ↗
                 </a></span>
               ) : (
-                <span className="rms-source">출처: <a
+                <span className="rms-source inline-flex items-baseline gap-1">출처: <a
                   href={exchange.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
+                  className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
                 >
                   {exchange.name} ↗
                 </a></span>
@@ -2964,7 +2935,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           </div>
         )}
 
-        {isPalmOil && <div className="text-[10px] text-slate-500">CPO는 관측일 환율로 USD 환산 · 표시통화는 공통 환율 적용 · 벤치마크 차이는 실제 정제마진이 아닙니다.{(historicalData as any)?.diagnostics?.estimatedFxObservations>0 && ' 일부 과거 환산값은 고정환율 추정입니다.'}{(historicalData as any)?.diagnostics?.lastError && ' 일부 가격 원문 갱신 불가 · 저장된 관측값 표시'}</div>}
         {/* Metric Area: Palm Oil Dual Cards (CPO & Palm Olein) */}
         {isPalmOil && palmMetrics && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2986,7 +2956,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <div className="text-lg sm:text-xl font-bold font-mono text-slate-900">
                     {prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}
                     <span className="text-xs font-semibold text-slate-500 ml-1">{currencyLabel}</span>
-                    <span data-palm-observation="cpo" className="block text-[10px] font-normal text-slate-400">{latestPalmSeriesPoint?.date}</span>
                   </div>
                 </div>
 
@@ -3035,7 +3004,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <div className="text-lg sm:text-xl font-bold font-mono text-slate-900">
                     {prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}
                     <span className="text-xs font-semibold text-slate-500 ml-1">{currencyLabel}</span>
-                    <span data-palm-observation="olein" className="block text-[10px] font-normal text-slate-400">{latestOleinSeriesPoint?.date}</span>
 
                   </div>
                 </div>
@@ -3666,7 +3634,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-3">
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="text-[#6b7280]">52주 가격 밴드 및 위치 분석 (52-Week Range Percentile)</span>
-                <span className="font-mono text-[#111827]">{usWheatHistory?.metrics?.srw?.contractMonth || '계약월 확인 중'} 선물 벤치마크</span>
+                <span className="font-mono text-[#111827]">범위 내 {wheat52WeekStats.srw.pct}% 지점</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="space-y-1.5">
@@ -3674,7 +3642,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> CBOT SRW
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 {wheat52WeekStats.srw.pct}% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {wheat52WeekStats.srw.pct}% 지점</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
                     <div className="bg-[#DF0029] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats.srw.pct}%` }}></div>
@@ -3691,7 +3659,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#EC870C]"></span> KCBT HRW
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 {wheat52WeekStats.hrw.pct}% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {wheat52WeekStats.hrw.pct}% 지점</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
                     <div className="bg-[#EC870C] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats.hrw.pct}%` }}></div>
@@ -3708,7 +3676,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> MIAX HRS
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 {wheat52WeekStats.hrs.pct}% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {wheat52WeekStats.hrs.pct}% 지점</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
                     <div className="bg-[#2563EB] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats.hrs.pct}%` }}></div>
@@ -3726,9 +3694,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           ) : isPalmOil && palm52WeekStats ? (
             <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-3">
               <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-[#6b7280]">52주 종가 밴드 및 위치 분석 (52-Week Closing Range)</span>
+                <span className="text-[#6b7280]">52주 가격 밴드 및 위치 분석 (52-Week Range Percentile)</span>
                 <span className="font-mono text-[#111827]">
-                  {formattedSpread}
+                  범위 내 {palm52WeekStats.cpoPct}% 지점
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
@@ -3738,7 +3706,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> CPO (원유 팜유)
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 {palm52WeekStats.cpoPct}% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.cpoPct}% 지점</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
                     <div className="bg-[#DF0029] h-full rounded-full transition-all duration-500" style={{ width: `${palm52WeekStats.cpoPct}%` }}></div>
@@ -3756,7 +3724,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <span className="font-bold text-slate-800 flex items-center gap-1">
                       <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Olein (정제 올레인)
                     </span>
-                    <span className="font-mono text-slate-600 text-[11px]">밴드 {palm52WeekStats.oleinPct}% 위치</span>
+                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.oleinPct}% 지점</span>
                   </div>
                   <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
                     <div className="bg-[#2563EB] h-full rounded-full transition-all duration-500" style={{ width: `${palm52WeekStats.oleinPct}%` }}></div>
@@ -3772,13 +3740,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           ) : (
             <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-2">
               <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-[#6b7280]">{(isSoybean||isSoybeanOil||isSugar) ? '52주 최저–최고가 범위 내 위치 (52-Week Range Position)' : '52주 가격 밴드 및 위치 분석 (52-Week Range Percentile)'}</span>
+                <span className="text-[#6b7280]">52주 가격 밴드 및 위치 분석 (52-Week Range Percentile)</span>
                 <span className="font-mono text-[#111827]">
-                  {(isSoybean||isSoybeanOil||isSugar) ? `범위 내 ${range52WeekStats.pct}% 지점` : range52WeekStats.pct >= 98
-                    ? "52주 최고가 (고평가 구간)"
-                    : range52WeekStats.pct <= 2
-                    ? "52주 최저가 (저평가 구간)"
-                    : `상위 ${100 - range52WeekStats.pct}% (${range52WeekStats.zone})`}
+                  범위 내 {range52WeekStats.pct}% 지점
                 </span>
               </div>
               <div className="w-full bg-[#e5e7eb] h-2.5 rounded-full overflow-hidden flex">
@@ -3789,7 +3753,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <span className="font-bold text-[#111827]">현재: {formatChartPrice(range52WeekStats.current)}</span>
                 <span>52주 고점: {formatChartPrice(range52WeekStats.high)}</span>
               </div>
-              {(isSoybean||isSoybeanOil||isSugar) && <p className="text-[10px] text-[#6b7280] leading-snug">관측 최저가 0% · 최고가 100% 기준의 가격 위치입니다.</p>}
             </div>
           )
         )}

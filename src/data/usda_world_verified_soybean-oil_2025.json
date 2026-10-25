@@ -1,0 +1,161 @@
+{
+  "commodity": "soybean-oil",
+  "commodityCode": "4232000",
+  "verifiedAt": "2026-10-25T16:49:18.145Z",
+  "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2025",
+  "observationStatus": "historical-as-reported",
+  "data": {
+    "commodityCode": "4232000",
+    "marketYear": "2025",
+    "releaseMonth": "10",
+    "source": "USDA FAS PSD Online",
+    "production1000MT": 73600,
+    "productionMMT": 73.6,
+    "domesticConsumption1000MT": 71975,
+    "domesticConsumptionMMT": 71.975,
+    "endingStocks1000MT": 6415,
+    "endingStocksMMT": 6.415,
+    "beginningStocks1000MT": 6466,
+    "beginningStocksMMT": 6.466,
+    "imports1000MT": 13819,
+    "exports1000MT": 15495,
+    "exportsMMT": 15.495,
+    "totalSupply1000MT": 93885,
+    "stocksToUseRatio": 8.9,
+    "stocksToUseRatioPct": 8.9,
+    "rawRecordsCount": 13,
+    "rawRecords": [
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 7,
+        "unitId": 8,
+        "value": 375838
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 181,
+        "unitId": 23,
+        "value": 0.1958
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 20,
+        "unitId": 8,
+        "value": 6466
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 28,
+        "unitId": 8,
+        "value": 73600
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 57,
+        "unitId": 8,
+        "value": 13819
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 86,
+        "unitId": 8,
+        "value": 93885
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 88,
+        "unitId": 8,
+        "value": 15495
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 140,
+        "unitId": 8,
+        "value": 17206
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 149,
+        "unitId": 8,
+        "value": 54684
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 161,
+        "unitId": 8,
+        "value": 85
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 125,
+        "unitId": 8,
+        "value": 71975
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 176,
+        "unitId": 8,
+        "value": 6415
+      },
+      {
+        "commodityCode": "4232000",
+        "countryCode": "00",
+        "marketYear": "2025",
+        "calendarYear": "2026",
+        "month": "10",
+        "attributeId": 178,
+        "unitId": 8,
+        "value": 93885
+      }
+    ],
+    "executiveBrief": "USDA PSD 2025/26 · 2026-10 세계 대두유 연간 전망. 기말재고 전망은 실제 월간 재고 변동이나 재고 적정성을 뜻하지 않습니다."
+  }
+}

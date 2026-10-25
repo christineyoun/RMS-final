@@ -6,7 +6,7 @@ import {soybeanDisplayFactor,parseDatedDisplayFx} from '../../utils/soybeanPrice
 import {centsPerLbToUsdPerMt} from '../../utils/commodityConversions.ts';
 import {observedPriceChanges} from '../../utils/observedPriceChanges.ts';
 const native=fetch;globalThis.fetch=async()=>{throw Error('Offline: paid and free network blocked');};
-const protectedFiles=fs.readdirSync('.rms-stage3/snapshots').map(f=>'.rms-stage3/snapshots/'+f).concat(['.rms-stage3/settings.json','.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl']);const before=protectedFiles.map(f=>fs.readFileSync(f).toString('base64'));
+const protectedFiles=fs.readdirSync('.rms-stage3/snapshots').filter(n=>fs.statSync('.rms-stage3/snapshots/'+n).isFile()).map(f=>'.rms-stage3/snapshots/'+f).concat(['.rms-stage3/settings.json','.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl']);const before=protectedFiles.map(f=>fs.readFileSync(f).toString('base64'));
 try{
  const supplyCache=JSON.parse(fs.readFileSync('src/data/usda_soybean_oil_last_verified.json','utf8'));const world={success:true,status:'last-verified' as const,data:supplyCache.data,verifiedAt:supplyCache.verifiedAt,checkedAt:supplyCache.verifiedAt};
  const today=new Date().toISOString().slice(0,10),date=(days:number)=>new Date(Date.parse(today)-86400000*days).toISOString().slice(0,10);

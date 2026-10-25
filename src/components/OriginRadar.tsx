@@ -1,3 +1,5 @@
+import {isVisibleWeatherStatus} from '../utils/weatherStatusPresentation';
+import {SourceAttribution} from './SourceAttribution';
 import React from 'react';
 import potatoJrc from '../data/potato_jrc_monthly_verified.json';
 import {insufficientWeather,weatherLocalDay,WEATHER_PILL_LABELS,type WeatherPill} from '../utils/originWeatherPills.ts';
@@ -64,9 +66,7 @@ export function originWeatherDisplayText(origin:OriginItem,now=Date.now()):strin
       detail+=` · 직전 3주 주평균 ${(baseline.reduce((sum,d)=>sum+d.precipMm!,0)/3).toFixed(1)}mm`;
     groups.set(heading,[...(groups.get(heading)||[]),detail]);
   }
-  const crop=/원료 대두 재배지/.test(origin.riskWeather||'')?'원료 대두':/사탕수수 재배지/.test(origin.riskWeather||'')?'사탕수수':/카사바 재배지/.test(origin.riskWeather||'')?'카사바':'';
-  return (crop?crop+' · ':'')+
-    [...groups].map(([heading,details])=>`${heading}: ${details.filter(Boolean).join(' · ')}`).join(' / ');
+  return [...groups].map(([heading,details])=>`${heading}: ${details.filter(Boolean).join(' · ')}`).join(' / ');
 }
 /** Present the source-screened WEATHER EVENT, not a generic market-risk level.
  * A rain deviation alone (Palm 28-day ratio) or a JRC yield revision cannot
@@ -151,20 +151,17 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
   const primary=isCorn?'USDA WASDE':isWheat?'USDA FAS PSD':null;
   const publishers=[...new Set([...(primary?[primary]:[]),...sources])];
   if(isTapioca)publishers.sort((a,b)=>['TTSA','AFSIS','Open-Meteo'].indexOf(a)-['TTSA','AFSIS','Open-Meteo'].indexOf(b));
-  const forecastYear=isTapioca?[...new Set(origins.map(o=>o.marketYear).filter(Boolean))].join(' · '):'';
   return <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className}`.trim()}>
     <div className="flex-1 flex flex-col gap-4">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-1">
         <div className="flex items-center gap-2"><Globe className="w-5 h-5 text-slate-700 shrink-0"/><h3 className="text-base font-bold text-slate-900 break-keep">{title||'주요 산지 수급 및 기상 현황 (Origin Radar)'}</h3></div>
       </div>
-      {(isPotato||isTapioca)&&origins.some(o=>o.production)&&<p className="text-[10px] text-slate-500">{isTapioca?`국가 카사바 생산 · ${forecastYear}년 전망`:'생산량·단수 전망은 국가 전체 감자 기준'}</p>}
       <div className="flex flex-col gap-3">
         {origins.length===0?<p className="text-xs text-[#6b7280]">산지 자료를 불러오는 중입니다.</p>:origins.map((origin,idx)=>{
           const comparison=origin.exportComparison&&!/없음|미확인|자료 부족/.test(origin.exportComparison)?origin.exportComparison:'';
           const exports=origin.exports?(/^수출\s/.test(origin.exports)?origin.exports:`수출 ${origin.exports}`):'';
           const supply=[exports+(exports&&comparison?` (${comparison})`:''),origin.endingStocks?(/^기말재고\s/.test(origin.endingStocks)?origin.endingStocks:`기말재고 ${origin.endingStocks}`):''].filter(Boolean).join(' · ');
-          const rainfall=originWeatherDisplayText(origin);
-          const weather=commodityId==='potato-starch'||commodityId==='tapioca-starch'?rainfall.replace(/^(?:카사바|원료감자) · /,''):rainfall;
+          const weather=originWeatherDisplayText(origin);
           const production=isPotato||isTapioca?origin.production?.match(/^\d+(?:\.\d+)?M MT/)?.[0]||origin.production:origin.production;
           const supplyLabel=(s:NonNullable<OriginItem['supplyIndicators']>[number])=>{
             if((!isPotato&&!isTapioca)||s.display!=='origin-summary')return s.text;
@@ -189,9 +186,8 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap"><span className="font-semibold text-xs text-[#111827]">{origin.region||origin.country||'산지'}</span>
                 {origin.production&&<span className="text-[10px] bg-white border border-[#e5e7eb] px-2 py-0.5 rounded-md font-sans font-medium text-[#374151]">{commodityId==='soybean-oil'?'국가 대두유 생산':isPotato?'감자 생산':isTapioca?'카사바 생산':commodityId==='sugar'?'국가 설탕 생산':origin.region?.includes('유럽연합')?'EU 생산':'국가 생산'} <span className="font-mono font-bold">{production}</span></span>}
-                {<span data-weather-pills className="ml-auto shrink-0" aria-description={weatherStatus.basis}>
-                  {weatherStatus.level==='판정 보류'?<span data-weather-assessment aria-description={weatherStatus.basis} className="text-[10px] font-normal text-slate-500 whitespace-nowrap">판정 보류</span>:
-                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap ${weatherStatus.level==='양호'?'rms-status-positive':'rms-status-warning'}`}>{weatherStatus.label}</span>}
+                {isVisibleWeatherStatus(weatherStatus.label)&&<span data-weather-pills className="ml-auto shrink-0" aria-description={weatherStatus.basis}>
+                  <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap ${weatherStatus.level==='양호'?'rms-status-positive':'rms-status-warning'}`}>{weatherStatus.label}</span>
                 </span>}
               </div>
               {(supply||weather)&&<div className="text-[10px] text-[#6b7280] mt-1 font-sans break-keep whitespace-normal leading-snug">
@@ -204,7 +200,7 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
         })}
       </div>
     </div>
-    {publishers.length>0&&<div data-origin-sources className="rms-source mt-auto pt-4 text-right text-xs text-gray-400 break-keep">출처: {publishers.join(' · ')}</div>}
+    {publishers.length>0&&<SourceAttribution data-origin-sources className="mt-auto pt-4 justify-end text-right" entries={publishers.map(label=>({label}))}/>}
   </div>;
 };
 export default OriginRadar;

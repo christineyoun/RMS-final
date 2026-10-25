@@ -37,8 +37,8 @@ try{
   assert.equal(JSON.parse(fs.readFileSync(path.join(temp,'.rms-price-history/corn.json'),'utf8')).payload.data.length,corn.data.length,'short manual refresh cannot discard older observations');
  }finally{if(oldRoot===undefined)delete process.env.RMS_HISTORY_ROOT;else process.env.RMS_HISTORY_ROOT=oldRoot;fs.rmSync(temp,{recursive:true,force:true});}
  const sugar=JSON.parse(JSON.parse(fs.readFileSync('.rms-stage3/evidence/sugar-price.json','utf8')).body);
- await rememberGraphRefresh('sugar',{...sugar,manualRefreshTest:true});
- assert.equal((await savedGraphHistoryResponse('/api/sugar/price-snapshot'))?.payload.manualRefreshTest,true,'successful explicit refresh supersedes cold-start receipt in memory');
+ const isolatedSugar=fs.mkdtempSync(path.join(os.tmpdir(),'rms-sugar-persist-')),priorRoot=process.env.RMS_HISTORY_ROOT;
+ try{process.env.RMS_HISTORY_ROOT=isolatedSugar;await rememberGraphRefresh('sugar',{...sugar,manualRefreshTest:true});assert.equal(JSON.parse(fs.readFileSync(path.join(isolatedSugar,'.rms-price-history/sugar.json'),'utf8')).payload.manualRefreshTest,true,'successful explicit refresh persists across restarts');}finally{if(priorRoot===undefined)delete process.env.RMS_HISTORY_ROOT;else process.env.RMS_HISTORY_ROOT=priorRoot;fs.rmSync(isolatedSugar,{recursive:true,force:true});}
  assert.equal(calls,0);assert.deepEqual(files.map(digest),before,'all source files remain immutable across graph GETs');
  console.log('PASS all seven saved graph endpoints, wheat report/source dates, unchanged soybean procurement payloads, aliases/timeframes, source identity, explicit refresh bypass, honest missing data and zero fetch/writes');
 }finally{globalThis.fetch=original;}

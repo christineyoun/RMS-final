@@ -3,6 +3,7 @@ import { Search, TrendingUp, X } from 'lucide-react';
 import { Commodity, Currency } from '../types';
 import { formatCleanModelName } from '../utils/formatters';
 import { clientMarketDataService } from '../services/marketDataService';
+import { loadDailyPublicationIssue } from '../utils/dailyPublicationIssue';
 
 export interface AlertItem {
   id: string;
@@ -136,32 +137,6 @@ export const HeaderSearch = ({ onSelectAsset }: { onSelectAsset?: (asset: any) =
   );
 };
 
-// Stage 3 provides an inexpensive, read-only status endpoint. It does NOT call Gemini.
-interface Stage3RefreshStatus {
-  running?: boolean;
-  lastAttempt?: {
-    status?: string;
-    completed?: string[];
-    finishedAt?: string;
-  } | null;
-  snapshots?: Array<{ key: string; updatedAt: string | null }>;
-}
-
-type DailyUpdateState =
-  | { status: 'loading' | 'none' | 'unavailable' }
-  | { status: 'ready'; completedAt: string; partial: boolean };
-
-function formatDailyUpdateKST(iso: string): string {
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return '업데이트 시간 확인 불가';
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
-  }).formatToParts(parsed);
-  const value = (key: string) => parts.find(part => part.type === key)?.value || '';
-  return `${value('year')}.${value('month')}.${value('day')} ${value('hour')}:${value('minute')} KST`;
-}
-
 interface HeaderProps {
   commodities: Commodity[];
   currency: Currency;
@@ -191,45 +166,22 @@ export const Header: React.FC<HeaderProps> = ({
   ]);
 
   const highRiskCount = alerts.filter(a => a.severity === 'high').length;
-  const [dailyUpdate, setDailyUpdate] = useState<DailyUpdateState>({ status: 'loading' });
+  const [issueNumber, setIssueNumber] = useState<string | null>(null);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
     const loadDailyStatus = async () => {
       try {
-        const res = await fetch('/api/rms/refresh-status', { cache: 'no-store' });
-        if (!res.ok) throw new Error(`Refresh status HTTP ${res.status}`);
-        const data = await res.json() as Stage3RefreshStatus;
-        if (!active) return;
-
-        // Only a finished job with saved outputs is allowed to move the timestamp.
-        // This avoids displaying a new time merely because the page opened or another
-        // market feed updated. During a running job, preserve the prior display.
-        const last = data.lastAttempt;
-        if (data.running) return;
-        if (last?.finishedAt && (last.completed?.length ?? 0) > 0 &&
-            (last.status === 'completed' || last.status === 'partial')) {
-          setDailyUpdate({ status: 'ready', completedAt: last.finishedAt, partial: last.status === 'partial' });
-          return;
-        }
-
-        // Fall back to an actual saved snapshot after a process restart if needed.
-        const latest = (data.snapshots ?? [])
-          .filter(item => item.updatedAt && !Number.isNaN(Date.parse(item.updatedAt)))
-          .sort((a, b) => Date.parse(b.updatedAt!) - Date.parse(a.updatedAt!))[0];
-        if (latest?.updatedAt) {
-          setDailyUpdate({ status: 'ready', completedAt: latest.updatedAt, partial: true });
-        } else {
-          setDailyUpdate({ status: 'none' });
-        }
+        // Read the saved publication only; this endpoint never collects sources.
+        const issue = await loadDailyPublicationIssue();
+        if (active && issue) setIssueNumber(issue);
       } catch {
-        if (active) setDailyUpdate(prev => prev.status === 'ready' ? prev : { status: 'unavailable' });
+        // Retain the published issue during read failures; never use the clock.
       }
     };
     void loadDailyStatus();
-    // This polls metadata only (no Gemini requests). The displayed time stays
-    // constant until another paid refresh is explicitly completed.
+    // The issue changes only when a new saved daily publication is available.
     const poll = window.setInterval(() => { void loadDailyStatus(); }, 60_000);
     const onFocus = () => { void loadDailyStatus(); };
     window.addEventListener('focus', onFocus);
@@ -310,25 +262,15 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* System record time, never a claim that every saved AI was generated then. */}
-        <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium shadow-2xs"
-          aria-live="polite"
-          aria-description="완료된 작업 또는 저장 기록의 시각입니다. 개별 AI 분석의 생성 시각이나 모든 데이터의 최신성을 의미하지 않습니다."
-        >
-          <span className="h-2 w-2 rounded-full shrink-0 bg-blue-500" />
-          <span className="font-sans">시스템 기록</span>
-          {dailyUpdate.status === 'ready' ? (
-            <>
-              <span className="text-slate-300">·</span>
-              <span className="font-mono font-semibold">{formatDailyUpdateKST(dailyUpdate.completedAt)}</span>
-            </>
-          ) : (
-            <span className="font-sans text-slate-500">
-              {dailyUpdate.status === 'loading' ? '확인 중' : dailyUpdate.status === 'none' ? '기록 없음' : '상태 확인 불가'}
-            </span>
-          )}
-        </div>
+        {issueNumber && (
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium shadow-2xs"
+            data-daily-issue
+            aria-live="polite"
+          >
+            <span className="font-mono font-semibold">Issue #{issueNumber}</span>
+          </div>
+        )}
       </div>
     </header>
   );

@@ -1,3 +1,4 @@
+import type {PotatoExportQuoteResponse} from './server/officialPotatoComextService';
 import type {SugarPriceSnapshot} from './utils/sugarPriceSnapshot';
 import type {SoybeanOilPriceSnapshot} from './utils/soybeanOilPriceSnapshot';
 import type { SoybeanPriceSnapshot, DatedDisplayFx } from './utils/soybeanPriceSnapshot';
@@ -50,6 +51,9 @@ export interface Commodity {
   changeWoW?: number | null;
 
 
+  _potatoExportQuote?: PotatoExportQuoteResponse;
+  _canonicalDisplayCurrency?: Currency;
+  _canonicalDisplayFx?: DatedDisplayFx | null;
   _sugarPriceSnapshot?: SugarPriceSnapshot;
   _soybeanOilPriceSnapshot?: SoybeanOilPriceSnapshot;
   _soybeanPriceSnapshot?: SoybeanPriceSnapshot;
@@ -78,7 +82,9 @@ export interface Commodity {
   categoryNameKo?: string;
   priceKrwEstimated?: number;
   changeMoM?: number | null;
-  changeYoY?: number;
+  changeYoY?: number | null;
+  _canonicalYoyUsdMt?: number | null;
+  _canonicalYoyReferenceDate?: string | null;
 
   exchange?: string;
   chartData?: Array<{
