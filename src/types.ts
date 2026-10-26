@@ -38,6 +38,12 @@ export interface OriginRoute {
   sourceUrl?: string;
 }
 
+/** Complete saved history response shared by Overview and commodity details. */
+export interface CommodityHistorySnapshot {
+ success:boolean;symbol:string;source:string;priceMyr?:number;cpoUsdMt?:number;oleinUsd?:number;lastError?:string;stale?:boolean;
+ data:Array<{date:string;centsPerBushel:number;usdPerMT:number;oleinUsdPerMt?:number}>;
+}
+
 export interface Commodity {
   id: CommodityId | string;
   nameKo: string;
@@ -60,7 +66,10 @@ export interface Commodity {
   _soybeanDisplayFx?: DatedDisplayFx | null;
   _originalPrice?: number;
   _originalUnit?: string;
+  _canonicalHistorySnapshot?: CommodityHistorySnapshot;
+  _wheatPriceSnapshot?: UsWheatPriceHistoryResponse;
   _canonicalQuoteDate?: string;
+  _canonicalQuoteStale?: boolean;
   _canonicalQuoteSource?: string;
   _canonicalWowUsdMt?: number | null;
   _canonicalMomUsdMt?: number | null;
@@ -399,7 +408,7 @@ export interface AmisWheatIntelligence {
   retrievalTimestamp: string;
   macroRiskSentenceKo: string;
   macroRiskScore: number;
-  macroRiskLevel: '안정' | '주의' | '경계';
+  macroRiskLevel: '안정' | '주의' | '경계' | '자료 미확보';
   findings: AmisWheatFindings;
   rawExcerpt?: string;
 }

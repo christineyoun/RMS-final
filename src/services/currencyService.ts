@@ -1,5 +1,5 @@
 import type {Currency} from '../types';
-import {parseDatedDisplayFx,type DatedDisplayFx} from '../utils/soybeanPriceSnapshot';
+import {displayCurrencyFactor,parseDatedDisplayFx,type DatedDisplayFx} from '../utils/soybeanPriceSnapshot';
 let datedDisplayFx:DatedDisplayFx|null=null;
 export const getDatedDisplayFx=()=>datedDisplayFx;
 export interface FXRates {
@@ -12,11 +12,11 @@ export interface FXRates {
 
 type FXListener = (rates: FXRates) => void;
 
-let cacheFxRates: FXRates = {
+let cacheFxRates: FXRates = Object.freeze({
   USD_KRW: 0,
   EUR_USD: 0,
   USD_MYR: 0,
-};
+});
 
 const listeners: Set<FXListener> = new Set();
 
@@ -28,11 +28,10 @@ export function subscribeFxRates(listener: FXListener): () => void {
   };
 }
 
-export function updateLiveFxRates(newRates: Partial<FXRates>): void {
-  const valid = Object.fromEntries(Object.entries(newRates).filter(([,v]) => typeof v === 'number' && Number.isFinite(v) && v > 0));
-  if (Object.keys(valid).length === 0) return;
-  cacheFxRates = { ...cacheFxRates, ...valid };
-  listeners.forEach((listener) => listener(cacheFxRates));
+function publishDatedFx(fx:DatedDisplayFx):void {
+ datedDisplayFx=Object.freeze(fx);
+ cacheFxRates=Object.freeze({USD_KRW:fx.USD_KRW,EUR_USD:fx.EUR_USD,USD_MYR:fx.USD_MYR??0});
+ listeners.forEach(listener=>listener(cacheFxRates));
 }
 
 export function getAllFxRates(): FXRates {
@@ -65,7 +64,16 @@ export function fetchLiveFxRates(force = false): Promise<FXRates> {
   return pendingFx;
 }
 async function fetchFxNow():Promise<FXRates>{
- try{const r=await fetch('/api/rms/free-fx',{cache:'no-store'});if(r.ok){const saved=await r.json(),fx=parseDatedDisplayFx(saved.raw,saved.verifiedAt);if(fx){datedDisplayFx=fx;updateLiveFxRates({USD_KRW:fx.USD_KRW,EUR_USD:fx.EUR_USD,USD_MYR:saved.raw.rates.MYR});}}}catch{/* Retain existing verified FX; page views do not collect. */}
+ try{
+  const r=await fetch('/api/rms/free-fx',{cache:'no-store'});
+  if(!r.ok)throw Error('Saved FX unavailable');
+  const saved=await r.json(),fx=parseDatedDisplayFx(saved.raw,saved.verifiedAt);
+  if(!fx)throw Error('Saved FX invalid');
+  publishDatedFx(fx);
+ }catch{
+  // Preserve original dates and numeric rates, explicitly identify retained FX.
+  if(datedDisplayFx)publishDatedFx({...datedDisplayFx,stale:true});
+ }
  return cacheFxRates;
 }
 
@@ -73,12 +81,12 @@ async function fetchFxNow():Promise<FXRates>{
 export function potatoEurKrwRate(fx:DatedDisplayFx|null|undefined):number|null {
   if(!fx||!/^20\d{2}-\d{2}-\d{2}$/.test(fx.observationDate)||!Number.isFinite(Date.parse(fx.observationDate))||fx.observationDate>fx.retrievedAt.slice(0,10)||!fx.sourceUrl.startsWith('https://api.frankfurter.dev/'))return null;
   if(!Number.isFinite(fx.USD_KRW)||fx.USD_KRW<=0||!Number.isFinite(fx.EUR_USD)||fx.EUR_USD<=0)return null;
-  const rate=fx.USD_KRW*fx.EUR_USD;return Number.isFinite(rate)&&rate>0?rate:null;
+  const rate=displayCurrencyFactor('EUR','KRW',fx);return Number.isFinite(rate)&&rate>0?rate:null;
 }
 export function potatoDisplayConversion(currency:Currency,fx:DatedDisplayFx|null|undefined) {
   const validFx=potatoEurKrwRate(fx)!==null;
   const displayCurrency:Currency=currency==='EUR'||validFx?currency:'EUR';
-  const factor=displayCurrency==='KRW'?potatoEurKrwRate(fx)!:displayCurrency==='USD'?fx!.EUR_USD:1;
+  const factor=displayCurrencyFactor('EUR',displayCurrency,fx);
   const symbol=displayCurrency==='KRW'?'₩':displayCurrency==='USD'?'$':'€';
   return {displayCurrency,factor,symbol};
 }

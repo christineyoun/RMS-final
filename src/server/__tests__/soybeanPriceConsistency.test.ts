@@ -35,7 +35,7 @@ try{
  const {fetchLiveFxRates,getDatedDisplayFx}=await import('../../services/currencyService.ts');
  globalThis.fetch=async(input:any)=>Response.json(String(input)==='/api/rms/free-fx'?{raw:{base:'USD',date:date(1),rates:{KRW:1329.49,EUR:.89087}},verifiedAt:new Date().toISOString()}:{});
  await fetchLiveFxRates(true);const retainedFx=getDatedDisplayFx();assert.equal(retainedFx?.observationDate,date(1));
- globalThis.fetch=async()=>new Response('',{status:503});await fetchLiveFxRates(true);assert.deepEqual(getDatedDisplayFx(),retainedFx,'outage preserves actual FX date and rates');
+ globalThis.fetch=async()=>new Response('',{status:503});await fetchLiveFxRates(true);assert.deepEqual(getDatedDisplayFx(),{...retainedFx,stale:true},'outage preserves actual FX date and rates and labels them retained');
  assert.deepEqual(protectedFiles.map(f=>fs.readFileSync(f).toString('base64')),before,'saved snapshots/paid history unchanged');
  console.log('PASS: single-flight and cached Soybean history/procurement; raw conversion/dates/provisional status; consistent USD/KRW/EUR price and movements; dated/invalid FX; outage preservation; no paid calls.');
 }finally{globalThis.fetch=native;}

@@ -1,9 +1,7 @@
 import { prefixCurrency } from './currencyFormatting';
 import { observedPriceChanges } from './observedPriceChanges';
 import type { Commodity, Currency } from '../types';
-import { COMMODITY_CONFIGS, getCalculatedMetrics } from '../lib/priceCalculator.ts';
 
-export { COMMODITY_CONFIGS, getCalculatedMetrics };
 
 
 
@@ -23,61 +21,6 @@ export const formatCurrencyValue = (value: number, currency: Currency): string =
 
 export const formatPrice = (value: number, currency: Currency, unitSuffix: string = 'MT'): string => {
   return `${formatCurrencyValue(value, currency)} / ${unitSuffix}`;
-};
-
-export const formatStarchSweetenerBenchmark = (
-  commodityId: string,
-  currency: Currency
-): { priceText: string; unitText: string } | null => {
-  if (commodityId === 'potato-starch') return {priceText:'미확인',unitText:'실물 견적 필요'};
-  const config = COMMODITY_CONFIGS[commodityId];
-  if (!config || !['potato-starch'].includes(commodityId)) {
-    return null;
-  }
-
-  if (currency === 'KRW') {
-    const baseVal = commodityId === 'tapioca-starch' ? 700 : config.benchmarkQuote;
-    const baseKRW = Math.round(baseVal * 1388.5);
-    return {
-      priceText: prefixCurrency(baseKRW.toLocaleString('en-US'), '₩'),
-      unitText: 'KRW / MT',
-    };
-  }
-
-  if (currency === 'USD') {
-    if (commodityId === 'potato-starch') {
-      const usdVal = config.benchmarkQuote * 1.145;
-      return {
-        priceText: prefixCurrency(usdVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), '$'),
-        unitText: 'USD / MT',
-      };
-    }
-    const usdVal = commodityId === 'tapioca-starch' ? 700 : config.benchmarkQuote;
-    return {
-      priceText: prefixCurrency(usdVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), '$'),
-      unitText: 'USD / MT',
-    };
-  }
-
-  // currency === 'EUR'
-  if (commodityId === 'potato-starch') {
-    return {
-      priceText: prefixCurrency(config.benchmarkQuote.toLocaleString('en-US'), '€'),
-      unitText: 'EUR / MT',
-    };
-  }
-  if (commodityId === 'tapioca-starch') {
-    const eurVal = 700 / 1.08;
-    return {
-      priceText: prefixCurrency(eurVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), '€'),
-      unitText: 'EUR / MT',
-    };
-  }
-  const eurVal = config.benchmarkQuote * (470.20 / 510);
-  return {
-    priceText: prefixCurrency(eurVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }), '€'),
-    unitText: 'EUR / MT',
-  };
 };
 
 export interface DynamicMetricsResult {

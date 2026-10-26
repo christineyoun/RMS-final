@@ -34,117 +34,10 @@ export const WASDE_TABS = [
   { id: 'sugar', label: '원당' },
 ] as const;
 
-export const WASDE_BASELINES: Record<string, WasdeRecord> = {
-  wheat: {
-    commodity: 'wheat',
-    marketYear: '2026',
-    productionMMT: 822.4,
-    productionKMT: 822432,
-    consumptionMMT: 822.5,
-    consumptionKMT: 822456,
-    endingStocksMMT: 276.3,
-    stocksToUseRatio: 33.6,
-    exportsMMT: 211.8,
-    exportsKMT: 211768,
-    areaHarvestedMHA: 215.3,
-    areaHarvestedKHA: 215326,
-    yieldMTHA: 3.82,
-    yieldKGHA: 3820,
-    lastUpdated: '04:03:57 PM KST',
-    source: 'USDA FAS PSD / WASDE Official'
-  },
-  corn: {
-    commodity: 'corn',
-    marketYear: '2026',
-    productionMMT: 1235.7,
-    productionKMT: 1235720,
-    consumptionMMT: 1228.4,
-    consumptionKMT: 1228400,
-    endingStocksMMT: 318.5,
-    stocksToUseRatio: 25.9,
-    exportsMMT: 201.2,
-    exportsKMT: 201200,
-    areaHarvestedMHA: 206.4,
-    areaHarvestedKHA: 206400,
-    yieldMTHA: 5.99,
-    yieldKGHA: 5987,
-    lastUpdated: '04:03:57 PM KST',
-    source: 'USDA FAS PSD / WASDE Official'
-  },
-  soybean: {
-    commodity: 'soybean',
-    marketYear: '2026',
-    productionMMT: 428.7,
-    productionKMT: 428700,
-    consumptionMMT: 402.5,
-    consumptionKMT: 402500,
-    endingStocksMMT: 134.6,
-    stocksToUseRatio: 33.4,
-    exportsMMT: 182.4,
-    exportsKMT: 182400,
-    areaHarvestedMHA: 142.8,
-    areaHarvestedKHA: 142800,
-    yieldMTHA: 3.00,
-    yieldKGHA: 3002,
-    lastUpdated: '04:03:57 PM KST',
-    source: 'USDA FAS PSD / WASDE Official'
-  },
-  'soybean-oil': {
-    commodity: 'soybean-oil',
-    marketYear: '2026',
-    productionMMT: 65.8,
-    productionKMT: 65820,
-    consumptionMMT: 65.2,
-    consumptionKMT: 65180,
-    endingStocksMMT: 5.4,
-    stocksToUseRatio: 8.3,
-    exportsMMT: 13.2,
-    exportsKMT: 13160,
-    areaHarvestedMHA: 0.0,
-    areaHarvestedKHA: 0,
-    yieldMTHA: 0.00,
-    yieldKGHA: 0,
-    lastUpdated: '04:03:57 PM KST',
-    source: 'USDA FAS PSD / WASDE Official'
-  },
-  'palm-oil': {
-    commodity: 'palm-oil',
-    marketYear: '2026',
-    productionMMT: 79.8,
-    productionKMT: 79800,
-    consumptionMMT: 78.4,
-    consumptionKMT: 78400,
-    endingStocksMMT: 17.2,
-    stocksToUseRatio: 21.9,
-    exportsMMT: 51.3,
-    exportsKMT: 51300,
-    areaHarvestedMHA: 29.5,
-    areaHarvestedKHA: 29500,
-    yieldMTHA: 2.71,
-    yieldKGHA: 2705,
-    lastUpdated: '04:03:57 PM KST',
-    source: 'USDA FAS PSD / WASDE Official'
-  },
-  sugar: {
-    commodity: 'sugar',
-    marketYear: '2026',
-    productionMMT: 186.2,
-    productionKMT: 186200,
-    consumptionMMT: 179.8,
-    consumptionKMT: 179800,
-    endingStocksMMT: 41.5,
-    stocksToUseRatio: 23.1,
-    exportsMMT: 65.4,
-    exportsKMT: 65400,
-    areaHarvestedMHA: 27.2,
-    areaHarvestedKHA: 27200,
-    yieldMTHA: 6.85,
-    yieldKGHA: 6846,
-    lastUpdated: '04:03:57 PM KST',
-    source: 'USDA FAS PSD / WASDE Official'
-  }
-};
-
+/** Explicit unavailable record; NaN is never an observed zero. */
+export function unavailableWasdeRecord(commodity:string):WasdeRecord {
+ return {commodity,marketYear:'',productionMMT:NaN,productionKMT:NaN,consumptionMMT:NaN,consumptionKMT:NaN,endingStocksMMT:NaN,stocksToUseRatio:NaN,exportsMMT:NaN,exportsKMT:NaN,areaHarvestedMHA:NaN,areaHarvestedKHA:NaN,yieldMTHA:NaN,yieldKGHA:NaN,lastUpdated:'',source:'자료 미확보'};
+}
 interface WasdeTerminalProps {
   initialCommodity?: string;
   className?: string;
@@ -156,7 +49,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<string>(initialCommodity);
   const [data, setData] = useState<WasdeRecord>(
-    WASDE_BASELINES[initialCommodity] || WASDE_BASELINES.wheat
+    unavailableWasdeRecord(initialCommodity)
   );
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -178,8 +71,8 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
         if (isMounted && payload) {
           setData({
             commodity: payload.commodity || activeTab,
-            marketYear: payload.marketYear || '2026',
-            productionMMT: payload.productionMMT ?? 0,
+            marketYear: payload.marketYear || '',
+            productionMMT: payload.productionMMT ?? NaN,
             productionKMT: payload.productionKMT ?? payload.production1000MT ?? 0,
             consumptionMMT: payload.consumptionMMT ?? payload.domesticConsumptionMMT ?? 0,
             consumptionKMT: payload.consumptionKMT ?? payload.domesticConsumption1000MT ?? 0,
@@ -191,7 +84,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
             areaHarvestedKHA: payload.areaHarvestedKHA ?? payload.areaHarvested1000HA ?? 0,
             yieldMTHA: payload.yieldMTHA ?? 0,
             yieldKGHA: payload.yieldKGHA ?? (payload.yieldMTHA ? Math.round(payload.yieldMTHA * 1000) : 0),
-            lastUpdated: payload.lastUpdated || json.lastUpdated || '04:03:57 PM KST',
+            lastUpdated: payload.lastUpdated || json.lastUpdated || '',
             source: payload.source || json.source || 'USDA FAS PSD / WASDE Official',
             executiveBrief: payload.executiveBrief || json.executiveBrief || ''
           });
@@ -199,9 +92,7 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
       } catch (err) {
         console.warn(`[WasdeTerminal] Failed to fetch /api/usda/${activeTab}:`, err);
         // Fallback to verified baseline
-        if (isMounted && WASDE_BASELINES[activeTab]) {
-          setData(WASDE_BASELINES[activeTab]);
-        }
+        if (isMounted) setData(unavailableWasdeRecord(activeTab));
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -216,7 +107,8 @@ export const WasdeTerminal: React.FC<WasdeTerminalProps> = ({
     };
   }, [activeTab]);
 
-  const activeCommodityData = data.commodity === activeTab ? data : (WASDE_BASELINES[activeTab] || WASDE_BASELINES.wheat);
+  const activeCommodityData = data.commodity === activeTab ? data : unavailableWasdeRecord(activeTab);
+  if(!Number.isFinite(activeCommodityData.productionMMT))return <div className={className}>검증된 수급 자료 미확보</div>;
   const selectedCommodity = activeTab;
   const currentData = activeCommodityData;
   const activePsdData = {

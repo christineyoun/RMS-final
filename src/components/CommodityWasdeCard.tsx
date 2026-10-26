@@ -6,7 +6,7 @@ import {verifiedSoybeanOilSupply,soybeanOilCrushIndicators,type SoybeanOilSupply
 import React, { useState, useEffect } from 'react';
 import { normalizeVerifiedOtherCommodityWasde, USDA_WORLD_IDS } from '../lib/verifiedWorldWasde';
 // RMS Step 12 world USDA validation
-import { WASDE_BASELINES, WasdeRecord } from './WasdeTerminal';
+import { unavailableWasdeRecord, WasdeRecord } from './WasdeTerminal';
 
 export interface CommodityWasdeCardProps {
   commodityId: string;
@@ -39,7 +39,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   refreshRevision = 0
 }) => {
   const normalizedId = commodityId?.toLowerCase().trim() || 'wheat';
-  const baseline = WASDE_BASELINES[normalizedId] || WASDE_BASELINES.wheat;
+  const baseline = unavailableWasdeRecord(normalizedId);
   const isSoybeanOil = normalizedId === 'soybean-oil' || normalizedId === 'soybean_oil';
   const isVerifiedUsdaCommodity = isSoybeanOil || USDA_WORLD_IDS.includes(normalizedId);
 
@@ -158,7 +158,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
       } catch (err) {
         console.warn(`[CommodityWasdeCard] Failed to fetch /api/usda/${normalizedId}:`, err);
         if (isMounted) {
-          setData(WASDE_BASELINES[normalizedId] || WASDE_BASELINES.wheat);
+          setData(unavailableWasdeRecord(normalizedId));
           if (isVerifiedUsdaCommodity) { setVerifiedWorldPsd(false); setVerifiedCommodityId(''); setUsdaDataStatus('unavailable'); }
         }
       } finally {

@@ -1,63 +1,7 @@
 import { DataSourceDefinition, NormalizedMarketData, MarketDataSyncPayload } from '../types';
 
-export const generateLiveAlerts = (normalizedData?: Record<string, NormalizedMarketData>) => {
-  const now = new Date();
-  const alerts = [];
-  const rand = Math.random();
-
-  // 1. Core Macro / FX (High Risk)
-  if (rand > 0.7) {
-    alerts.push({
-      id: `alert-fx-${now.getTime()}`,
-      severity: 'high' as const,
-      title: '[긴급] 환율 변동성 확대',
-      message: 'USD/KRW 장중 1,389.20 돌파. 즉시 헷징 비율 점검 요망.'
-    });
-  } else if (rand > 0.4) {
-    alerts.push({
-      id: `alert-geo-${now.getTime()}`,
-      severity: 'high' as const,
-      title: '[경고] 흑해 곡물 협정 불확실성',
-      message: '러시아 주요 항만 선적 지연 발생. 대체 조달 경로 확보 권고.'
-    });
-  }
-
-  // 2. Weather & Crops (Medium Risk)
-  if (rand > 0.5) {
-    alerts.push({
-      id: `alert-weather-${now.getTime()}`,
-      severity: 'medium' as const,
-      title: '[주의] 미 중서부(Midwest) 기상 악화',
-      message: '콘벨트 주요 지역 가뭄 심화로 옥수수 작황 등급 하향 조정 예상.'
-    });
-  } else {
-    alerts.push({
-      id: `alert-palm-${now.getTime()}`,
-      severity: 'medium' as const,
-      title: '[주의] 팜유 B40 시행 모멘텀',
-      message: '인도네시아 2025 B40 의무화로 수급 타이트 전망. MDEX 강세.'
-    });
-  }
-
-  // 3. Logistics & Reports (Low/Info Risk)
-  if (rand > 0.3) {
-    alerts.push({
-      id: `alert-freight-${now.getTime()}`,
-      severity: 'low' as const,
-      title: '[정보] 상하이 운임지수(SCFI) 상승',
-      message: '북미 서안행 컨테이너 운임 강세 지속. 선복 조기 확보 권고.'
-    });
-  } else {
-    alerts.push({
-      id: `alert-wasde-${now.getTime()}`,
-      severity: 'low' as const,
-      title: '[정보] USDA WASDE 리포트 발행',
-      message: '세계 농산물 수급 전망 보고서가 터미널에 업데이트되었습니다.'
-    });
-  }
-
-  return alerts;
-};
+/** No market alert can be inferred from randomness or an undated sample. */
+export const generateLiveAlerts = (_normalizedData?:Record<string,NormalizedMarketData>) => [];
 
 type MarketDataListener = (payload: MarketDataSyncPayload) => void;
 

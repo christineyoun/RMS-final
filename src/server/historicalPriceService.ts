@@ -198,7 +198,6 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
       filtered = fullSeries;
     }
 
-    const usdMyrRate = getLiveExchangeRate('USD_MYR') || 4.0845;
     const formattedFiltered = filtered.map((pt) => {
       const cpoUsd = pt.cpoUsd ?? pt.usdPerMT;
       const oleinUsd = pt.oleinUsd ?? pt.oleinUsdPerMt;
@@ -283,7 +282,7 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
   const quoteUnit = config.quoteUnit || 'unspecified';
   const exchange = config.exchange || 'Unknown exchange';
   const exchangeTimezone = result.meta?.exchangeTimezoneName || 'UTC';
-  const mult = config.buPerMt || config.lbsPerMt || config.multiplier || 39.368;
+  const mult = config.buPerMt ?? config.lbsPerMt ?? config.multiplier ?? NaN;
   const toUsdPerMt = (quoteValue: number): number =>
     Number((config.lbsPerMt
       ? centsPerLbToUsdPerMt(quoteValue)

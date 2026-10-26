@@ -151,16 +151,18 @@ export default function App() {
   // One canonical market snapshot for all eight detail views and Overview cards.
   // No synthetic fallbacks or recalculations in the Overview component.
   const syncAllCommodityMetrics = useCallback(async (force = false) => {
-    const quotes = await fetchCommodityQuotes(force);
+    const [quotes] = await Promise.all([fetchCommodityQuotes(force), fetchLiveFxRates(force)]);
     setCommodities(prev => prev.map(c => {
       const q = quotes[c.id as keyof typeof quotes];
       if (!q && c.id==='sugar') return c._sugarPriceSnapshot?{...c,_sugarPriceSnapshot:{...c._sugarPriceSnapshot,stale:true,lastError:'Price snapshot endpoint unavailable'}}:{...c,price:0,changeWoW:null,changeMoM:null,sparkline:[]};
-      if (!q) return c.id==='soybean-oil' ? c._soybeanOilPriceSnapshot ? {...c,_soybeanOilPriceSnapshot:{...c._soybeanOilPriceSnapshot,stale:true,lastError:'Price snapshot endpoint unavailable'}} : {...c,price:0,changeWoW:null,changeMoM:null,sparkline:[]} : c; // keep the previous successful snapshot if the source temporarily fails
+      if (!q) return c.id==='soybean-oil' ? c._soybeanOilPriceSnapshot ? {...c,_soybeanOilPriceSnapshot:{...c._soybeanOilPriceSnapshot,stale:true,lastError:'Price snapshot endpoint unavailable'}} : {...c,price:0,changeWoW:null,changeMoM:null,sparkline:[]} : {...c,_canonicalQuoteStale:!!c._canonicalQuoteDate}; // keep the previous successful snapshot if the source temporarily fails
       return { ...c, price:q.priceUsdMt, unit:'USD / MT', changeWoW:q.changeWoW,
         changeMoM:q.changeMoM, sparkline:q.sparkline,
         ...(c.id==='tapioca-starch'?{changeYoY:q.changeYoY,_canonicalYoyUsdMt:q.changeYoYUsdMt,_canonicalYoyReferenceDate:q.yoyReferenceDate}:{}),
         ...(c.id==='potato-starch'?{_potatoExportQuote:q.potatoSnapshot}:c.id==='soybean'?{_soybeanPriceSnapshot:q.soybeanSnapshot}:c.id==='soybean-oil'?{_soybeanOilPriceSnapshot:q.soybeanOilSnapshot}:c.id==='sugar'?{_sugarPriceSnapshot:q.sugarSnapshot}:{}),
-        _canonicalQuoteDate:q.asOf, _canonicalQuoteSource:q.source,
+        ...(c.id==='wheat'?{_wheatPriceSnapshot:q.wheatSnapshot}:{}),
+        _canonicalHistorySnapshot:q.historySnapshot,
+        _canonicalQuoteDate:q.asOf,_canonicalQuoteStale:q.sourceStale, _canonicalQuoteSource:q.source,
         _canonicalWowUsdMt:q.changeWoWUsdMt, _canonicalMomUsdMt:q.changeMoMUsdMt };
     }));
   }, []);
@@ -255,7 +257,7 @@ export default function App() {
               modelVersion={modelVersion}
               usdKrwRate={fxRates.USD_KRW || 0}
             />
-          ) : currentCommodity.id!=='potato-starch' && currency !== 'USD' && (currentCommodity.id==='soybean' ? !datedDisplayFx : (currency === 'KRW' && !(fxRates.USD_KRW > 0)) || (currency === 'EUR' && !(fxRates.EUR_USD > 0))) ? (
+          ) : currentCommodity.id!=='potato-starch' && currency !== 'USD' && (!datedDisplayFx) ? (
             <div className="p-6 bg-white rounded-xl border border-slate-200 text-slate-600">
               환율 데이터를 확인할 수 없어 임의의 환율로 표시하지 않습니다. 잠시 후 다시 확인하거나
               <button type="button" className="ml-2 underline font-semibold text-slate-800" onClick={() => setCurrency('USD')}>USD/MT로 보기</button>

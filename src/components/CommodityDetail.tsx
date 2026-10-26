@@ -8,7 +8,7 @@ import {PotatoPriceChangesDisplay} from './PotatoPriceChanges';
 import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 import PotatoBenchmarkValue from './PotatoBenchmarkValue';
 import {soybeanDisplayFactor} from '../utils/soybeanPriceSnapshot';
-import { prefixCurrency, priceUnit } from '../utils/currencyFormatting';
+import { prefixCurrency, priceUnit, formatCurrencyAmount } from '../utils/currencyFormatting';
 import {latestCommonPalmSpread,palmClosingRange} from '../utils/palmPriceIntegrity';
 import {ChartEndpointLabels} from './ChartEndpointLabels';
 import { observedPriceChanges } from '../utils/observedPriceChanges';
@@ -17,16 +17,13 @@ import type {ProcurementRisk} from '../utils/procurementRisk';
 import {procurementRiskDisplayText} from '../utils/procurementRiskPresentation';
 import { Globe } from 'lucide-react';
 import { Commodity, Currency, UsWheatPriceHistoryResponse, UsWheatHistoryDataPoint, UsWheatClassMetric, AmisWheatResponse, CornProcurementAnalysisData, SoybeanProcurementAnalysisData, SoybeanOilProcurementAnalysisData } from '../types';
-import { formatPrice, formatStarchSweetenerBenchmark, COMMODITY_CONFIGS, getCalculatedMetrics, calculateDynamicMetrics } from '../utils/commodityPriceMetrics';
+import { formatPrice, calculateDynamicMetrics } from '../utils/commodityPriceMetrics';
 import { sanitizeOklchColorsForCanvas } from '../utils/exportDashboardPdf';
 import { CommodityNews } from './CommodityNews';
 import AiRecommendation from './AiRecommendation';
 import {rmsAiEditorial} from '../utils/rmsAiEditorial';
 import { CommodityWasdeCard } from './CommodityWasdeCard';
 import { OriginRadar } from './OriginRadar';
-import { getLiveExchangeRate, subscribeFxRates, fetchLiveFxRates, getAllFxRates, FXRates } from '../services/currencyService';
-import palmOilCacheFallback from '../data/cache_palmoil.json';
-import tapiocaCacheFallback from '../data/cache_tapioca.json';
 
 export interface UsdaWheatSummary {
   commodityCode?: string;
@@ -62,18 +59,6 @@ export interface WasdeTelemetryData {
   executiveBrief: string;
 }
 
-export const defaultWasdeTelemetry: WasdeTelemetryData = {
-  marketYear: '2026',
-  source: 'USDA FAS PSD',
-  lastUpdated: '10:38:34 PM KST',
-  production: { mmt: 822.4, kmt: '822,432' },
-  consumption: { mmt: 822.5, kmt: '822,456' },
-  endingStocks: { mmt: 276.3, stuRatio: '33.6%' },
-  exports: { mmt: 211.8, kmt: '211,768' },
-  areaHarvested: { mha: 215.3, kha: '215,326' },
-  yield: { mtPerHa: 3.82, kgPerHa: '3,820' },
-  executiveBrief: '미국산 HRW 소맥은 560~590 USd/bu 범위의 단기 횡보세를 유지하고 있습니다. 미국 남부 평원지대의 지속적인 토양 수분 부족과 2025/26 흑해 수출 물량 감소가 상승 요인으로 작용하고 있습니다. 반면 러시아의 풍부한 이월 재고와 이집트 GASC 입찰 수요 둔화가 상단을 제한하고 있습니다. 국내 식품 제조 구매 데스크에서는 현재 570~575 USd 밴드 부근에서 1분기 물리적 수입 물량의 조달 약정을 체결할 것을 권고합니다.'
-};
 
 interface CommodityDetailProps {
   commodity: Commodity;
@@ -153,399 +138,7 @@ export interface OriginItem {
   sourceName: string;
 }
 
-export const COMMODITY_ORIGINS_MAP: Record<string, OriginItem[]> = {
-  // Wheat deliberately has no hardcoded origin fallbacks.
-  wheat: [],
-  corn: [
-    {
-      region: '미국 (Corn Belt)',
-      production: '385.0M MT',
-      exports: '수출 58.5M MT',
-      endingStocks: '기말재고 52.0M MT',
-      riskAssessment: '저위험 - 풍작 수급 및 미 걸프만/PNW 원활 선적',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'USDA FAS',
-    },
-    {
-      region: '브라질 (Mato Grosso / Safrinha)',
-      production: '127.0M MT',
-      exports: '수출 49.0M MT',
-      endingStocks: '기말재고 10.5M MT',
-      riskAssessment: '저위험 - 2기작(사프리냐) 수확 원활 및 대두 교대 선적',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'CONAB',
-    },
-    {
-      region: '아르헨티나 (Pampas)',
-      production: '51.0M MT',
-      exports: '수출 36.0M MT',
-      endingStocks: '기말재고 6.8M MT',
-      riskAssessment: '중위험 - 파라나강 수위 저하에 따른 만재 흘수 제한 모니터링',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'USDA FAS PSD',
-    },
-    {
-      region: '우크라이나 (Black Sea)',
-      production: '27.0M MT',
-      exports: '수출 24.0M MT',
-      endingStocks: '기말재고 2.5M MT',
-      riskAssessment: '고위험 - 군사 분쟁 및 흑해 항만 선적 지연 불확실성',
-      status: '주의 요망',
-      statusColor: 'red',
-      sourceName: 'IGC',
-    },
-  ],
-  soybean: [
-    {
-      region: '브라질 (Mato Grosso)',
-      production: '169.0M MT',
-      exports: '수출 105.0M MT',
-      endingStocks: '기말재고 38.0M MT',
-      riskAssessment: '저위험 - 사상 최대 수확량 및 글로벌 수출 주도',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'CONAB',
-    },
-    {
-      region: '미국 (Midwest)',
-      production: '124.8M MT',
-      exports: '수출 49.7M MT',
-      endingStocks: '기말재고 15.0M MT',
-      riskAssessment: '저위험 - 수확 완료 및 미 걸프/태평양 연안 공급 안정',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'USDA FAS',
-    },
-    {
-      region: '아르헨티나 (Pampas)',
-      production: '51.0M MT',
-      exports: '수출 4.5M MT',
-      endingStocks: '기말재고 24.0M MT',
-      riskAssessment: '중위험 - 국내 착유 가공용 비축 집중 및 통화 불확실성',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'USDA FAS PSD',
-    },
-    {
-      region: '파라과이 (Alto Paraná)',
-      production: '10.5M MT',
-      exports: '수출 6.8M MT',
-      endingStocks: '기말재고 1.2M MT',
-      riskAssessment: '저위험 - 바지선 내륙 수운 정상 가동',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'USDA FAS',
-    },
-  ],
-  'soybean-oil': [
-    {
-      region: '아르헨티나 (Rosario Crushing Hub)',
-      production: '8.38M MT',
-      exports: '수출 5.2M MT',
-      endingStocks: '기말재고 0.4M MT',
-      riskAssessment: '중위험 - 로사리오 착유 공장 가동률 및 파라나강 운송 주시',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'BNA',
-    },
-    {
-      region: '브라질 (Mato Grosso/Paraná)',
-      production: '12.64M MT',
-      exports: '수출 2.4M MT',
-      endingStocks: '기말재고 0.5M MT',
-      riskAssessment: '저위험 - 바이오디젤 의무혼합(B15) 및 수출 물량 적정 유지',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'CONAB',
-    },
-    {
-      region: '미국 (Midwest Crushing)',
-      production: '14.05M MT',
-      exports: '수출 0.4M MT',
-      endingStocks: '기말재고 0.8M MT',
-      riskAssessment: '저위험 - 자국 재생디젤(RD/SAF) 수요 집중으로 수출 가용량 제한적',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'USDA FAS',
-    },
-    {
-      region: '유럽연합 (독일/네덜란드)',
-      production: '2.85M MT',
-      exports: '수출 0.9M MT',
-      endingStocks: '기말재고 0.2M MT',
-      riskAssessment: '저위험 - 로테르담 정유 설비 정상 가동 및 유럽 역내 수급 균형',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'EC AGRI',
-    },
-  ],
-  'palm-oil': [
-    {
-      region: '인도네시아 (Sumatra/Kalimantan)',
-      production: '47.0M MT',
-      exports: '수출 28.0M MT',
-      endingStocks: '기말재고 3.2M MT',
-      riskAssessment: '중위험 (B40 의무화) - B40 바이오디젤 의무화 및 DMO 수출 규제 모니터링',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'GAPKI',
-    },
-    {
-      region: '말레이시아 (Sabah/Sarawak)',
-      production: '19.2M MT',
-      exports: '수출 15.5M MT',
-      endingStocks: '기말재고 1.8M MT',
-      riskAssessment: '저위험 - 외국인 노동력 정상화 및 주요 수출항 선적 안정',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'MPOB',
-    },
-    {
-      region: '콜롬비아 (Cesar/Meta)',
-      production: '1.8M MT',
-      exports: '수출 0.7M MT',
-      endingStocks: '기말재고 0.1M MT',
-      riskAssessment: '저위험 - 중남미 역내 및 대미 공급 지속',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'Fedepalma',
-    },
-    {
-      region: '태국 (Southern Provinces)',
-      production: '3.4M MT',
-      exports: '수출 0.9M MT',
-      endingStocks: '기말재고 0.3M MT',
-      riskAssessment: '저위험 - 내수 식용유 안정화 우선 및 국경 무역 정상',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'OAE Thailand',
-    },
-  ],
-  'palmoil': [
-    {
-      region: '인도네시아 (Sumatra/Kalimantan)',
-      production: '47.0M MT',
-      exports: '수출 28.0M MT',
-      endingStocks: '기말재고 3.2M MT',
-      riskAssessment: '중위험 (B40 의무화) - B40 바이오디젤 의무화 및 DMO 수출 규제 모니터링',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'GAPKI',
-    },
-    {
-      region: '말레이시아 (Sabah/Sarawak)',
-      production: '19.2M MT',
-      exports: '수출 15.5M MT',
-      endingStocks: '기말재고 1.8M MT',
-      riskAssessment: '저위험 - 외국인 노동력 정상화 및 주요 수출항 선적 안정',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'MPOB',
-    },
-    {
-      region: '콜롬비아 (Cesar/Meta)',
-      production: '1.8M MT',
-      exports: '수출 0.7M MT',
-      endingStocks: '기말재고 0.1M MT',
-      riskAssessment: '저위험 - 중남미 역내 및 대미 공급 지속',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'Fedepalma',
-    },
-    {
-      region: '태국 (Southern Provinces)',
-      production: '3.4M MT',
-      exports: '수출 0.9M MT',
-      endingStocks: '기말재고 0.3M MT',
-      riskAssessment: '저위험 - 내수 식용유 안정화 우선 및 국경 무역 정상',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'OAE Thailand',
-    },
-  ],
-  'palm_oil': [
-    {
-      region: '인도네시아 (Sumatra/Kalimantan)',
-      production: '47.0M MT',
-      exports: '수출 28.0M MT',
-      endingStocks: '기말재고 3.2M MT',
-      riskAssessment: '중위험 (B40 의무화) - B40 바이오디젤 의무화 및 DMO 수출 규제 모니터링',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'GAPKI',
-    },
-    {
-      region: '말레이시아 (Sabah/Sarawak)',
-      production: '19.2M MT',
-      exports: '수출 15.5M MT',
-      endingStocks: '기말재고 1.8M MT',
-      riskAssessment: '저위험 - 외국인 노동력 정상화 및 주요 수출항 선적 안정',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'MPOB',
-    },
-    {
-      region: '콜롬비아 (Cesar/Meta)',
-      production: '1.8M MT',
-      exports: '수출 0.7M MT',
-      endingStocks: '기말재고 0.1M MT',
-      riskAssessment: '저위험 - 중남미 역내 및 대미 공급 지속',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'Fedepalma',
-    },
-    {
-      region: '태국 (Southern Provinces)',
-      production: '3.4M MT',
-      exports: '수출 0.9M MT',
-      endingStocks: '기말재고 0.3M MT',
-      riskAssessment: '저위험 - 내수 식용유 안정화 우선 및 국경 무역 정상',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'OAE Thailand',
-    },
-  ],
-  sugar: [
-    {
-      region: '브라질 (Center-South)',
-      production: '42.5M MT',
-      exports: '수출 33.0M MT',
-      endingStocks: '기말재고 3.5M MT',
-      riskAssessment: '저위험 - 사탕수수 분쇄 순조 및 산투스(Santos) 항만 처리량 양호',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'UNICA',
-    },
-    {
-      region: '인도 (Maharashtra/UP)',
-      production: '32.0M MT',
-      exports: '수출 1.0M MT',
-      endingStocks: '기말재고 8.5M MT',
-      riskAssessment: '고위험 (수출 제한) - 에탄올 전용 정책 및 정부 상업 수출 제한 조치 지속',
-      status: '주의 요망',
-      statusColor: 'red',
-      sourceName: 'ISMA',
-    },
-    {
-      region: '태국 (Central/Northeast)',
-      production: '10.0M MT',
-      exports: '수출 7.0M MT',
-      endingStocks: '기말재고 1.2M MT',
-      riskAssessment: '중위험 - 강수량 회복으로 수확량 반등, 방콕항 출하 대기',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'OCSB Thailand',
-    },
-    {
-      region: '호주 (Queensland)',
-      production: '4.2M MT',
-      exports: '수출 3.4M MT',
-      endingStocks: '기말재고 0.4M MT',
-      riskAssessment: '저위험 - 벌크 터미널 인프라 우수 및 고품질 원당 안정 공급',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'QSL',
-    },
-  ],
-  'potato-starch': [
-    {
-      region: '네덜란드 (Avebe / Groningen)',
-      production: '245.0K MT',
-      exports: '수출 160.0K MT',
-      endingStocks: '기말재고 42.0K MT',
-      riskAssessment: '저위험 - 품종 개량 및 선진 가공 공정 안정 가동',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'EC MARS',
-    },
-    {
-      region: '독일 (Emsland Group)',
-      production: '210.0K MT',
-      exports: '수출 125.0K MT',
-      endingStocks: '기말재고 36.0K MT',
-      riskAssessment: '저위험 - 가공용 감자 수확량 적정 및 고품질 변성전분 제조 원활',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'EC MARS',
-    },
-    {
-      region: '덴마크 (KMC / Jutland)',
-      production: '165.0K MT',
-      exports: '수출 120.0K MT',
-      endingStocks: '기말재고 25.0K MT',
-      riskAssessment: '저위험 - 스칸디나비아 협동조합 물류 및 대아시아 수출 안정',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'EC MARS',
-    },
-    {
-      region: '폴란드 (WPPZ / Wielkopolska)',
-      production: '115.0K MT',
-      exports: '수출 58.0K MT',
-      endingStocks: '기말재고 21.0K MT',
-      riskAssessment: '저위험 - 동유럽 산지 단가 경쟁력 유지',
-      status: '정상 선적',
-      statusColor: 'green',
-      sourceName: 'EC MARS',
-    },
-    {
-      region: '프랑스 (Roquette)',
-      production: '70.0K MT',
-      exports: '수출 42.0K MT',
-      endingStocks: '기말재고 13.0K MT',
-      riskAssessment: '보통 - 특수 식품 전분 라인 공급 모니터링',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'EC MARS',
-    },
-  ],
-  'tapioca-starch': [
-    {
-      region: '태국 (Korat / Isan)',
-      production: '4.6M MT',
-      exports: '수출 천연 2.85M MT / 변성 1.15M MT',
-      endingStocks: '기말재고 1.2M MT',
-      riskAssessment: '생뿌리 18.58M MT (경작지 106만 HA) · 산지 수급 안정 및 FOB 방콕 $700/MT 유지',
-      status: '정상',
-      statusColor: 'green',
-      sourceName: 'TTSA',
-    },
-    {
-      region: '베트남 (Tây Ninh / Central)',
-      production: '1.4M MT',
-      exports: '수출 1.1M MT',
-      endingStocks: '기말재고 0.2M MT',
-      riskAssessment: '중국향 국경 무역 수요 경합 주시',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'VTA',
-    },
-    {
-      region: '인도네시아 (Lampung)',
-      production: '0.9M MT',
-      exports: '수출 0.3M MT',
-      endingStocks: '기말재고 0.1M MT',
-      riskAssessment: '내수 스낵 및 식품 가공 가용량 우선 소비',
-      status: '정상',
-      statusColor: 'green',
-      sourceName: 'BPS',
-    },
-    {
-      region: '캄보디아 (Battambang)',
-      production: '0.6M MT',
-      exports: '수출 0.5M MT',
-      endingStocks: '기말재고 0.1M MT',
-      riskAssessment: '태국/베트남 가공 공장향 원료 칩 수송 모니터링',
-      status: '모니터링',
-      statusColor: 'yellow',
-      sourceName: 'MAFF',
-    },
-  ],
-};
-
+/** No sample origin numbers; all origins come from the verified saved source. */
 export const EXTERNAL_CHART_URLS: Record<string, string> = {
   'palm-oil': 'https://www.investing.com/commodities/palm-oil',
   'palmoil': 'https://www.investing.com/commodities/palm-oil',
@@ -663,55 +256,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   useEffect(() => {
     setActiveTimeframe(commodity.id==='potato-starch'?'5Y':'6M');
   }, [commodity.id]);
-  const [fxRates, setFxRates] = useState<FXRates>(getAllFxRates());
-
-  useEffect(() => {
-    const unsubscribe = subscribeFxRates((updated) => {
-      setFxRates(updated);
-    });
-    fetchLiveFxRates();
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (isSyncing) {
-      fetchLiveFxRates();
-    }
-  }, [isSyncing]);
-
   const selectedCurrency = currency;
-  const exchangeRate = selectedCurrency === 'KRW' ? (fxRates.USD_KRW || 1388.5) : selectedCurrency === 'EUR' ? (1 / (fxRates.EUR_USD || 1.08)) : 1;
+  // Match the parent summary's validated FX packet, including its observation date.
+  const exchangeRate = soybeanDisplayFactor(selectedCurrency, commodity._canonicalDisplayFx);
   const currencySymbol = selectedCurrency === 'KRW' ? '₩' : selectedCurrency === 'EUR' ? '€' : '$';
   const currencyLabel = priceUnit(currency, currencySymbol);
 
-  const formatPriceValue = (usdVal: number, decimals: number = 2) => {
-    const converted = usdVal * exchangeRate;
-    if (currency === 'KRW') {
-      return Math.round(converted).toLocaleString('en-US');
-    }
-    return converted.toLocaleString('en-US', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-  };
-
-  const formatConvertedPrice = (val: number, decimals: number = 2) => {
-    if (currency === 'KRW') {
-      return Math.round(val).toLocaleString('en-US');
-    }
-    return val.toLocaleString('en-US', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    });
-  };
-
-  const formatWheatUsd = (val: number, decimals: number = 2) => {
-    const converted = val * exchangeRate;
-    if (currency === 'KRW') {
-      return Math.round(converted).toLocaleString('en-US');
-    }
-    return converted.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-  };
+  const formatConvertedPrice = (val:number,decimals=2) => formatCurrencyAmount(val,currency,decimals);
 
   const isWheat = commodity.id === 'wheat';
   const isCorn = commodity.id === 'corn';
@@ -724,52 +275,30 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const isTapiocaStarch = commodity.id === 'tapioca-starch' || commodity.id === 'tapioca_starch';
 
   // CBOT & Commodity Live & Historical Price Report State
-  const [fetchedHistoricalData, setHistoricalData] = useState<{
-    success: boolean;
-    symbol: string;
-    source: string;
-    priceMyr?: number;
-    cpoUsdMt?: number;
-    oleinUsd?: number;
-    data: Array<{ date: string; centsPerBushel: number; usdPerMT: number; oleinUsdPerMt?: number }>;
-  } | null>(null);
-  const [isHistoryFailed, setIsHistoryFailed] = useState<boolean>(false);
-  const lastSuccessfulHistoryRef = useRef<any>(null);
-
-  // Separate Full 1Y (52-Week) Historical Price Dataset for 52-Week Range Percentile
-  const [fetchedFullYearHistoryData, setFullYearHistoryData] = useState<{
-    success: boolean;
-    symbol: string;
-    source: string;
-    priceMyr?: number;
-    cpoUsdMt?: number;
-    oleinUsd?: number;
-    data: Array<{ date: string; centsPerBushel: number; usdPerMT: number; oleinUsdPerMt?: number }>;
-  } | null>(null);
-  const lastSuccessfulFullYearHistoryRef = useRef<any>(null);
-
-
+  const fetchedHistoricalData=commodity._canonicalHistorySnapshot||null;
+  const fetchedFullYearHistoryData=fetchedHistoricalData;
+  const isHistoryFailed=!!fetchedHistoricalData?.lastError;
 
   const datedPriceSnapshot=isSoybean?commodity._soybeanPriceSnapshot:isSoybeanOil?commodity._soybeanOilPriceSnapshot:isSugar?commodity._sugarPriceSnapshot:undefined;
   const historicalData=(isSoybean||isSoybeanOil||isSugar)?(datedPriceSnapshot||null):fetchedHistoricalData;
   const fullYearHistoryData=(isSoybean||isSoybeanOil||isSugar)?(datedPriceSnapshot||null):fetchedFullYearHistoryData;
   const soybeanFactor=soybeanDisplayFactor(currency,commodity._soybeanDisplayFx);
 
-  const liveUsdMyr = fxRates.USD_MYR || getLiveExchangeRate('USD_MYR');
-  const liveUsdKrw = fxRates.USD_KRW || getLiveExchangeRate('KRW') || NaN;
-  const liveEurUsd = fxRates.EUR_USD || getLiveExchangeRate('EUR');
+  const liveUsdMyr = commodity._canonicalDisplayFx?.USD_MYR??NaN;
+  const liveUsdKrw = commodity._canonicalDisplayFx?.USD_KRW??NaN;
+  const liveEurUsd = commodity._canonicalDisplayFx?.EUR_USD??NaN;
 
   // Verified Scraped Market Benchmarks (with persistent cache_palmoil.json fallback)
-  const palmObservedSeries = useMemo<any[]>(()=>historicalData?.data?.length ? historicalData.data : palmOilCacheFallback.historicalSeries,[historicalData]);
+  const palmObservedSeries = useMemo<any[]>(()=>historicalData?.data?.length ? historicalData.data : [],[historicalData]);
   const latestPalmSeriesPoint=[...palmObservedSeries].reverse().find(p=>Number.isFinite(p.cpoUsd??p.usdPerMT));
   const latestOleinSeriesPoint=[...palmObservedSeries].reverse().find(p=>Number.isFinite(p.oleinUsdPerMt??p.oleinUsd));
-  const LIVE_CPO_MYR=latestPalmSeriesPoint?.cpoMyr??latestPalmSeriesPoint?.centsPerBushel??palmOilCacheFallback.priceMyr;
-  const LIVE_OLEIN_USD=latestOleinSeriesPoint?.oleinUsdPerMt??latestOleinSeriesPoint?.oleinUsd??palmOilCacheFallback.oleinUsd;
-  const cpoUsdMt=Number(latestPalmSeriesPoint?.cpoUsd??latestPalmSeriesPoint?.usdPerMT??palmOilCacheFallback.cpoUsdMt);
+  const LIVE_CPO_MYR=latestPalmSeriesPoint?.cpoMyr??latestPalmSeriesPoint?.centsPerBushel??NaN;
+  const LIVE_OLEIN_USD=latestOleinSeriesPoint?.oleinUsdPerMt??latestOleinSeriesPoint?.oleinUsd??NaN;
+  const cpoUsdMt=Number(latestPalmSeriesPoint?.cpoUsd??latestPalmSeriesPoint?.usdPerMT??NaN);
 
   // Both series, current quotes, chart, changes and range use the same display FX.
   // Saved CPO USD values retain their original/dated MYR conversion provenance.
-  const palmDisplayRateCandidate=currency==='KRW'?liveUsdKrw:currency==='EUR'?(liveEurUsd>0?1/liveEurUsd:NaN):1;
+  const palmDisplayRateCandidate=exchangeRate;
   const palmDisplayRate=palmDisplayRateCandidate>0?palmDisplayRateCandidate:NaN;
   const cpoPrice=currency==='KRW'?Math.round(cpoUsdMt*palmDisplayRate):Number((cpoUsdMt*palmDisplayRate).toFixed(2));
   const oleinPrice=currency==='KRW'?Math.round(LIVE_OLEIN_USD*palmDisplayRate):Number((LIVE_OLEIN_USD*palmDisplayRate).toFixed(2));
@@ -802,14 +331,12 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   };
 
   const palmChartData = useMemo(() => {
-    if (!isPalmOil) return null;
+    if (!isPalmOil||!Number.isFinite(palmDisplayRate)) return null;
 
     const convRate = palmDisplayRate;
 
     // 1. Dynamic series merging logic: Combine baseline cached JSON history with live server telemetry items
-    const baseSeries = (palmOilCacheFallback && Array.isArray(palmOilCacheFallback.historicalSeries) && palmOilCacheFallback.historicalSeries.length > 0)
-      ? palmOilCacheFallback.historicalSeries
-      : [];
+    const baseSeries:any[]=[];
     const liveSeries = (historicalData?.data && Array.isArray(historicalData.data))
       ? historicalData.data
       : [];
@@ -943,12 +470,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const lastSuccessfulUsdaDataRef = useRef<UsdaWheatSummary | null>(null);
 
   // U.S. Wheat Associates Live & Historical Price Report State
-  const [usWheatHistory, setUsWheatHistory] = useState<UsWheatPriceHistoryResponse | null>(
-    null
-  );
-  const [usWheatLastRetrieved, setUsWheatLastRetrieved] = useState<string>('');
-  const [isUsWheatFailed, setIsUsWheatFailed] = useState<boolean>(false);
-  const lastSuccessfulWheatHistoryRef = useRef<UsWheatPriceHistoryResponse | null>(null);
+  const usWheatHistory=commodity._wheatPriceSnapshot||null;
+  const usWheatLastRetrieved=usWheatHistory?.lastRetrievalTime||'';
+  const isUsWheatFailed=!usWheatHistory&&commodity.price>0;
 
 
   // AMIS Market Monitor (Wheat) – verified monthly market intelligence.
@@ -996,9 +520,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   },[commodity.id,isSyncing]);
 
   // Dynamic WASDE 6-Metric Telemetry Pipeline State
-  const [wasdeTelemetry, setWasdeTelemetry] = useState<WasdeTelemetryData>(defaultWasdeTelemetry);
+  const [wasdeTelemetry, setWasdeTelemetry] = useState<WasdeTelemetryData|null>(null);
   const [isWasdeTelemetryFailed, setIsWasdeTelemetryFailed] = useState<boolean>(false);
-  const lastSuccessfulWasdeTelemetryRef = useRef<WasdeTelemetryData>(defaultWasdeTelemetry);
+  const lastSuccessfulWasdeTelemetryRef = useRef<WasdeTelemetryData|null>(null);
 
   const selectedCommodity = commodity;
 
@@ -1082,129 +606,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       isMounted = false;
     };
   }, [selectedCommodity, isSyncing]);
-
-  useEffect(() => {
-    if (isWheat || isSoybean || isSoybeanOil || isSugar || isPotatoStarch) return;
-
-    let isMounted = true;
-
-    const fetchPriceHistory = async () => {
-      try {
-        const res = await fetch(`/api/history?commodity=${commodity.id}&timeframe=${isPalmOil ? '5Y' : activeTimeframe}${isSyncing ? '&force=true' : ''}`, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const json = await res.json();
-        if (json.success && json.data && json.data.length > 0) {
-          if (isMounted) {
-            setHistoricalData(json);
-            if(isPalmOil)setFullYearHistoryData(json);
-            lastSuccessfulHistoryRef.current = json;
-            setIsHistoryFailed(false);
-          }
-        } else {
-          throw new Error('Invalid historical data');
-        }
-      } catch (err) {
-        console.warn('[CommodityDetail] Price history fetch notice:', err);
-        if (isMounted) {
-          setIsHistoryFailed(true);
-          if (!historicalData && lastSuccessfulHistoryRef.current) {
-            setHistoricalData(lastSuccessfulHistoryRef.current);
-          }
-        }
-      }
-    };
-
-    fetchPriceHistory();
-    const timer=(isPalmOil||isTapiocaStarch)?setInterval(fetchPriceHistory,3600000):null;
-    return () => {
-      isMounted = false;if(timer)clearInterval(timer);
-    };
-  }, [commodity.id, isWheat, isPalmOil ? 'saved' : activeTimeframe, isSyncing]);
-
-  // Fetch full multi-year historical price dataset independently of activeTimeframe for 52-week rolling range
-  useEffect(() => {
-    if (isWheat || isPalmOil || isSoybean || isSoybeanOil || isSugar || isPotatoStarch) return;
-
-    let isMounted = true;
-
-    const fetchFullYearHistory = async () => {
-      try {
-        const res = await fetch(`/api/history?commodity=${commodity.id}&timeframe=5Y${isSyncing ? '&force=true' : ''}`, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const json = await res.json();
-        if (json.success && json.data && json.data.length > 0) {
-          if (isMounted) {
-            setFullYearHistoryData(json);
-            lastSuccessfulFullYearHistoryRef.current = json;
-          }
-        }
-      } catch (err) {
-        console.warn('[CommodityDetail] Multi-year history fetch notice:', err);
-        if (isMounted && lastSuccessfulFullYearHistoryRef.current) {
-          setFullYearHistoryData(lastSuccessfulFullYearHistoryRef.current);
-        }
-      }
-    };
-
-    fetchFullYearHistory();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [commodity.id, isWheat, isSyncing]);
-
-  useEffect(() => {
-    if (!isWheat) return;
-
-    if (!usWheatHistory && lastSuccessfulWheatHistoryRef.current) {
-      setUsWheatHistory(lastSuccessfulWheatHistoryRef.current);
-    }
-
-    let isMounted = true;
-
-    const fetchWheatPriceHistory = async () => {
-      try {
-        const url = isSyncing ? '/api/uswheat/price-history?force=true' : '/api/uswheat/price-history';
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const json: UsWheatPriceHistoryResponse = await res.json();
-        if (json.success && json.data && json.data.length > 0) {
-          if (isMounted) {
-            setUsWheatHistory(json);
-            lastSuccessfulWheatHistoryRef.current = json;
-            setUsWheatLastRetrieved(json.lastRetrievalTime || '');
-            setIsUsWheatFailed(false);
-          }
-        } else {
-          throw new Error(json.errorMessage || 'Invalid U.S. Wheat data');
-        }
-      } catch (err) {
-        console.warn('[CommodityDetail] U.S. Wheat Associates fetch error:', err);
-        if (isMounted) {
-          setIsUsWheatFailed(true);
-          // Retain last successfully loaded data if available
-          if (!usWheatHistory && lastSuccessfulWheatHistoryRef.current) {
-            setUsWheatHistory(lastSuccessfulWheatHistoryRef.current);
-          }
-        }
-      }
-    };
-
-    fetchWheatPriceHistory();
-    // Refresh the saved data from the server while the Wheat page is open.
-    // Server-side checking is rate-limited to once per 6 hours, not on every poll.
-    const interval = setInterval(fetchWheatPriceHistory, 60 * 60 * 1000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [isWheat, isSyncing]);
 
   useEffect(() => {
     let isMounted = true;
@@ -1379,7 +780,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // Wheat benchmark is the verified HRW weekly price in USD/MT.
   const hrwData = useMemo(() => {
-    if (!isWheat || !usWheatHistory?.data?.length) return null;
+    if (!isWheat || !Number.isFinite(exchangeRate) || !usWheatHistory?.data?.length) return null;
     const points = usWheatHistory.data;
     const latest = points[points.length - 1];
     const prev = points.length >= 2 ? points[points.length - 2] : null;
@@ -1412,9 +813,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       : null;
 
     let rawSeries = series?.map((d) => ({ date: d.date, price: d.usdPerMT })) || [];
-    if (rawSeries.length === 0) {
-      rawSeries = tapiocaCacheFallback.weeklyPrices.filter((p:any)=>!p.isSynthetic && Date.parse(p.date)<=Date.now()).map(p=>({date:p.date,price:p.price}));
-    }
+
 
     if (rawSeries.length === 0) return null;
 
@@ -1457,7 +856,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       ? fullYearHistoryData.data
       : (historicalData?.data && historicalData.data.length > 0)
       ? historicalData.data
-      : palmOilCacheFallback.historicalSeries;
+      : [];
 
     if (!pts || pts.length < 2) {
       return null;
@@ -1470,11 +869,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const oleinWowPct=oleinMoves.wow.pct, oleinMomPct=oleinMoves.mom.pct;
     const oleinWowChangeMt=oleinMoves.wow.amountUsdMt ?? 0, oleinMomChangeMt=oleinMoves.mom.amountUsdMt ?? 0;
 
-    const cpoWowChangeConv = currency === 'KRW' ? Math.round(cpoWowChangeMt * liveUsdKrw) : currency === 'EUR' ? Number((cpoWowChangeMt / liveEurUsd).toFixed(2)) : cpoWowChangeMt;
-    const cpoMomChangeConv = currency === 'KRW' ? Math.round(cpoMomChangeMt * liveUsdKrw) : currency === 'EUR' ? Number((cpoMomChangeMt / liveEurUsd).toFixed(2)) : cpoMomChangeMt;
+    const cpoWowChangeConv = currency === 'KRW' ? Math.round(cpoWowChangeMt * exchangeRate) : Number((cpoWowChangeMt * exchangeRate).toFixed(2));
+    const cpoMomChangeConv = currency === 'KRW' ? Math.round(cpoMomChangeMt * exchangeRate) : Number((cpoMomChangeMt * exchangeRate).toFixed(2));
 
-    const oleinWowChangeConv = currency === 'KRW' ? Math.round(oleinWowChangeMt * liveUsdKrw) : currency === 'EUR' ? Number((oleinWowChangeMt / liveEurUsd).toFixed(2)) : oleinWowChangeMt;
-    const oleinMomChangeConv = currency === 'KRW' ? Math.round(oleinMomChangeMt * liveUsdKrw) : currency === 'EUR' ? Number((oleinMomChangeMt / liveEurUsd).toFixed(2)) : oleinMomChangeMt;
+    const oleinWowChangeConv = currency === 'KRW' ? Math.round(oleinWowChangeMt * exchangeRate) : Number((oleinWowChangeMt * exchangeRate).toFixed(2));
+    const oleinMomChangeConv = currency === 'KRW' ? Math.round(oleinMomChangeMt * exchangeRate) : Number((oleinMomChangeMt * exchangeRate).toFixed(2));
 
     return {
       cpo: {
@@ -1490,7 +889,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         momChangeConv: oleinMomChangeConv,
       }
     };
-  }, [isPalmOil, fullYearHistoryData, historicalData, currency, liveUsdKrw, liveEurUsd, cpoPrice]);
+  }, [isPalmOil, fullYearHistoryData, historicalData, currency, exchangeRate, cpoPrice]);
 
   const amisData = amisResponse?.data;
 
@@ -1638,22 +1037,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // Universal Single-Commodity Historical Time-Series Chart Data from Yahoo Finance / TTSA / Eurostat
   const historicalChartData = useMemo(() => {
-    if (isWheat || ((isSoybeanOil||isSugar)&&!Number.isFinite(soybeanFactor))) {
+    if (isWheat || !Number.isFinite(exchangeRate)) {
       return null;
     }
 
     // Dynamic series merging logic: Combine baseline cached JSON history with live server telemetry items
     const baseItems: Array<{ date: string; usdPerMT: number; centsPerBushel?: number; isSynthetic?: boolean }> = [];
-    if (isTapiocaStarch && tapiocaCacheFallback && Array.isArray(tapiocaCacheFallback.weeklyPrices)) {
-      tapiocaCacheFallback.weeklyPrices.forEach((item: any) => {
-        baseItems.push({
-          date: item.date,
-          usdPerMT: item.price,
-          centsPerBushel: item.price,
-          isSynthetic: !!item.isSynthetic,
-        });
-      });
-    }
+
 
     const liveItems = (historicalData && Array.isArray(historicalData.data)) ? historicalData.data : [];
 
@@ -1682,7 +1072,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const filtered = filterSeriesByTimeframe(allPoints.filter(p=>!p.isSynthetic && Number.isFinite(p.usdPerMT) && p.usdPerMT>0 && Date.parse(p.date)<=Date.now()), activeTimeframe);
     if (filtered.length === 0) return null;
 
-    const convRate = (isSoybean||isSoybeanOil||isSugar) ? soybeanFactor : currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+    const convRate = (isSoybean||isSoybeanOil||isSugar) ? soybeanFactor : exchangeRate;
 
     let pointsData = filtered.map((p, i) => {
       const convPrice = p.usdPerMT * convRate;
@@ -1916,7 +1306,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   // U.S. Wheat Associates Historical Time-Series Chart Data (SRW, HRW, HRS)
   const wheatChartData = useMemo(() => {
-    if (!isWheat) return null;
+    if (!isWheat || !Number.isFinite(exchangeRate)) return null;
 
     // Use strictly real live data from U.S. Wheat Associates
     const liveItems = (usWheatHistory && Array.isArray(usWheatHistory.data)) ? usWheatHistory.data : [];
@@ -1959,7 +1349,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     if (activeWheatPoints.length < 2) return null;
 
-    const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+    const convRate = exchangeRate;
     const allPrices = activeWheatPoints.flatMap((p) => [p.srwMt * convRate, p.hrwMt * convRate, p.hrsMt * convRate]);
     const {low:minVal,high:maxVal} = chartValueBounds(allPrices);
     const range = maxVal - minVal || 1;
@@ -2061,8 +1451,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
 
     if (!isWheat && historicalData?.data && historicalData.data.length > 0) {
-      const firstPoint = historicalData.data[0]?.usdPerMT || 1;
-      const lastPoint = historicalData.data[historicalData.data.length - 1]?.usdPerMT || 1;
+      const firstPoint = historicalData.data[0]?.usdPerMT ?? NaN;
+      const lastPoint = historicalData.data[historicalData.data.length - 1]?.usdPerMT ?? NaN;
       return firstPoint !== 0 ? ((lastPoint - firstPoint) / firstPoint) * 100 : 0;
     }
 
@@ -2095,7 +1485,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
   const range52WeekStats = useMemo(() => {
     if (isWheat && usWheatHistory?.data?.length) {
-      const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+      const convRate = exchangeRate;
       const prices = usWheatHistory.data.map((d) => d.hrwMt * convRate).filter((v) => Number.isFinite(v));
       if (prices.length > 0) {
         const current = prices[prices.length - 1];
@@ -2156,10 +1546,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
       const active365Data = last365DaysData.length > 0 ? last365DaysData : fullScrapedDataset;
 
-      const convRate = (isSoybean||isSoybeanOil||isSugar) ? soybeanFactor : currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+      const convRate = (isSoybean||isSoybeanOil||isSugar) ? soybeanFactor : exchangeRate;
       const validUsdPrices = active365Data.map((p) => p.usdPerMT).filter((v) => Number.isFinite(v) && v > 0);
-      const low52W = validUsdPrices.length > 0 ? Math.min(...validUsdPrices) : 100;
-      const high52W = validUsdPrices.length > 0 ? Math.max(...validUsdPrices) : 1000;
+      const low52W = validUsdPrices.length > 0 ? Math.min(...validUsdPrices) : NaN;
+      const high52W = validUsdPrices.length > 0 ? Math.max(...validUsdPrices) : NaN;
 
       // Use the exact same currency-adjusted benchmark shown in the top price card.
       // AI analysis benchmarks and the historical series can be from older snapshots;
@@ -2185,10 +1575,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
 
     const current = effectiveBasePrice;
-    const low = current * 0.88;
-    const high = current * 1.22;
-    const pct = 42;
-    return { current, high, low, pct, zone: '안정 구간' };
+    return {current,high:NaN,low:NaN,pct:NaN,zone:'자료 미확보'};
   }, [
     isWheat,
     isPalmOil,
@@ -2219,7 +1606,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     if (!allPts.length) return null;
     const latestMs = Date.parse(`${allPts[allPts.length - 1].date}T00:00:00Z`);
     const valid = allPts.filter(p => Date.parse(`${p.date}T00:00:00Z`) >= latestMs - 365 * 86400000);
-    const convRate = currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1;
+    const convRate = exchangeRate;
     const stats = (key: 'srwMt' | 'hrwMt' | 'hrsMt') => {
       const values = valid.map(p => p[key]).filter(v => Number.isFinite(v) && v > 0);
       if (values.length === 0) return null;
@@ -2498,6 +1885,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   };
 
   const formatChartPrice = (val: number) => {
+    if(!Number.isFinite(val))return '자료 미확보';
     const formatted = val.toLocaleString('en-US', {
       minimumFractionDigits: currency === 'KRW' ? 0 : 2,
       maximumFractionDigits: currency === 'KRW' ? 0 : 2,
@@ -2599,6 +1987,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               </div>
 
               </>}
+              {commodity._canonicalQuoteDate&&<span className="text-[10px] text-slate-500">관측 {commodity._canonicalQuoteDate}{currency!=='USD'&&commodity._canonicalDisplayFx?' · 환율 '+commodity._canonicalDisplayFx.observationDate:''}{commodity._canonicalQuoteStale?' · 시세 갱신 실패 · 이전 관측 사용':''}{commodity._canonicalDisplayFx?.stale?' · 환율 갱신 실패 · 이전 관측 사용':''}</span>}
             </div>
 
             {/* Card 2: WoW & MoM Side-by-Side with Exact Amount Below */}
@@ -2784,34 +2173,34 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               let actualPercentChange = 0;
               if (isPalmOil && palmChartData?.points && palmChartData.points.length > 0) {
                 const activeData = palmChartData.points.filter(p=>Number.isFinite(p.cpoPrice));
-                const firstPoint = activeData[0]?.cpoPrice || 1;
-                const lastPoint = activeData[activeData.length - 1]?.cpoPrice || 1;
+                const firstPoint = activeData[0]?.cpoPrice ?? NaN;
+                const lastPoint = activeData[activeData.length - 1]?.cpoPrice ?? NaN;
                 actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
               } else if (!isWheat && historicalChartData?.points && historicalChartData.points.length > 0) {
                 const activeData = historicalChartData.points;
-                const firstPoint = activeData[0]?.price || 1;
-                const lastPoint = activeData[activeData.length - 1]?.price || 1;
+                const firstPoint = activeData[0]?.price ?? NaN;
+                const lastPoint = activeData[activeData.length - 1]?.price ?? NaN;
                 actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
               } else if (!isWheat && historicalData?.data && historicalData.data.length > 0) {
-                const firstPoint = historicalData.data[0]?.usdPerMT || 1;
-                const lastPoint = historicalData.data[historicalData.data.length - 1]?.usdPerMT || 1;
+                const firstPoint = historicalData.data[0]?.usdPerMT ?? NaN;
+                const lastPoint = historicalData.data[historicalData.data.length - 1]?.usdPerMT ?? NaN;
                 actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
               } else if (isWheat && wheatChartData?.points && wheatChartData.points.length > 0) {
                 const activeData = wheatChartData.points as any[];
-                const firstPoint = activeData[0]?.hrwMt ?? activeData[0]?.usdPerMT ?? 1;
-                const lastPoint = activeData[activeData.length - 1]?.hrwMt ?? activeData[activeData.length - 1]?.usdPerMT ?? 1;
+                const firstPoint = activeData[0]?.hrwMt ?? activeData[0]?.usdPerMT ?? NaN;
+                const lastPoint = activeData[activeData.length - 1]?.hrwMt ?? activeData[activeData.length - 1]?.usdPerMT ?? NaN;
                 actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
               } else if (chartData?.points && chartData.points.length > 0) {
                 const activeData = chartData.points as any[];
-                const firstPoint = activeData[0]?.usdPerMT ?? activeData[0]?.price ?? 1;
-                const lastPoint = activeData[activeData.length - 1]?.usdPerMT ?? activeData[activeData.length - 1]?.price ?? 1;
+                const firstPoint = activeData[0]?.usdPerMT ?? activeData[0]?.price ?? NaN;
+                const lastPoint = activeData[activeData.length - 1]?.usdPerMT ?? activeData[activeData.length - 1]?.price ?? NaN;
                 actualPercentChange = ((lastPoint - firstPoint) / firstPoint) * 100;
               } else {
                 actualPercentChange = periodPctChange;
               }
 
               const isPositive = actualPercentChange >= 0;
-              const formattedPct = `${isPositive ? '+' : ''}${actualPercentChange.toFixed(2)}%`;
+              const formattedPct = Number.isFinite(actualPercentChange)?`${isPositive ? '+' : ''}${actualPercentChange.toFixed(2)}%`:'--%';
 
               return (
                 <div key={tf} className="relative flex flex-col items-center">
@@ -2860,7 +2249,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         {/* Metric Area: SRW, HRW, HRS Cards with Latest Published Price, WoW, MoM, Contract Month */}
         {isWheat && usWheatHistory?.metrics && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-<ChartSummaryCard color="#DF0029" label="CBOT SRW" description="연질적색소맥" badge={formatContractMonth(usWheatHistory.metrics.srw.contractMonth)} value={prefixCurrency(formatConvertedPrice(usWheatHistory.metrics.srw.latestPriceMt * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)} unit={currencyLabel} metrics={<>
+<ChartSummaryCard data-wheat-class="srw" color="#DF0029" label="CBOT SRW" description="연질적색소맥" badge={formatContractMonth(usWheatHistory.metrics.srw.contractMonth)} value={prefixCurrency(formatConvertedPrice(usWheatHistory.metrics.srw.latestPriceMt * exchangeRate), currencySymbol)} unit={currencyLabel} metrics={<>
                   <div className="flex items-center justify-end gap-1">
                     <span className="text-[10px] text-slate-400">WoW:</span>
                     <span className={`text-xs font-mono font-bold ${
@@ -2869,7 +2258,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       {usWheatHistory.metrics.srw.wowAvailable === false ? '--' : `${usWheatHistory.metrics.srw.wowChangeMt >= 0 ? '+' : ''}${usWheatHistory.metrics.srw.wowChangePct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {usWheatHistory.metrics.srw.wowAvailable === false ? '' : `(${usWheatHistory.metrics.srw.wowChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.srw.wowChangeMt) * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)})`}
+                      {usWheatHistory.metrics.srw.wowAvailable === false ? '' : `(${usWheatHistory.metrics.srw.wowChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.srw.wowChangeMt) * exchangeRate), currencySymbol)})`}
                     </span>
                   </div>
                   <div className="flex items-center justify-end gap-1">
@@ -2880,11 +2269,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       {usWheatHistory.metrics.srw.momAvailable === false ? '--' : `${usWheatHistory.metrics.srw.momChangeMt >= 0 ? '+' : ''}${usWheatHistory.metrics.srw.momChangePct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {usWheatHistory.metrics.srw.momAvailable === false ? '' : `(${usWheatHistory.metrics.srw.momChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.srw.momChangeMt) * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)})`}
+                      {usWheatHistory.metrics.srw.momAvailable === false ? '' : `(${usWheatHistory.metrics.srw.momChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.srw.momChangeMt) * exchangeRate), currencySymbol)})`}
                     </span>
                   </div>
                 </>} />
-<ChartSummaryCard color="#D97706" label="KCBT HRW" description="경질적색소맥" badge={formatContractMonth(usWheatHistory.metrics.hrw.contractMonth)} value={prefixCurrency(formatConvertedPrice(usWheatHistory.metrics.hrw.latestPriceMt * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)} unit={currencyLabel} metrics={<>
+<ChartSummaryCard data-wheat-class="hrw" color="#D97706" label="KCBT HRW" description="경질적색소맥" badge={formatContractMonth(usWheatHistory.metrics.hrw.contractMonth)} value={prefixCurrency(formatConvertedPrice(usWheatHistory.metrics.hrw.latestPriceMt * exchangeRate), currencySymbol)} unit={currencyLabel} metrics={<>
                   <div className="flex items-center justify-end gap-1">
                     <span className="text-[10px] text-slate-400">WoW:</span>
                     <span className={`text-xs font-mono font-bold ${
@@ -2893,7 +2282,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       {usWheatHistory.metrics.hrw.wowAvailable === false ? '--' : `${usWheatHistory.metrics.hrw.wowChangeMt >= 0 ? '+' : ''}${usWheatHistory.metrics.hrw.wowChangePct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {usWheatHistory.metrics.hrw.wowAvailable === false ? '' : `(${usWheatHistory.metrics.hrw.wowChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrw.wowChangeMt) * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)})`}
+                      {usWheatHistory.metrics.hrw.wowAvailable === false ? '' : `(${usWheatHistory.metrics.hrw.wowChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrw.wowChangeMt) * exchangeRate), currencySymbol)})`}
                     </span>
                   </div>
                   <div className="flex items-center justify-end gap-1">
@@ -2904,11 +2293,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       {usWheatHistory.metrics.hrw.momAvailable === false ? '--' : `${usWheatHistory.metrics.hrw.momChangeMt >= 0 ? '+' : ''}${usWheatHistory.metrics.hrw.momChangePct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {usWheatHistory.metrics.hrw.momAvailable === false ? '' : `(${usWheatHistory.metrics.hrw.momChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrw.momChangeMt) * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)})`}
+                      {usWheatHistory.metrics.hrw.momAvailable === false ? '' : `(${usWheatHistory.metrics.hrw.momChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrw.momChangeMt) * exchangeRate), currencySymbol)})`}
                     </span>
                   </div>
                 </>} />
-<ChartSummaryCard color="#2563EB" label="MIAX HRS" description="경질봄소맥" badge={formatContractMonth(usWheatHistory.metrics.hrs.contractMonth)} value={prefixCurrency(formatConvertedPrice(usWheatHistory.metrics.hrs.latestPriceMt * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)} unit={currencyLabel} metrics={<>
+<ChartSummaryCard data-wheat-class="hrs" color="#2563EB" label="MIAX HRS" description="경질봄소맥" badge={formatContractMonth(usWheatHistory.metrics.hrs.contractMonth)} value={prefixCurrency(formatConvertedPrice(usWheatHistory.metrics.hrs.latestPriceMt * exchangeRate), currencySymbol)} unit={currencyLabel} metrics={<>
                   <div className="flex items-center justify-end gap-1">
                     <span className="text-[10px] text-slate-400">WoW:</span>
                     <span className={`text-xs font-mono font-bold ${
@@ -2917,7 +2306,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       {usWheatHistory.metrics.hrs.wowAvailable === false ? '--' : `${usWheatHistory.metrics.hrs.wowChangeMt >= 0 ? '+' : ''}${usWheatHistory.metrics.hrs.wowChangePct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {usWheatHistory.metrics.hrs.wowAvailable === false ? '' : `(${usWheatHistory.metrics.hrs.wowChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrs.wowChangeMt) * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)})`}
+                      {usWheatHistory.metrics.hrs.wowAvailable === false ? '' : `(${usWheatHistory.metrics.hrs.wowChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrs.wowChangeMt) * exchangeRate), currencySymbol)})`}
                     </span>
                   </div>
                   <div className="flex items-center justify-end gap-1">
@@ -2928,7 +2317,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       {usWheatHistory.metrics.hrs.momAvailable === false ? '--' : `${usWheatHistory.metrics.hrs.momChangeMt >= 0 ? '+' : ''}${usWheatHistory.metrics.hrs.momChangePct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {usWheatHistory.metrics.hrs.momAvailable === false ? '' : `(${usWheatHistory.metrics.hrs.momChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrs.momChangeMt) * (currency === 'KRW' ? exchangeRate : currency === 'EUR' ? 1 / 1.08 : 1)), currencySymbol)})`}
+                      {usWheatHistory.metrics.hrs.momAvailable === false ? '' : `(${usWheatHistory.metrics.hrs.momChangeMt >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(usWheatHistory.metrics.hrs.momChangeMt) * exchangeRate), currencySymbol)})`}
                     </span>
                   </div>
                 </>} />
@@ -3742,11 +3131,11 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="text-[#6b7280]">52주 가격 밴드 및 위치 분석 (52-Week Range Percentile)</span>
                 <span className="font-mono text-[#111827]">
-                  범위 내 {range52WeekStats.pct}% 지점
+                  범위 내 {Number.isFinite(range52WeekStats.pct)?range52WeekStats.pct:'--'}% 지점
                 </span>
               </div>
               <div className="w-full bg-[#e5e7eb] h-2.5 rounded-full overflow-hidden flex">
-                <div className="bg-[#DF0029] h-full rounded-full transition-all duration-500" style={{ width: `${range52WeekStats.pct}%` }}></div>
+                <div className="bg-[#DF0029] h-full rounded-full transition-all duration-500" style={{ width: Number.isFinite(range52WeekStats.pct)?`${range52WeekStats.pct}%`:undefined }}></div>
               </div>
               <div className="flex items-center justify-between text-xs font-mono text-[#6b7280]">
                 <span>52주 저점: {formatChartPrice(range52WeekStats.low)}</span>
@@ -3764,7 +3153,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         key={selectedCommodity?.id || (selectedCommodity as any)?.slug || (selectedCommodity as any)?.key || commodity.id}
         commodityId={commodity.id}
         currency={commodity.id === 'potato-starch' ? 'EUR' : currency}
-        confidenceScore={aiInsight?.confidenceScore ?? 88}
+        confidenceScore={aiInsight?.confidenceScore}
         recommendedCoverage={aiInsight?.deskRecommendation || activeDeskRecommendation}
         researchStatus={aiInsight?.status}
         researchSources={aiInsight?.sources}

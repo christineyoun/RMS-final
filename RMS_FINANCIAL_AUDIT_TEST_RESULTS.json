@@ -1,0 +1,540 @@
+{
+  "baselineCommit": "93c91f8e50e9476232699fea62329cc812a4ab30",
+  "typeCheck": "PASS npm run lint",
+  "productionBuild": "PASS npm run build; large-chunk advisory",
+  "suite": {
+    "total": 118,
+    "passed": 67,
+    "failed": 51
+  },
+  "tests": [
+    {
+      "file": "src/server/__tests__/aiPresentationCleanup.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/all8WeatherMinimums.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/analysisClaimAssembly.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/analysisClaimContract.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/analysisClaimPlanning.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/analysisGrounding.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/analysisQuality.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/analysisRecovery.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/brentBasisCorrection.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/canonicalCommodityPrices.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/chartEndpointLabels.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/cloudPersistence.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/cloudReadiness.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/cornTapiocaVerifiedNews.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/currencyUnitFormatting.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/dailyPublicationIssue.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/dataIntegrity.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/finalAiEditorial.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/freeDailyRefresh.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/freeRefreshNetwork.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/geminiKrwBudget.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/koreanReportVoice.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/macroTooltipFinal.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/mvpRendering.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/mvpStabilization.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/nativeTooltipRegression.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/newsFreshnessRepair.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/newsProcurementSelection.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/originHistoricalWeather.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherAuditCorrections.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherDisplay.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherFinalPresentation.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherFinalRepair.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherPills.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherPrefix.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherRecheck.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/originWeatherRootRepair.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/overviewIntegrityRepair.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/overviewIntelligence.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/overviewMacroFunctionality.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/overviewMarketHistory.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/paidRequestControl.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/palmCompletion.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/palmDisclaimerRemoval.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/palmFinalIntegrity.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/palmIngestion.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/palmMissingFx.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/palmPublisherSearch.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/pdfPublication.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoChartPresentation.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoDeskColors.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoExportChanges.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoExportQuote.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/potatoExportSchedule.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoFinalTop.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/potatoJrcEditorial.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoPhase1.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/potatoProductionChart.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoProductionEstimates.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoProductionRange.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/potatoPublisherSearch.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/potatoTopSavedReads.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/procurementRiskIntegration.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/procurementRiskWording.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/providerRequestCompatibility.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/publicHistoryRecovery.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/publisherMethodParity.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/retainedPalmPromotion.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/retainedPotatoPromotion.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/retainedSoybeanOilPromotion.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/retainedSoybeanPromotion.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/retainedSugarPromotion.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/rmsAiEditorial.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/rmsProcurementCondition.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/savedGraphHistory.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/scheduledAiWorkflow.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/scheduledRefreshIsolation.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/searchGroundingDiagnostic.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/sharedOriginWeather.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/sharedReportGuidelines.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/sixFieldSummaryRepair.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/sixthSoybeanReasoning.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/sourceAttributionStandard.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanAdviceReasoning.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanAnalysisEvidence.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanNewsPersistence.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilAnalysisEvidence.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilNewsPersistence.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilOriginIntegrity.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilPriceConsistency.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilPricePersistence.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilPublisherSearch.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilRetainedSources.test.ts",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOilSupplyRisk.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanOriginIntegrity.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanPriceConsistency.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanPricePersistence.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/soybeanPublisherSearch.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/soybeanWeatherLabels.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/standaloneAnalysis.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/starchOriginSupply.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/sugarPriceConsistency.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/sugarPublisherSearch.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/sugarVerifiedNews.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/supplyPreviousYear.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/tapiocaAnnualChange.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/tapiocaOriginPresentation.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/tropicalFreezingRisk.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/typedReasoningRoles.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/verifiedFactBinding.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/weatherNeutralVisibility.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/weatherRiskStatusVerification.test.tsx",
+      "result": "FAIL",
+      "baseline": "FAIL"
+    },
+    {
+      "file": "src/server/__tests__/weekdayRecovery.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/wheatOriginIntegrity.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/wheatOriginRisk.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/wheatScheduledIngestion.test.ts",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/wheatCurrencyConsistency.test.tsx",
+      "result": "PASS"
+    },
+    {
+      "file": "src/server/__tests__/financialDataSsot.test.ts",
+      "result": "PASS"
+    }
+  ],
+  "notExecuted": [
+    "browser interaction/visual verification",
+    "real provider/API integration",
+    "cloud deployment or configuration verification"
+  ]
+}

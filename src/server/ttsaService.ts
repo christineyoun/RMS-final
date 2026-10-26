@@ -40,94 +40,6 @@ export class TtsaService {
   private cacheExpiresAt: number = 0;
   private readonly cacheDurationMs = 30 * 60 * 1000; // 30 minutes
 
-  // Official TTSA weekly FOB Bangkok Starch Price Series for 2026 (Sorted by date ascending)
-  private readonly fallbackPrices: TtsaWeeklyPrice[] = [
-    // 2021
-    { date: '2021-01-05', price: 440, domesticThb: 11.50 }, // Absolute 5Y Low ($440 USD / ₩610,940 KRW)
-    { date: '2021-06-15', price: 490, domesticThb: 12.80 },
-    { date: '2021-12-21', price: 520, domesticThb: 13.50 },
-    // 2022
-    { date: '2022-02-08', price: 490, domesticThb: 13.00 },
-    { date: '2022-03-15', price: 540, domesticThb: 14.00 },
-    { date: '2022-09-20', price: 530, domesticThb: 13.80 },
-    // 2023
-    { date: '2023-01-10', price: 540, domesticThb: 14.10 },
-    { date: '2023-06-20', price: 570, domesticThb: 15.20 },
-    { date: '2023-11-14', price: 500, domesticThb: 13.00 },
-    // 2024
-    { date: '2024-02-13', price: 520, domesticThb: 13.60 },
-    { date: '2024-05-14', price: 555, domesticThb: 14.50 },
-    { date: '2024-07-16', price: 500, domesticThb: 13.00 },
-    { date: '2024-12-17', price: 480, domesticThb: 12.50 },
-    // 2025
-    { date: '2025-03-11', price: 485, domesticThb: 12.60 },
-    { date: '2025-07-15', price: 445, domesticThb: 11.80 },
-    { date: '2025-08-19', price: 490, domesticThb: 12.80 },
-    { date: '2025-12-23', price: 480, domesticThb: 12.50 },
-    // 2026
-    { date: '2026-01-06', price: 480, domesticThb: 14.10 },
-    { date: '2026-01-13', price: 480, domesticThb: 14.20 },
-    { date: '2026-01-20', price: 485, domesticThb: 14.20 },
-    { date: '2026-01-27', price: 490, domesticThb: 14.25 },
-    { date: '2026-02-03', price: 490, domesticThb: 14.30 },
-    { date: '2026-02-10', price: 490, domesticThb: 14.40 },
-    { date: '2026-02-17', price: 490, domesticThb: 14.40 },
-    { date: '2026-02-24', price: 495, domesticThb: 14.50 },
-    { date: '2026-03-03', price: 500, domesticThb: 14.70 },
-    { date: '2026-03-10', price: 500, domesticThb: 15.00 },
-    { date: '2026-03-17', price: 510, domesticThb: 15.20 },
-    { date: '2026-03-24', price: 515, domesticThb: 15.60 },
-    { date: '2026-03-31', price: 525, domesticThb: 16.20 },
-    { date: '2026-04-07', price: 540, domesticThb: 16.50 },
-    { date: '2026-04-21', price: 555, domesticThb: 16.70 },
-    { date: '2026-04-28', price: 565, domesticThb: 17.20 },
-    { date: '2026-05-05', price: 580, domesticThb: 17.90 },
-    { date: '2026-05-12', price: 605, domesticThb: 18.50 },
-    { date: '2026-05-19', price: 625, domesticThb: 19.50 },
-    { date: '2026-05-26', price: 650, domesticThb: 20.00 },
-    { date: '2026-06-02', price: 665, domesticThb: 20.70 },
-    { date: '2026-06-09', price: 685, domesticThb: 21.30 },
-    { date: '2026-06-16', price: 700, domesticThb: 21.70 },
-    { date: '2026-06-23', price: 700, domesticThb: 22.00 },
-    { date: '2026-06-30', price: 700, domesticThb: 22.00 },
-    { date: '2026-07-07', price: 700, domesticThb: 22.15 },
-    { date: '2026-07-14', price: 700, domesticThb: 22.15 },
-    { date: '2026-07-21', price: 700, domesticThb: 22.15 },
-    { date: '2026-08-04', price: 705, domesticThb: 22.30 },
-    { date: '2026-08-11', price: 705, domesticThb: 22.30 },
-    { date: '2026-08-18', price: 705, domesticThb: 22.30 },
-    { date: '2026-08-25', price: 705, domesticThb: 22.30 },
-    { date: '2026-09-01', price: 705, domesticThb: 22.30 },
-    { date: '2026-09-08', price: 705, domesticThb: 22.30 },
-    { date: '2026-09-15', price: 700, domesticThb: 22.10 },
-    { date: '2026-09-22', price: 700, domesticThb: 22.10 },
-    { date: '2026-09-29', price: 700, domesticThb: 22.10 },
-    { date: '2026-10-06', price: 695, domesticThb: 22.00 },
-    { date: '2026-10-13', price: 695, domesticThb: 22.00 },
-    { date: '2026-10-20', price: 690, domesticThb: 21.80 },
-    { date: '2026-10-27', price: 690, domesticThb: 21.80 }
-  ];
-
-  private readonly fallbackSupply: TtsaSupplyBalance = {
-    referencePeriod: '2025/2026 Season',
-    plantedArea: 6615.283, // kRAI
-    plantedAreaYoY: -21.7, 
-    cassavaYield: 2.809, // Ton/Rai
-    yieldYoY: -5.0,
-    cassavaProduction: 18.582, // MMT
-    productionYoY: -25.6,
-    nativeStarchExportVolume: 2.85, 
-    nativeStarchExportYoY: 4.2, 
-    modifiedStarchExportVolume: 1.15, 
-    modifiedStarchExportYoY: -1.5, 
-    latestFobBangkokPrice: 695,
-    priceWoW: -0.71,
-    sourceDates: {
-      priceDate: '2026-10-06',
-      statisticsDate: '2026-09-11'
-    }
-  };
-
   private constructor() {}
 
   public static getInstance(): TtsaService {
@@ -248,36 +160,8 @@ export class TtsaService {
   }
 
   public async getSupplyBalance(force: boolean = false): Promise<TtsaSupplyBalance> {
-    const now = Date.now();
-    if (!force && this.cachedSupply && now < this.cacheExpiresAt) {
-      return this.cachedSupply;
-    }
-
-    try {
-      const prices = await this.getWeeklyPrices(force);
-      const latestPrice = prices[prices.length - 1];
-      const prevPrice = prices[prices.length - 2];
-      
-      const priceVal = latestPrice ? latestPrice.price : 700;
-      const prevVal = prevPrice ? prevPrice.price : 700;
-      const wow = prevVal === 0 ? 0 : ((priceVal - prevVal) / prevVal) * 100;
-
-      this.cachedSupply = {
-        ...this.fallbackSupply,
-        latestFobBangkokPrice: priceVal,
-        priceWoW: Number(wow.toFixed(2)),
-        sourceDates: {
-          priceDate: latestPrice ? latestPrice.date : '2026-09-22',
-          statisticsDate: '2026-09-11'
-        }
-      };
-      
-      return this.cachedSupply;
-    } catch (err) {
-      console.warn('[TtsaService] Error computing supply balance:', err);
-      return this.fallbackSupply;
-    }
-  }
+throw Error('TTSA supply balance unavailable: no verified production/trade source; use dated weekly price observations');
+}
 
   public static forwardFillWeeklyPrices(prices: TtsaWeeklyPrice[]): TtsaWeeklyPrice[] {
     if (prices.length === 0) return [];

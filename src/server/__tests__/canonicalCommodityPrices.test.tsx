@@ -23,7 +23,7 @@ try{
  }
  assert.equal(batch.wheat!.priceUsdMt,inputs[endpoint('wheat')].metrics.srw.latestPriceMt);
  const palm=structuredClone(inputs[endpoint('palm-oil')]);palm.data.at(-1).usdPerMT=9999;assert.equal(quoteFromResponse('palm-oil',palm)!.priceUsdMt,palm.data.at(-1).cpoUsd,'FCPO never replaced by Olein/generic field');
- for(const id of COMMODITY_IDS){const packet=inputs[endpoint(id)];if(id==='potato-starch')packet.data.eurPerMT+=1;else if(id==='wheat')packet.metrics.srw.latestPriceMt+=1;else{const latest=packet.data.at(-1);latest.usdPerMT+=1;if(id==='palm-oil')latest.cpoUsd+=1;}}
+ for(const id of COMMODITY_IDS){const packet=inputs[endpoint(id)];if(id==='potato-starch')packet.data.eurPerMT+=1;else if(id==='wheat'){packet.metrics.srw.latestPriceMt+=1;packet.data.at(-1).srwMt+=1;}else{const latest=packet.data.at(-1);latest.usdPerMT+=1;if(id==='palm-oil')latest.cpoUsd+=1;}}
  const updated=await fetchCommodityQuotes();for(const id of COMMODITY_IDS){assert.notEqual(id==='potato-starch'?updated[id]!.potatoSnapshot!.data!.eurPerMT:updated[id]!.priceUsdMt,id==='potato-starch'?batch[id]!.potatoSnapshot!.data!.eurPerMT:batch[id]!.priceUsdMt,id+' saved reload');}
  const sparse=quoteFromResponse('corn',{success:true,data:[{date:'2026-10-23',usdPerMT:100}]})!;assert.equal(sparse.changeWoW,null);assert.equal(sparse.changeMoM,null);assert.equal(commodityComparisonDisplay({id:'corn',changeMoM:null} as Commodity,'mom'),'--%');
  const missingPotato={id:'potato-starch',price:0,changeMoM:null,_potatoExportQuote:batch['potato-starch']!.potatoSnapshot} as Commodity;

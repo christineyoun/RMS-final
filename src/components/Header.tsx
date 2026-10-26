@@ -160,10 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
   lastSyncTime,
   modelVersion
 }) => {
-  const [alerts, setAlerts] = useState<AlertItem[]>([
-    { id: 'a1', severity: 'high', title: '[긴급] 환율 변동성 확대', message: 'USD/KRW 1,388.50원 돌파, 원가상승 주의보 발령' },
-    { id: 'a2', severity: 'medium', title: '[주시] 팜유 B40 시행 모멘텀', message: '인도네시아 2025 B40 의무화로 4,180 MYR 돌파' }
-  ]);
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
 
   const highRiskCount = alerts.filter(a => a.severity === 'high').length;
   const [issueNumber, setIssueNumber] = useState<string | null>(null);
@@ -191,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
   useEffect(() => {
     // Continue receiving existing alerts; their timestamps do not affect the daily AI badge.
     const unsubscribe = clientMarketDataService.subscribe((payload: any) => {
-      if (payload.alerts && payload.alerts.length > 0) setAlerts(payload.alerts);
+      if (Array.isArray(payload.alerts)) setAlerts(payload.alerts);
     });
     return unsubscribe;
   }, []);

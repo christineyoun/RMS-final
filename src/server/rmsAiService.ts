@@ -39,8 +39,10 @@ export class RmsAiService {
     unit: string = 'USD/MT'
   ): Promise<RmsStrategyEvaluation> {
     const validPrices = historicalPrices.filter((p) => typeof p === 'number' && Number.isFinite(p) && p > 0);
-    const min52W = validPrices.length > 0 ? Math.min(...validPrices) : currentPrice * 0.8;
-    const max52W = validPrices.length > 0 ? Math.max(...validPrices) : currentPrice * 1.2;
+    if(!Number.isFinite(currentPrice)||currentPrice<=0||validPrices.length<2)throw Error('Verified price/history unavailable for strategy evaluation');
+    // Deterministic strategy policy v1: heuristic thresholds, never observed financial data.
+    const min52W = Math.min(...validPrices);
+    const max52W = Math.max(...validPrices);
     
     // Percentile position in 52-week range (0 to 100)
     const range52W = max52W - min52W || 1;

@@ -1,9 +1,9 @@
 import {formatPercentChange} from '../utils/commodityPriceMetrics';
-import type {Commodity,Currency} from '../types';
+import type {Commodity,Currency,UsWheatPriceHistoryResponse,CommodityHistorySnapshot} from '../types';
 import type {DatedDisplayFx} from '../utils/soybeanPriceSnapshot';
 import {soybeanDisplayFactor} from '../utils/soybeanPriceSnapshot';
 import {potatoDisplayConversion} from './currencyService';
-import {prefixCurrency,priceUnit} from '../utils/currencyFormatting';
+import {prefixCurrency,priceUnit,formatCurrencyAmount} from '../utils/currencyFormatting';
 import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 import type {SugarPriceSnapshot} from '../utils/sugarPriceSnapshot';
 import type {SoybeanOilPriceSnapshot} from '../utils/soybeanOilPriceSnapshot';
@@ -18,6 +18,9 @@ export const COMMODITY_IDS = ['wheat','corn','soybean','soybean-oil','palm-oil',
 export type CommodityId = typeof COMMODITY_IDS[number];
 export type CommodityQuote = {
   priceUsdMt: number;
+  sourceStale?: boolean;
+  wheatSnapshot?: UsWheatPriceHistoryResponse;
+  historySnapshot?: CommodityHistorySnapshot;
   potatoSnapshot?: PotatoExportQuoteResponse;
   changeWoW: number | null;
   changeMoM: number | null;
@@ -67,6 +70,7 @@ export function quoteFromResponse(id: CommodityId, response: any): CommodityQuot
   if(id==='sugar'&&(response.commodity!=='sugar'||!/^SB=F(?:\s|$)/.test(String(response.symbol))||response.quoteUnit!=='US¢/lb'||response.priceUnit!=='USD/MT'))return null;
   if(id==='soybean-oil'&&(response.commodity!=='soybean-oil'||!String(response.symbol).startsWith('ZL=F')||response.quoteUnit!=='US¢/lb'||response.priceUnit!=='USD/MT'))return null;
   if (id === 'wheat') {
+    if(response.latestSourceType==='imported-baseline'||response.sourceStatus==='baseline')return null;
     const metric = response.metrics?.srw;
     const points = Array.isArray(response.data) ? response.data : [];
     if (!finite(metric?.latestPriceMt) || !points.length) return null;
@@ -74,8 +78,10 @@ export function quoteFromResponse(id: CommodityId, response: any): CommodityQuot
     if (!verified.length) return null;
     verified.sort((a: any,b: any) => a.date.localeCompare(b.date));
     const tail = verified.slice(-24);
+    if(Math.abs(metric.latestPriceMt-tail[tail.length-1].srwMt)>1e-6)return null; // Never publish contradictory current observations.
     return {
       priceUsdMt: metric.latestPriceMt,
+      wheatSnapshot: response,
       changeWoW: metric.wowAvailable === false ? null : (Number.isFinite(metric.wowChangePct) ? metric.wowChangePct : null),
       changeMoM: metric.momAvailable === false ? null : (Number.isFinite(metric.momChangePct) ? metric.momChangePct : null),
       changeWoWUsdMt: metric.wowAvailable === false || !Number.isFinite(metric.wowChangeMt) ? null : metric.wowChangeMt,
@@ -125,7 +131,7 @@ async function readCommodityQuotes(force = false): Promise<Partial<Record<Commod
   const quotes: Partial<Record<CommodityId,CommodityQuote>> = {};
   COMMODITY_IDS.forEach((id,index) => {
     const quote = quoteFromResponse(id,responses[index]);
-    if (quote) quotes[id] = quote;
+    if (quote) quotes[id] = {...quote,sourceStale:!!(responses[index]?.sourceError||responses[index]?.lastError||responses[index]?.stale),...(['corn','palm-oil','tapioca-starch'].includes(id)?{historySnapshot:responses[index]}:{})};
   });
   return quotes;
 }
@@ -146,7 +152,7 @@ export function mapCommodityForDisplay(c:Commodity,currency:Currency,fx:DatedDis
 export function commodityBenchmarkDisplay(c:Commodity,currency:Currency){
  const selected=c._canonicalDisplayCurrency||currency,symbol=selected==='KRW'?'₩':selected==='EUR'?'€':'$';
  const available=finite(c.price);
- const value=available?prefixCurrency(selected==='KRW'?Math.round(c.price).toLocaleString('en-US'):c.price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),symbol):c.id==='potato-starch'?'데이터 미확보':'--';
+ const value=available?prefixCurrency(formatCurrencyAmount(c.price,selected),symbol):c.id==='potato-starch'?'데이터 미확보':'--';
  return {value,unit:priceUnit(selected,symbol),currency:selected};
 }
 
