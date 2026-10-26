@@ -166,12 +166,11 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
             if((!isPotato&&!isTapioca)||s.display!=='origin-summary')return s.text;
             if(isPotato){
               const row=potatoJrc.rows.find(r=>r.country===origin.country||origin.region?.startsWith(r.country+' '));
-              const history=origin.marketYear?`${origin.marketYear}년 생산${origin.production?.includes('추정')?'(추정)':''}`:'';
               if(row&&row.previousYear>0&&Number.isFinite(row.forecast)){
                 const change=(row.forecast/row.previousYear-1)*100;
-                return `${history}${history?' · ':''}${potatoJrc.forecastYear}년 단수 전망 ${row.forecast.toFixed(1)}t/ha (${potatoJrc.previousYear}년 대비 ${change<0?'−':change>0?'+':''}${Math.abs(change).toFixed(1)}%)`;
+                return `${potatoJrc.forecastYear}년 단수 전망 ${row.forecast.toFixed(1)}t/ha (${potatoJrc.previousYear}년 대비 ${change<0?'−':change>0?'+':''}${Math.abs(change).toFixed(1)}%)`;
               }
-              return history||s.text;
+              return s.text.replace(/^\d{4}년 생산(?:\(추정\))?\s*·\s*/, '');
             }
             const change=s.text.match(/[+-]?\d+(?:\.\d+)?%$/)?.[0];
             const previousYear=isPotato&&/^\d{4}$/.test(s.period)?String(Number(s.period)-1):isTapioca?s.text.match(/^\d{4}\/\d{2}/)?.[0]:undefined;
@@ -184,7 +183,7 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
           return <div key={idx} aria-description={commodityId==='tapioca-starch'?[provenance,weatherStatus.basis].filter(Boolean).join(' · '):provenance} className="origin-card bg-[#f9fafb] border border-[#e5e7eb] p-2.5 rounded flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap"><span className="font-semibold text-xs text-[#111827]">{origin.region||origin.country||'산지'}</span>
-                {origin.production&&<span className="text-[10px] bg-white border border-[#e5e7eb] px-2 py-0.5 rounded-md font-sans font-medium text-[#374151]">{commodityId==='soybean-oil'?'국가 대두유 생산':isPotato?'감자 생산':isTapioca?'카사바 생산':commodityId==='sugar'?'국가 설탕 생산':origin.region?.includes('유럽연합')?'EU 생산':'국가 생산'} <span className="font-mono font-bold">{production}</span></span>}
+                {origin.production&&<span className="text-[10px] bg-white border border-[#e5e7eb] px-2 py-0.5 rounded-md font-sans font-medium text-[#374151]">{commodityId==='soybean-oil'?'국가 대두유 생산':isPotato?`${origin.marketYear?origin.marketYear+' ':''}생산${origin.production?.includes('추정')?' 추정':''}`:isTapioca?'카사바 생산':commodityId==='sugar'?'국가 설탕 생산':origin.region?.includes('유럽연합')?'EU 생산':'국가 생산'} <span className="font-mono font-bold">{production}</span></span>}
               </div>
               {(supply||weather)&&<div className="text-[10px] text-[#6b7280] mt-1 font-sans break-keep whitespace-normal leading-snug">
                 {supply&&<div>{origin.region?.includes('유럽연합')?'EU':'국가'} {originRadarDisplayText(supply,isCorn?'corn':isWheat?'wheat':'other')}</div>}
