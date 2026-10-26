@@ -28,7 +28,7 @@ export function freeRefreshDay(now=new Date()){
   return {day:`${values.year}-${values.month}-${values.day}`,hour:Number(values.hour),weekday:!['Sat','Sun'].includes(values.weekday)};
 }
 export function freeRefreshDue(now=new Date(),settings=freeRefreshSettings(),lastDay=read('free-source-refresh.json')?.day){const t=freeRefreshDay(now);return settings.enabled&&t.weekday&&t.hour>=settings.hourKST&&t.day!==lastDay;}
-export interface FreeSourceJob {key:string;commodity?:string;source?:string;cadenceHours?:number;run:()=>Promise<any>}
+export interface FreeSourceJob {key:string;commodity?:string;source?:string;cadenceHours?:number;retryable?:boolean;run:()=>Promise<any>}
 export const soybeanPriceRefreshJob:FreeSourceJob={key:'soybean-history',run:async()=>{
   const snapshot=await soybeanIntelligenceService.getSoybeanPriceSnapshot(true,'scheduled');
   return {lastError:snapshot.lastError,observationDate:snapshot.data.at(-1)?.date,refresh:snapshot.refreshMetadata};
@@ -65,13 +65,17 @@ export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;
    try{
     const day=freeRefreshDay(now()).day,previous=readRun('free-source-refresh.json');
     if(trigger==='scheduled'&&previous?.day===day&&previous.status!=='running')return null;
+    const recovering=trigger==='recovery';
+    if(recovering&&(!previous||previous.day!==day||previous.status==='running'||(previous.recoveryPasses||0)>=1))return null;
+    const retryKeys=new Set(recovering?previous.jobs.filter((j:any)=>['failed','retained-old-data'].includes(j.status)&&j.retryable!==false&&!/HTTP 403|permission|authorization|licensed|written authorization/i.test(j.error||'')).map((j:any)=>j.key):[]);
+    if(recovering&&!retryKeys.size)return null;
     const resumed=previous?.day===day&&previous.status==='running';
     if(previous&&!resumed)fs.appendFileSync(path.join(directory,'free-source-refresh-history.jsonl'),JSON.stringify(previous)+'\n');
-    const run:any=resumed?{...previous,id:previous.id||nonce,resumedAt:now().toISOString()}:{day,id:nonce,trigger,startedAt:now().toISOString(),kind:'free-public-sources',status:'running',jobs:[]};save(run);
+    const run:any=recovering?{...previous,status:'running',recoveryPasses:(previous.recoveryPasses||0)+1,recoveryStartedAt:now().toISOString(),jobs:previous.jobs.filter((j:any)=>!retryKeys.has(j.key))}:resumed?{...previous,id:previous.id||nonce,resumedAt:now().toISOString()}:{day,id:nonce,trigger,startedAt:now().toISOString(),kind:'free-public-sources',status:'running',jobs:[]};save(run);
     const observations=readRun('free-source-observations.json')||{jobs:{}},oldJobs=observations.jobs||{};
-    const tasks=jobs();let next=0;
+    const tasks=jobs().filter(j=>!recovering||retryKeys.has(j.key));let next=0;
     const worker=async()=>{while(next<tasks.length){const job=tasks[next++];if(resumed&&run.jobs.some((r:any)=>r.key===job.key))continue;
-     const prior=oldJobs[job.key],startedAt=now().toISOString();let row:any={key:job.key,commodity:job.commodity||job.key,source:job.source||job.key,attemptedAt:startedAt};
+     const prior=oldJobs[job.key],startedAt=now().toISOString();let row:any={key:job.key,commodity:job.commodity||job.key,source:job.source||job.key,attemptedAt:startedAt,retryable:job.retryable!==false};
      if(job.cadenceHours&&prior?.lastVerifiedAt&&Date.parse(startedAt)-Date.parse(prior.lastVerifiedAt)<job.cadenceHours*3600000){row={...row,status:'unchanged',reason:'Verified publication retained within source check cadence',observationDate:prior.observationDate,lastVerifiedAt:prior.lastVerifiedAt};}
      else try{const value=await job.run(),publication=value.publication??value;
       const error=value.lastError||value.refreshFailed&&value.message||value.success===false&&value.message||value.stale&&value.lastError;
@@ -93,7 +97,7 @@ export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;
  };
  const check=()=>{const cfg=readRun('settings.json')||{},s={enabled:cfg.freeAutoEnabled===true,hourKST:9},last=readRun('free-source-refresh.json');
   return !active&&freeRefreshDue(now(),s,last?.status==='running'?'':last?.day||'')?refresh('scheduled'):Promise.resolve(null);};
- return {refresh,check};
+ return {refresh,check,retryFailed:()=>refresh('recovery')};
 }
 const runner=createFreeSourceRunner();
 export const refreshFreeSources=runner.refresh;

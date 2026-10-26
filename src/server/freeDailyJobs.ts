@@ -1,4 +1,5 @@
 import {scfiReuseAuthorization,SSE_SCFI_URL} from './scfiScraperService.ts';
+import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
 import fs from 'node:fs';import path from 'node:path';
 import {sharedWeatherScreen} from './originWeatherService.ts';
 import type {FreeSourceJob} from './freeSourceRefresh.ts';
@@ -36,8 +37,9 @@ async function news(id:string){
   // These commodities have original-article verification but no standalone free index discovery.
   // Recheck the original approved article URLs; preserve Korean editorial summaries and receipts.
   const inputs=await savedOverviewInputs();const prior=inputs.find(i=>i.id===id)?.articles||[];
-  accepted=await(await import('./all8ArticleVerification.ts')).verifyOtherCommodityArticles(prior.map((a:any)=>({...a,rawTitle:a.title,rawSnippet:a.summary,rawId:a.id})),id);
-  discovery={candidates:prior,limitation:'Original published URLs only; new discovery requires a supported free index, not paid search'};
+  const extra=await discoverAdditionalNews(id);
+  accepted=await(await import('./all8ArticleVerification.ts')).verifyOtherCommodityArticles([...extra.candidates,...prior.map((a:any)=>({...a,rawTitle:a.sourceHeadline||a.title,rawSnippet:a.summary,rawId:a.id}))].slice(0,12),id);
+  discovery={candidates:[...extra.candidates,...prior],limitation:'Bounded original-publisher feeds; missing articles may be researched only within authorized paid context'};
  }
  const value={checkedAt:new Date().toISOString(),candidates:accepted,discoveryCount:discovery.candidates.length,status:'verified-originals-awaiting-editorial-review',limitation:discovery.limitation};writeFreeJson('free-news-candidates-'+id+'.json',value);
  return packet(accepted,accepted.map(a=>a.publishedAt).sort().at(-1),accepted.length?undefined:'No original public articles verified; approved saved news retained');
@@ -46,7 +48,7 @@ export function originWeatherPublicationStatus(r:any){const errors=r.origins.fil
 export function dailyFreeSourceJobs():FreeSourceJob[]{return [
  {key:'transport-policy',commodity:'overview / wheat',source:'USDA AMS ocean grain freight + Federal Register (US wheat scope only)',cadenceHours:24,run:async()=>{const r=await(await import('./wheatOriginTransportPolicyService.ts')).wheatOriginTransportPolicyService.getEvidence();writeFreeJson('free-transport-policy.json',r);return packet(r,[r.freight?.observedOn,r.policy?.publishedOn].filter(Boolean).sort().at(-1),!r.freight&&!r.policy?'No currently verified US freight or relevant policy publication; absence is not proof of no restriction':undefined);}},
  {key:'energy',commodity:'overview',source:'Yahoo Finance Brent public quote',run:async()=>{const r=await(await import('./geminiApi.ts')).fetchLiveCrudeOilData('BZ=F',0);if(!r.observationDate||!(r.currentPrice>0))throw Error('No dated verified Brent quote; previous publication retained');saveVerifiedEnergy(r);return packet(r,r.sessionDate||r.observationDate);}},
- {key:'freight',commodity:'overview',source:'Shanghai Shipping Exchange SCFI',cadenceHours:168,run:async()=>{const r=await(await import('./scfiScraperService.ts')).scrapeLiveScfiIndex(true);if(!r.observationDate)throw Error('SSE did not provide a verifiable SCFI publication date; retained cache is not a new observation');return packet(r,r.observationDate,r.lastError);}},
+ {key:'freight',commodity:'overview',source:'Shanghai Shipping Exchange SCFI',cadenceHours:168,retryable:!!scfiReuseAuthorization(),run:async()=>{if(!scfiReuseAuthorization())throw Error('SCFI written display/export authorization not recorded; no source request attempted');const r=await(await import('./scfiScraperService.ts')).scrapeLiveScfiIndex(true);if(!r.observationDate)throw Error('SSE did not provide a verifiable SCFI publication date; retained cache is not a new observation');return packet(r,r.observationDate,r.lastError);}},
  {key:'fx',commodity:'overview',source:'ECB / Frankfurter',run:fxJob},
  ...ids.filter(i=>i!=='potato-starch').map(id=>({key:id+'-history',commodity:id,source:id==='wheat'?'U.S. Wheat Associates':id.includes('starch')?'TTSA':id==='palm-oil'?'Public palm publisher tables':'Yahoo Finance exchange-labelled history',run:()=>history(id)})),
  ...ids.filter(i=>!i.includes('starch')).map(id=>({key:id+'-world',commodity:id,source:'USDA FAS PSD',cadenceHours:24,run:()=>world(id)})),

@@ -55,6 +55,10 @@ try{
  assert.equal((await loadPublicBundle()).revision,'two','existing viewer follows a complete promoted publication');
  await assert.rejects(publish(first,state,initial.generation),/412/);
  assert.equal((await loadPublicBundle()).revision,'two','stale writer cannot overwrite newer publication');
+ const {cloudScheduledJournal}=await import('../scheduledAi.ts');const firstJournal=cloudScheduledJournal('2026-10-26');assert.equal(await firstJournal.read(),null);
+ const record:any={version:2,day:'2026-10-26',policyHash:'offline-only',budget:{maxDailyEstimatedKrw:5000,maxEstimatedUsd:2.77,safetyKrwPerUsd:1800},requests:[{phase:'news-wheat',attempt:1,model:'offline',reservedUsd:0.25,reservedKrw:450}],phases:{'news-wheat':{status:'started'}}};await firstJournal.save(record);
+ const restarted=cloudScheduledJournal('2026-10-26');assert.deepEqual(await restarted.read(),record,'Cloud restart retains reservations even without publication promotion');await restarted.save({...record,phases:{'news-wheat':{status:'retained-previous'}}});await assert.rejects(firstJournal.save(record),/412/);
+ console.log('PASS durable KRW daily journal survives restart/failed publication and rejects stale reservation writes.');
  process.env.K_SERVICE='deployed-viewer';process.env.RMS_PUBLICATION_FILE='/tmp/local-only.json';
  await assert.rejects(loadPublicBundle(),/persistent bucket/);
  assert.throws(()=>validatePublicationPointer({...pointer,state:{...pointer.state,key:'../state'}}),/object identity/);

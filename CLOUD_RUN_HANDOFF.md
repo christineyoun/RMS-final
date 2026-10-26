@@ -1,6 +1,6 @@
 # RMS Google Cloud deployment handoff
 
-Repository implementation is ready for project-side staging. **No live Google Cloud deployment, IAM configuration or Docker image build has been verified:** this workspace has neither project credentials nor `gcloud`/Docker. No source refresh was triggered. The commands below are for the authorized deployment operator; they were not executed here.
+Repository implementation is ready for project-side staging. **No live Google Cloud deployment, IAM configuration or Docker image build has been verified:** this workspace has neither project credentials nor `gcloud`/Docker. The deployment preparation triggered no full refresh or paid AI call. A later focused repair verified the official October23 Wheat report. The commands below are for the authorized deployment operator; they were not executed here.
 
 ## Runtime design
 
@@ -57,7 +57,7 @@ gcloud storage buckets add-iam-policy-binding "gs://$PUBLICATION_BUCKET" --membe
 gcloud storage buckets add-iam-policy-binding "gs://$STATE_BUCKET" --member="serviceAccount:$UPDATER_SA" --role=roles/storage.objectUser
 ```
 
-No bucket is public. Viewer has no private-state access or write permissions. Updater has object permissions on these two dedicated buckets, not project-wide storage administration. Scheduler has no storage access. If an existing free collector requires a credential, attach only its specific Secret Manager secret to the updater with per-secret access. Do not attach `GEMINI_API_KEY`, `GOOGLE_API_KEY` or other paid AI credentials to either runtime. Preserve the existing Cloud Scheduler service-agent role; do not grant Scheduler project Editor.
+No bucket is public. Viewer has no private-state access or write permissions. Updater has object permissions on these two dedicated buckets, not project-wide storage administration. Scheduler has no storage access. If an existing free collector requires a credential, attach only its specific Secret Manager secret to the updater with per-secret access. Never attach paid AI credentials to the viewer. The default updater remains free-only. A Gemini secret may be attached to the updater only after the separate explicit policy/budget approval documented in WEEKDAY_REFRESH_POLICY.md; do not attach GOOGLE_API_KEY. Preserve the existing Cloud Scheduler service-agent role; do not grant Scheduler project Editor.
 
 Do not put bucket-level retention locks on the mutable lease/current pointer: these must be conditionally deleted/replaced. Versioning preserves old pointers. Configure lifecycle only after defining retention requirements; never delete objects still referenced by current or retained rollback pointers.
 
@@ -161,8 +161,8 @@ A weekday check does not mean the source publishes daily. Existing collector rul
 | Origin Radar/Overview weather | Existing all-eight origin jobs and deduplicated Open-Meteo evidence windows; crop/region scope unchanged. No weather-status pills rendered. |
 | FX/Brent | Weekday checks. Existing quote/reference/session rules remain; not every futures quote is a confirmed settlement. FX comparison can be unavailable without a saved comparable prior dated receipt. |
 | SCFI | Existing weekly/168-hour gate and parser retained. Automatic collection/display/export remain unavailable until documented permission is recorded; reference link alone is not a license. |
-| Market Intelligence | Existing source verification/discovery jobs; does not automatically approve/rewrite all editorial articles. Saved approved content is retained. |
-| RMS AI / Desk recommendations | Approved saved snapshots remain visible. **No automatic Gemini/paid analysis generation.** |
+| Market Intelligence | Existing source verification/discovery jobs; candidates alone are not approval. The separately approved paid workflow can publish only source-verified, evidence-checked accepted summaries. |
+| RMS AI / Desk recommendations | Approved saved snapshots remain visible. **Default OFF. Explicitly approved private weekday policy can generate accepted updates; see WEEKDAY_REFRESH_POLICY.md.** |
 | Policy/transport | Existing US/wheat-scope Federal Register/USDA screen; not comprehensive new government-policy coverage for every commodity. Selected verified outlooks retain factual status. |
 | Tapioca S&D | Saved verified raw-material scope retained; no configured official global starch-balance feed. |
 | AMIS/other unsupported sources | Existing saved or unavailable states remain honest; no new substitute feeds. |
@@ -176,3 +176,7 @@ Local: focused allowlist/security, archive/history round-trip, generation CAS, o
 Actual Cloud Build/Docker runtime, Google IAM permissions, bucket access, service cold restart/scale, Scheduler execution and post-refresh propagation remain **unverified until performed in your project**. These are the final credential-dependent operations, not an application startup error diagnosed from inaccessible logs.
 
 Official deployment references: [scheduled Cloud Run Jobs](https://docs.cloud.google.com/run/docs/execute/jobs-on-schedule), [Cloud Storage generation preconditions](https://docs.cloud.google.com/storage/docs/request-preconditions), [Cloud Storage volume configuration](https://docs.cloud.google.com/run/docs/configuring/services/cloud-storage-volume-mounts). The operator must verify current CLI availability, project policy and permissions when executing.
+
+## Coordinated paid extension — corrected KRW policy approved
+
+See [WEEKDAY_REFRESH_POLICY.md](WEEKDAY_REFRESH_POLICY.md). The owner approved the corrected **₩5,000 combined Gemini API estimated-spend cap per KST day** on October 26, for **October 27–November 25, 2026**, with 24 calls as a secondary ceiling and no paid retries. The earlier US$6 authorization remains revoked. `scripts/cloud/weekday-ai-policy.approved.json` records the corrected approval; runtime activation requires the private updater Secret Manager settings and matching fingerprint. Saved FX plus the policy floor and 20% margin currently yields **US$2.77/day at 1,800 KRW/USD**; higher verified FX tightens it. All reservations persist in the private daily ledger; exhausted budget retains approved content. Infrastructure costs are separate. No paid calls, local paid timers or public access were activated here. Keep staging private and verify the first authorized cloud execution.

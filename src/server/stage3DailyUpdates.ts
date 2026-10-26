@@ -1,4 +1,5 @@
 import {policyRecordPresentation} from '../utils/overviewMacroPresentation.ts';
+import {readScheduledContent} from './scheduledContent.ts';
 import {readFreePublication,freeRefreshStatus} from './freeDailyPublication.ts';
 import {assessProcurementRisk} from '../utils/procurementRisk.ts';
 import {collectAnalysisEvidence} from './analysisEvidence.ts';
@@ -394,6 +395,10 @@ export function createStage3Gateway() {
         return respond(res,403,{success:false,error:'Paid authorization is restricted to the selected analysis commodity.'});
       return withAuthorizedStage3Run(state.context,()=>next());
     }
+    // A single accepted manifest switches news and analyses together. Shared by
+    // commodity readers and the saved Overview input collector; no paid page reads.
+    const scheduled=readScheduledContent(key);
+    if(scheduled)return respond(res,200,key.startsWith('news-')?savedNewsResponse(key.slice(5),scheduled.payload.articles):{...scheduled.payload,data:{...scheduled.payload.data,status:'cached'}});
     if(key==='news-wheat')return respond(res,200,savedNewsResponse('wheat',readVerifiedWheatNews()));
     if(key==='news-soybean-oil')return respond(res,200,savedNewsResponse('soybean-oil',readVerifiedSoybeanOilNews()));
     if(key==='news-soybean')return respond(res,200,savedNewsResponse('soybean',[...readVerifiedSoybeanNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='American Soybean Association')]));

@@ -28,7 +28,7 @@ export function validAnalysisFact(f:AnalysisFact,id:string,now=new Date()):boole
 }
 export function trustedAnalysisUrl(value:string):boolean {
   try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&!u.port&&
-    ((u.href===POTATO_RESEARCH_URL||u.href===POTATO_KMC_URL||u.href===SUGAR_PRICE_URL||u.href===SUGAR_RESEARCH_URL||SOYBEAN_OIL_NEWS_CARDS.some(c=>c.originalUrl===u.href))||OIL_ORIGIN_POINTS.some(p=>(oilWeatherSourceUrl(p)===u.href||legacyOilWeatherUrl(p)===u.href))||
+    ((u.href==='https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price'||u.href===POTATO_RESEARCH_URL||u.href===POTATO_KMC_URL||u.href===SUGAR_PRICE_URL||u.href===SUGAR_RESEARCH_URL||SOYBEAN_OIL_NEWS_CARDS.some(c=>c.originalUrl===u.href))||OIL_ORIGIN_POINTS.some(p=>(oilWeatherSourceUrl(p)===u.href||legacyOilWeatherUrl(p)===u.href))||
      u.hostname==='query1.finance.yahoo.com'&&['/v8/finance/chart/ZS%3DF','/v8/finance/chart/ZL%3DF'].includes(u.pathname)&&u.searchParams.get('range')==='5y'&&u.searchParams.get('interval')==='1d'||
      u.hostname==='power.larc.nasa.gov'&&u.pathname==='/api/temporal/daily/point'||
      u.hostname==='commodity-board.com'&&/^\/[a-z0-9-]{20,}\/?$/.test(u.pathname)||

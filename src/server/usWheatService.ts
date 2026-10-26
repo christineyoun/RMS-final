@@ -8,6 +8,9 @@ import type {
 } from '../types.ts';
 import { loadWheatHistory, saveWheatHistory, mergePublishedWheatReport, toChartPoints, buildWheatMetrics, asIsoDate, toMetricTon, WHEAT_PRICE_SOURCE } from './wheatPriceHistoryStore.ts';
 import { PDFParse } from 'pdf-parse';
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
 import { usWheatPdfCandidates, parseUsWheatFuturesPdf } from './wheatReportFuturesPdf.ts';
 import { getKSTDateString, getKSTFormattedTime } from './marketDataService.ts';
 import { getSourceDefinition } from './sourceRegistry.ts';
@@ -463,25 +466,30 @@ export class UsWheatPriceReportService {
     const iso = asIsoDate(reportDate);
     if (!iso) throw new Error('Publisher date cannot be validated for PDF settlement lookup');
     const candidates = usWheatPdfCandidates(iso, '', archive.map(item => item.url));
+    const failures:string[]=[];
     for (const url of candidates) {
       try {
         const result = await fetch(url, { method: 'GET', headers: { Accept: 'application/pdf' }, signal: AbortSignal.timeout(12000) });
-        if (!result.ok || !/^https:\/\/(?:www\.)?uswheat\.org\//i.test(result.url)) continue;
+        if (!result.ok || !/^https:\/\/(?:www\.)?uswheat\.org\//i.test(result.url)){failures.push(!result.ok?'HTTP '+result.status:'final publisher URL missing or invalid');continue;}
         const contentLength = Number(result.headers.get('content-length') || 0);
         if (contentLength > 5_000_000) continue;
         const bytes = new Uint8Array(await result.arrayBuffer());
         if (bytes.length < 2000 || bytes.length > 5_000_000 || String.fromCharCode(...bytes.slice(0,4)) !== '%PDF') continue;
         const parser = new PDFParse({ data: bytes });
-        const extracted = await parser.getText();
+        let extracted;try{extracted=await parser.getText();}finally{await parser.destroy();}
         const exact = parseUsWheatFuturesPdf(extracted?.text || '', iso, contractMonth);
-        if (!exact) continue;
-        if ([exact.srwBu,exact.hrwBu,exact.hrsBu].some((v,i) => Math.abs(v - roundedBu[i]) > 0.06)) continue;
-        return { ...exact, pdfUrl: url };
+        if (!exact){failures.push('dated contract/settlement rows or USD units could not be parsed');continue;}
+        if ([exact.srwBu,exact.hrwBu,exact.hrsBu].some((v,i) => Math.abs(v - roundedBu[i]) > 0.06)){failures.push('printed settlements disagree with publisher report summary');continue;}
+        const receiptSha256=createHash('sha256').update(bytes).digest('hex'),receiptPath='.rms-price-history/source-evidence/wheat/'+receiptSha256+'.json';
+        fs.mkdirSync(path.dirname(receiptPath),{recursive:true});
+        if(!fs.existsSync(receiptPath))fs.writeFileSync(receiptPath,JSON.stringify({sourceUrl:result.url,retrievedAt:new Date().toISOString(),status:result.status,sha256:receiptSha256,pdfBase64:Buffer.from(bytes).toString('base64')}),{flag:'wx',mode:0o600});
+        return { ...exact, pdfUrl: result.url,receiptPath,receiptSha256 };
       } catch (e) {
+        failures.push((e as Error).message.slice(0,180));
         console.warn('[WheatHistory] Publisher PDF unavailable:', url, e instanceof Error ? e.message : String(e));
       }
     }
-    throw new Error(`Official settlement PDF could not be verified for ${iso} (${contractMonth}); previous price history retained`);
+    throw new Error(`Official settlement PDF could not be verified for ${iso} (${contractMonth}): ${failures.join('; ')}; previous price history retained`);
   }
 
   /**
@@ -522,7 +530,7 @@ export class UsWheatPriceReportService {
           srwBu: exact.srwBu, hrwBu: exact.hrwBu, hrsBu: exact.hrsBu,
           srwMt: exact.srwMt, hrwMt: exact.hrwMt, hrsMt: exact.hrsMt,
           contractMonth: exact.contractMonth,
-          sourceUrl: exact.pdfUrl
+          sourceUrl: exact.pdfUrl,receiptPath:exact.receiptPath,receiptSha256:exact.receiptSha256
         });
         stored = merge.history;
         updated = merge.changed;

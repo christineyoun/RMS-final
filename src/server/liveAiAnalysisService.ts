@@ -351,7 +351,7 @@ export async function getGroundedAiAnalysis(rawCommodityId: string, force = fals
   if(selectedRun?.permitted&&selectedRun.analysisCommodity!==id)
     throw Error('Paid generation requires explicit authorization for this commodity.');
 
-  if(['soybean','soybean-oil','palm-oil','sugar','potato-starch'].includes(id)&&selectedRun?.permitted&&selectedRun.evidenceMode!=='search')throw Error('Publisher research requires explicit Search-profile authorization.');
+  if(['soybean','soybean-oil','palm-oil','sugar','potato-starch'].includes(id)&&selectedRun?.permitted&&!selectedRun.scheduledEvidence&&selectedRun.evidenceMode!=='search')throw Error('Publisher research requires explicit Search-profile authorization.');
   const now = Date.now();
   const cached = cache.get(id);
   if (!force && cached && cached.expiresAt > now) return { ...cached.result, status: 'cached' };
@@ -366,14 +366,14 @@ export async function getGroundedAiAnalysis(rawCommodityId: string, force = fals
       throw new Error('GEMINI_API_KEY가 설정되지 않았습니다. Mac RMS-final/.env를 확인하세요.');
     }
     const model = runContext?.analysisModel || (id==='wheat' ? WHEAT_RESEARCH_MODEL : (process.env.RMS_AI_MODEL || 'gemini-3.8-flash').trim());
-    const recoveryPipeline=!['wheat','corn','soybean','soybean-oil','palm-oil','sugar','potato-starch'].includes(id);
+    const recoveryPipeline=!!runContext?.scheduledEvidence||!['wheat','corn','soybean','soybean-oil','palm-oil','sugar','potato-starch'].includes(id);
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
     const ai = new GoogleGenAI({ apiKey,...(recoveryPipeline?{vertexai:false,httpOptions:{apiVersion:'v1beta',baseUrl:'https://generativelanguage.googleapis.com'}}:{}) });
-    const oilEvidence=['soybean-oil','palm-oil','sugar','potato-starch'].includes(id)?await prepareAnalysisEvidence(id):undefined;
+    const oilEvidence=!recoveryPipeline&&['soybean-oil','palm-oil','sugar','potato-starch'].includes(id)?await prepareAnalysisEvidence(id):undefined;
     const publisherRequest=!recoveryPipeline?buildPublisherResearchRequest(model,id,today,!!runContext?.analysisCommodity,oilEvidence):null;
 
     let response: any;
-    const evidence=recoveryPipeline?await prepareAnalysisEvidence(id):undefined;
+    const evidence=recoveryPipeline?(runContext?.scheduledEvidence||await prepareAnalysisEvidence(id)):undefined;
     assertPaidRunActive(runContext);
     const evidenceMode=runContext?.evidenceMode||'search';
     const recoveryRequest=recoveryPipeline?buildRecoveryAnalysisRequest(model,id,evidence!,today,evidenceMode):null;

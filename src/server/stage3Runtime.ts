@@ -20,6 +20,10 @@ export type Stage3RunContext = {
   evidenceMode?:'verified-only'|'search';
   analysisCommodity?:string;
   analysisModel?:string;
+  scheduledEvidence?:import('./analysisEvidence.ts').AnalysisEvidence;
+  scheduledPolicyHash?:string;
+  onReserve?:(entry:{attempt:number;model:string;reservedUsd:number})=>Promise<void>;
+  onUsage?:(entry:{attempt:number;estimatedUsd:number;reservedUsd:number})=>Promise<void>;
 };
 const context = new AsyncLocalStorage<Stage3RunContext>();
 export const getStage3RunContext = () => context.getStore();
@@ -44,15 +48,26 @@ export async function trackedGeminiGenerate<T>(params: any, doGenerate: (prepare
   const plannedModel=String(params?.model??'unknown');
   const plannedGrounding=Array.isArray(params?.config?.tools)&&
     params.config.tools.some((x:any)=>x?.googleSearch);
-  const reserve=plannedModel==='gemini-3.1-flash-lite'
+  let reserve=plannedModel==='gemini-3.1-flash-lite'
     ? (plannedGrounding?0.065:0.05)
     : (plannedGrounding?0.15:0.12);
+  if(ctx.scheduledPolicyHash){
+    // Bound scheduled output and reserve from the actual prompt size with a
+    // conservative byte/token upper estimate, grounding allowance and 25% buffer.
+    const maxOutputTokens=Math.min(8192,Math.max(1,Number(params.config?.maxOutputTokens)||8192));
+    params={...params,config:{...params.config,maxOutputTokens}};
+    const promptBytes=Buffer.byteLength(JSON.stringify(params.contents||''),'utf8');
+    reserve=Math.ceil(Math.max(reserve,((promptBytes*2+maxOutputTokens*12)/1000000+(plannedGrounding?0.15:0))*1.25)*100)/100;
+  }
   if (ctx.attempts >= ctx.maxCalls || ctx.estimatedUsd + reserve > ctx.maxEstimatedUsd) {
     throw new Error('[RMS STAGE 3] Daily API call / estimated budget limit reached.');
   }
   ctx.attempts += 1;
   ctx.estimatedUsd += reserve; // Reserve synchronously before yielding to another call.
   const attempt = ctx.attempts;
+  // Scheduled cloud runs persist reservation before any provider transport.
+  // Manual contexts retain their existing local tracking behavior.
+  await ctx.onReserve?.({attempt,model:plannedModel,reservedUsd:reserve});
   const model = String(params?.model ?? 'unknown');
   const groundingRequested = Array.isArray(params?.config?.tools) &&
     params.config.tools.some((x: any) => x?.googleSearch);
@@ -69,6 +84,7 @@ export async function trackedGeminiGenerate<T>(params: any, doGenerate: (prepare
     const estimate = usageAvailable?Math.max(0.01, tokenEstimate) + (groundingRequested ? 0.03 : 0):reserve;
     ctx.estimatedUsd += estimate-reserve;
     ctx.successfulCalls += 1;
+    await ctx.onUsage?.({attempt,estimatedUsd:estimate,reservedUsd:reserve});
     writeRecord({runId:ctx.runId, attempt, model, inputTokens:input, outputAndThinkingTokens:output,
       usageAvailable, groundingRequested, publishedTokenEstimateUsd,reservedEstimatedUsd:reserve,
       costMethod:'conservative-run-budget;publishedTokenEstimateUsd-excludes-grounding',estimatedUsd:usageAvailable?estimate:null, outcome:'ok'});

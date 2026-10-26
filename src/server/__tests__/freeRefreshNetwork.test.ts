@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 let actual=0,active=0,max=0;
-globalThis.fetch=async(input:any)=>{actual++;active++;max=Math.max(max,active);await new Promise(r=>setTimeout(r,5));active--;return new Response(String(input).includes('empty')?null:'fixture source body',{status:String(input).includes('empty')?204:200});};
+globalThis.fetch=async(input:any)=>{actual++;active++;max=Math.max(max,active);await new Promise(r=>setTimeout(r,5));active--;const response=new Response(String(input).includes('empty')?null:'fixture source body',{status:String(input).includes('empty')?204:200});Object.defineProperties(response,{url:{value:String(input)},redirected:{value:false}});return response;};
 const {withFreeNetwork,withSavedDataRead}=await import('../freeRefreshNetwork.ts');
 const result=await withFreeNetwork(async()=>{
  const a=await fetch('https://example.com/weather');await a.body!.cancel();
- const b=await fetch('https://example.com/weather');assert.equal(await b.text(),'fixture source body');assert.equal(actual,1,'cancelled consumer does not hang or repeat request');
+ const b=await fetch('https://example.com/weather');assert.equal(b.url,'https://example.com/weather','Original publisher URL survives buffering/deduplication');assert.equal(await b.text(),'fixture source body');assert.equal(actual,1,'cancelled consumer does not hang or repeat request');
  await Promise.all(Array.from({length:12},(_,i)=>fetch('https://example.com/'+i)));assert(max<=4);
  const empty=await fetch('https://example.com/empty');assert.equal(empty.status,204);
  await assert.rejects(fetch('https://generativelanguage.googleapis.com/v1beta/models'),/blocked/);

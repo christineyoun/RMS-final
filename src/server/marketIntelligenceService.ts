@@ -1,4 +1,6 @@
 import {selectProcurementNews} from './newsProcurementSelection.ts';
+import {getStage3RunContext} from './stage3Runtime.ts';
+import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
 /**
  * Market Intelligence Service
  *
@@ -66,6 +68,7 @@ export interface MarketArticle {
   linkStatus?: 'verified' | 'unverified';
   linkCheckedAt?: string;
   sourceHeadline?: string; // Original publisher headline used for independent link validation
+  verifiedSourceEvidence?: {originalUrl:string;publishedAt:string;sourceHeadline:string;excerpt:string;verifiedAt:string};
   // Legacy compatibility fields for existing consumers
   source: string;
   title_kr: string;
@@ -493,6 +496,11 @@ export class MarketIntelligenceService {
           'tapioca-starch': 'tapioca starch TTSA Vietnam China import demand export prices cassava root processing weather mosaic disease supply latest'
         };
         const searchQuery = COMMODITY_QUERIES[key] || `commodity "${key}" latest`; 
+        let collectedCandidates:RetrievedSourceMetadata[]=[];
+        if(getStage3RunContext()?.scheduledPolicyHash)try{
+          const saved=JSON.parse(fs.readFileSync(path.join(process.cwd(),'.rms-stage3','free-news-candidates-'+key+'.json'),'utf8'));
+          if(Date.parse(saved.checkedAt)<=Date.now()&&Date.now()-Date.parse(saved.checkedAt)<86400000&&Array.isArray(saved.candidates))collectedCandidates=saved.candidates.slice(0,12);
+        }catch{/* Existing bounded discovery remains available. */}
         const todayKST = kstDate();
         const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
         const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
@@ -515,6 +523,7 @@ Never use Google News as sourceName.`;
           : [null, null];
         const cornDiscovery = key === 'corn' ? await discoverCornFreeSources(retrievedAt) : null;
         const soybeanDiscovery = key === 'soybean' ? await discoverSoybeanFreeSources(retrievedAt) : null;
+        const additionalDiscovery = ['soybean-oil','palm-oil','sugar','potato-starch','tapioca-starch'].includes(key)?collectedCandidates.length?{candidates:collectedCandidates}:await discoverAdditionalNews(key):null;
         // Favor original, accessible public-page indexes before feeds whose article bodies
         // may be blocked. Max 8 candidates per host to avoid one publisher crowding out
         // USDA/FAO; remaining spots include other original-publisher RSS candidates.
@@ -523,7 +532,7 @@ Never use Google News as sourceName.`;
         const hostCounts = new Map<string,number>();
         const candidateSeen = new Set<string>();
         const freeCandidates: RetrievedSourceMetadata[] = [];
-        for(const candidate of [...(cornDiscovery?.candidates || []), ...(soybeanDiscovery?.candidates || []), ...publicPool, ...(feedDiscovery?.candidates || [])]) {
+        for(const candidate of [...collectedCandidates,...(cornDiscovery?.candidates || []), ...(soybeanDiscovery?.candidates || []), ...(additionalDiscovery?.candidates||[]), ...publicPool, ...(feedDiscovery?.candidates || [])]) {
           const urlKey=normalizeArticleUrl(candidate.originalUrl);
           if(!urlKey||candidateSeen.has(urlKey))continue;
           const host=new URL(candidate.originalUrl).hostname.replace(/^www\./,'');
@@ -540,9 +549,10 @@ Never use Google News as sourceName.`;
         // Four independently verified RSS articles need no paid Search/grounding call.
         // Corn is free-first, and fails closed if fewer than four publisher pages verify.
         // Do not pay Gemini Search to try to rescue a failing discovery batch.
-        const skipPaidDiscovery = key === 'corn' || key === 'soybean' || (key === 'wheat' && (freeCheck?.accepted.length || 0) >= 1);
+        const scheduledSearch=!!getStage3RunContext()?.scheduledPolicyHash;
+        const skipPaidDiscovery = ((key === 'corn' || key === 'soybean')&&(!scheduledSearch||(freeCheck?.accepted.length||0)>0)) || (key === 'wheat' && (freeCheck?.accepted.length || 0) >= 1);
         const retrievalResp = skipPaidDiscovery ? null : await ai.models.generateContent({
-          model: key === 'wheat' ? WHEAT_NEWS_MODEL : 'gemini-3.8-flash',
+          model: getStage3RunContext()?.analysisModel || (key === 'wheat' ? WHEAT_NEWS_MODEL : 'gemini-3.8-flash'),
           contents: retrievalPrompt,
           config: { tools: [{ googleSearch: {} }] }
         });
@@ -559,7 +569,7 @@ Never use Google News as sourceName.`;
           }
         }
 
-        const lockedMetadataList: RetrievedSourceMetadata[] = [...(freeCheck?.accepted || [])];
+        const lockedMetadataList: RetrievedSourceMetadata[] = [...(freeCheck?.accepted || []),...(additionalDiscovery?.candidates||[])];
         let retrievedJsonCandidates=0;
         const rawText = retrievalResp?.text || '';
         const jsonMatch = rawText.match(/\[[\s\S]*\]/);
@@ -646,7 +656,8 @@ Never use Google News as sourceName.`;
         // STAGE 2: independently check original URLs before any summarization expense.
         const report=key==='wheat'
           ? await verifyWheatNewsLinksReported(lockedMetadataList.filter(m=>!m.unavailable))
-          : null;
+          : scheduledSearch&&key==='corn'?await verifyCornCandidates(lockedMetadataList.filter(m=>!m.unavailable))
+          : scheduledSearch&&key==='soybean'?await verifySoybeanCandidates(lockedMetadataList.filter(m=>!m.unavailable)):null;
         // Corn items in lockedMetadataList are already independently verified by
         // verifyCornCandidates; no metadata-only items are accepted as evidence.
         const verifiedOther = ['soybean-oil','palm-oil','sugar','potato-starch','tapioca-starch'].includes(key)
@@ -717,7 +728,7 @@ Output schema:
 ]`;
 
           const sumResp = await ai.models.generateContent({
-            model: key === 'wheat' ? WHEAT_NEWS_MODEL : 'gemini-3.8-flash',
+            model: getStage3RunContext()?.analysisModel || (key === 'wheat' ? WHEAT_NEWS_MODEL : 'gemini-3.8-flash'),
             contents: summarizePrompt
           });
 
@@ -811,6 +822,7 @@ Output schema:
               article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();
             }
             if(verifiedOther){article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();}
+            if(article.linkStatus==='verified')article.verifiedSourceEvidence={originalUrl:lockedMeta.originalUrl,publishedAt:lockedMeta.publishedAt,sourceHeadline:lockedMeta.rawTitle,excerpt:lockedMeta.rawSnippet,verifiedAt:new Date().toISOString()};
             return [article];
           });
 
@@ -845,7 +857,7 @@ Output schema:
           const publishable=key==='corn'
             ? (cornSelectedQuality(cornGrounded).readyForReview ? groundedArticles.filter(a=>cornAllowedUrls.has(a.originalUrl)) : [])
             : key==='wheat' ? groundedArticles.filter(a=>wheatAllowedUrls.has(a.originalUrl))
-            : key==='soybean' ? (soySelected.length===4 ? groundedArticles.filter(a=>soyAllowedUrls.has(a.originalUrl)):[])
+            : key==='soybean' ? ((soySelected.length===4||scheduledSearch&&soySelected.length>0) ? groundedArticles.filter(a=>soyAllowedUrls.has(a.originalUrl)):[])
             : groundedArticles;
           finalArticles = [...publishable, ...baseArticles];
           if(key==='soybean')writeNewsAudit({stage:publishable.length===4?'four-articles-ready':'summary-incomplete',

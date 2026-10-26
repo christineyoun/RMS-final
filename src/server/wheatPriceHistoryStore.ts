@@ -21,6 +21,7 @@ export type WheatStoredPoint = {
   contractMonth: string;
   provenance: 'imported-baseline' | 'source-verified';
   sourceUrl?: string;
+  receiptPath?:string;receiptSha256?:string;
 };
 export type WheatHistoryStore = {
   version: number;
@@ -35,6 +36,7 @@ export type WheatIncomingReport = {
   // When provided, all three must be provided and match the quoted USD/bu values.
   srwMt?: number; hrwMt?: number; hrsMt?: number;
   contractMonth: string; sourceUrl: string;
+  receiptPath?:string;receiptSha256?:string;
 };
 const round2 = (v: number) => Math.round(v * 100) / 100;
 export const toMetricTon = (usdPerBu: number) => round2(usdPerBu * BUSHELS_PER_METRIC_TON);
@@ -125,7 +127,7 @@ export function mergePublishedWheatReport(history: WheatHistoryStore, report: Wh
     hrsMt: hasPrintedMt ? report.hrsMt! : toMetricTon(report.hrsBu),
     contractMonth: report.contractMonth,
     provenance: 'source-verified',
-    sourceUrl: report.sourceUrl
+    sourceUrl: report.sourceUrl,...(report.receiptPath?{receiptPath:report.receiptPath,receiptSha256:report.receiptSha256}:{})
   };
   if (!isValidPricePoint(point)) throw new Error('Converted wheat prices outside acceptable bounds');
   const existing = history.points.find(p => p.date === date);

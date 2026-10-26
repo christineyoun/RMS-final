@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
+import {savedGeminiBudget} from '../geminiKrwBudget.ts';
+import {validateScheduledPolicy} from '../scheduledAi.ts';
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'rms-krw-budget-')),now=new Date('2026-10-26T00:05:00Z');fs.mkdirSync(path.join(root,'.rms-stage3'));
+const file=path.join(root,'.rms-stage3/free-fx.json'),policy={maxDailyEstimatedKrw:5000,fxFloorKrwPerUsd:1500,fxSafetyMarginPct:20};
+const write=(rate:number,date='2026-10-23')=>fs.writeFileSync(file,JSON.stringify({raw:{base:'USD',date,rates:{KRW:rate,EUR:0.9}},verifiedAt:'2026-10-26T00:00:00Z'}));
+write(1324.45);const first=savedGeminiBudget(policy,root,now);assert.equal(first.safetyKrwPerUsd,1800);assert.equal(first.maxEstimatedUsd,2.77);assert(first.maxEstimatedUsd*first.safetyKrwPerUsd<=5000);
+write(2000);const higher=savedGeminiBudget(policy,root,now);assert.equal(higher.safetyKrwPerUsd,2400);assert.equal(higher.maxEstimatedUsd,2.08);
+write(1324.45,'2026-10-01');assert.throws(()=>savedGeminiBudget(policy,root,now),/stale/);
+assert.throws(()=>savedGeminiBudget({...policy,maxDailyEstimatedKrw:5001},root,now),/invalid/);
+assert.throws(()=>validateScheduledPolicy({version:'weekday-ai-v1',enabled:true,maxDailyEstimatedUsd:6} as any,now),/invalid/);
+const approved=JSON.parse(fs.readFileSync('scripts/cloud/weekday-ai-policy.approved.json','utf8'));assert.equal(approved.enabled,true);assert.equal(approved.maxDailyEstimatedKrw,5000);assert.equal(approved.maxDailyCalls,24);assert(!('maxDailyEstimatedUsd' in approved));assert.equal(validateScheduledPolicy(approved,new Date('2026-10-27T00:00:00Z')),approved);assert.equal(validateScheduledPolicy(approved,new Date('2026-11-25T14:59:59Z')),approved);assert.throws(()=>validateScheduledPolicy(approved,now),/invalid/);assert.throws(()=>validateScheduledPolicy(approved,new Date('2026-11-25T15:00:00Z')),/invalid/);const example=JSON.parse(fs.readFileSync('scripts/cloud/scheduled-ai-policy.example.json','utf8'));assert.equal(example.enabled,false);
+console.log('PASS ₩5000 combined cap, 20% FX safety margin/floor, USD2.77 threshold, higher-FX tightening, stale FX rejection, revoked USD policy rejection and approved KST authorization boundaries and disabled example.');
