@@ -1977,7 +1977,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               </div>
 
               </>}
-              {commodity._canonicalQuoteDate&&<span className="text-[10px] text-slate-500">관측 {commodity._canonicalQuoteDate}{currency!=='USD'&&commodity._canonicalDisplayFx?' · 환율 '+commodity._canonicalDisplayFx.observationDate:''}{commodity._canonicalQuoteStale?' · 시세 갱신 실패 · 이전 관측 사용':''}{commodity._canonicalDisplayFx?.stale?' · 환율 갱신 실패 · 이전 관측 사용':''}</span>}
             </div>
 
             {/* Card 2: WoW & MoM Side-by-Side with Exact Amount Below */}
