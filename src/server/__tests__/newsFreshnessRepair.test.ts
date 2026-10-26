@@ -1,6 +1,6 @@
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
 import {selectProcurementNews} from '../newsProcurementSelection.ts';import {acceptedScheduledNews,publishScheduledContent,readScheduledContent} from '../scheduledContent.ts';
-import {scheduledPhasePlan,fairPhaseAllowance} from '../scheduledAi.ts';import {validateConditionalReasoning} from '../analysisReasoning.ts';import {recordNewsSummary} from '../newsDiagnostics.ts';import {withAuthorizedStage3Run} from '../stage3Runtime.ts';
+import {scheduledPhasePlan} from '../scheduledAi.ts';import {validateConditionalReasoning} from '../analysisReasoning.ts';import {recordNewsSummary} from '../newsDiagnostics.ts';import {withAuthorizedStage3Run} from '../stage3Runtime.ts';
 const now=Date.parse('2026-10-26T03:00:00Z'),oldRoot=process.cwd(),root=fs.mkdtempSync(path.join(os.tmpdir(),'rms-news-freshness-'));const native=fetch;let network=0;
 globalThis.fetch=async()=>{network++;throw Error('Offline regression only');};
 const summary='옥수수 수출량은 전주 대비 증가했으며 미국산 수출 수요 회복과 선적 물량 확대가 수급의 주요 변수입니다. 수출항과 도착항의 운임 조건을 비교하여 실제 구매 견적의 변화를 확인해야 합니다.';
@@ -13,7 +13,7 @@ try{process.chdir(root);fs.mkdirSync('src/data',{recursive:true});fs.writeFileSy
  // Receipt capture is invoked under an injected authorization, never a provider.
  const ctx={runId:'offline-receipt',permitted:true,attempts:1,successfulCalls:1,maxCalls:1,estimatedUsd:0,maxEstimatedUsd:0};
  const raw='[{"rawId":"offline","summary":"unaccepted original model output"}]';const receipt=withAuthorizedStage3Run(ctx,()=>recordNewsSummary('corn',[{rawId:'offline',rawSnippet:'original excerpt'}],{text:raw}));assert(receipt);const bytes=fs.readFileSync(receipt.file);assert.equal(createHash('sha256').update(bytes).digest('hex'),receipt.sha256);assert.equal(JSON.parse(bytes.toString()).response.text,raw);
- const plan=scheduledPhasePlan('2026-10-27');assert.equal(new Set(plan.slice(0,8).map(p=>p.id)).size,8);assert(plan.slice(0,8).every(p=>p.kind==='news'));assert(plan.slice(8).every(p=>p.kind==='analysis'));assert.notEqual(plan[0].id,scheduledPhasePlan('2026-10-28')[0].id);assert.equal(fairPhaseAllowance(2.77,8),.34);
+ const plan=scheduledPhasePlan('2026-10-27');assert.equal(new Set(plan.slice(0,8).map(p=>p.id)).size,8);assert(plan.slice(0,8).every(p=>p.kind==='news'));assert(plan.slice(8).every(p=>p.kind==='analysis'));assert.notEqual(plan[0].id,scheduledPhasePlan('2026-10-28')[0].id);
  // Isolate the demonstrated grammatical false positive; factual/scope checks remain.
  const advice=validateConditionalReasoning('차기 기말재고 전망치를 확인할 것을 권고합니다.',[],{kind:'recommendation',support:[]});assert(!advice.issues.includes('assertion-or-prediction-disguised-as-advice'));assert(advice.issues.length,'missing evidence is still rejected');
  const claim=validateConditionalReasoning('가격이 상승할 것으로 예상되므로 구매를 검토합니다.',[],{kind:'recommendation',support:[]});assert(claim.issues.includes('assertion-or-prediction-disguised-as-advice'));

@@ -16,7 +16,7 @@ testClock.timers.enable({apis:['Date'],now});
 const ids=['palm-oil','soybean','soybean-oil','sugar','potato-starch'];
 const fixtures=['2f654d767230','a1128feff43d'].map(id=>'.rms-stage3/diagnostics/analysis-recovery-palm-'+id+'-1-palm-oil.json');
 const protectedFiles=[...fixtures,'.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl','.rms-stage3/analysis-recovery.json','.rms-stage3/settings.json',
-  ...fs.readdirSync('.rms-stage3/snapshots').map(n=>'.rms-stage3/snapshots/'+n),
+  ...fs.readdirSync('.rms-stage3/snapshots',{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>e.parentPath+'/'+e.name),
   ...fs.readdirSync('.rms-price-history').filter(n=>n.endsWith('.json')).map(n=>'.rms-price-history/'+n)];
 const hash=()=>protectedFiles.map(p=>createHash('sha256').update(fs.readFileSync(p)).digest('hex')).join(':');
 const before=hash(),nativeFetch=globalThis.fetch;

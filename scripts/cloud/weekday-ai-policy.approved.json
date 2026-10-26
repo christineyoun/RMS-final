@@ -1,13 +1,13 @@
 {
-  "version": "weekday-ai-krw-v2",
+  "version": "weekday-ai-prepaid-v3",
   "enabled": true,
-  "approvalId": "owner-approved-20261026-krw5000-v2",
-  "validFrom": "2026-10-27",
-  "validThrough": "2026-11-25",
+  "approvalId": "owner-approved-20261026-manual-prepaid",
   "analysisModel": "gemini-3.8-flash",
   "newsModel": "gemini-3.1-flash-lite",
-  "maxDailyCalls": 24,
-  "maxDailyEstimatedKrw": 5000,
   "fxFloorKrwPerUsd": 1500,
-  "fxSafetyMarginPct": 20
+  "fxSafetyMarginPct": 20,
+  "monthlyOperatingBudgetKrw": 100000,
+  "funding": "manual-prepaid",
+  "automaticTopUp": false,
+  "automaticPayment": false
 }

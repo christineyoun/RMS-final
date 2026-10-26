@@ -42,32 +42,53 @@ export async function publish(bundle:PublicBundle,state:Uint8Array,previousGener
 export async function privateServer(workspace:string,action:(base:string)=>Promise<void>){
  const appRoot=path.resolve(import.meta.dirname,'../..'),port=Number(process.env.RMS_CAPTURE_PORT)||18081;
  const env:NodeJS.ProcessEnv={...process.env,NODE_ENV:'production',PORT:String(port),RMS_APP_ROOT:appRoot,RMS_PUBLIC_READONLY:'0',RMS_DISABLE_SCHEDULERS:'1'};
- delete env.GEMINI_API_KEY;delete env.GOOGLE_API_KEY;
+ delete env.GEMINI_API_KEY;delete env.GOOGLE_API_KEY;delete env.RMS_GEMINI_API_KEY_FILE;
  const child=spawn(process.execPath,['--import',path.join(appRoot,'node_modules/tsx/dist/loader.mjs'),path.join(appRoot,'server.ts')],{cwd:workspace,env,stdio:['ignore','pipe','pipe']});
  let log='';child.stdout.on('data',v=>{log+=v;});child.stderr.on('data',v=>{log+=v;});
  try{let ready=false;for(let i=0;i<100;i++){await new Promise(r=>setTimeout(r,100));if(log.includes('Server running on port')){ready=true;break;}if(child.exitCode!==null)break;}if(!ready)throw Error('Private saved-reader server did not start: '+log.slice(-1000));await action('http://127.0.0.1:'+port);}finally{if(child.exitCode===null&&child.signalCode===null){const stopped=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await stopped;}}
 }
-export async function runRefreshWorkflow(paidPolicy:import('../../src/server/scheduledAi.ts').ScheduledAiPolicy|null,store?:import('../../src/server/scheduledAi.ts').ScheduledJournalStore){
- const {runScheduledAi}=await import('../../src/server/scheduledAi.ts');
- const cfg=JSON.parse(await fs.readFile('.rms-stage3/settings.json','utf8'));if(cfg.autoEnabled!==false||cfg.freeAutoEnabled!==true)throw Error('Saved free/paid scheduling settings not approved');
- const {createFreeSourceRunner}=await import('../../src/server/freeSourceRefresh.ts');
- // Existing shared runner owns source cadence, same-day checks and calculations.
- const runner=createFreeSourceRunner();let run=await runner.check();
- const {freeRefreshDay}=await import('../../src/server/freeSourceRefresh.ts');const t=freeRefreshDay();
+/** Keep source collection and paid generation outcomes independent. Dependencies
+ * are injectable for offline integration checks against the real workflow. */
+export async function runRefreshWorkflow(paidPolicy:import('../../src/server/scheduledAi.ts').ScheduledAiPolicy|null,store?:import('../../src/server/scheduledAi.ts').ScheduledJournalStore,options:{
+ runner?:Pick<ReturnType<typeof import('../../src/server/freeSourceRefresh.ts').createFreeSourceRunner>,'check'|'retryFailed'>;
+ now?:()=>Date;priorNews?:Record<string,any[]>;runAi?:typeof import('../../src/server/scheduledAi.ts').runScheduledAi;publishOverview?:typeof import('../../src/server/freeDailyJobs.ts').publishDailyOverview;
+}={}){
+ const {recordPaidRequestEvent}=await import('../../src/server/paidRequestTransport.ts');
+ const {freeRefreshDay,createFreeSourceRunner}=await import('../../src/server/freeSourceRefresh.ts');
+ const now=options.now||(()=>new Date()),t=freeRefreshDay(now());
  if(!t.weekday||t.hour<9){console.log('Outside weekday publication window');return;}
- run=run||JSON.parse(await fs.readFile('.rms-stage3/free-source-refresh.json','utf8'));
- if(run.day!==t.day)throw Error('Current weekday source run unavailable');
- if(run.status==='partial')run=await runner.retryFailed()||run;
- if(run.publicationError)throw Error('Saved publishing failed; cloud pointer retained');
- if(paidPolicy){
-  let baseline:PublicBundle|undefined;await privateServer(process.cwd(),async base=>{baseline=await capturePublicBundle(base);});
-  const priorNews=Object.fromEntries(Object.entries(baseline!.responses).filter(([key])=>key.startsWith('/api/market-intelligence?commodity=')).map(([key,value])=>[new URL(key,'http://localhost').searchParams.get('commodity'),value.payload.articles||[]]));
-  const result=await runScheduledAi(paidPolicy,store!,{priorNews});console.log('Scheduled AI result:',JSON.stringify({attempts:result.attempts,accepted:result.accepted,estimatedUsd:result.estimatedUsd,estimatedKrw:result.estimatedKrw,maxDailyEstimatedKrw:result.budget.maxDailyEstimatedKrw,maxEstimatedUsd:result.budget.maxEstimatedUsd,safetyKrwPerUsd:result.budget.safetyKrwPerUsd}));
-  // Reuse the existing aggregator after accepted content changes so Overview
-  // and commodity readers use the same selected articles/analyses and Issue.
-  if(result.accepted.length){const {publishDailyOverview}=await import('../../src/server/freeDailyJobs.ts');await publishDailyOverview({...run,finishedAt:new Date().toISOString()});}
+ const cfg=JSON.parse(await fs.readFile('.rms-stage3/settings.json','utf8'));if(cfg.autoEnabled!==false||cfg.freeAutoEnabled!==true)throw Error('Saved free/paid scheduling settings not approved');
+ const runner=options.runner||createFreeSourceRunner();let run:any,sourceError=false,aiError=false,aiResult;
+ try{
+  run=await runner.check();
+  run=run||JSON.parse(await fs.readFile('.rms-stage3/free-source-refresh.json','utf8'));
+  if(run.day!==t.day)throw Error('Current weekday source run unavailable');
+  if(run.status==='partial')run=await runner.retryFailed()||run;
+  sourceError=run.status==='partial'||!!run.publicationError;
+ }catch{
+  sourceError=true;
+  // Retained readers still provide valid inputs when source collection fails.
+  run={id:'weekday-retained-'+now().toISOString(),day:t.day,status:'partial',finishedAt:now().toISOString()};
  }
- return {sourceRun:run};
+ if(sourceError)recordPaidRequestEvent({phase:'free-refresh-failed',reason:'source-or-publication-failed',day:t.day});
+ if(paidPolicy){
+  try{
+   let priorNews=options.priorNews;
+   if(!priorNews){let baseline:PublicBundle|undefined;await privateServer(process.cwd(),async base=>{baseline=await capturePublicBundle(base);});
+    priorNews=Object.fromEntries(Object.entries(baseline!.responses).filter(([key])=>key.startsWith('/api/market-intelligence?commodity=')).map(([key,value])=>[new URL(key,'http://localhost').searchParams.get('commodity'),value.payload.articles||[]]));}
+   const runAi=options.runAi||(await import('../../src/server/scheduledAi.ts')).runScheduledAi;
+   aiResult=await runAi(paidPolicy,store!,{priorNews});
+   console.log('Scheduled AI result:',JSON.stringify({attempts:aiResult.attempts,accepted:aiResult.accepted,estimatedUsd:aiResult.estimatedUsd,estimatedKrw:aiResult.estimatedKrw,fx:aiResult.budget}));
+  }catch{
+   aiError=true;recordPaidRequestEvent({phase:'scheduled-ai-failed',day:t.day,reason:'generation-evidence-or-journal-failed'});
+   console.error('Scheduled Gemini failed; free updates and previous accepted AI retained');
+  }
+ }
+ // Always attempt the shared saved-input aggregator. It can publish new free
+ // observations and independently accepted AI, including after partial failures.
+ try{await(options.publishOverview||(await import('../../src/server/freeDailyJobs.ts')).publishDailyOverview)({...run,finishedAt:now().toISOString()});}
+ catch{recordPaidRequestEvent({phase:'overview-retained',day:t.day,reason:'saved-aggregation-failed'});}
+ return {sourceRun:run,sourceError,aiError,aiResult};
 }
 export async function main([command,destination]=process.argv.slice(2)){
 if(command==='prepare'){
@@ -92,7 +113,7 @@ if(command==='prepare'){
 }else if(command==='refresh'){
  if(!process.env.CLOUD_RUN_JOB||process.env.RMS_CLOUD_FREE_JOB!=='1')throw Error('Free job requires the private Cloud Run job environment');
  if(process.env.GOOGLE_API_KEY)throw Error('Use only the explicitly authorized private Gemini secret');
- if(process.env.GEMINI_API_KEY&&!process.env.RMS_SCHEDULED_AI_POLICY_FILE)throw Error('Paid credential requires deliberate scheduled policy configuration');
+
  await withCloudPublicationLease(async()=>{
  const {pointer,generation}=await readCloudPointer(),state=await gcsRead(process.env.RMS_STATE_BUCKET!,pointer.state.key);if(sha256(state.bytes)!==pointer.state.sha256)throw Error('Private state integrity mismatch');
  const workspace=await fs.mkdtemp(path.join(os.tmpdir(),'rms-cloud-refresh-'));await restoreState(state.bytes,workspace);process.chdir(workspace);

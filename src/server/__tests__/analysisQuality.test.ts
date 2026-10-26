@@ -15,7 +15,7 @@ const fixturePath='.rms-stage3/diagnostics/analysis-recovery-palm-2f654d767230-1
 const retained=JSON.parse(fs.readFileSync(fixturePath,'utf8')),now=new Date(frozen.checkedAt);
 testClock.timers.enable({apis:['Date'],now});
 const protectedFiles=[fixturePath,'.rms-stage3/usage.jsonl','.rms-stage3/paid-requests.jsonl','.rms-stage3/analysis-recovery.json',
-  ...fs.readdirSync('.rms-stage3/snapshots').map(n=>'.rms-stage3/snapshots/'+n)];
+  ...fs.readdirSync('.rms-stage3/snapshots',{recursive:true,withFileTypes:true}).filter(e=>e.isFile()).map(e=>e.parentPath+'/'+e.name)];
 const hash=()=>protectedFiles.map(p=>createHash('sha256').update(fs.readFileSync(p)).digest('hex')).join(':');
 const before=hash(),temp=fs.mkdtempSync(path.join(os.tmpdir(),'rms-quality-'));
 const nativeFetch=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Real network/paid generation prohibited');};

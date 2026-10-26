@@ -130,13 +130,13 @@ Organization policies may disallow public ingress; resolve that with the project
 ## 6. One private weekday job and one authenticated Scheduler trigger
 
 ```sh
-gcloud run jobs create rms-free-refresh --project "$PROJECT" --region "$REGION" \
+gcloud run jobs update rms-free-refresh --project "$PROJECT" --region "$REGION" \
   --image "$IMAGE" --service-account "$UPDATER_SA" \
   --tasks 1 --parallelism 1 --max-retries 0 --task-timeout 3600s --memory 2Gi \
   --command node --args=--import,tsx,scripts/cloud/publication.ts,refresh \
-  --set-env-vars "RMS_CLOUD_FREE_JOB=1,RMS_PUBLIC_READONLY=1,RMS_DISABLE_SCHEDULERS=1,RMS_PUBLICATION_BUCKET=$PUBLICATION_BUCKET,RMS_STATE_BUCKET=$STATE_BUCKET"
+  --update-env-vars "RMS_CLOUD_FREE_JOB=1,RMS_PUBLIC_READONLY=1,RMS_DISABLE_SCHEDULERS=1,RMS_PUBLICATION_BUCKET=$PUBLICATION_BUCKET,RMS_STATE_BUCKET=$STATE_BUCKET"
 gcloud run jobs add-iam-policy-binding rms-free-refresh --project "$PROJECT" --region "$REGION" --member="serviceAccount:$SCHEDULER_SA" --role=roles/run.invoker
-gcloud scheduler jobs create http rms-weekday-free-refresh --project "$PROJECT" --location "$REGION" \
+gcloud scheduler jobs update http rms-weekday-free-refresh --project "$PROJECT" --location "$REGION" \
   --schedule '0 9 * * 1-5' --time-zone Asia/Seoul \
   --uri "https://run.googleapis.com/v2/projects/$PROJECT/locations/$REGION/jobs/rms-free-refresh:run" \
   --http-method POST --oauth-service-account-email "$SCHEDULER_SA" --message-body '{}' \
@@ -177,6 +177,6 @@ Actual Cloud Build/Docker runtime, Google IAM permissions, bucket access, servic
 
 Official deployment references: [scheduled Cloud Run Jobs](https://docs.cloud.google.com/run/docs/execute/jobs-on-schedule), [Cloud Storage generation preconditions](https://docs.cloud.google.com/storage/docs/request-preconditions), [Cloud Storage volume configuration](https://docs.cloud.google.com/run/docs/configuring/services/cloud-storage-volume-mounts). The operator must verify current CLI availability, project policy and permissions when executing.
 
-## Coordinated paid extension — corrected KRW policy approved
+## Coordinated paid extension — manual prepaid operating policy
 
-See [WEEKDAY_REFRESH_POLICY.md](WEEKDAY_REFRESH_POLICY.md). The owner approved the corrected **₩5,000 combined Gemini API estimated-spend cap per KST day** on October 26, for **October 27–November 25, 2026**, with 24 calls as a secondary ceiling and no paid retries. The earlier US$6 authorization remains revoked. `scripts/cloud/weekday-ai-policy.approved.json` records the corrected approval; runtime activation requires the private updater Secret Manager settings and matching fingerprint. Saved FX plus the policy floor and 20% margin currently yields **US$2.77/day at 1,800 KRW/USD**; higher verified FX tightens it. All reservations persist in the private daily ledger; exhausted budget retains approved content. Infrastructure costs are separate. No paid calls, local paid timers or public access were activated here. Keep staging private and verify the first authorized cloud execution.
+See [WEEKDAY_REFRESH_POLICY.md](WEEKDAY_REFRESH_POLICY.md) for the current indefinite manual-prepaid Gemini policy: 100,000 KRW monthly operating budget (metadata only), no daily cost/call caps, retained analysis on failure and independent free refresh. Reuse the existing `rms-free-refresh` Job, Scheduler and `rms-gemini-api-key` Secret. Later activation uses the bundled policy and existing Secret volume; do not create additional infrastructure. Code review, tests and GitHub push do not deploy or connect the Secret.
