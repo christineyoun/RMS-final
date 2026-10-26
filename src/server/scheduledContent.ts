@@ -29,7 +29,7 @@ export function readScheduledContent(key:string,root=process.cwd()):any|null{
   if(hash(bytes)!==ref.sha256)return null;
   const saved=JSON.parse(bytes);if(saved.key!==key)return null;
   if(key.startsWith('analysis-')&&snapshotIssues(key,saved.payload).length)return null;
-  if(key.startsWith('news-')&&!acceptedScheduledNews(key.slice(5),saved.payload.articles||[]).length)return null;
+  if(key.startsWith('news-')){const articles=acceptedScheduledNews(key.slice(5),saved.payload.articles||[]);if(!articles.length)return null;return {...saved,payload:{...saved.payload,articles}};}
   return saved;
  }catch{return null;}
 }
@@ -40,7 +40,7 @@ export function publishScheduledContent(updates:Record<string,any>,runId:string,
   if(!validKey(key))throw Error('Unknown scheduled content key');
   if(key.startsWith('analysis-')&&(payload?.data?.status!=='live'||snapshotIssues(key,payload).length))throw Error('Analysis not accepted by existing snapshot checks');
   if(key.startsWith('news-')){
-   const articles=acceptedScheduledNews(key.slice(5),payload.articles||[]);
+   const articles=acceptedScheduledNews(key.slice(5),[...(payload.articles||[]),...(readScheduledContent(key,root)?.payload?.articles||[])]);
    if(!articles.length)throw Error('No independently verified substantive articles');
    payload={...payload,success:true,articles};
   }

@@ -1,3 +1,4 @@
+import {recordNewsDiscovery,recordNewsInputs,recordNewsSummary} from './newsDiagnostics.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
 import {getStage3RunContext} from './stage3Runtime.ts';
 import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
@@ -76,6 +77,106 @@ export interface MarketArticle {
   publication_date: string;
   original_url: string;
   affected_region: string;
+}
+
+/** Offline/live shared acceptance. A saved candidate alone is never approval. */
+export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSourceMetadata[],responseText:string,verifiedOther:boolean=false){
+ const sumMap = new Map<string, { title: string; summary: string; evidenceQuote: string }>();
+ const sumMatch = responseText.match(/\[[\s\S]*\]/);
+ if (sumMatch) {
+   const parsedSums = JSON.parse(sumMatch[0]);
+   if (Array.isArray(parsedSums)) {
+     for (const s of parsedSums) {
+       if (s && s.rawId) {
+         sumMap.set(String(s.rawId), {
+           title: String(s.title || '').trim(),
+           summary: String(s.summary || '').trim(),
+           evidenceQuote: String(s.evidenceQuote || '').trim()
+         });
+       }
+     }
+   }
+ }
+
+ const summaryRejections:Array<{url:string;reason:string}>=[];
+ const groundedArticles: MarketArticle[] = verifiedLocked.flatMap((lockedMeta) => {
+   const sumItem = sumMap.get(lockedMeta.rawId);
+   // A scraped English excerpt is evidence for summarization, NOT a
+   // substitute for the requested factual Korean article summary.
+   if ((key === 'wheat' || key === 'corn' || key === 'soybean') && (!sumItem?.summary ||
+     sumItem.summary.length < 30 || !/[가-힣]/.test(sumItem.summary) ||
+     !sumItem.title || !/[가-힣]/.test(sumItem.title))) return [];
+   // Fail closed on recognizable serious numerical attribution errors.
+   // Missing an item is safer than publishing a misleading purchasing figure;
+   // Failed factual claims are omitted; existing successful snapshots survive failed collections.
+   if (key === 'wheat') {
+     const risk = wheatSummaryRisk(sumItem!.summary, lockedMeta.rawSnippet);
+     if (risk) {
+       console.warn('[RMS Wheat] Rejected ungrounded summary:', risk,
+         lockedMeta.originalUrl);
+       return [];
+     }
+   }
+   if(key==='corn') {
+     const quote=String(sumItem!.evidenceQuote||'').replace(/\s+/g,' ').trim();
+     const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
+     const quoteValid=quote.length>=35 && evidence.includes(quote);
+     const risk=quoteValid?cornSummaryRisk(sumItem!.summary,lockedMeta.rawSnippet,sumItem!.title):'unverified-evidence-quote';
+     if(risk){console.warn('[RMS Corn] Rejected summary:',risk,lockedMeta.originalUrl);return [];}
+   }
+   if(key==='soybean') {
+     const quote=String(sumItem!.evidenceQuote||'').replace(/\s+/g,' ').trim();
+     const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
+     const validQuote=quote.length>=35 && evidence.includes(quote);
+     const qualityIssue=validQuote ? reviewMarketSummary(sumItem!.title,sumItem!.summary,lockedMeta.rawSnippet,'soybean') : 'unverified-evidence-quote';
+     if(qualityIssue){console.warn('[RMS Soybean] Rejected summary:',qualityIssue,lockedMeta.originalUrl);return [];}
+   }
+   if(!['wheat','corn','soybean'].includes(key)) {
+     const quote=String(sumItem?.evidenceQuote||'').replace(/\s+/g,' ').trim();
+     const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
+     if(quote.length<35 || !evidence.includes(quote)){summaryRejections.push({url:lockedMeta.originalUrl,reason:quote.length<35?'evidence-quote-shorter-than-35-characters':'evidence-quote-not-found-in-publisher-text'});return [];}
+     const issue=reviewMarketSummary(sumItem?.title||'',sumItem?.summary||'',lockedMeta.rawSnippet,key);
+     if(issue){summaryRejections.push({url:lockedMeta.originalUrl,reason:issue});return [];}
+   }
+   // Shared eight-commodity quality gate: publisher verification alone
+   // cannot turn a generic article introduction into useful intelligence.
+   const quality = assessNewsSummary(sumItem?.summary, sumItem?.title, key);
+   if (!quality.pass) {
+     summaryRejections.push({url:lockedMeta.originalUrl,reason:String(quality.reason)});
+     console.info('[RMS News] Rejected uninformative summary:', key, quality.reason, lockedMeta.originalUrl);
+     return [];
+   }
+   const article = buildArticleFromLockedMetadata(
+     lockedMeta,
+     sumItem?.summary || lockedMeta.rawSnippet,
+     sumItem?.title || lockedMeta.rawTitle
+   );
+   if (key === 'wheat') {
+     // Source-driven pills, not Gemini's generic default metadata.
+     const labels = wheatLabelsForSource(lockedMeta);
+     article.category = labels.category;
+     article.affectedRegion = labels.affectedRegion;
+     article.affected_region = labels.affectedRegion;
+     article.linkStatus = 'verified';
+     article.linkCheckedAt = new Date().toISOString();
+   }
+   if(key==='soybean') {
+     article.category='수급 전망'; article.affectedRegion='글로벌';article.affected_region='글로벌';
+     article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();
+   }
+   if(key==='corn') {
+     const labels=cornLabelsForSource(lockedMeta);
+     article.category=labels.category;article.affectedRegion=labels.affectedRegion;
+     article.affected_region=labels.affectedRegion;
+     article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();
+   }
+   if(verifiedOther){article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();}
+   if(article.linkStatus==='verified')article.verifiedSourceEvidence={originalUrl:lockedMeta.originalUrl,publishedAt:lockedMeta.publishedAt,sourceHeadline:lockedMeta.rawTitle,excerpt:lockedMeta.rawSnippet,verifiedAt:new Date().toISOString()};
+   return [article];
+ });
+
+
+ return {articles:groundedArticles,rejections:summaryRejections};
 }
 
 interface CacheEntry {
@@ -507,7 +608,7 @@ export class MarketIntelligenceService {
         const retrievalPrompt = `Current date in Korea: ${todayKST}.
 Search Google Search for up to ${key === 'wheat' ? '14' : '12'} ACTUAL original articles and official reports with a material procurement connection to ${key}. A direct commodity headline is not required when the source establishes a specific crop/region/season, trade, policy, energy, processing or logistics impact. Do not infer that every geopolitical or agricultural event affects this commodity.
 For wheat, collect extra candidates BEFORE filtering so selection can favor useful distinct developments without filling a quota. Cover distinct themes when available: USDA supply and stocks, growing-region weather, export and logistics, futures and prices. Prioritize the newest original publisher HTML articles, not generic databases, homepages, commodity pages, or other crops.
-Prefer the past 14 days, expand to ${thirtyDaysAgo} when useful, and retain older authoritative reports only when still materially relevant. Procurement decision value precedes credibility, timeliness and distinct-event/publisher diversity. Never use a future date.
+Prioritize verified relevant publications since ${sevenDaysAgo} (past seven calendar days), expand to ${thirtyDaysAgo} when useful, and retain older authoritative reports only when still materially relevant. Procurement decision value precedes credibility, timeliness and distinct-event/publisher diversity. Never use a future date.
 Search query: ${searchQuery}.
 Use the original publisher's specific article/report page, not its homepage or a search results page.
 Return the most procurement-useful verifiable candidates first. Prefer original official, industry and publisher sources; explore relevant World Grain, USDA FAS/ERS, IGC, AHDB, KREI and regional-language reporting. Keep secondary attribution explicit. Final selection is zero to four, never a mandatory quota. Reject unrelated technology awards, generic farming and promotional announcements. Never pad or invent links.
@@ -571,6 +672,7 @@ Never use Google News as sourceName.`;
 
         const lockedMetadataList: RetrievedSourceMetadata[] = [...(freeCheck?.accepted || []),...(additionalDiscovery?.candidates||[])];
         let retrievedJsonCandidates=0;
+        if(retrievalResp)recordNewsDiscovery(key,retrievalResp);
         const rawText = retrievalResp?.text || '';
         const jsonMatch = rawText.match(/\[[\s\S]*\]/);
 
@@ -706,6 +808,7 @@ Never use Google News as sourceName.`;
           sourceDiversityNote:new Set(verifiedLocked.map(m=>m.sourceName)).size<2?'Limited publisher diversity; all links independently verified.':null},'soybean');
         if(!verifiedLocked.length)return [];
         if (verifiedLocked.length > 0) {
+          recordNewsInputs(key,verifiedLocked);
           const summarizePrompt = `Translate and summarize the following retrieved commodity intelligence items into Korean for a procurement desk.
 ${!['wheat','corn','soybean'].includes(key) ? `The rawSnippet is verified original-publisher HTML article text for ${key}. Use ONLY that text, preserve the precise commodity and distinguish crude versus refined oil, raw sugar versus cane, and starch products versus harvested roots. Do not borrow facts from other commodities or years. If article-specific market developments are absent omit that item. Include an evidenceQuote copied directly from rawSnippet supporting the Korean summary. Return only a JSON array:` : key==='wheat' ? 'The rawSnippet field contains text scraped from the independently verified original publisher page for Wheat. Do not add statistics, crop regions, causal explanations, or claims not supported by that field. Carefully distinguish TOTAL GRAINS (wheat + coarse grains) from WHEAT-ONLY production, exports, trade, or stocks. Never attribute maize supply changes to wheat. If a number cannot be traced to its correct crop and metric in rawSnippet, OMIT that numerical claim. Preserve uncertainty and avoid generic boilerplate. Do NOT alter IDs or invent sources. Return ONLY a JSON array:' : key==='soybean' ? 'Every rawSnippet comes from an independently verified original publisher article specifically about SOYBEANS (not soybean oil alone). Use ONLY that exact source evidence. Never invent production, prices, crops, trade, weather or causal claims. Do not confuse whole soybean beans with processed soybean oil or soymeal; keep reporting years and units precise. Produce specific Korean procurement news, not generic report intros. For each article include an evidenceQuote field with one exact 35+ character English passage copied verbatim from the rawSnippet that directly supports the Korean summary. When evidence cannot support concrete soybean procurement intelligence, omit the article. Return ONLY a JSON array:' : 'The rawSnippet field contains text extracted from independently verified original publisher content for Corn. Treat it as the ONLY evidence. Never invent numbers or causes. Distinguish CORN/MAIZE from WHEAT, SOYBEANS, and total grains; do not move statistics between crops, seasons, geographies, or units. If a specific number cannot be traced to the correct crop and metric in rawSnippet, OMIT it. Preserve uncertainty, accurately report forecast revisions, and avoid generic boilerplate. Do NOT alter IDs or invent sources. For EACH Corn article, identify a specific event, price, production, stocks, demand, shipping, or sourcing change, not a report introduction or description. If the evidence lacks a concrete Corn/maize development, omit that article from the output. Prefer source-exact numbers and units; if unsure omit the number. Do not describe FOB Flat Price tables as an average or mean (평단가/평균) unless the report explicitly supplies an average. Add an evidenceQuote field containing one direct, verbatim English passage copied from rawSnippet (do not translate the quote). Return ONLY a JSON array:'}
 Input:
@@ -732,100 +835,9 @@ Output schema:
             contents: summarizePrompt
           });
 
-          const sumMap = new Map<string, { title: string; summary: string; evidenceQuote: string }>();
-          const sumMatch = (sumResp.text || '').match(/\[[\s\S]*\]/);
-          if (sumMatch) {
-            const parsedSums = JSON.parse(sumMatch[0]);
-            if (Array.isArray(parsedSums)) {
-              for (const s of parsedSums) {
-                if (s && s.rawId) {
-                  sumMap.set(String(s.rawId), {
-                    title: String(s.title || '').trim(),
-                    summary: String(s.summary || '').trim(),
-                    evidenceQuote: String(s.evidenceQuote || '').trim()
-                  });
-                }
-              }
-            }
-          }
-
-          const summaryRejections:Array<{url:string;reason:string}>=[];
-          const groundedArticles: MarketArticle[] = verifiedLocked.flatMap((lockedMeta) => {
-            const sumItem = sumMap.get(lockedMeta.rawId);
-            // A scraped English excerpt is evidence for summarization, NOT a
-            // substitute for the requested factual Korean article summary.
-            if ((key === 'wheat' || key === 'corn' || key === 'soybean') && (!sumItem?.summary ||
-              sumItem.summary.length < 30 || !/[가-힣]/.test(sumItem.summary) ||
-              !sumItem.title || !/[가-힣]/.test(sumItem.title))) return [];
-            // Fail closed on recognizable serious numerical attribution errors.
-            // Missing an item is safer than publishing a misleading purchasing figure;
-            // Failed factual claims are omitted; existing successful snapshots survive failed collections.
-            if (key === 'wheat') {
-              const risk = wheatSummaryRisk(sumItem!.summary, lockedMeta.rawSnippet);
-              if (risk) {
-                console.warn('[RMS Wheat] Rejected ungrounded summary:', risk,
-                  lockedMeta.originalUrl);
-                return [];
-              }
-            }
-            if(key==='corn') {
-              const quote=String(sumItem!.evidenceQuote||'').replace(/\s+/g,' ').trim();
-              const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
-              const quoteValid=quote.length>=35 && evidence.includes(quote);
-              const risk=quoteValid?cornSummaryRisk(sumItem!.summary,lockedMeta.rawSnippet,sumItem!.title):'unverified-evidence-quote';
-              if(risk){console.warn('[RMS Corn] Rejected summary:',risk,lockedMeta.originalUrl);return [];}
-            }
-            if(key==='soybean') {
-              const quote=String(sumItem!.evidenceQuote||'').replace(/\s+/g,' ').trim();
-              const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
-              const validQuote=quote.length>=35 && evidence.includes(quote);
-              const qualityIssue=validQuote ? reviewMarketSummary(sumItem!.title,sumItem!.summary,lockedMeta.rawSnippet,'soybean') : 'unverified-evidence-quote';
-              if(qualityIssue){console.warn('[RMS Soybean] Rejected summary:',qualityIssue,lockedMeta.originalUrl);return [];}
-            }
-            if(!['wheat','corn','soybean'].includes(key)) {
-              const quote=String(sumItem?.evidenceQuote||'').replace(/\s+/g,' ').trim();
-              const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
-              if(quote.length<35 || !evidence.includes(quote)){summaryRejections.push({url:lockedMeta.originalUrl,reason:quote.length<35?'evidence-quote-shorter-than-35-characters':'evidence-quote-not-found-in-publisher-text'});return [];}
-              const issue=reviewMarketSummary(sumItem?.title||'',sumItem?.summary||'',lockedMeta.rawSnippet,key);
-              if(issue){summaryRejections.push({url:lockedMeta.originalUrl,reason:issue});return [];}
-            }
-            // Shared eight-commodity quality gate: publisher verification alone
-            // cannot turn a generic article introduction into useful intelligence.
-            const quality = assessNewsSummary(sumItem?.summary, sumItem?.title, key);
-            if (!quality.pass) {
-              summaryRejections.push({url:lockedMeta.originalUrl,reason:String(quality.reason)});
-              console.info('[RMS News] Rejected uninformative summary:', key, quality.reason, lockedMeta.originalUrl);
-              return [];
-            }
-            const article = buildArticleFromLockedMetadata(
-              lockedMeta,
-              sumItem?.summary || lockedMeta.rawSnippet,
-              sumItem?.title || lockedMeta.rawTitle
-            );
-            if (key === 'wheat') {
-              // Source-driven pills, not Gemini's generic default metadata.
-              const labels = wheatLabelsForSource(lockedMeta);
-              article.category = labels.category;
-              article.affectedRegion = labels.affectedRegion;
-              article.affected_region = labels.affectedRegion;
-              article.linkStatus = 'verified';
-              article.linkCheckedAt = new Date().toISOString();
-            }
-            if(key==='soybean') {
-              article.category='수급 전망'; article.affectedRegion='글로벌';article.affected_region='글로벌';
-              article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();
-            }
-            if(key==='corn') {
-              const labels=cornLabelsForSource(lockedMeta);
-              article.category=labels.category;article.affectedRegion=labels.affectedRegion;
-              article.affected_region=labels.affectedRegion;
-              article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();
-            }
-            if(verifiedOther){article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();}
-            if(article.linkStatus==='verified')article.verifiedSourceEvidence={originalUrl:lockedMeta.originalUrl,publishedAt:lockedMeta.publishedAt,sourceHeadline:lockedMeta.rawTitle,excerpt:lockedMeta.rawSnippet,verifiedAt:new Date().toISOString()};
-            return [article];
-          });
-
+          // Save the exact response before any acceptance/ranking can discard it.
+          recordNewsSummary(key,verifiedLocked,sumResp);
+          const {articles:groundedArticles,rejections:summaryRejections}=evaluateSavedNewsSummaries(key,verifiedLocked,sumResp.text||'',!!verifiedOther);
           if(verifiedOther)writeNewsAudit({stage:groundedArticles.length?'articles-ready':'all-summaries-rejected',
             verifiedSources:verifiedLocked.length,publishable:groundedArticles.length,rejections:summaryRejections,
             rejectionChecks:['evidenceQuote must match original text (35+ characters)','summary must pass commodity-specific informativeness gate']},key);

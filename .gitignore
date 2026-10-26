@@ -18,3 +18,6 @@ dist/
 
 # Ignore local RMS backup and temporary directories
 # /.rms-*/
+
+# Private one-shot local publications, paid accounting and source receipts
+.rms-local-staging/

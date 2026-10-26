@@ -194,6 +194,18 @@ function status() {
     caveat:'Requires the RMS server to remain running. Token costs are estimates, not a billing cap.'
   };
 }
+/** Existing source-specific verified readers; also retained as merge candidates. */
+export function savedVerifiedCommodityNews(id:string):any[]{
+ if(id==='wheat')return readVerifiedWheatNews();
+ if(id==='soybean-oil')return readVerifiedSoybeanOilNews();
+ if(id==='soybean')return [...readVerifiedSoybeanNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='American Soybean Association')];
+ if(id==='potato-starch')return readVerifiedPotatoNews();
+ if(id==='corn')return readVerifiedCornNews();
+ if(id==='tapioca-starch')return readVerifiedTapiocaNews();
+ if(id==='sugar')return readVerifiedSugarNews();
+ if(id==='palm-oil')return [...readVerifiedPalmNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='USDA ERS')];
+ return [];
+}
 function savedNewsResponse(id:string, verified:any[]) {
   const articles=selectProcurementNews(id,verified);
   return {success:true,articles,sourceStatus:'verified-retained-originals',
@@ -398,15 +410,8 @@ export function createStage3Gateway() {
     // A single accepted manifest switches news and analyses together. Shared by
     // commodity readers and the saved Overview input collector; no paid page reads.
     const scheduled=readScheduledContent(key);
-    if(scheduled)return respond(res,200,key.startsWith('news-')?savedNewsResponse(key.slice(5),scheduled.payload.articles):{...scheduled.payload,data:{...scheduled.payload.data,status:'cached'}});
-    if(key==='news-wheat')return respond(res,200,savedNewsResponse('wheat',readVerifiedWheatNews()));
-    if(key==='news-soybean-oil')return respond(res,200,savedNewsResponse('soybean-oil',readVerifiedSoybeanOilNews()));
-    if(key==='news-soybean')return respond(res,200,savedNewsResponse('soybean',[...readVerifiedSoybeanNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='American Soybean Association')]));
-    if(key==='news-potato-starch')return respond(res,200,savedNewsResponse('potato-starch',readVerifiedPotatoNews()));
-    if(key==='news-corn')return respond(res,200,savedNewsResponse('corn',readVerifiedCornNews()));
-    if(key==='news-tapioca-starch')return respond(res,200,savedNewsResponse('tapioca-starch',readVerifiedTapiocaNews()));
-    if(key==='news-sugar')return respond(res,200,savedNewsResponse('sugar',readVerifiedSugarNews()));
-    if(key==='news-palm-oil')return respond(res,200,savedNewsResponse('palm-oil',[...readVerifiedPalmNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='USDA ERS')]));
+    if(scheduled)return respond(res,200,key.startsWith('news-')?savedNewsResponse(key.slice(5),[...scheduled.payload.articles,...savedVerifiedCommodityNews(key.slice(5))]):{...scheduled.payload,data:{...scheduled.payload.data,status:'cached'}});
+    if(key.startsWith('news-'))return respond(res,200,savedNewsResponse(key.slice(5),savedVerifiedCommodityNews(key.slice(5))));
     if(key==='trade-policy'){
       const p=readFreePublication()?.data?.transportPolicy?.policy;
       if(p?.url&&p?.publishedOn)return respond(res,200,policyRecordPresentation({...p,title:p.title,summary:p.summary||p.title,recordKind:p.recordKind||'announcement',publishedAt:p.publishedOn,sourceUrl:p.url,sourceName:'Federal Register'}));

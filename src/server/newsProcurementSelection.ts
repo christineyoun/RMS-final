@@ -26,14 +26,20 @@ export function selectProcurementNews<T extends Item>(commodity:string,verified:
   const promotional=/innovation award|wins? .*award|수상|혁신상|수출 주문.*접수|견적 요청/i.test(text);
   const driver=/가격|공급|수요|재고|수확|단수|관세|수출|수입|바이오연료|운임|물류|가뭄|강수|생산|price|stock|supply|demand|yield|freight|tariff/i.test(text);
   if(!r&&(promotional||!driver))return [];
-  const priority=r?.priority??2,credibility=article.sourceType==='official'?3:article.sourceType==='company'?1:2;
-  const age=Math.max(0,(now-date)/86400000),timeliness=age<=14?2:age<=30?1:0;
-  return[{article:{...article,title,summary,...('title_kr' in article?{title_kr:title}:{}),...('summary_kr' in article?{summary_kr:summary}:{}),procurementReview:{kind:'independently-reviewed-news-selection',priority,theme:r?.theme||'market-development',rationale:r?.rationale||'Source-verified commodity-specific market development.',reviewedAt:r?current.reviewedAt:undefined}} as T,priority,credibility,timeliness,index,event:r?.eventKey||title.toLowerCase().replace(/\s+/g,'')}];
+  // Editorial verification/wording remains authoritative, but historic review
+  // tiers are not a permanent ranking advantage over newly verified reporting.
+  const signals=[/생산|수확|단수|작황|crop|production|yield|harvest/i,/소비|수요|착유|demand|consumption|crush/i,/재고|stocks?|inventor/i,/가격|호가|선물|price|futures?|offers?/i,/수출|수입|교역|exports?|imports?|trade/i,/관세|정책|바이오연료|에탄올|tariff|policy|biofuel|ethanol/i,/운임|물류|선적|freight|logistics|shipping/i];
+  const relevance=signals.reduce((n,re)=>n+Number(re.test(text)),0);
+  const development=/증가|감소|상향|하향|하락|상승|축소|확대|차질|부족|늘|줄|raised|lowered|rise|fell|cut|disrupt|shortage|increase|decrease/i.test(text);
+  const priority=Math.min(4,relevance+Number(development)),credibility=article.sourceType==='official'?3:article.sourceType==='company'?1:2;
+  const age=Math.max(0,(now-date)/86400000),timeliness=age<=7?3:age<=14?2:age<=30?1:0;
+  const score=priority*2+timeliness*2+credibility;
+  return[{article:{...article,title,summary,...('title_kr' in article?{title_kr:title}:{}),...('summary_kr' in article?{summary_kr:summary}:{}),procurementReview:{kind:'independently-reviewed-news-selection',priority,legacyPriority:r?.priority,score,ageDays:age,theme:r?.theme||'market-development',rationale:'Verified market relevance, material development, source credibility and publication age; legacy approval confers no ranking bonus.',reviewedAt:r?current.reviewedAt:undefined}} as T,priority,score,credibility,timeliness,index,event:r?.eventKey||title.toLowerCase().replace(/\s+/g,'')}];
  });
  // Decision value precedes credibility and age; diversity breaks ties, never fills a quota.
  const result:T[]=[],events=new Set<string>(),publishers=new Set<string>();
  while(result.length<4){const left=candidates.filter(c=>!events.has(c.event));if(!left.length)break;
-  left.sort((a,b)=>b.priority-a.priority||b.credibility-a.credibility||b.timeliness-a.timeliness||Number(publishers.has(a.article.sourceName||''))-Number(publishers.has(b.article.sourceName||''))||b.article.publishedAt.localeCompare(a.article.publishedAt)||a.index-b.index);
+  left.sort((a,b)=>b.score-a.score||b.priority-a.priority||b.timeliness-a.timeliness||b.credibility-a.credibility||Number(publishers.has(a.article.sourceName||''))-Number(publishers.has(b.article.sourceName||''))||b.article.publishedAt.localeCompare(a.article.publishedAt)||a.index-b.index);
   const next=left[0];result.push(next.article);events.add(next.event);publishers.add(next.article.sourceName||'');
  }
  return result;

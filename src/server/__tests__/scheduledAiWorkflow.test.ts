@@ -20,9 +20,9 @@ try{
  process.chdir(root);process.env.RMS_STAGE3_RUNTIME_ROOT=root;
  globalThis.fetch=async()=>{assert(journal!.requests.length>transports,'Durable reservation must precede every transport');transports++;return Response.json({});};
  assert.throws(()=>validateScheduledPolicy({...policy,enabled:false}),/disabled/);
- const result=await runScheduledAi(policy,store,{root,news:async id=>{await metered();return id==='corn'?[article]:[];},analysis:async id=>{await metered();if(id==='sugar')throw Error('OFFLINE response rejection');return body(id);}});
+ const result=await runScheduledAi(policy,store,{root,priorNews:{corn:[{...article,originalUrl:'https://example.org/offline-prior',publishedAt:'2026-10-01',title:'옥수수 선적 여건과 수출 수요 점검'}]},news:async id=>{await metered();return id==='corn'?[article]:[];},analysis:async id=>{if(id==='corn')assert(readScheduledContent('news-corn',root),'accepted news is published before later AI rejection');await metered();if(id==='sugar'||id==='corn')throw Error('OFFLINE response rejection');return body(id);}});
  assert.equal(transports,16);assert(result.accepted.includes('news-corn'));assert(!result.accepted.includes('analysis-sugar'));
- assert(readScheduledContent('analysis-wheat',root));assert(readScheduledContent('news-corn',root));
+ assert(readScheduledContent('analysis-wheat',root));assert(readScheduledContent('news-corn',root));assert.equal(readScheduledContent('analysis-corn',root),null,'rejected AI does not roll back independently accepted news or require four new stories');
  assert.equal(readScheduledContent('analysis-sugar',root),null,'failed output does not become accepted');
  const before=transports;await runScheduledAi(policy,store,{root,news:async()=>{throw Error('must not run again');},analysis:async()=>{throw Error('must not run again');}});assert.equal(transports,before);
  assert.equal(acceptedScheduledNews('corn',[{...article,linkStatus:'unverified'}]).length,0);

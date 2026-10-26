@@ -28,8 +28,15 @@ export function validateConditionalReasoning(text:string,refs:AnalysisFact[],opt
     return /전망|forecast/i.test(prefix)&&/상향|하향|증가|감소/.test(prefix)&&
       claimMetrics(prefix,refs).some(metric=>['production','consumption','exports'].includes(metric));
   }):null;
-  const causal=!divider&&!recommendation?(/(?:에 따라|으로 인해|때문에|바탕으로|토대로)[,，]?\s+/.exec(text)||revisionSubject):null;
-  const boundary=divider||basis||causal;
+  // The existing claim plan permits a hypothetical *relative* revision of two
+  // same-scope forecasts. '향후 ... 조정 폭에 따라' is not a claim that a
+  // directional revision was already reported. No price direction is inferred.
+  const jointFacts=refs.filter(f=>f.measure?.valueKind==='forecast');
+  const jointPair=jointFacts.some(p=>factClaimContext(p).aspects.includes('production')&&jointFacts.some(c=>c.id!==p.id&&factClaimContext(c).aspects.includes('consumption')&&p.observedAt===c.observedAt&&p.measure?.scope&&p.measure.scope===c.measure?.scope&&p.measure.benchmark===c.measure?.benchmark&&p.measure.unit===c.measure?.unit));
+  const jointForecast=!divider&&!recommendation&&options.kind==='conditional'&&jointPair&&/향후|미래/.test(text)&&/생산/.test(text)&&/소비/.test(text)&&/전망/.test(text)&&/상대|조정|수정|변동/.test(text)&&/선물[\s\S]*수급[\s\S]*압력[\s\S]*(?:변화|재조정|변동)/.test(text)&&!/상방|하방|상승|하락|현재|이미|확정|실제|재고\s*(?:부족|충분|풍부)/.test(text);
+  const jointBoundary=jointForecast?/에\s*따라[,，]?\s+/.exec(text):null;
+  const causal=!divider&&!recommendation&&!jointBoundary?(/(?:에 따라|으로 인해|때문에|바탕으로|토대로)[,，]?\s+/.exec(text)||revisionSubject):null;
+  const boundary=divider||basis||jointBoundary||causal;
   const adviceOnly=!boundary&&typedAdvice;
   // A causal forecast needs a verified revision, not merely a forecast level,
   // plus a qualified market consequence. A modal alone confers no evidence.
@@ -50,7 +57,11 @@ export function validateConditionalReasoning(text:string,refs:AnalysisFact[],opt
   // A recommendation tag is not permission to hide an assertion/prediction in
   // an advice target. Such clauses need separate typed facts/scenario support.
   const assertionInAdvice=/(?:으므로|하므로|되므로|이므로|때문|인해|따라서|예상|전망(?:됩니다|이다|입니다)|할 것|될 것|오를|내릴|가능성|수 있습니다|수 있으|확정됐|확정된|발생했|증가했|감소했|상승했|하락했|기록했|이어질|이어지|보장)/;
-  if((adviceOnly||basis)&&assertionInAdvice.test(adviceOnly?text:antecedent))issues.push('assertion-or-prediction-disguised-as-advice');
+  // Nominal advice such as 확인할 것을 권고 is not a prediction (할 것이다).
+  // Remove only that grammatical construction for this assertion test; all
+  // original metric, scope, numeric and causal checks still receive full text.
+  const assertionText=(adviceOnly?text:antecedent).replace(/(확인|비교|검토|점검|모니터링|추적|대조|조율|유지|조절)할 것을\s*(?:권고|제안)/g,'$1');
+  if((adviceOnly||basis)&&assertionInAdvice.test(assertionText))issues.push('assertion-or-prediction-disguised-as-advice');
   // Bare advice targets are nominal questions/metrics, not uncited finite
   // market claims. Interrogatives such as 하락하는지/하락할지 remain questions.
   if(adviceOnly&&/(?:상승|하락|증가|감소|부족|풍부|견조|안정)(?:중|하고|하는(?!지)|하니|하며|하겠|할(?!지))|(?:오르|내리)(?:고|는(?!지)|니|며|겠)/.test(text))

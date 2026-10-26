@@ -39,13 +39,35 @@ export async function publish(bundle:PublicBundle,state:Uint8Array,previousGener
  await gcsWrite(bucket,'current.json',Buffer.from(JSON.stringify(pointer)),previousGeneration);
  console.log('Promoted saved publication',bundle.revision,bundle.publishedAt);
 }
-async function privateServer(workspace:string,action:(base:string)=>Promise<void>){
+export async function privateServer(workspace:string,action:(base:string)=>Promise<void>){
  const appRoot=path.resolve(import.meta.dirname,'../..'),port=Number(process.env.RMS_CAPTURE_PORT)||18081;
  const env:NodeJS.ProcessEnv={...process.env,NODE_ENV:'production',PORT:String(port),RMS_APP_ROOT:appRoot,RMS_PUBLIC_READONLY:'0',RMS_DISABLE_SCHEDULERS:'1'};
  delete env.GEMINI_API_KEY;delete env.GOOGLE_API_KEY;
  const child=spawn(process.execPath,['--import',path.join(appRoot,'node_modules/tsx/dist/loader.mjs'),path.join(appRoot,'server.ts')],{cwd:workspace,env,stdio:['ignore','pipe','pipe']});
  let log='';child.stdout.on('data',v=>{log+=v;});child.stderr.on('data',v=>{log+=v;});
  try{let ready=false;for(let i=0;i<100;i++){await new Promise(r=>setTimeout(r,100));if(log.includes('Server running on port')){ready=true;break;}if(child.exitCode!==null)break;}if(!ready)throw Error('Private saved-reader server did not start: '+log.slice(-1000));await action('http://127.0.0.1:'+port);}finally{if(child.exitCode===null&&child.signalCode===null){const stopped=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await stopped;}}
+}
+export async function runRefreshWorkflow(paidPolicy:import('../../src/server/scheduledAi.ts').ScheduledAiPolicy|null,store?:import('../../src/server/scheduledAi.ts').ScheduledJournalStore){
+ const {runScheduledAi}=await import('../../src/server/scheduledAi.ts');
+ const cfg=JSON.parse(await fs.readFile('.rms-stage3/settings.json','utf8'));if(cfg.autoEnabled!==false||cfg.freeAutoEnabled!==true)throw Error('Saved free/paid scheduling settings not approved');
+ const {createFreeSourceRunner}=await import('../../src/server/freeSourceRefresh.ts');
+ // Existing shared runner owns source cadence, same-day checks and calculations.
+ const runner=createFreeSourceRunner();let run=await runner.check();
+ const {freeRefreshDay}=await import('../../src/server/freeSourceRefresh.ts');const t=freeRefreshDay();
+ if(!t.weekday||t.hour<9){console.log('Outside weekday publication window');return;}
+ run=run||JSON.parse(await fs.readFile('.rms-stage3/free-source-refresh.json','utf8'));
+ if(run.day!==t.day)throw Error('Current weekday source run unavailable');
+ if(run.status==='partial')run=await runner.retryFailed()||run;
+ if(run.publicationError)throw Error('Saved publishing failed; cloud pointer retained');
+ if(paidPolicy){
+  let baseline:PublicBundle|undefined;await privateServer(process.cwd(),async base=>{baseline=await capturePublicBundle(base);});
+  const priorNews=Object.fromEntries(Object.entries(baseline!.responses).filter(([key])=>key.startsWith('/api/market-intelligence?commodity=')).map(([key,value])=>[new URL(key,'http://localhost').searchParams.get('commodity'),value.payload.articles||[]]));
+  const result=await runScheduledAi(paidPolicy,store!,{priorNews});console.log('Scheduled AI result:',JSON.stringify({attempts:result.attempts,accepted:result.accepted,estimatedUsd:result.estimatedUsd,estimatedKrw:result.estimatedKrw,maxDailyEstimatedKrw:result.budget.maxDailyEstimatedKrw,maxEstimatedUsd:result.budget.maxEstimatedUsd,safetyKrwPerUsd:result.budget.safetyKrwPerUsd}));
+  // Reuse the existing aggregator after accepted content changes so Overview
+  // and commodity readers use the same selected articles/analyses and Issue.
+  if(result.accepted.length){const {publishDailyOverview}=await import('../../src/server/freeDailyJobs.ts');await publishDailyOverview({...run,finishedAt:new Date().toISOString()});}
+ }
+ return {sourceRun:run};
 }
 export async function main([command,destination]=process.argv.slice(2)){
 if(command==='prepare'){
@@ -74,25 +96,10 @@ if(command==='prepare'){
  await withCloudPublicationLease(async()=>{
  const {pointer,generation}=await readCloudPointer(),state=await gcsRead(process.env.RMS_STATE_BUCKET!,pointer.state.key);if(sha256(state.bytes)!==pointer.state.sha256)throw Error('Private state integrity mismatch');
  const workspace=await fs.mkdtemp(path.join(os.tmpdir(),'rms-cloud-refresh-'));await restoreState(state.bytes,workspace);process.chdir(workspace);
- const {configuredScheduledPolicy,runScheduledAi,cloudScheduledJournal}=await import('../../src/server/scheduledAi.ts');
+ const {configuredScheduledPolicy,cloudScheduledJournal}=await import('../../src/server/scheduledAi.ts');
  let paidPolicy:ReturnType<typeof configuredScheduledPolicy>=null;
  try{paidPolicy=configuredScheduledPolicy();}catch{console.error('Scheduled paid policy not approved/valid; free data continues, AI retained');}
- const cfg=JSON.parse(await fs.readFile('.rms-stage3/settings.json','utf8'));if(cfg.autoEnabled!==false||cfg.freeAutoEnabled!==true)throw Error('Saved free/paid scheduling settings not approved');
- const {createFreeSourceRunner}=await import('../../src/server/freeSourceRefresh.ts');
- // Existing shared runner owns source cadence, same-day checks and calculations.
- const runner=createFreeSourceRunner();let run=await runner.check();
- const {freeRefreshDay}=await import('../../src/server/freeSourceRefresh.ts');const t=freeRefreshDay();
- if(!t.weekday||t.hour<9){console.log('Outside weekday publication window');return;}
- run=run||JSON.parse(await fs.readFile('.rms-stage3/free-source-refresh.json','utf8'));
- if(run.day!==t.day)throw Error('Current weekday source run unavailable');
- if(run.status==='partial')run=await runner.retryFailed()||run;
- if(run.publicationError)throw Error('Saved publishing failed; cloud pointer retained');
- if(paidPolicy){
-  const result=await runScheduledAi(paidPolicy,cloudScheduledJournal(t.day));console.log('Scheduled AI result:',JSON.stringify({attempts:result.attempts,accepted:result.accepted,estimatedUsd:result.estimatedUsd,estimatedKrw:result.estimatedKrw,maxDailyEstimatedKrw:result.budget.maxDailyEstimatedKrw,maxEstimatedUsd:result.budget.maxEstimatedUsd,safetyKrwPerUsd:result.budget.safetyKrwPerUsd}));
-  // Reuse the existing aggregator after accepted content changes so Overview
-  // and commodity readers use the same selected articles/analyses and Issue.
-  if(result.accepted.length){const {publishDailyOverview}=await import('../../src/server/freeDailyJobs.ts');await publishDailyOverview({...run,finishedAt:new Date().toISOString()});}
- }
+ const result=await runRefreshWorkflow(paidPolicy,paidPolicy?cloudScheduledJournal((await import('../../src/server/freeSourceRefresh.ts')).freeRefreshDay().day):undefined);if(!result)return;
  await privateServer(workspace,async base=>{const bundle=await capturePublicBundle(base);await publish(bundle,await archiveState(workspace),generation||'0');});
  });
 }else throw Error('Commands: prepare, check-state, seed, refresh');

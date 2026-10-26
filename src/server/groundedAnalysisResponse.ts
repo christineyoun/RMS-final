@@ -89,7 +89,7 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
     if(maps.length!==1||!Array.isArray(maps[0].segments)||!maps[0].segments.length){issues.push('missing-claim-coverage:'+field);continue;}
     const segments=maps[0].segments;
     if(segments.map((s:any)=>s?.text).join(' ')!==value)issues.push('unmapped-material-assertion:'+field);
-    let factual=false,conditional=false;
+    let factual=false,actionable=false;
     for(const segment of segments){
       if(!segment||typeof segment.text!=='string'){issues.push('invalid-segment:'+field);continue;}
       const refs=Array.isArray(segment.evidenceIds)?segment.evidenceIds.map((id:string)=>facts.get(id)):[];
@@ -109,15 +109,13 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
         const verdict=validateConditionalReasoning(text,refs as any,{kind:segment.kind,support:segment.support});
         if(verdict.issues.length){issues.push('unsupported-or-nonconditional-reasoning:'+field);issues.push(...verdict.issues.map(reason=>reason+':'+field));}
         if(conditionalTexts.has(text))issues.push('generic-repeated-recommendation:'+field);
-        conditionalTexts.add(text);conditional=true;
+        conditionalTexts.add(text);if(!verdict.issues.length&&verdict.classification!=='conditional-scenario')actionable=true;
       }else issues.push('unknown-claim-kind:'+field);
     }
     if(!factual)issues.push('missing-specific-factual-premise:'+field);
-    if(!conditional)issues.push('missing-commodity-specific-implication:'+field);
-    // An action is not a claim that tomorrow's supplier offer/FX is known. Keep
-    // guidance actionable and conditional without prescribing a fixed sentence.
-    if(field==='deskRecommendation'&&(!/(?:견적|오퍼)/.test(value)||!/(?:확인|비교|검토|점검)/.test(value)||
-      !/(?:구매|매입|조달|분할|발주|계약|관망)/.test(value)))issues.push('unsupported-procurement-recommendation');
+    // Ordinary fields may be verified factual summaries without speculation.
+    // Only the Desk field requires a supported action; supplier quotes are optional.
+    if(field==='deskRecommendation'&&!actionable)issues.push('unsupported-procurement-recommendation');
   }
   if(used.size<2)issues.push('insufficient-distinct-factual-premises');
   if(issues.length)throw new AnalysisValidationError('sources',issues);
@@ -142,7 +140,7 @@ export function parseGroundedAnalysis(response:any,model:string,now=new Date(),e
   for(const [field,min] of [['deskRecommendation',4],['executiveSummary',140]] as const)
     if(typeof data[field]!=='string'||data[field].trim().length<min)issues.push(`${field}: expected string length >= ${min}; received ${typeof data[field]==='string'?data[field].trim().length:typeof data[field]}`);
   for(const field of ['bullishFactors','bearishFactors','watchItems']) {
-    if(!Array.isArray(data[field])||data[field].length<2||data[field].length>3||data[field].some((x:any)=>typeof x!=='string'||x.trim().length<4))issues.push(field+': expected 2–3 nonempty substantive strings');
+    if(!Array.isArray(data[field])||data[field].length<(data.factBinding==='verified-records-v1'?0:2)||data[field].length>3||data[field].some((x:any)=>typeof x!=='string'||x.trim().length<4))issues.push(field+': expected supported nonempty strings, up to 3 (legacy reports need at least 2)');
   }
   if(issues.length)throw new AnalysisValidationError('schema',issues);
   let sources=supportedSearchSources(response,data);

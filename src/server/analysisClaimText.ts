@@ -32,7 +32,7 @@ export function materializeClaimText(data:any,evidence?:AnalysisEvidence,now=new
  }
  const result={...data};
  for(const name of singles){if(!mapped.has(name))throw Error('missing-claim-text-field:'+name);result[name]=mapped.get(name);mapped.delete(name);}
- for(const name of lists){const items:string[]=[];for(let i=0;i<3;i++){const field=name+'.'+i;if(!mapped.has(field))break;items.push(mapped.get(field)!);mapped.delete(field);}if(items.length<2)throw Error('missing-claim-text-items:'+name);result[name]=items;}
+ for(const name of lists){const items:string[]=[];for(let i=0;i<3;i++){const field=name+'.'+i;if(!mapped.has(field))break;items.push(mapped.get(field)!);mapped.delete(field);}if(items.length<(data.factBinding===VERIFIED_FACT_BINDING?0:2))throw Error('missing-claim-text-items:'+name);result[name]=items;}
  if(mapped.size)throw Error('unknown-or-noncontiguous-claim-text-field');
  return result; // All text, IDs/aspects and every segment still pass the existing validator.
 }

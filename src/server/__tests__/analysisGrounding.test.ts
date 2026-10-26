@@ -16,7 +16,7 @@ const frozen=JSON.parse(fs.readFileSync(new URL('./fixtures/analysis-grounding-e
 const now=new Date(frozen.checkedAt);
 testClock.timers.enable({apis:['Date'],now});
 const protectedFiles=['.rms-stage3/usage.jsonl','.rms-stage3/analysis-recovery.json','.rms-stage3/settings.json',
-  ...fs.readdirSync('.rms-stage3/snapshots').map(n=>'.rms-stage3/snapshots/'+n)];
+  ...fs.readdirSync('.rms-stage3/snapshots',{recursive:true,encoding:'utf8'}).filter(n=>fs.statSync('.rms-stage3/snapshots/'+n).isFile()).map(n=>'.rms-stage3/snapshots/'+n)];
 const hashes=()=>protectedFiles.map(f=>createHash('sha256').update(fs.readFileSync(f)).digest('hex')).join(':');
 const before=hashes(),temp=fs.mkdtempSync(path.join(os.tmpdir(),'rms-grounding-'));
 const originalFetch=globalThis.fetch;

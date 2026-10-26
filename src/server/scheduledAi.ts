@@ -8,6 +8,7 @@ import {freeRefreshDay} from './freeSourceRefresh.ts';
 import {withAuthorizedStage3Run,type Stage3RunContext} from './stage3Runtime.ts';
 import {acquirePaidLease,hasOutstandingPaidRequest} from './paidJobLease.ts';
 import {snapshotIssues} from './mvpEvidence.ts';
+import {selectProcurementNews} from './newsProcurementSelection.ts';
 import {acceptedScheduledNews,publishScheduledContent} from './scheduledContent.ts';
 import {gcsRead,gcsWrite} from './cloudPublication.ts';
 import {scheduledAnalysisEvidence} from './scheduledEvidence.ts';
@@ -32,7 +33,7 @@ export function configuredScheduledPolicy(){
  if(!process.env.GEMINI_API_KEY)throw Error('Approved scheduled policy requires its private Gemini secret');
  return p;
 }
-export type DailyAiJournal={version:2;day:string;policyHash:string;budget:ReturnType<typeof savedGeminiBudget>;phases:Record<string,{status:string;error?:string}>;accepted?:Record<string,any>;requests:Array<{runId?:string;phase:string;attempt:number;model:string;reservedUsd:number;reservedKrw?:number;estimatedUsd?:number;estimatedKrw?:number}>};
+export type DailyAiJournal={version:2;day:string;policyHash:string;budget:ReturnType<typeof savedGeminiBudget>;phases:Record<string,{status:string;error?:string;allowanceUsd?:number;reason?:string}>;accepted?:Record<string,any>;requests:Array<{runId?:string;phase:string;attempt:number;model:string;reservedUsd:number;reservedKrw?:number;estimatedUsd?:number;estimatedKrw?:number}>};
 export interface ScheduledJournalStore{read:()=>Promise<DailyAiJournal|null>;save:(j:DailyAiJournal)=>Promise<void>}
 /** Under the existing workflow lease. Independent of publication promotion so a
  * crash/failed upload cannot erase paid reservations and silently spend again. */
@@ -42,7 +43,14 @@ export function cloudScheduledJournal(day:string):ScheduledJournalStore{
 }
 const charged=(j:DailyAiJournal)=>j.requests.reduce((n,r)=>n+Math.max(r.reservedUsd,r.estimatedUsd||0),0);
 const chargedKrw=(j:DailyAiJournal,rate:number)=>j.requests.reduce((n,r)=>n+Math.ceil(Math.max(r.reservedUsd,r.estimatedUsd||0)*rate),0);
-export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJournalStore,options:{now?:()=>Date;root?:string;news?:(id:string)=>Promise<any[]>;analysis?:(id:string)=>Promise<any>;commit?:(updates:Record<string,any>,runId:string)=>void;afterCommodity?:()=>Promise<void>}={}){
+/** All commodities are considered for news before any analysis; rotate daily order. */
+export function scheduledPhasePlan(day:string){
+ const offset=Math.floor(Date.parse(day+'T00:00:00Z')/86400000)%COMMODITY_IDS.length;
+ const ids=[...COMMODITY_IDS.slice(offset),...COMMODITY_IDS.slice(0,offset)];
+ return (['news','analysis'] as const).flatMap(kind=>ids.map(id=>({id,kind})));
+}
+export function fairPhaseAllowance(remainingUsd:number,pending:number){return Math.max(0,Math.floor((remainingUsd/Math.max(1,pending)+1e-9)*100)/100);}
+export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJournalStore,options:{now?:()=>Date;root?:string;news?:(id:string)=>Promise<any[]>;analysis?:(id:string)=>Promise<any>;commit?:(updates:Record<string,any>,runId:string)=>void;priorNews?:Record<string,any[]>;afterCommodity?:()=>Promise<void>}={}){
  const now=options.now||(()=>new Date()),root=options.root||process.cwd(),t=freeRefreshDay(now());validateScheduledPolicy(policy,now());
  if(!t.weekday||t.hour<9)throw Error('Scheduled AI requires weekday 09:00 KST or later');
  if(hasOutstandingPaidRequest())throw Error('Unresolved paid transport requires operator review');
@@ -56,31 +64,39 @@ export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJou
   const updates:Record<string,any>={...journal.accepted},runId='weekday-ai-'+t.day+'-'+hash.slice(0,12);
   const news=options.news|| (async id=>(await import('./marketIntelligenceService.ts')).marketIntelligenceService.getCommodityIntelligence(id,true));
   const analysis=options.analysis|| (async id=>({success:true,data:await(await import('./liveAiAnalysisService.ts')).getGroundedAiAnalysis(id,true)}));
-  for(const id of COMMODITY_IDS){
-   for(const kind of ['news','analysis'] as const){
+  const plan=scheduledPhasePlan(t.day);
+  for(const {id,kind} of plan){
     const phase=kind+'-'+id;if(journal.phases[phase])continue; // attempted = consumed, including unknown outcome after a crash
     if(journal.requests.length>=policy.maxDailyCalls||charged(journal)>=budget.maxEstimatedUsd||chargedKrw(journal,budget.safetyKrwPerUsd)>=policy.maxDailyEstimatedKrw)break;
-    journal.phases[phase]={status:'started'};await store.save(journal);
-    const ctx:Stage3RunContext={runId:runId+'-'+phase,scheduledPolicyHash:hash,analysisCommodity:id,analysisModel:kind==='news'?policy.newsModel:policy.analysisModel,permitted:true,attempts:0,successfulCalls:0,maxCalls:kind==='news'?2:1,estimatedUsd:0,maxEstimatedUsd:budget.maxEstimatedUsd-charged(journal),requestDeadlineMs:60000,deadlineAt:+now()+180000,abortController:new AbortController(),evidenceMode:'search',
+    const pending=plan.filter(p=>p.kind===kind&&!journal!.phases[p.kind+'-'+p.id]).length;
+    const allowance=fairPhaseAllowance(budget.maxEstimatedUsd-charged(journal),pending);
+    journal.phases[phase]={status:'started',allowanceUsd:allowance};await store.save(journal);
+    const ctx:Stage3RunContext={runId:runId+'-'+phase,scheduledPolicyHash:hash,analysisCommodity:id,analysisModel:kind==='news'?policy.newsModel:policy.analysisModel,permitted:true,attempts:0,successfulCalls:0,maxCalls:kind==='news'?2:1,estimatedUsd:0,maxEstimatedUsd:allowance,requestDeadlineMs:60000,deadlineAt:+now()+180000,abortController:new AbortController(),evidenceMode:'search',
      onReserve:async r=>{
       if(journal!.requests.length>=policy.maxDailyCalls||charged(journal!)+r.reservedUsd>budget.maxEstimatedUsd||chargedKrw(journal!,budget.safetyKrwPerUsd)+Math.ceil(r.reservedUsd*budget.safetyKrwPerUsd)>policy.maxDailyEstimatedKrw)throw Error('Combined daily KRW Gemini budget exhausted; previous content retained');
       journal!.requests.push({runId:ctx.runId,phase,attempt:r.attempt,model:r.model,reservedUsd:r.reservedUsd,reservedKrw:Math.ceil(r.reservedUsd*budget.safetyKrwPerUsd)});await store.save(journal!);
      },onUsage:async r=>{const request=journal!.requests.find(x=>x.phase===phase&&x.attempt===r.attempt)!;request.estimatedUsd=r.estimatedUsd;request.estimatedKrw=Math.ceil(r.estimatedUsd*budget.safetyKrwPerUsd);await store.save(journal!);}};
     try{
-     if(kind==='analysis'){ctx.evidenceMode='verified-only';ctx.scheduledEvidence=scheduledAnalysisEvidence(id,updates['news-'+id]?.articles,root,now());}
+     if(kind==='analysis'){ctx.evidenceMode='verified-only';ctx.scheduledEvidence=await scheduledAnalysisEvidence(id,updates['news-'+id]?.articles,root,now());}
      const payload=await withAuthorizedStage3Run(ctx,async()=>kind==='news'?{success:true,articles:await news(id)}:await analysis(id));
      assertPaidRunActive(ctx);
      if(!ctx.successfulCalls||ctx.estimatedUsd>ctx.maxEstimatedUsd)throw Error('No successful metered generation within estimated budget');
      if(kind==='news'){
-      const accepted=acceptedScheduledNews(id,payload.articles||[]);if(!accepted.length)throw Error('No accepted, independently verified substantive news');payload.articles=accepted;
+      const accepted=acceptedScheduledNews(id,payload.articles||[]);if(!accepted.length)throw Error('No accepted, independently verified substantive news');const prior=options.priorNews?.[id]||[];
+      const ranked=selectProcurementNews(id,[...accepted,...prior]);
+      const newUrls=new Set(accepted.map(a=>a.originalUrl));
+      const selected=acceptedScheduledNews(id,ranked);
+      if(!selected.some(a=>newUrls.has(a.originalUrl)))throw Error('No verified candidate improves the current selection');
+      payload.articles=selected;
      }else if(snapshotIssues(phase,payload).length||payload.data?.status!=='live')throw Error('Existing analysis acceptance failed');
-     updates[phase]=payload;journal.accepted={...updates};journal.phases[phase]={status:'accepted'};
-    }catch(error){journal.phases[phase]={status:'retained-previous',error:error instanceof Error?error.name:'generation-failed'};}
+     updates[phase]=payload;journal.accepted={...updates};journal.phases[phase]={status:'accepted',allowanceUsd:allowance};
+     // News has its own accepted checkpoint; a later rejected AI response cannot suppress it.
+     if(kind==='news')(options.commit||((u,r)=>publishScheduledContent(u,r,root)))(updates,runId);
+    }catch(error){const message=error instanceof Error?error.message:'';const reason=/budget|limit reached/i.test(message)?'budget':/improves the current selection/.test(message)?'ranking':/verified.*news|substantive news/.test(message)?'news-verification':'generation-or-evidence-validation';journal.phases[phase]={status:'retained-previous',allowanceUsd:allowance,reason,error:error instanceof Error?error.name:'generation-failed'};}
     finally{ctx.cancelled=true;ctx.abortController!.abort();await store.save(journal);}
     if(hasOutstandingPaidRequest())throw Error('Outstanding provider operation; no additional paid phases allowed');
-   }
   }
-  // All accepted content is promoted with one manifest write. Failed items keep
+  // Final atomic checkpoint includes earlier news checkpoints. Failed items keep
   // their prior manifest entry or original approved snapshot.
   (options.commit||((u,r)=>publishScheduledContent(u,r,root)))(updates,runId);
   return {day:t.day,budget,phases:journal.phases,attempts:journal.requests.length,estimatedUsd:charged(journal),estimatedKrw:chargedKrw(journal,budget.safetyKrwPerUsd),accepted:Object.keys(updates)};
