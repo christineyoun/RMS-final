@@ -8,7 +8,7 @@ import {PotatoPriceChangesDisplay} from './PotatoPriceChanges';
 import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 import PotatoBenchmarkValue from './PotatoBenchmarkValue';
 import {soybeanDisplayFactor} from '../utils/soybeanPriceSnapshot';
-import { prefixCurrency, priceUnit, formatCurrencyAmount } from '../utils/currencyFormatting';
+import { prefixCurrency, priceUnit, formatCurrencyAmount, formatSignedCurrencyPerMt } from '../utils/currencyFormatting';
 import {latestCommonPalmSpread,palmClosingRange} from '../utils/palmPriceIntegrity';
 import {ChartEndpointLabels} from './ChartEndpointLabels';
 import { observedPriceChanges } from '../utils/observedPriceChanges';
@@ -307,17 +307,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const currentSpread=spreadUsd*palmDisplayRate;
   const spreadPrice=currentSpread;
 
-  const formattedSpread = useMemo(() => {
-    if(!Number.isFinite(currentSpread))return '정규화 벤치마크 차이: --';
-    const sign = currentSpread >= 0 ? '+' : '';
-    if (currency === 'KRW') {
-      return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(Math.round(currentSpread).toLocaleString('en-US'), '₩')}${currencyLabel}`;
-    }
-    if (currency === 'EUR') {
-      return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(currentSpread.toFixed(2), '€')}${currencyLabel}`;
-    }
-    return `정규화 벤치마크 차이(${commonPalmSpread?.date.slice(5).replace('-','.')}): ${sign}${prefixCurrency(currentSpread.toFixed(2), '$')}${currencyLabel}`;
-  }, [currency, currentSpread, commonPalmSpread?.date]);
+  const formattedSpread = `정규화 벤치마크 차이: ${formatSignedCurrencyPerMt(currentSpread, currency)}`;
 
   const formatPalmPrice = (val: number) => {
     if (!Number.isFinite(val)) return '--';
@@ -2800,7 +2790,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       <span className="w-2 h-2 rounded-full bg-slate-400"></span> 벤치마크 스프레드:
                     </span>
                     <span className="font-bold font-mono">
-                      {prefixCurrency(formatPalmPrice(palmCrosshairState.oleinPrice - palmCrosshairState.cpoPrice), currencySymbol)} {currencyLabel}
+                      {formatSignedCurrencyPerMt(palmCrosshairState.oleinPrice - palmCrosshairState.cpoPrice, currency)}
                     </span>
                   </div>
                 </div>
