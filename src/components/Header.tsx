@@ -209,10 +209,10 @@ export const Header: React.FC<HeaderProps> = ({
       onNavigate(item.path);
     } else if (item.id) {
       const match = commodities.find((c) => c.id === item.id);
-      if (match) onNavigate(match.path);
+      if (match?.path) onNavigate(match.path);
     } else if (item.ticker) {
       const match = commodities.find((c) => c.ticker.toLowerCase() === item.ticker.toLowerCase());
-      if (match) {
+      if (match?.path) {
         onNavigate(match.path);
       }
     }
