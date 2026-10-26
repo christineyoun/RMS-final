@@ -1,5 +1,5 @@
-# RMS public VIEWER predeployment image. Not ready for live release until durable
-# snapshots and the private scheduled-updater pipeline have been implemented.
+# RMS public viewer / private job image. Readiness requires a seeded persistent
+# publication bucket; no local runtime data or credentials are baked into it.
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -14,4 +14,4 @@ ENV NODE_ENV=production \
     RMS_DISABLE_SCHEDULERS=1
 COPY --from=build /app /app
 # Intentionally omit RMS_PUBLIC_DATA_READY. Startup refuses an unverified launch.
-CMD ["node", "--import", "tsx", "server.ts"]
+CMD ["node", "--import", "tsx", "scripts/cloud/start.ts"]

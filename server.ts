@@ -4,7 +4,6 @@ import {captureOverviewPublication} from './src/server/overviewPublishedInputs.t
 import {refreshSoybeanOilNews} from './src/server/soybeanOilVerifiedNews.ts';
 import {startFreeSourceScheduler,refreshPalmPageSources} from './src/server/freeSourceRefresh.ts';
 import express from 'express';
-import { publicDeploymentGuard } from './src/server/publicDeploymentGuard.mjs';
 import {refreshSoybeanNews} from './src/server/soybeanNewsPersistence.ts';
 import path from 'path';
 import fs from 'fs';
@@ -15,15 +14,10 @@ import { loadAll8OriginRadar, ORIGIN_MVP } from './src/server/all8OriginRadarSer
 
 async function startServer() {
   const app = express();
-  // Public hosting is fail-closed until saved-data and refresh architecture are verified.
+  // Direct/local startup must use the same certified saved-only public viewer.
   if (process.env.RMS_PUBLIC_READONLY === '1') {
-    if (process.env.RMS_PUBLIC_DATA_READY !== '1') {
-      throw new Error('RMS public deployment blocked: persistent snapshots and updater are not yet certified.');
-    }
-    if (process.env.GEMINI_API_KEY) {
-      throw new Error('RMS public deployment blocked: Gemini credentials must never be present in the public viewer.');
-    }
-    app.use(publicDeploymentGuard);
+    const {startPublicViewer}=await import('./src/server/publicViewer.ts');
+    await startPublicViewer();return;
   }
   // Source refreshes are local administration only; cross-origin browser requests fail closed.
   app.use((req,res,next)=>{
@@ -75,7 +69,7 @@ async function startServer() {
     app.use(vite.middlewares);
     console.log('Dev: Mounted Vite middleware.');
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = path.join(process.env.RMS_APP_ROOT||process.cwd(), 'dist');
     const indexPath = path.join(distPath, 'index.html');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

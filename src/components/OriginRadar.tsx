@@ -1,4 +1,3 @@
-import {isVisibleWeatherStatus} from '../utils/weatherStatusPresentation';
 import {SourceAttribution} from './SourceAttribution';
 import React from 'react';
 import potatoJrc from '../data/potato_jrc_monthly_verified.json';
@@ -186,9 +185,6 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap"><span className="font-semibold text-xs text-[#111827]">{origin.region||origin.country||'산지'}</span>
                 {origin.production&&<span className="text-[10px] bg-white border border-[#e5e7eb] px-2 py-0.5 rounded-md font-sans font-medium text-[#374151]">{commodityId==='soybean-oil'?'국가 대두유 생산':isPotato?'감자 생산':isTapioca?'카사바 생산':commodityId==='sugar'?'국가 설탕 생산':origin.region?.includes('유럽연합')?'EU 생산':'국가 생산'} <span className="font-mono font-bold">{production}</span></span>}
-                {isVisibleWeatherStatus(weatherStatus.label)&&<span data-weather-pills className="ml-auto shrink-0" aria-description={weatherStatus.basis}>
-                  <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap ${weatherStatus.level==='양호'?'rms-status-positive':'rms-status-warning'}`}>{weatherStatus.label}</span>
-                </span>}
               </div>
               {(supply||weather)&&<div className="text-[10px] text-[#6b7280] mt-1 font-sans break-keep whitespace-normal leading-snug">
                 {supply&&<div>{origin.region?.includes('유럽연합')?'EU':'국가'} {originRadarDisplayText(supply,isCorn?'corn':isWheat?'wheat':'other')}</div>}

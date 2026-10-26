@@ -1129,7 +1129,11 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           {formatDateStandard(issue.publishedAt)}
                         </span>
                       </div>
-                      <span className="rms-source font-sans text-slate-500">{issue.source}</span>
+                      {!isInvalidOrSearchUrl(issue.url) ? (
+                        <a data-market-source className="rms-source font-sans hover:underline transition-colors" href={issue.url} target="_blank" rel="noopener noreferrer">{issue.source}{'\u00a0'}↗</a>
+                      ) : (
+                        <span data-market-source className="rms-source font-sans">{issue.source}</span>
+                      )}
                     </div>
                   </article>
                 ))}

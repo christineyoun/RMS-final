@@ -24,6 +24,12 @@ a[href].rms-source {
   overflow-wrap: normal;
 }
 .rms-source a[href]:hover, a[href].rms-source:hover { color: #DF0029; }
+a[href] .rms-source[data-market-source]:hover,
+a[href]:focus-visible .rms-source[data-market-source],
+a[href].rms-source[data-market-source]:focus-visible {
+  color: #DF0029;
+  text-decoration-line: underline;
+}
 
 @layer base {
   body {

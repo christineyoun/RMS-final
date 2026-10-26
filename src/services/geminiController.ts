@@ -68,11 +68,11 @@ class GeminiController {
         potatoRes,
         tapiocaRes
       ] = await Promise.all([
-        fetch('/api/gemini/live-market-data', {
+        fetch(force ? '/api/gemini/live-market-data' : '/api/rms/saved-market-data', force ? {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ force })
-        }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        } : { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/uswheat/price-history${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/history?commodity=corn&timeframe=5Y${force ? '&force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
         fetch(`/api/soybean/price-snapshot${force ? '?force=true' : ''}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),

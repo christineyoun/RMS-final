@@ -1,0 +1,25 @@
+.gcloudignore
+.git
+.gitignore
+node_modules/
+dist/
+.env
+.env.*
+.rms*/
+**/.rms*/
+.codex/
+.agents/
+.aws/
+.config/
+*.zip
+*.log
+*.bak
+*backup*/
+RMS_*REPORT*.md
+.DS_Store
+
+# Private local runtime files and audit reports
+.rms*
+**/.rms*
+RMS_*.md
+*_REPORT.md

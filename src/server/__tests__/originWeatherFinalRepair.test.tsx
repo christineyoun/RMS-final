@@ -20,10 +20,7 @@ function verify(name:string,e:any,screen:any,expected:string){
  const origin={region:'OFFLINE FIXTURE: '+name,weatherEvidence:e,weatherDataKind:'archived-model',...screen};
  assert.equal(originWeatherDisplayStatus(origin,'wheat',+now).label,expected,name);
  const clock=Date.now;let html:string;try{Date.now=()=>+now;html=renderToStaticMarkup(<OriginRadar commodityId="wheat" origins={[origin]}/>);}finally{Date.now=clock;}const $=load(html);
- assert.equal($('[data-weather-pills]').text(),expected);assert.equal($('.rms-status-negative').length,0);
- if(expected==='양호')assert.equal($('.rms-status-positive').length,1);
- else if(expected!=='판정 보류')assert.equal($('.rms-status-warning').length,1);
- else assert.equal($('[data-weather-assessment]').length,1);
+ assert.equal($('[data-weather-pills], [data-weather-assessment], .origin-card .rms-status-positive, .origin-card .rms-status-warning, .origin-card .rms-status-negative').length,0);
  fixtures.push({name,expected,html});
 }
 const normal=evidence(b=>{b.daily.temperature_2m_max.fill(24);b.daily.temperature_2m_min.fill(12);b.daily.precipitation_sum.fill(3);});
@@ -51,4 +48,4 @@ const zeroBaseline=evidence(b=>b.daily.precipitation_sum.fill(0));
 assert(!sharedWeatherScreen([zeroBaseline],[point],{heatDays:3,rainMm:90},now).weatherPills.some(p=>p.label==='강수 과다 주의'||p.label==='강수 부족 주의'));
 assert.equal(JSON.stringify(original),before);
 fs.writeFileSync(dir+'/offline-fixtures.json',JSON.stringify({classifierStatuses:['양호','고온 주의','저온 주의','강수 과다 주의','판정 보류'],unsupportedClassifierStatuses:['강수 부족 주의'],fixtures},null,2));
-console.log('PASS supported classification boundaries, real missing evidence, all six UI labels, source immutability and no false drought. Deficit classifier remains explicitly unsupported.');
+console.log('PASS supported classification boundaries, real missing evidence, all six internal labels with no visible pills, source immutability and no false drought. Deficit classifier remains explicitly unsupported.');

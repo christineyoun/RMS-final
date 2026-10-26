@@ -5,17 +5,7 @@
  * Every additional API route requires an individual review before allowlisting.
  */
 
-const COMMODITIES = new Set([
-  'wheat', 'corn', 'soybean', 'soybean-oil', 'palm-oil', 'sugar',
-  'potato-starch', 'tapioca-starch',
-]);
-
-const SAFE_EXACT_GET = new Set([
-  '/api/health',
-  '/api/market-intelligence', // intercepted by Stage3 saved-news gateway
-  '/api/rms/refresh-status',  // status read only
-  '/api/overview/comparison', // saved inputs/history only
-]);
+import {publicRouteKey} from './publicDeploymentRoutes.mjs';
 
 /** Returns null when permitted, otherwise a stable deny reason. */
 export function denyPublicRequest(method, rawUrl) {
@@ -32,11 +22,7 @@ export function denyPublicRequest(method, rawUrl) {
   }
   // No percent-encoded API paths: avoid path normalization or routing ambiguity.
   if (/%/.test(rawUrl.split('?')[0])) return 'encoded-api-path-not-public';
-  if (SAFE_EXACT_GET.has(p)) return null;
-  if (p.startsWith('/api/ai-analysis/')) {
-    const id = p.slice('/api/ai-analysis/'.length);
-    if (COMMODITIES.has(id)) return null; // Stage3 saved snapshot, no paid run
-  }
+  if (publicRouteKey(rawUrl)) return null;
   return 'api-not-reviewed-for-public-access';
 }
 

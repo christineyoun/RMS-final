@@ -11,3 +11,16 @@ dist
 *.bak
 *backup*/
 .DS_Store
+
+# Local account files and private implementation reports are never image inputs.
+.codex
+.agents
+.aws
+.config
+RMS_*REPORT*.md
+
+# Private local runtime files and audit reports
+.rms*
+**/.rms*
+RMS_*.md
+*_REPORT.md

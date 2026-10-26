@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {denyPublicRequest,publicDeploymentGuard} from '../publicDeploymentGuard.mjs';
 
 for (const url of ['/', '/assets/app.js', '/api/health', '/api/market-intelligence?commodity=wheat',
-  '/api/ai-analysis/potato-starch','/api/overview/comparison','/api/rms/refresh-status']) {
+  '/api/ai-analysis/potato-starch','/api/overview/comparison','/api/rms/refresh-status','/api/pipeline/telemetry','/api/rms/free-publication','/api/rms/saved-market-data','/api/usda/corn?marketYear=2025']) {
   test('allow passive '+url, () => assert.equal(denyPublicRequest('GET',url),null));
 }
 for (const [method,url] of [
@@ -14,7 +14,10 @@ for (const [method,url] of [
   ['GET','/api/market-intelligence?forceRefresh=false'],
   ['GET','/api/ai-analysis/wheat?force=true'],
   ['GET','/api/origins/live?commodity=wheat'],
-  ['GET','/api/pipeline/telemetry'],
+  ['POST','/api/rms/saved-market-data'],
+  ['GET','/api/rms/free-publication?admin=false'],
+  ['GET','/api/history?commodity=corn&timeframe=6M&force=false'],
+  ['GET','/api/gemini/live-market-data'],
   ['GET','/api/market-data/refresh'],
   ['GET','/api/scm/live-market-issues'],
   ['GET','/api/ai-analysis/not-a-commodity'],
