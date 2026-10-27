@@ -131,14 +131,16 @@ export function selectMarketEvidence(paragraphs:string[],commodity:string,cap=58
 
 // MT means metric tonnes; only case-sensitive Mt (megatonnes) scales by a
 // million. A case-insensitive Mt/m pattern also consumed the m in metres.
-const numberPattern=/(\d[\d,]*(?:\.\d+)?)(?:\s*(억|만|천|[Bb]illion|[Mm]illion|[Tt]housand|bn|MMT|Mt|[Kk]t)(?![a-zA-Z]))?/g;
+const numberPattern=/(\d[\d,]*(?:\.\d+)?)(?:\s*(억|만|천|[Bb]illion|[Mm]illion|[Tt]housand|bn|crore|lakh|크로어|MMT|Mt|[Kk]t)(?![a-zA-Z]))?/g;
 function normalizeScale(n:number,scale:string|undefined):number {
   if(!scale)return n;
-  return n*(({억:1e8,만:1e4,천:1e3,billion:1e9,million:1e6,thousand:1e3,bn:1e9,mm:1e6,m:1e6,mt:1e6,kt:1e3,mmt:1e6} as Record<string,number>)[scale.toLowerCase()]||1);
+  return n*(({억:1e8,만:1e4,천:1e3,billion:1e9,million:1e6,thousand:1e3,bn:1e9,crore:1e7,lakh:1e5,크로어:1e7,mm:1e6,m:1e6,mt:1e6,kt:1e3,mmt:1e6} as Record<string,number>)[scale.toLowerCase()]||1);
 }
 function unitOf(text:string):string {
   // Read the attached unit, never a different quantity later in the sentence.
   const s=text.trimStart();
+  if(/^(?:리터|litres?\b|liters?\b)/i.test(s))return 'litre';
+  if(/^(?:년|years?\b)/i.test(s))return 'year';
   if(/^(?:%|퍼센트|percent\b|per cent\b)/i.test(s))return 'percent';
   if(/^(?:부셸|bushels?\b|bu\b)/i.test(s))return 'bushel';
   if(/^(?:센트|(?:US\s*)?cents?\b|(?:US\s*)?¢)/i.test(s))return 'cent';
@@ -146,15 +148,16 @@ function unitOf(text:string):string {
   if(/^(?:유로|eur\b|€)/i.test(s))return 'euro';
   if(/^(?:위안|cny\b|rmb\b)/i.test(s))return 'yuan';
   if(/^(?:킬로그램|kg\b)/i.test(s))return 'kilogram';
-  if(/^(?:톤|tonnes?\b|tons?\b|metric\s+tons?\b|mt\b|kt\b|mmt\b)/i.test(s))return 'tonne';
+  if(/^(?:톤|tonnes?\b|tons?\b|metric\s+ton(?:ne)?s?\b|mt\b|kt\b|mmt\b)/i.test(s))return 'tonne';
   return 'unspecified';
 }
-export type NewsQuantity={n:number;unit:string;original:string;denominator?:string};
+export type NewsQuantity={n:number;unit:string;original:string;denominator?:string;metric?:'yield'|'production';reference?:'average-period'};
 export function extractNewsQuantities(text:string):NewsQuantity[] {
   const out:NewsQuantity[]=[];
-  const value=clean(text);
+  // Remove only a redundant, exactly equal parenthetical scale spelling.
+  const value=clean(text).replace(/(metric\s+ton(?:ne)?s?)(?=[A-Z]{2}|[A-Z][a-z])/g,"$1 ").replace(/(\d[\d,]*(?:\.\d+)?)\s*(crore|크로어)\s*\((\d[\d,]*(?:\.\d+)?)\s*억\)/gi,(all,a,scale,b)=>normalizeScale(Number(a.replace(/,/g,'')),scale)===Number(b.replace(/,/g,''))*1e8?a+' '+scale:all);
   const dates=[...value.matchAll(/\b\d{4}[-/]\d{1,2}(?:[-/]\d{1,2})?\b/g)].map(m=>[m.index!,m.index!+m[0].length]);
-  let skipUntil=0;
+  let skipUntil=0,lastQuantityEnd=0;
   for(const match of value.matchAll(numberPattern)) {
     const start=match.index||0,end=start+match[0].length;
     if(start<skipUntil)continue;
@@ -171,21 +174,35 @@ export function extractNewsQuantities(text:string):NewsQuantity[] {
     // Korean combined scale (4억 730만 = 407.3 million).
     const extra=after.match(/^\s*(\d[\d,]*(?:\.\d+)?)\s*(만|천)(?=\s|\b|[가-힣]|$)/);
     if(match[2]==='억'&&extra){n+=normalizeScale(Number(extra[1].replace(/,/g,'')),extra[2]);consumed+=extra[0].length;skipUntil=consumed;}
-    let unit=unitOf(value.slice(consumed));
+    // Price ranges share a currency and denominator, only across the actual
+    // contiguous range connector. Never borrow a later unrelated unit.
+    const tail=value.slice(consumed).replace(/^\s*(?:[–—~−-]|to\b)\s*\d[\d,]*(?:\.\d+)?/i,'');
+    const rangePrevious=out.length>0&&/^\s*(?:[–—~−-]|to)\s*$/i.test(value.slice(lastQuantityEnd,start));
+    let unit=unitOf(tail);
     if(/\b(?:Mt|Kt|MMT)\b/.test(match[0]))unit='tonne';
-    if(unit==='unspecified'){
-      const prefix=/(?:\b(?:USD|EUR|CNY|RMB)|[$€])\s*$/i.exec(before)?.[0];
-      if(prefix)unit=unitOf(prefix);
+    const currencyPrefix=/(?:\b(?:USD|EUR|CNY|RMB)|[$€])\s*$/i.exec(before)?.[0];
+    if(currencyPrefix&&unit!=='unspecified'&&unit!==unitOf(currencyPrefix))unit='ambiguous-currency';
+    else if(unit==='unspecified'){
+      if(currencyPrefix)unit=unitOf(currencyPrefix);
+      else if(rangePrevious)unit=out.at(-1)!.unit;
     }
     let denominator:string|undefined;
     if(['dollar','euro','yuan','cent'].includes(unit)){
-      const suffix=/^\s*(?:(?:USD|EUR|CNY|RMB|US\s*cents?|cents?|US\s*¢|센트|달러|유로|위안|US\s*\$|[$€¢])\s*)?(?:\/|per\s+)(MT\b|metric\s+tonnes?\b|tonnes?\b|tons?\b|kg\b|lb\b|lbs\b|pounds?\b|bu\b|bushels?\b|톤|부셸|파운드)/i.exec(value.slice(consumed));
-      const prefix=/(톤|부셸|파운드|kg)당\s*$/.exec(before);
+      const suffix=/^\s*(?:(?:USD|EUR|CNY|RMB|US\s*cents?|cents?|US\s*¢|센트|달러|유로|위안|US\s*\$|[$€¢])\s*)?(?:\/|per\s+)(MT\b|metric\s+ton(?:ne)?s?\b|tonnes?\b|tons?\b|kg\b|lb\b|lbs\b|pounds?\b|bu\b|bushels?\b|톤|부셸|파운드)/i.exec(tail);
+      const prefix=/(톤|부셸|파운드|kg)당\s*(?:약|대략)?\s*$/.exec(before);
       const rate=suffix?.[1]||prefix?.[1];
+      if(!rate&&rangePrevious)denominator=out.at(-1)?.denominator;
       if(rate)denominator=/^(?:lb|pound|파운드)/i.test(rate)?'pound':/^(?:bu|부셸)/i.test(rate)?'bushel':/^kg$/i.test(rate)?'kilogram':'tonne';
     }
-    out.push({n,unit,original:match[0],...(denominator?{denominator}:{})});
+    const context=value.slice(Math.max(value.lastIndexOf('.',start-1)+1,start-160),Math.min(value.length,end+55));
+    const metric=/수확량|생산량/.test(context)?'production':(['percent','unspecified'].includes(unit)&&/\byields?\b|t\/ha|tonnes? per hectare|단수/.test(context))?'yield':undefined;
+    lastQuantityEnd=consumed;
+    out.push({n,unit,original:match[0],...(unit==='year'&&/^(?:년|years?)[ -]*(?:평균|평년|average|mean)/i.test(tail.trim())?{reference:'average-period' as const}:{}),...(denominator?{denominator}:{}),...(metric?{metric}:{})});
   }
+  // A spelled-out reference duration is not an arbitrary numerical value.
+  const words=['one','two','three','four','five','six','seven','eight','nine','ten'];
+  for(const m of value.matchAll(/\b(one|two|three|four|five|six|seven|eight|nine|ten)[ ‐‑–—-]year\s+(?:average|mean)\b/gi))out.push({n:words.indexOf(m[1].toLowerCase())+1,unit:'year',original:m[1],reference:'average-period'});
+  if(/\bzero\b/i.test(value))out.push({n:0,unit:"unspecified",original:"zero"});
   return out;
 }
 const approx=(a:number,b:number)=>Math.abs(a-b)<=Math.max(0.02,Math.min(a,b)*0.0025);
@@ -195,7 +212,9 @@ export function newsNumbersIssue(summary:string,evidence:string,options:{strictU
     // Month and day ordinals, e.g. 10월 / 15일, are temporal metadata.
     if(source.some(s=>(options.exactValues?Math.abs(claim.n-s.n)<=Number.EPSILON*Math.max(1,Math.abs(claim.n),Math.abs(s.n))*4:approx(claim.n,s.n)) &&
         (claim.unit===s.unit||!options.strictUnits&&(claim.unit==='unspecified'||s.unit==='unspecified'))&&
-        (!options.strictUnits||claim.denominator===s.denominator)))continue;
+        (!options.strictUnits||claim.denominator===s.denominator)&&
+        !(claim.metric==='production'&&s.metric==='yield')&&
+        (claim.unit!=='year'||claim.reference===s.reference)))continue;
     // English original might spell the number out ("nine weeks"); fail safe:
     // no fabricated numeric quantities are allowed in stored summaries.
     return `unsupported-number:${claim.original}`;

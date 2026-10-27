@@ -1,3 +1,4 @@
+import {validateReportedFact} from './analysisReportedFact.ts';
 import {materializeClaimText} from './analysisClaimText.ts';
 import {canonicalAnalysisQualityIssues} from './analysisPublicationQuality.ts';
 /** Pure response handling: never synthesizes prose, numbers or source URLs. */
@@ -101,6 +102,10 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
         // Exact complete atomic statements bind metric, benchmark, date, geography,
         // unit and value together. Matching a number somewhere on a page is unsafe.
         if(refs.length!==1||segment.text!==refs[0]!.text)issues.push('unsupported-factual-claim:'+field);
+        factual=true;
+      }else if(segment.kind==='reported-fact'){
+        const verdict=validateReportedFact(segment.text,refs as any);
+        if(verdict.issues.length)issues.push(...verdict.issues.map(reason=>'unsupported-reported-fact:'+reason+':'+field));
         factual=true;
       }else if(segment.kind==='interpretation'){
         if(refs.length!==1||!refs[0]!.comparison||!refs[0]!.interpretations?.includes(segment.text))issues.push('unsupported-interpretation:'+field);

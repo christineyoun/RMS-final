@@ -2,7 +2,7 @@
  * new observations, cross-crop attribution or independent factual approval. */
 import {createHash} from 'node:crypto';
 import {extractNewsQuantities,newsNumbersIssue,publisherQuotationIssue} from './newsEvidenceQuality.ts';
-const koreanUnits:Record<string,string>={tonne:'톤',bushel:'부셸',dollar:'달러',euro:'유로',yuan:'위안',kilogram:'kg',percent:'%'};
+const koreanUnits:Record<string,string>={tonne:'톤',bushel:'부셸',dollar:'달러',euro:'유로',yuan:'위안',kilogram:'kg',percent:'%',litre:'리터'};
 function koreanEquivalent(n:number,unit:string):string|undefined {
  if(!koreanUnits[unit]||!Number.isSafeInteger(n)||n<10000)return undefined;
  // Base-10 notation only. Never convert currencies, bushels, weights or prices.
