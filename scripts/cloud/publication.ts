@@ -54,6 +54,8 @@ export async function runRefreshWorkflow(paidPolicy:import('../../src/server/sch
  now?:()=>Date;priorNews?:Record<string,any[]>;runAi?:typeof import('../../src/server/scheduledAi.ts').runScheduledAi;publishOverview?:typeof import('../../src/server/freeDailyJobs.ts').publishDailyOverview;
 }={}){
  const {recordPaidRequestEvent}=await import('../../src/server/paidRequestTransport.ts');
+ // Workflow telemetry is best effort; storage/console failures must not block publication.
+ const recordEvent=(event:Record<string,unknown>)=>{try{recordPaidRequestEvent(event);}catch{}};
  const {freeRefreshDay,createFreeSourceRunner}=await import('../../src/server/freeSourceRefresh.ts');
  const now=options.now||(()=>new Date()),t=freeRefreshDay(now());
  if(!t.weekday||t.hour<9){console.log('Outside weekday publication window');return;}
@@ -70,24 +72,30 @@ export async function runRefreshWorkflow(paidPolicy:import('../../src/server/sch
   // Retained readers still provide valid inputs when source collection fails.
   run={id:'weekday-retained-'+now().toISOString(),day:t.day,status:'partial',finishedAt:now().toISOString()};
  }
- if(sourceError)recordPaidRequestEvent({phase:'free-refresh-failed',reason:'source-or-publication-failed',day:t.day});
+ if(sourceError)recordEvent({phase:'free-refresh-failed',reason:'source-or-publication-failed',day:t.day});
  if(paidPolicy){
+  let aiStage:'prior-news-capture'|'scheduled-ai'='prior-news-capture';
   try{
    let priorNews=options.priorNews;
    if(!priorNews){let baseline:PublicBundle|undefined;await privateServer(process.cwd(),async base=>{baseline=await capturePublicBundle(base);});
     priorNews=Object.fromEntries(Object.entries(baseline!.responses).filter(([key])=>key.startsWith('/api/market-intelligence?commodity=')).map(([key,value])=>[new URL(key,'http://localhost').searchParams.get('commodity'),value.payload.articles||[]]));}
+   aiStage='scheduled-ai';
    const runAi=options.runAi||(await import('../../src/server/scheduledAi.ts')).runScheduledAi;
    aiResult=await runAi(paidPolicy,store!,{priorNews});
-   console.log('Scheduled AI result:',JSON.stringify({attempts:aiResult.attempts,accepted:aiResult.accepted,estimatedUsd:aiResult.estimatedUsd,estimatedKrw:aiResult.estimatedKrw,fx:aiResult.budget}));
-  }catch{
-   aiError=true;recordPaidRequestEvent({phase:'scheduled-ai-failed',day:t.day,reason:'generation-evidence-or-journal-failed'});
-   console.error('Scheduled Gemini failed; free updates and previous accepted AI retained');
+   try{console.log('Scheduled AI result:',JSON.stringify({attempts:aiResult.attempts,accepted:aiResult.accepted,estimatedUsd:aiResult.estimatedUsd,estimatedKrw:aiResult.estimatedKrw,fx:aiResult.budget}));}catch{}
+  }catch(error){
+   aiError=true;
+   // Never inspect/stringify thrown values: messages, stacks and custom fields
+   // can contain credentials, private reader logs, requests or model responses.
+   const diagnostic={phase:'scheduled-ai-failed',day:t.day,reason:'generation-evidence-or-journal-failed',stage:aiStage,errorType:typeof error};
+   recordEvent(diagnostic);
+   try{console.error('Scheduled Gemini failed; free updates and previous accepted AI retained',JSON.stringify(diagnostic));}catch{}
   }
  }
  // Always attempt the shared saved-input aggregator. It can publish new free
  // observations and independently accepted AI, including after partial failures.
  try{await(options.publishOverview||(await import('../../src/server/freeDailyJobs.ts')).publishDailyOverview)({...run,finishedAt:now().toISOString()});}
- catch{recordPaidRequestEvent({phase:'overview-retained',day:t.day,reason:'saved-aggregation-failed'});}
+ catch{recordEvent({phase:'overview-retained',day:t.day,reason:'saved-aggregation-failed'});}
  return {sourceRun:run,sourceError,aiError,aiResult};
 }
 export async function main([command,destination]=process.argv.slice(2)){
