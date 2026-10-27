@@ -5,7 +5,7 @@ export function snapshotIssues(key:string, body:any):string[] {
   if(key.startsWith('analysis-')) {
     const a=body.data;
     if(!a) return ['analysis-data-missing'];
-    return [typeof a.executiveSummary!=='string' || a.executiveSummary.trim().length<140 ? 'executiveSummary-missing-or-too-short' : '',
+    return [typeof a.executiveSummary!=='string' || a.executiveSummary.trim().length<(a.evidenceAudit?.outputFormat==='evidence-sections-v1'?1:140) ? 'executiveSummary-missing-or-too-short' : '',
       typeof a.deskRecommendation!=='string' || !a.deskRecommendation.trim() ? 'deskRecommendation-missing' : '',
       !Number.isFinite(Date.parse(a.generatedAt)) ? 'generatedAt-missing-or-invalid' : '',
       !Array.isArray(a.sources) || !a.sources.some((s:any)=>{try{return new URL(s.url).protocol==='https:';}catch{return false;}}) ? 'grounded-sources-missing' : '',

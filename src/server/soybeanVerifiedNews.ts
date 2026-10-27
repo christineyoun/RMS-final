@@ -184,19 +184,19 @@ function extractOriginalEvidence(html:string,$:ReturnType<typeof load>):{excerpt
   for(const selector of selectors){
     $copy(selector).slice(0,3).each((_,root)=>{
       const paragraphs=$copy(root).find('p,h2,h3,li').toArray().map(el=>strip($copy(el).text()))
-        .filter(s=>s.length>=35&&s.length<=1400);
-      if(paragraphs.length>=2)sets.push(paragraphs);
+        .filter(s=>!!s.trim()&&s.length<=1400);
+      if(paragraphs.length>0)sets.push(paragraphs);
     });
   }
   // Some publishers put the full article outside a semantic <article> element.
   // A body fallback remains evidence-gated: boilerplate cannot pass crop/market checks.
   if(!sets.length){
-    const body=$copy('body').find('p,h2,h3').toArray().map(el=>strip($copy(el).text())).filter(s=>s.length>=35&&s.length<=1400);
-    if(body.length>=3)sets.push(body);
+    const body=$copy('body').find('p,h2,h3').toArray().map(el=>strip($copy(el).text())).filter(s=>!!s.trim()&&s.length<=1400);
+    if(body.length>0)sets.push(body);
   }
-  for(const entry of articleJsonLd($))if(entry.body.length>=250){
-    const chunks=entry.body.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).filter(s=>s.length>=35);
-    if(chunks.length>=3)sets.push(chunks);
+  for(const entry of articleJsonLd($))if(!!entry.body.trim()){
+    const chunks=entry.body.split(/(?<=[.!?])\s+(?=[A-Z0-9])/).filter(s=>!!s.trim());
+    if(chunks.length>0)sets.push(chunks);
   }
   let best={excerpt:'',anchors:0,passages:0,reason:'article-body-too-short'},bestScore=-1;
   for(const paragraphs of sets){
@@ -229,8 +229,8 @@ export async function verifySoybeanOriginal(candidate:RetrievedSourceMetadata):P
     if(candidate.publishedAt&&Math.abs(Date.parse(candidate.publishedAt)-Date.parse(day))>86400000)
       return {allowed:false,reason:'rss-article-date-mismatch'};
     const evidence=extractOriginalEvidence(html,$);
-    if(evidence.passages<3)return {allowed:false,reason:'article-body-too-short'};
-    if(evidence.reason!=='ok'||evidence.anchors<1||evidence.excerpt.length<230)
+    if(!evidence.passages||evidence.excerpt.trim()===title.trim())return {allowed:false,reason:'article-body-unavailable'};
+    if(evidence.reason!=='ok'||evidence.anchors<1)
       return {allowed:false,reason:evidence.reason};
     if(!soybean.test(evidence.excerpt)||!market.test(evidence.excerpt))return {allowed:false,reason:'soybean-facts-missing'};
     return {allowed:true,reason:'verified',verified:{...candidate,rawTitle:strip(title||og),rawSnippet:evidence.excerpt,publishedAt:day,

@@ -9,7 +9,8 @@ import {withAuthorizedStage3Run,type Stage3RunContext} from './stage3Runtime.ts'
 import {acquirePaidLease,hasOutstandingPaidRequest} from './paidJobLease.ts';
 import {snapshotIssues} from './mvpEvidence.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
-import {acceptedScheduledNews,publishScheduledContent} from './scheduledContent.ts';
+import {acceptedScheduledNews,publishScheduledContent,readScheduledContent} from './scheduledContent.ts';
+import {analysisReplacementIssues} from './analysisPublicationQuality.ts';
 import {gcsRead,gcsWrite} from './cloudPublication.ts';
 import {scheduledAnalysisEvidence} from './scheduledEvidence.ts';
 import {assertPaidRunActive,recordPaidRequestEvent,PaidRequestError} from './paidRequestTransport.ts';
@@ -83,6 +84,11 @@ export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJou
       if(!selected.some(a=>newUrls.has(a.originalUrl)))throw Error('No verified candidate improves the current selection');
       payload.articles=selected;
      }else if(snapshotIssues(phase,payload).length||payload.data?.status!=='live')throw Error('Existing analysis acceptance failed');
+     if(kind==='analysis'){
+      let previous=readScheduledContent(phase,root)?.payload;
+      if(!previous)try{previous=JSON.parse(fs.readFileSync(path.join(root,'.rms-stage3/snapshots',phase+'.json'),'utf8')).payload;}catch{}
+      if(previous&&!snapshotIssues(phase,previous).length&&analysisReplacementIssues(payload.data,previous.data).length)throw Error('Analysis section coverage regression; retain previous');
+     }
      updates[phase]=payload;journal.accepted={...updates};journal.phases[phase]={status:'accepted'};
      // News has its own accepted checkpoint; a later rejected AI response cannot suppress it.
      recordPaidRequestEvent({runId:ctx.runId,phase:'content-accepted',kind,commodity:id,...(kind==='analysis'?{lastSuccessfulAnalysisAt:now().toISOString()}:{} )});

@@ -1,3 +1,4 @@
+import {hasMarketArticleBody} from './newsEvidenceQuality.ts';
 /**
  * Wheat original-publisher article verifier. No Gemini calls.
  * Requires a direct HTTPS article, an independent page-title/URL identity match,
@@ -285,7 +286,7 @@ async function checkDetailed(candidate:Candidate):Promise<Check> {
           !titleOkay?reject('headline-does-not-match-url'):
           !dateOkay?reject('publication-date-unverified'):
           !topical?reject('page-not-about-wheat'):
-          excerpt.length<180?reject('insufficient-publisher-text'):
+          (!hasMarketArticleBody(excerpt,title))?reject('article-body-unavailable'):
           {allowed:true,reason:'verified-article',excerpt,verifiedDate:date!};
       }else result=reject('unsupported-response-type');
     }else {result=reject('source-http-error');await response?.body?.cancel().catch(()=>{});}
@@ -306,7 +307,7 @@ export async function verifyWheatNewsLinksReported<T extends RetrievedSourceMeta
     const batch=items.slice(i,i+MAX_PARALLEL);
     const checks=await Promise.all(batch.map(async item=>checkDetailed({rawTitle:item.rawTitle,publishedAt:item.publishedAt,originalUrl:item.originalUrl})));
     checks.forEach((check,index)=>{
-      if(check.allowed && check.excerpt && check.excerpt.length>=100 && check.verifiedDate) {
+      if(check.allowed && check.excerpt && !!check.excerpt.trim() && check.verifiedDate) {
         // Save the actual publisher date, never an unconfirmed model date.
         accepted.push({...batch[index],rawSnippet:check.excerpt,publishedAt:check.verifiedDate});
       } else {

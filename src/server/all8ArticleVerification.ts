@@ -1,3 +1,4 @@
+import {hasMarketArticleBody} from './newsEvidenceQuality.ts';
 /** Conservative original-publisher check for non-pilot RMS commodities.
  * Article candidates from model search are not accepted just because a URL exists.
  */
@@ -25,12 +26,12 @@ async function inspect(a:RetrievedSourceMetadata,key:string):Promise<RetrievedSo
   try{
     const r=await fetch(url.toString(),{redirect:'manual',signal:AbortSignal.timeout(9000),headers:{'User-Agent':'Mozilla/5.0 (compatible; RMS Market Quality/1.0)','Accept':'text/html'}});
     if(!r.ok||!String(r.headers.get('content-type')).includes('html'))return null;
-    const body=await r.text();if(body.length<1000||body.length>2_000_000)return null;
+    const body=await r.text();if(!body.trim()||body.length>2_000_000)return null;
     const $=load(body);$('script,style,noscript,nav,footer,header').remove();
     const headline=clean($('meta[property="og:title"]').attr('content')||$('h1').first().text()||$('title').first().text());
     const text=clean($('article').first().text()||$('main').first().text()||$('body').text());
     const headText=clean(headline+' '+text.slice(0,6000));
-    if(!headline||text.length<450||!allowed.test(headText))return null;
+    if(!headline||!hasMarketArticleBody(text,headline)||!allowed.test(headText))return null;
     const date=String($('meta[property="article:published_time"]').attr('content')||$('meta[name="date"]').attr('content')||$('time[datetime]').first().attr('datetime')||'');
     if(!date)return null;
     const pubDate=new Date(date);

@@ -144,7 +144,7 @@ try{
     assert.throws(()=>parseGroundedAnalysis(raw(mock),'mock',now,failedSource),/failed-source-verification/);
     const invented=clone(mock);invented.sources=[{url:'https://fake.example/fiction'}];
     assert.throws(()=>parseGroundedAnalysis(raw(invented),'mock',now,evidence),/fabricated-or-unverified-source-url/);
-    const request=buildRecoveryAnalysisRequest('gemini-3.8-flash',id,evidence,'2026-10-20','verified-only');
+    const request=buildRecoveryAnalysisRequest('gemini-3.8-flash',id,evidence,'2026-10-20','verified-only','claims');
     assert.deepEqual(request.config.tools,[]);assert.equal(request.config.maxOutputTokens,8192);assert.equal(request.config.thinkingConfig.thinkingLevel,'LOW');
     assert.ok(request.config.responseSchema.required.includes('evidenceContractVersion'));
     assert.ok(request.contents.includes('INTERVAL CHANGE')&&request.contents.includes('SUSTAINED TREND')&&request.contents.includes('STOCK ADEQUACY'));

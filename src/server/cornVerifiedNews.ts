@@ -7,7 +7,7 @@
  */
 import { load } from 'cheerio';
 import { PDFParse } from 'pdf-parse';
-import { selectMarketEvidence, reviewMarketSummary, prepareCornCouncilPdfEvidence } from './newsEvidenceQuality.ts';
+import { selectMarketEvidence, reviewMarketSummary, prepareCornCouncilPdfEvidence,newsPercentagesGrounded,hasMarketArticleBody } from './newsEvidenceQuality.ts';
 import type { RetrievedSourceMetadata } from './marketIntelligenceService.ts';
 
 type Source = { url: string; host: string; publisher: string; kind: 'rss'|'index'; sourceType: 'news'|'official' };
@@ -230,7 +230,7 @@ export async function verifyCornOriginal(candidate:RetrievedSourceMetadata):Prom
       ? $copy('article').first() : $copy('main').first().length ? $copy('main').first() : $copy('body');
     const htmlParagraphs=root.find('p,h2,h3,h4,li,tr').toArray()
       .map(el=>strip($copy(el).text()))
-      .filter(x=>x.length>=30&&x.length<1400);
+      .filter(x=>!!x&&x.length<1400);
     const fallback=strip(root.text());
     let paragraphs=htmlParagraphs.length>=3?htmlParagraphs:[fallback];
     // A short official landing page is not enough: prefer the linked original
@@ -242,6 +242,7 @@ export async function verifyCornOriginal(candidate:RetrievedSourceMetadata):Prom
           .replace(/\r/g,'').split(/\n\s*\n+/).map(x=>strip(x)).filter(Boolean);
       else return {allowed:false,reason:'official-report-body-unavailable',contentChars:fallback.length};
     }
+    if(!hasMarketArticleBody(paragraphs.join(' '),heading))return {allowed:false,reason:'article-body-unavailable'};
     const selected=selectMarketEvidence(paragraphs,'corn',5800);
     if(selected.reason!=='ok')return {allowed:false,reason:selected.reason,
       contentChars:selected.excerpt.length};
@@ -297,15 +298,12 @@ export function cornSummaryRisk(summary:string,evidence:string,title='옥수수 
   const shared=reviewMarketSummary(title,summary,evidence,'corn');
   if(shared)return shared;
   // Avoid fabricated numerical percentages and confuse-as-wheat mistakes.
-  for(const m of summary.matchAll(/(\d+(?:\.\d+)?)\s*%/g)) {
-    const n=m[1];if(!new RegExp(`\\b${n.replace('.','\\.')}\\s*(?:%|percent|per cent)`,'i').test(evidence))
-      return 'unsupported-percentage';
-  }
+  if(!newsPercentagesGrounded(summary,evidence))return 'unsupported-percentage';
   if(/미국\s*밀\s*생산/.test(summary)&&/us maize production|u\.s\. corn production/i.test(evidence))return 'possible-crop-confusion';
   return null;
 }
 export function selectCornNews(items:RetrievedSourceMetadata[],limit=4,now=Date.now()):RetrievedSourceMetadata[] {
-  const valid=items.filter(x=>x.publishedAt&&inWindow(x.publishedAt,now)&&x.rawSnippet.length>=200);
+  const valid=items.filter(x=>x.publishedAt&&inWindow(x.publishedAt,now)&&!!x.rawSnippet.trim());
   const result:RetrievedSourceMetadata[]=[],hosts=new Map<string,number>(),topics=new Map<string,number>();
   const seen=new Set<string>();
   while(result.length<limit){
@@ -337,6 +335,7 @@ export function cornSelectedQuality(items:RetrievedSourceMetadata[], now=Date.no
     return Number.isFinite(t)&&t>=kstDay-14*86400000&&t<=kstDay;
   }).length;
   const uniquePublishers=new Set(items.map(x=>normHost(new URL(x.originalUrl).hostname))).size;
+  const failedRequirements=items.length>=1&&items.length<=4?[]:['selected-count-must-be-1-to-4'];
   return {selected:items.length,uniquePublishers,within14Days,
-    readyForReview:items.length===4 && uniquePublishers>=3 && within14Days>=3};
+    failedRequirements,readyForReview:failedRequirements.length===0};
 }

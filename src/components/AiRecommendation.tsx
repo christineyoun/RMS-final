@@ -1,3 +1,4 @@
+import {formalAiText,aiEvidenceDateLabel} from '../utils/aiReportPresentation';
 import {getRecommendationColor} from '../utils/recommendationPresentation';
 export {getRecommendationColor} from '../utils/recommendationPresentation';
 import {SourceAttribution} from './SourceAttribution';
@@ -18,7 +19,8 @@ export interface AiRecommendationProps {
   watchItems?: string[];
   researchStatus?: "live" | "cached" | "rule-based";
   researchSources?: AiDisplaySource[];
-  researchGeneratedAt?: string; // retained for compatibility; program-wide date is in the header
+  researchEvidenceDates?: string[];
+  researchGeneratedAt?: string; // report creation time, distinct from evidence observation dates
   researchModel?: string; // retained for compatibility
   isLoading?: boolean;
   isError?: boolean;
@@ -40,6 +42,7 @@ export default function AiRecommendation({
   researchStatus,
   researchSources = [],
   researchGeneratedAt,
+  researchEvidenceDates = [],
   isLoading = false,
   isError = false,
   errorMessage = '',
@@ -50,6 +53,10 @@ export default function AiRecommendation({
   });
   ({deskRecommendation:recommendedCoverage,executiveSummary,bullishFactors,bearishFactors,watchItems}=editorial.fields);
   researchSources=editorial.sources;
+  recommendedCoverage=formalAiText(recommendedCoverage);
+  executiveSummary=executiveSummary&&formalAiText(executiveSummary);
+  bullishFactors=bullishFactors.map(formalAiText);bearishFactors=bearishFactors.map(formalAiText);watchItems=watchItems.map(formalAiText);
+  const evidenceDates=aiEvidenceDateLabel(researchGeneratedAt,researchEvidenceDates);
 
   // Preserve distinct exact URLs, including query-specific publications. A
   // publisher label is presentation only; no source records are rewritten.
@@ -137,6 +144,7 @@ export default function AiRecommendation({
           </span>
         </div>
 
+        {evidenceDates&&<div data-ai-evidence-dates className="text-[10px] text-slate-500 mb-3">{evidenceDates}</div>}
         {/* AI Summary Text Box */}
         <div className="bg-slate-50/80 border border-slate-100 rounded-lg p-4 mb-4">
           <p className="text-[13px] text-slate-700 leading-relaxed font-sans whitespace-pre-line">

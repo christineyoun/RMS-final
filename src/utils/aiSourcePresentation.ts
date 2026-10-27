@@ -39,6 +39,9 @@ export function isDirectAiFooterSource(source:AiDisplaySource):boolean {
   try {
     const u=new URL(source.url),host=u.hostname.replace(/^www\./,'');
     return ['http:','https:'].includes(u.protocol) && !/^(?:vertexaisearch\.cloud\.google\.com|news\.google\.com|google\.com)$/.test(host) &&
+      // Authenticated PSD transport endpoints remain internal evidence identities,
+      // never a public-reader citation or a guessed replacement report URL.
+      host!=='api.fas.usda.gov' && host!=='query1.finance.yahoo.com' &&
       u.pathname!=='/' && !/\/(?:hoi-vien|members?|directory)(?:\/|$)/i.test(u.pathname) &&
       !(host==='apps.fas.usda.gov' && /\/psdonline\/app\/index\.html/.test(u.pathname)) &&
       !(host==='fas.usda.gov' && /^\/data\/commodities\//.test(u.pathname));

@@ -39,6 +39,10 @@ export function deriveAnalysisClaimPlan(evidence:AnalysisEvidence,now=new Date()
       if(f.measure?.valueKind==='forecast'||aspects.includes('stock-balance-forecast'))excludes.add('annual-forecast-is-observed-monthly-stock-movement');
     }
     if(aspects.includes('consumption'))excludes.add('total-consumption-is-importer-specific-crush-demand');
+    if(aspects.includes('acreage')){
+      uses.add('monitor-acreage-in-original-scope');excludes.add('acreage-decline-is-confirmed-production-loss');
+      if(f.comparison?.metric==='acreage'&&f.comparison.direction==='decrease'&&f.comparison.observationCount>=2)uses.add('conditional-price-pressure-only-if-declining-acreage-affects-production');
+    }
     if(aspects.includes('crush-input'))uses.add('monitor-raw-input-volume-with-its-reported-member-or-country-coverage');
     if(aspects.includes('production-input-ratio')){uses.add('compare-defined-annual-output-input-mass-ratio');excludes.add('mass-ratio-is-observed-mill-efficiency');}
     if(aspects.includes('modeled-price-scenario')){uses.add('discuss-original-model-scenario-under-its-reported-assumptions');excludes.add('modeled-counterfactual-is-confirmed-outcome');}

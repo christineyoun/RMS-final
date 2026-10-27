@@ -1,4 +1,5 @@
 import {recordNewsDiscovery,recordNewsInputs,recordNewsSummary} from './newsDiagnostics.ts';
+import {newsSourceEvidence,newsSourceBindingIssue} from './newsSourceFacts.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
 import {getStage3RunContext} from './stage3Runtime.ts';
 import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
@@ -29,7 +30,7 @@ import path from 'node:path';
 import { WHEAT_NEWS_MODEL } from './wheatHybridModels.ts';
 import { discoverCornFreeSources, verifyCornCandidates, selectCornNews, cornSelectedQuality, cornLabelsForSource, cornSummaryRisk } from './cornVerifiedNews.ts';
 import { assessNewsSummary } from '../utils/newsSummaryQuality.ts';
-import { reviewMarketSummary } from './newsEvidenceQuality.ts';
+import { reviewMarketSummary,publisherQuotationIssue,hasMarketArticleBody } from './newsEvidenceQuality.ts';
 import { discoverSoybeanFreeSources, verifySoybeanCandidates, selectSoybeanNews } from './soybeanVerifiedNews.ts';
 import { verifyOtherCommodityArticles } from './all8ArticleVerification.ts';
 
@@ -80,8 +81,8 @@ export interface MarketArticle {
 }
 
 /** Offline/live shared acceptance. A saved candidate alone is never approval. */
-export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSourceMetadata[],responseText:string,verifiedOther:boolean=false){
- const sumMap = new Map<string, { title: string; summary: string; evidenceQuote: string }>();
+export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSourceMetadata[],responseText:string,verifiedOther:boolean=false,options:{requireEvidenceIds?:boolean}={}){
+ const sumMap = new Map<string, { title: string; summary: string; evidenceQuote: string;evidenceIds?:unknown }>();
  const sumMatch = responseText.match(/\[[\s\S]*\]/);
  if (sumMatch) {
    const parsedSums = JSON.parse(sumMatch[0]);
@@ -91,7 +92,7 @@ export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSo
          sumMap.set(String(s.rawId), {
            title: String(s.title || '').trim(),
            summary: String(s.summary || '').trim(),
-           evidenceQuote: String(s.evidenceQuote || '').trim()
+           evidenceQuote: String(s.evidenceQuote || '').trim(),evidenceIds:s.evidenceIds
          });
        }
      }
@@ -101,40 +102,39 @@ export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSo
  const summaryRejections:Array<{url:string;reason:string}>=[];
  const groundedArticles: MarketArticle[] = verifiedLocked.flatMap((lockedMeta) => {
    const sumItem = sumMap.get(lockedMeta.rawId);
+   if(!hasMarketArticleBody(lockedMeta.rawSnippet,lockedMeta.rawTitle)){summaryRejections.push({url:lockedMeta.originalUrl,reason:'article-body-unavailable'});return [];}
+   if(options.requireEvidenceIds||sumItem?.evidenceIds!==undefined){
+    const bindingIssue=newsSourceBindingIssue(lockedMeta,sumItem?.evidenceIds,`${sumItem?.title||''} ${sumItem?.summary||''}`,sumItem?.evidenceQuote||undefined);
+    if(bindingIssue){summaryRejections.push({url:lockedMeta.originalUrl,reason:bindingIssue});return [];}
+   }
    // A scraped English excerpt is evidence for summarization, NOT a
    // substitute for the requested factual Korean article summary.
    if ((key === 'wheat' || key === 'corn' || key === 'soybean') && (!sumItem?.summary ||
-     sumItem.summary.length < 30 || !/[가-힣]/.test(sumItem.summary) ||
-     !sumItem.title || !/[가-힣]/.test(sumItem.title))) return [];
+     !/[가-힣]/.test(sumItem.summary) ||
+     !sumItem.title)) {summaryRejections.push({url:lockedMeta.originalUrl,reason:'missing-or-invalid-korean-summary'});return [];}
    // Fail closed on recognizable serious numerical attribution errors.
    // Missing an item is safer than publishing a misleading purchasing figure;
    // Failed factual claims are omitted; existing successful snapshots survive failed collections.
    if (key === 'wheat') {
      const risk = wheatSummaryRisk(sumItem!.summary, lockedMeta.rawSnippet);
      if (risk) {
+       summaryRejections.push({url:lockedMeta.originalUrl,reason:risk});
        console.warn('[RMS Wheat] Rejected ungrounded summary:', risk,
          lockedMeta.originalUrl);
        return [];
      }
    }
    if(key==='corn') {
-     const quote=String(sumItem!.evidenceQuote||'').replace(/\s+/g,' ').trim();
-     const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
-     const quoteValid=quote.length>=35 && evidence.includes(quote);
-     const risk=quoteValid?cornSummaryRisk(sumItem!.summary,lockedMeta.rawSnippet,sumItem!.title):'unverified-evidence-quote';
-     if(risk){console.warn('[RMS Corn] Rejected summary:',risk,lockedMeta.originalUrl);return [];}
+     const risk=(sumItem!.evidenceQuote?publisherQuotationIssue(sumItem!.evidenceQuote,lockedMeta.rawSnippet):null)||cornSummaryRisk(sumItem!.summary,lockedMeta.rawSnippet,sumItem!.title);
+     if(risk){summaryRejections.push({url:lockedMeta.originalUrl,reason:risk});console.warn('[RMS Corn] Rejected summary:',risk,lockedMeta.originalUrl);return [];}
    }
    if(key==='soybean') {
-     const quote=String(sumItem!.evidenceQuote||'').replace(/\s+/g,' ').trim();
-     const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
-     const validQuote=quote.length>=35 && evidence.includes(quote);
-     const qualityIssue=validQuote ? reviewMarketSummary(sumItem!.title,sumItem!.summary,lockedMeta.rawSnippet,'soybean') : 'unverified-evidence-quote';
-     if(qualityIssue){console.warn('[RMS Soybean] Rejected summary:',qualityIssue,lockedMeta.originalUrl);return [];}
+     const qualityIssue=(sumItem!.evidenceQuote?publisherQuotationIssue(sumItem!.evidenceQuote,lockedMeta.rawSnippet):null)||reviewMarketSummary(sumItem!.title,sumItem!.summary,lockedMeta.rawSnippet,'soybean');
+     if(qualityIssue){summaryRejections.push({url:lockedMeta.originalUrl,reason:qualityIssue});console.warn('[RMS Soybean] Rejected summary:',qualityIssue,lockedMeta.originalUrl);return [];}
    }
    if(!['wheat','corn','soybean'].includes(key)) {
-     const quote=String(sumItem?.evidenceQuote||'').replace(/\s+/g,' ').trim();
-     const evidence=lockedMeta.rawSnippet.replace(/\s+/g,' ').trim();
-     if(quote.length<35 || !evidence.includes(quote)){summaryRejections.push({url:lockedMeta.originalUrl,reason:quote.length<35?'evidence-quote-shorter-than-35-characters':'evidence-quote-not-found-in-publisher-text'});return [];}
+     const quoteIssue=sumItem?.evidenceQuote?publisherQuotationIssue(sumItem.evidenceQuote,lockedMeta.rawSnippet):null;
+     if(quoteIssue){summaryRejections.push({url:lockedMeta.originalUrl,reason:quoteIssue});return [];}
      const issue=reviewMarketSummary(sumItem?.title||'',sumItem?.summary||'',lockedMeta.rawSnippet,key);
      if(issue){summaryRejections.push({url:lockedMeta.originalUrl,reason:issue});return [];}
    }
@@ -647,8 +647,8 @@ Never use Google News as sourceName.`;
           ? await verifyWheatNewsLinksReported(freeCandidates)
           : key === 'corn' ? await verifyCornCandidates(freeCandidates)
           : key === 'soybean' ? await verifySoybeanCandidates(freeCandidates) : null;
-        // Four independently verified RSS articles need no paid Search/grounding call.
-        // Corn is free-first, and fails closed if fewer than four publisher pages verify.
+        // Any independently verified source subset is eligible for summarization.
+        // Corn remains free-first; source failure retains previous content.
         // Do not pay Gemini Search to try to rescue a failing discovery batch.
         const scheduledSearch=!!getStage3RunContext()?.scheduledPolicyHash;
         const skipPaidDiscovery = ((key === 'corn' || key === 'soybean')&&(!scheduledSearch||(freeCheck?.accepted.length||0)>0)) || (key === 'wheat' && (freeCheck?.accepted.length || 0) >= 1);
@@ -801,7 +801,7 @@ Never use Google News as sourceName.`;
           note:'No Search grounding; existing paid authorization still required; only verified originals are eligible.'
         },'corn');
         // No summarization without verified original publisher evidence.
-        if(key==='soybean')writeNewsAudit({stage:verifiedLocked.length>=4?'ready-to-summarize':'insufficient-verified-articles',
+        if(key==='soybean')writeNewsAudit({stage:verifiedLocked.length>0?'ready-to-summarize':'insufficient-verified-articles',
           discovery:soybeanDiscovery?.diagnostics || null,verification:freeCheck?.summary || null,
           selected:verifiedLocked.map(m=>({source:m.sourceName,title:m.rawTitle,date:m.publishedAt,url:m.originalUrl})),
           distinctPublishers:new Set(verifiedLocked.map(m=>m.sourceName)).size,
@@ -810,13 +810,14 @@ Never use Google News as sourceName.`;
         if (verifiedLocked.length > 0) {
           recordNewsInputs(key,verifiedLocked);
           const summarizePrompt = `Translate and summarize the following retrieved commodity intelligence items into Korean for a procurement desk.
-${!['wheat','corn','soybean'].includes(key) ? `The rawSnippet is verified original-publisher HTML article text for ${key}. Use ONLY that text, preserve the precise commodity and distinguish crude versus refined oil, raw sugar versus cane, and starch products versus harvested roots. Do not borrow facts from other commodities or years. If article-specific market developments are absent omit that item. Include an evidenceQuote copied directly from rawSnippet supporting the Korean summary. Return only a JSON array:` : key==='wheat' ? 'The rawSnippet field contains text scraped from the independently verified original publisher page for Wheat. Do not add statistics, crop regions, causal explanations, or claims not supported by that field. Carefully distinguish TOTAL GRAINS (wheat + coarse grains) from WHEAT-ONLY production, exports, trade, or stocks. Never attribute maize supply changes to wheat. If a number cannot be traced to its correct crop and metric in rawSnippet, OMIT that numerical claim. Preserve uncertainty and avoid generic boilerplate. Do NOT alter IDs or invent sources. Return ONLY a JSON array:' : key==='soybean' ? 'Every rawSnippet comes from an independently verified original publisher article specifically about SOYBEANS (not soybean oil alone). Use ONLY that exact source evidence. Never invent production, prices, crops, trade, weather or causal claims. Do not confuse whole soybean beans with processed soybean oil or soymeal; keep reporting years and units precise. Produce specific Korean procurement news, not generic report intros. For each article include an evidenceQuote field with one exact 35+ character English passage copied verbatim from the rawSnippet that directly supports the Korean summary. When evidence cannot support concrete soybean procurement intelligence, omit the article. Return ONLY a JSON array:' : 'The rawSnippet field contains text extracted from independently verified original publisher content for Corn. Treat it as the ONLY evidence. Never invent numbers or causes. Distinguish CORN/MAIZE from WHEAT, SOYBEANS, and total grains; do not move statistics between crops, seasons, geographies, or units. If a specific number cannot be traced to the correct crop and metric in rawSnippet, OMIT it. Preserve uncertainty, accurately report forecast revisions, and avoid generic boilerplate. Do NOT alter IDs or invent sources. For EACH Corn article, identify a specific event, price, production, stocks, demand, shipping, or sourcing change, not a report introduction or description. If the evidence lacks a concrete Corn/maize development, omit that article from the output. Prefer source-exact numbers and units; if unsure omit the number. Do not describe FOB Flat Price tables as an average or mean (평단가/평균) unless the report explicitly supplies an average. Add an evidenceQuote field containing one direct, verbatim English passage copied from rawSnippet (do not translate the quote). Return ONLY a JSON array:'}
+SOURCE-FIRST CONTRACT: Each input includes sourceEvidence with stable evidenceId values, start/end character offsets into that same rawSnippet, exact source numerical tokens, units, explicit source dates and optional deterministic Korean base-10 equivalents. These annotations are not permission to move a number between crops, metrics, periods or passages. Select the original passage before drafting. Return evidenceIds for the passages actually used. Numerical claims in both title and summary must be supported by those selected passages with the same unit. Prefer exact source values/units or the listed Korean equivalent. No currency, weight, price or percentage calculations; do not introduce numerical facts from memory. Preserve the original commodity, geography, metric, period and uncertainty. If extraction gives no reliable unit/equivalent, omit the numerical claim rather than infer one. Quote the selected original passage, not these annotations. Omit an item when its original passages cannot support substantive Korean commodity news.
+Summarize only the verified original article content in rawSnippet. Preserve commodity, metric, units, geography, date and uncertainty. A brief substantive Korean summary is valid; no word count or mandatory phrase. Source passage IDs preserve traceability; evidenceQuote is optional and need not be generated. Never confuse total grains with wheat, whole soybeans with oil, or raw roots with starch. No independent numerical conversions or unsupported procurement claims. Omit an article if its actual body cannot support a useful factual summary. Return ONLY a JSON array.
 Input:
 ${JSON.stringify(
   verifiedLocked.map((m) => ({
     rawId: m.rawId,
     rawTitle: m.rawTitle,
-    rawSnippet: m.rawSnippet
+    rawSnippet: m.rawSnippet,publishedAt:m.publishedAt,sourceName:m.sourceName,sourceEvidence:newsSourceEvidence(m)
   }))
 )}
 
@@ -824,7 +825,7 @@ Output schema:
 [
   {
     "rawId": "matching rawId",
-    ${key !== 'wheat' ? '"evidenceQuote": "verbatim short English passage from rawSnippet relevant to the commodity market movement",' : ''}
+    "evidenceIds": ["sourceEvidence.evidenceId for each original passage actually used"],
     "title": "accurate, natural Korean headline",
     "summary": "complete, readable professional Korean explaining the source-verified development, important figures/units/periods, and defensible ${key} procurement implications; no fixed word, character or sentence limit; never truncate useful facts to equalize card heights; use only rawSnippet and preserve forecast uncertainty"
   }
@@ -837,12 +838,11 @@ Output schema:
 
           // Save the exact response before any acceptance/ranking can discard it.
           recordNewsSummary(key,verifiedLocked,sumResp);
-          const {articles:groundedArticles,rejections:summaryRejections}=evaluateSavedNewsSummaries(key,verifiedLocked,sumResp.text||'',!!verifiedOther);
+          const {articles:groundedArticles,rejections:summaryRejections}=evaluateSavedNewsSummaries(key,verifiedLocked,sumResp.text||'',!!verifiedOther,{requireEvidenceIds:true});
           if(verifiedOther)writeNewsAudit({stage:groundedArticles.length?'articles-ready':'all-summaries-rejected',
             verifiedSources:verifiedLocked.length,publishable:groundedArticles.length,rejections:summaryRejections,
-            rejectionChecks:['evidenceQuote must match original text (35+ characters)','summary must pass commodity-specific informativeness gate']},key);
-          // Apply the same four-card diversity/recency gate AFTER rejecting bad
-          // summaries; a partial batch NEVER overwrites a valid Stage 3 snapshot.
+            rejectionChecks:['source passage IDs bind original publisher content; optional quotations must match','summary must pass commodity-specific informativeness gate']},key);
+          // Rank individually valid summaries; one to four articles can publish.
           const cornGrounded = key==='corn'
             ? selectCornNews(groundedArticles.map(a=>({rawId:a.originalUrl,
                 rawTitle:a.sourceHeadline||a.title,rawSnippet:verifiedLocked.find(v=>v.originalUrl===a.originalUrl)?.rawSnippet||'',
@@ -867,19 +867,20 @@ Output schema:
           })),4) : [];
           const soyAllowedUrls=new Set(soySelected.map(a=>a.originalUrl));
           const publishable=key==='corn'
-            ? (cornSelectedQuality(cornGrounded).readyForReview ? groundedArticles.filter(a=>cornAllowedUrls.has(a.originalUrl)) : [])
+            ? groundedArticles.filter(a=>cornAllowedUrls.has(a.originalUrl))
             : key==='wheat' ? groundedArticles.filter(a=>wheatAllowedUrls.has(a.originalUrl))
-            : key==='soybean' ? ((soySelected.length===4||scheduledSearch&&soySelected.length>0) ? groundedArticles.filter(a=>soyAllowedUrls.has(a.originalUrl)):[])
+            : key==='soybean' ? groundedArticles.filter(a=>soyAllowedUrls.has(a.originalUrl))
             : groundedArticles;
           finalArticles = [...publishable, ...baseArticles];
-          if(key==='soybean')writeNewsAudit({stage:publishable.length===4?'four-articles-ready':'summary-incomplete',
+          if(key==='soybean')writeNewsAudit({stage:publishable.length?'articles-ready':'no-valid-summary',
             selectedForSummary:verifiedLocked.length,goodKoreanSummaries:publishable.length,
             rejectedAfterSummary:verifiedLocked.length-groundedArticles.length},'soybean');
-          if(key==='corn')writeNewsAudit({stage:publishable.length===4?'four-articles-ready':'summary-incomplete',
+          if(key==='corn')writeNewsAudit({stage:publishable.length?'articles-ready':'no-valid-summary',
             selectedForSummary:verifiedLocked.length,goodKoreanSummaries:publishable.length,
+            groundedSummaries:groundedArticles.length,postSummarySelection:cornSelectedQuality(cornGrounded),rejections:summaryRejections,
             rejectedAfterSummary:verifiedLocked.length-groundedArticles.length,
             selectedPublishers:[...new Set(verifiedLocked.map(x=>x.sourceName))]},'corn');
-          if(key==='wheat')writeNewsAudit({stage:publishable.length===4?'four-articles-ready':'summary-incomplete',
+          if(key==='wheat')writeNewsAudit({stage:publishable.length?'articles-ready':'no-valid-summary',
             retrievedJsonCandidates,groundingChunks:groundedWebSources.length,groundingCandidates,
             feedDiscovery:feedDiscovery?.diagnostics || null,publicDiscovery:publicDiscovery?.diagnostics || null,
           freeCandidates:freeCandidates.length,feedVerified:freeCheck?.accepted.length || 0,skipPaidDiscovery,

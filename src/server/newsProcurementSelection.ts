@@ -9,7 +9,7 @@ type Item={originalUrl:string;publishedAt:string;title:string;summary:string;sou
 type ReviewMap=Record<string,Array<{url:string;publishedAt:string;sourceSummarySha256:string;priority:number;theme:string;eventKey:string;decision:string;rationale:string;title?:string;summary?:string}>>;
 const hash=(s:string)=>createHash('sha256').update(s).digest('hex');
 export function selectProcurementNews<T extends Item>(commodity:string,verified:T[],now=Date.now()):T[]{
- let current:typeof reviewed;try{current=JSON.parse(fs.readFileSync(path.join(process.cwd(),'src/data/news_procurement_reviews.json'),'utf8'));}catch{return [];}
+ let current:typeof reviewed=reviewed;try{current=JSON.parse(fs.readFileSync(path.join(process.cwd(),'src/data/news_procurement_reviews.json'),'utf8'));}catch{/* Verified new articles do not depend on a local editorial file. */}
  if(!current?.reviews)return [];
  const reviews=current.reviews as ReviewMap;
  const seen=new Set<string>();
@@ -19,7 +19,9 @@ export function selectProcurementNews<T extends Item>(commodity:string,verified:
   seen.add(url);
   const r=reviews[commodity]?.find(r=>r.url===article.originalUrl&&r.publishedAt===article.publishedAt&&r.sourceSummarySha256===hash(article.summary));
   if(r?.decision==='omit')return [];
-  const title=r?.title||article.title,summary=r?.summary||article.summary;
+  // Bound summaries retain the exact wording validated against their receipt.
+  // Editorial selection metadata may rank/omit; it cannot rewrite that evidence binding.
+  const title=article.verifiedSourceEvidence?article.title:r?.title||article.title,summary=article.verifiedSourceEvidence?article.summary:r?.summary||article.summary;
   // A reviewed cross-commodity summary must identify this crop, like any saved card.
   if(!assessNewsSummary(summary,title,commodity).pass)return [];
   const text=title+' '+summary;

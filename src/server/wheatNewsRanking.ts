@@ -51,7 +51,7 @@ export function selectWheatVerifiedNews(items:RetrievedSourceMetadata[],limit=4,
   const seen=new Set<string>();
   const valid=items.filter(x=>{
     const host=normalizedHost(x.originalUrl);
-    if(!host||!x.publishedAt||!x.rawSnippet||x.rawSnippet.length<100)return false;
+    if(!host||!x.publishedAt||!x.rawSnippet||!x.rawSnippet.trim())return false;
     const key=x.originalUrl.toLowerCase().replace(/\/$/,'').split('?')[0];
     if(seen.has(key))return false;
     seen.add(key);return Number.isFinite(wheatRankScore(x,now));

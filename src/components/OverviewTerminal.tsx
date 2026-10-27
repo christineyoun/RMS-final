@@ -1,6 +1,7 @@
 import {commodityBenchmarkDisplay,commodityComparisonDisplay,commodityComparisonValue} from '../services/commodityQuoteSource';
 import {SourceAttribution} from './SourceAttribution';
 import {brentCostSignal} from '../utils/overviewMacroPresentation';
+import {formalAiText} from '../utils/aiReportPresentation';
 import {loadOverviewIntelligence} from '../utils/overviewIntelligence';
 import {overviewIssueSummary} from '../utils/overviewIssueSummary';
 import React, { useState, useEffect } from 'react';
@@ -1079,7 +1080,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               {(intelligence?.directives||[]).map(d=>(
                 <div key={d.commodity} data-overview-directive={d.commodity} aria-description={d.reason+' · '+d.generatedAt.slice(0,10)} className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
                   <span className="px-2 py-0.5 bg-[#DF0029] border border-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">{d.name}</span>
-                  <span className="text-xs font-bold text-slate-800 break-keep">{d.recommendation}</span>
+                  <span className="text-xs font-bold text-slate-800 break-keep">{formalAiText(d.recommendation)}</span>
                 </div>
               ))}
             </div>

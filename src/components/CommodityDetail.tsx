@@ -526,6 +526,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     watchItems: string[];
     sources?: Array<{ title: string; url: string }>;
     generatedAt?: string;
+    evidenceAudit?: {facts?: Array<{observedAt:string}>};
     status?: 'live' | 'cached' | 'rule-based';
     model?: string;
   } | null>(null);
@@ -3147,6 +3148,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         researchStatus={aiInsight?.status}
         researchSources={aiInsight?.sources}
         researchGeneratedAt={aiInsight?.generatedAt}
+        researchEvidenceDates={aiInsight?.evidenceAudit?.facts?.map((f:any)=>f.observedAt)||[]}
         researchModel={aiInsight?.model}
         executiveSummary={aiInsight?.executiveSummary}
         bullishFactors={aiInsight?.bullishFactors}

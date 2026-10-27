@@ -4,6 +4,7 @@
  * Classification uses source-owned English headline/snippet when available.
  */
 export type WheatLabels = { category: string; affectedRegion: string };
+import {newsPercentagesGrounded} from './newsEvidenceQuality.ts';
 type NewsLike = {
   rawTitle?: string; rawSnippet?: string; sourceHeadline?: string;
   originalUrl?: string; original_url?: string; title?: string; title_kr?: string;
@@ -75,11 +76,7 @@ export function wheatSummaryRisk(summary:string, rawSnippet:string):string|null 
     return 'possible-maize-as-wheat-attribution';
   // A percentage in the Korean summary should occur in the verified English excerpt;
   // avoids invented percentage magnitudes while allowing articles without percentages.
-  const percents=[...text.matchAll(/(\d+(?:\.\d+)?)\s*%/g)].map(m=>m[1]);
-  for(const percent of percents) {
-    if(!new RegExp(`\\b${percent.replace('.','\\.')}\\s*(?:%|percent|per cent)`,'i').test(english) &&
-      !english.includes(`${percent}%`))return 'unsupported-summary-percentage';
-  }
+  if(!newsPercentagesGrounded(text,rawSnippet))return 'unsupported-summary-percentage';
   return null;
 }
 

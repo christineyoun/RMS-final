@@ -3,12 +3,13 @@ import {verifiedReferenceContext} from './analysisReferenceContext.ts';
  * This is a small evidence contract, not a free-text entailment engine. */
 import type {AnalysisFact} from './analysisEvidence.ts';
 
-export const CLAIM_ASPECTS=['price-level','interval-change','sustained-price-trend','inventory-level','inventory-change',
+export const CLAIM_ASPECTS=['acreage','price-level','interval-change','sustained-price-trend','inventory-level','inventory-change',
   'inventory-adequacy','stock-balance-forecast','production','consumption','exports','production-proxy','planting-progress','weather-signal','crush-input','production-input-ratio','total-supply','modeled-price-scenario'] as const;
 export type ClaimAspect=typeof CLAIM_ASPECTS[number];
 export type ClaimSupport={evidenceId:string;aspect:ClaimAspect};
-type Metric='price'|'inventory'|'production'|'consumption'|'exports'|'planting'|'weather'|'crush'|'ratio'|'totalSupply';
+type Metric='area'|'price'|'inventory'|'production'|'consumption'|'exports'|'planting'|'weather'|'crush'|'ratio'|'totalSupply';
 const vocabulary:Record<Metric,RegExp>={
+  area:/재배면적|수확면적|파종면적|acreage|harvested area|planted area/i,
   crush:/압착|착유|\bcrush(?:ing)?\b/i,
   ratio:/질량비|환산율|생산\/원료|생산\/압착|mass ratio/i,
   totalSupply:/총공급|total supply/i,
@@ -54,6 +55,7 @@ export function factClaimContext(f:AnalysisFact){
   const legacyPrice=!f.measure&&((f.id==='palm-cpo-'+f.observedAt&&f.sourceUrl==='https://www.investing.com/commodities/palm-oil-historical-data')||
     (f.id==='palm-olein-'+f.observedAt&&f.sourceUrl==='https://www.investing.com/commodities/rbd-palm-olein-historical-data'))&&/공표 종가 \d+(?:\.\d+)? (?:MYR|USD)\/MT\.$/.test(f.text);
   const aspects:ClaimAspect[]=[];const metric=f.measure?.metric||legacyPsd||(legacyPrice?'price':undefined);
+  if(metric==='acreage')aspects.push('acreage');
   if(metric==='raw-soybean-crush-input')aspects.push('crush-input');
   if(metric==='production-crush-ratio')aspects.push('production-input-ratio');
   if(metric==='oil-total-supply')aspects.push('total-supply');
@@ -91,6 +93,7 @@ export function factClaimContext(f:AnalysisFact){
   return {subject:identity,aspects:[...new Set(aspects)],valueKind:f.measure?.valueKind??'attributed-report'};
 }
 const aspectMetric:Record<ClaimAspect,Metric>={
+  acreage:'area',
   'price-level':'price','interval-change':'price','sustained-price-trend':'price',
   'inventory-level':'inventory','inventory-change':'inventory','inventory-adequacy':'inventory','stock-balance-forecast':'inventory',
   production:'production',consumption:'consumption',exports:'exports','production-proxy':'production','planting-progress':'planting','weather-signal':'weather','crush-input':'crush','production-input-ratio':'ratio','total-supply':'totalSupply','modeled-price-scenario':'price',

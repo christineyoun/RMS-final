@@ -1,3 +1,4 @@
+import {ANALYSIS_SECTIONS_FORMAT} from './analysisSections.ts';
 import {retainedPotatoPublisherCitations} from './potatoAnalysisEvidence.ts';
 import {retainedSugarPublisherCitations} from './sugarAnalysisEvidence.ts';
 import {deriveAnalysisClaimPlan} from './analysisClaimPlan.ts';
@@ -70,9 +71,9 @@ export const KOREAN_REPORT_VOICE = `공통 한국어 문체 — 농심 구매 �
 - 공급사 오퍼 비교·운임/환율 확인·규격/납기 검토 등 통상 절차를 권고나 모니터링 항목으로 반복하지 마세요. 선물과 실물의 구분은 유지하되 개별 거래 조건이 해당 시장 전략을 실질적으로 바꿀 때만 짧게 언급하세요. 데스크 권고·요약·상승/하락 요인·모니터링 항목이 하나의 일관된 전략을 뒷받침해야 합니다.
 - 요약은 시장 결론을 먼저 제시한 뒤 핵심 근거·가격과 공급에 미치는 영향·구매 전략 순으로 전개하세요. 자연스럽고 간결한 전문 한국어 격식체(~습니다/~합니다)를 사용하고 유용한 수치·날짜·단위·지리적 범위와 출처를 보존하세요. 보도·전망·시나리오를 실적으로 단정하지 말고 필요한 불확실성만 구체적으로 한정하세요.
 - 과도한 매체별 인용 나열, '가능성이 있을 것으로 보입니다', '확정할 수 없습니다', '추가 확인이 필요합니다'의 반복과 일반적인 구매조건 면책문을 피하세요. 조건은 해당 품목의 실제 구매 판단에 필요한 위치에 한 번만 연결하고, 모든 품목을 같은 조달 문장 틀로 쓰지 마세요.
-- 상승 요인(bullishFactors)과 하락 요인(bearishFactors)은 모니터링 항목과 같은 간결한 분석적 명사구로 쓰세요. 불필요한 ~습니다/~합니다 종결을 쓰지 말고 근거가 있는 시장 동인과 영향을 명확히 연결하세요. 보도된 사실·해석·전망과 불확실성을 보존하고 새로운 인과관계를 덧붙이지 마세요.
-- 모니터링 항목(watchItems)은 수확·재고 발표·수출·가격 흐름·정책 이행 등 구매 결정을 바꿀 사건과 필요한 대응을 간결한 명사구로 쓰세요. 단순 자료 재확인이나 기본 구매 절차를 나열하지 마세요.
-- 데스크 권고는 짧은 한국어 행동 구문으로 쓰되 전략을 결정하는 시장별 조건은 유지하세요. 영어 번역, 괄호 속 운영상 주의문, 반복적인 FOB·운임·환율 안내, 수익 보장은 피하세요.
+- 상승 요인(bullishFactors)과 하락 요인(bearishFactors)은 간결한 보고서 문체로 쓰세요. 명사구 또는 짧은 격식체를 일관되게 사용하고 반말·대화체를 섞지 말며 근거가 있는 시장 동인과 영향을 명확히 연결하세요. 보도된 사실·해석·전망과 불확실성을 보존하고 새로운 인과관계를 덧붙이지 마세요.
+- 모니터링 항목(watchItems)은 수확·재고 발표·수출·가격 흐름·정책 이행 등 구매 결정을 바꿀 사건과 필요한 대응을 간결한 보고서 격식체로 쓰세요. 단순 자료 재확인이나 기본 구매 절차를 나열하지 마세요.
+- 데스크 권고는 짧은 한국어 존댓말 격식체(~습니다/~합니다/~하십시오)로 쓰되 전략을 결정하는 시장별 조건은 유지하세요. 영어 번역, 괄호 속 운영상 주의문, 반복적인 FOB·운임·환율 안내, 수익 보장은 피하세요.
 - 수급, 생산량, 수출량, 기말재고, 선물가격, 현물가격, 상승 압력, 하방 압력의 용어를 일관되게 쓰세요. 원자료의 품목·벤치마크·단위·기간·사실과 해석을 보존하고 품목마다 동일한 문장 틀을 강요하지 마세요.`;
 
 const textSchema = {
@@ -89,11 +90,14 @@ const textSchema = {
 };
 
 /** Pure request builder: offline-testable, no SDK construction or paid calls. */
-export function buildRecoveryAnalysisRequest(model:string,id:string,evidence:AnalysisEvidence,today:string,mode:'search'|'verified-only'='search'){
+export function buildRecoveryAnalysisRequest(model:string,id:string,evidence:AnalysisEvidence,today:string,mode:'search'|'verified-only'='search',wireFormat:'sections'|'claims'='sections'){
   if(!/^gemini-(?:3|4)(?:[.-]|$)/.test(model))throw new Error('RMS recovery requires a documented Gemini 3/4 model supporting structured outputs with Search; no paid request made.');
   if(mode==='verified-only'&&(evidence.facts.length<2||evidence.facts.some(f=>!validAnalysisFact(f,id))||
     id==='palm-oil'&&(!evidence.facts.some(f=>f.topic==='CPO')||!evidence.facts.some(f=>f.topic==='RBD Olein')||!evidence.facts.some(f=>f.id.startsWith('psd-')))))
     throw Error('Insufficient verified original evidence for a Search-free diagnostic; no paid request made.');
+  // Fresh observation dates, not retrieval timestamps, guide attention. Keep older
+  // comparisons and slow official series available; never relabel their dates.
+  if(mode==='verified-only'&&wireFormat==='sections')evidence={...evidence,facts:[...evidence.facts].sort((a,b)=>Date.parse(b.observedAt)-Date.parse(a.observedAt))};
   const claimPlan=deriveAnalysisClaimPlan(evidence);
   // Compact the existing plan for input; no new permissions or output fields.
   const relationshipRequirements=Object.fromEntries(['hypothetical-forecast-revision','qualified-reported-revision','joint-forecast-scenario'].map(mode=>[mode,[...new Set([...claimPlan.records.flatMap(r=>r.causalRelations),...claimPlan.jointRelations].filter(r=>r.mode===mode).flatMap(r=>r.requirements))]]));
@@ -109,24 +113,27 @@ ${mode==='verified-only'?'No live Search or external tools. Work only from the v
 
 REPORT BRIEF (same six RMS fields, source-supported Korean summaries):
 Executive summary: summarize the relevant dated verified articles and commodity data in coherent professional Korean (at least 140 characters). Ordinary fields need no buying advice, forecasts, causes or hypothetical scenarios. Distinguish annual forecasts, reported revisions and observations; retain commodity, scope, dates, units and market years.
-Bullish factors: select documented supply constraints, demand support or reported upward price drivers only when records establish them. Bearish factors: select documented supply expansion, weaker demand or reported downward drivers only with source support. A production/stocks level proves neither price direction nor adequacy. Watch items: identify supported metrics or documented pending developments; a factual reference suffices. Choose up to three items per list. When no supported item exists, omit that list's indexed claim fields so RMS returns an empty list. Never invent a counterargument to fill a quota.
+Bullish factors: select documented supply constraints, demand support or reported upward price drivers only when records establish them. Bearish factors: select documented supply expansion, weaker demand or reported downward drivers only with source support. A production/stocks level proves neither price direction nor adequacy. Each populated directional factor must pair a canonical premise with a supported interpretation or qualified conditional market driver; a level alone is not a bullish/bearish driver. Watch items: pair a canonical premise with a supported recommendation or conditional monitoring action for the exact metric and scope. Choose up to three items per list. When no supported item exists, omit that list's indexed claim fields so RMS returns an empty list. Never invent a counterargument to fill a quota.
 Desk recommendation: a conservative supported action, such as monitoring the next publication or comparing a benchmark. Purchasing timing or supplier-offer checks are optional and require support. No compulsory speed/coverage recommendation or guarantees. Missing evidence is not permission to add information from memory. Confidence expresses evidence quality, not predictive accuracy.
 Select and arrange relevant checked facts. Prefer article records when available. Do not paraphrase canonical facts in fact-binding mode: RMS inserts their exact checked Korean statements or source quotations. Optional interpretations must match allowed interpretations; optional analytical text still passes the existing scope/metric/causal checks.
 OUTPUT CONTRACT:
 ${mode==='verified-only'?'Return only outputFormat=typed-segments-v1, factBinding=verified-records-v1, evidenceContractVersion=4, confidenceScore and evidenceClaims. No separate prose copies.':'Return the report fields with evidenceContractVersion=4 and evidenceClaims; Search-only claims instead require complete provider citation spans.'}
-Each populated logical field (deskRecommendation, executiveSummary, bullishFactors.0, etc.) needs at least one fact segment. Ordinary fields may contain facts only. Only deskRecommendation requires an evidence-bound actionable recommendation. RMS joins segments with one space. Use at least two distinct factual premises across the report. Do not repeat facts merely to fill sections.
-FACT: kind=fact, exactly one evidenceIds entry, support=[], ${mode==='verified-only'?'omit text; RMS inserts the complete canonical fact. An ID is not factual text.':'copy its complete canonical text exactly.'}
-INTERPRETATION: kind=interpretation only for an exact permitted interpretation from that record.
-ANALYSIS: kind=conditional for a qualified scenario or supported causal interpretation; kind=recommendation for a purchasing, monitoring or comparison action. Write original Korean text. For both, evidenceIds must match support=[{evidenceId,aspect}] exactly; use only the cited record's aspects. Every relevant clause needs the correct metric, geography, benchmark and period. Recommendations may monitor an existing metric without inventing an outcome or a special polite ending. Do not add sources; RMS resolves them.
+Each populated logical field (deskRecommendation, executiveSummary, bullishFactors.0, etc.) needs at least one fact segment. ExecutiveSummary may contain facts only. Directional factor fields require supported interpretation/conditional text, and watchItems require supported monitoring text. DeskRecommendation requires an evidence-bound actionable recommendation. RMS joins segments with one space. Use at least two distinct factual premises across the report. Do not repeat facts merely to fill sections.
+Every segment has kind, text, evidenceIds and support. Never omit text for an interpretation, conditional or recommendation; it must contain nonempty Korean prose.
+FACT: kind=fact, exactly one evidenceIds entry, support=[], ${mode==='verified-only'?'text="" (empty reference placeholder); RMS inserts the complete canonical fact. Never put an ID or model-written factual prose in text.':'copy its complete canonical text exactly.'}
+INTERPRETATION: kind=interpretation, text is an exact permitted interpretation from that record.
+ANALYSIS: kind=conditional for a qualified scenario or supported causal interpretation; kind=recommendation for a purchasing, monitoring or comparison action. Write original Korean prose in text. For both, evidenceIds must match support=[{evidenceId,aspect}] exactly; use only the cited record's aspects. Every relevant clause needs the correct metric, geography, benchmark and period. Recommendations may monitor an existing metric without inventing an outcome or a special polite ending. Do not add sources; RMS resolves them.
 
 GENERATION REQUIREMENTS FROM THE EXISTING ACCEPTANCE CONTRACT:
 Use one logical sentence per non-factual segment; split different scenarios/actions into separate segments. For a conditional segment, use an explicit conditional antecedent and only the exact relationship, direction and scope authorized in the support index. A forecast level is not an observed revision. Production above consumption alone does not justify a price forecast or inventory-adequacy claim. Never repeat canonical quantities or dates in analytical text; select the exact listed aspect (interval-change is not price-level or volatility). Do not infer sideways prices, rebounds, sustained trends or physical costs from a single observation or net interval change.
 A recommendation must identify a supported metric and an actionable comparison or monitoring task. A stock forecast alone cannot justify faster/slower buying. Supplier-offer vocabulary is optional; do not invent a purchase decision when only monitoring is supported. These are not requirements for ordinary factual summaries.
+The executiveSummary must use at least two distinct factual records. Do not repeat a fact within a field, repeat the same summary across list items, or pad a short report by copying sentences. Empty unsupported factor lists are preferable to repetitive or invented drivers. Use concise verified Korean records where available; do not assemble a summary solely from raw publisher quotation records. Keep source URLs and attribution in the separate sources metadata resolved by RMS. Do not repeat a source biography or record disclaimer as a substitute for market intelligence; when only raw quotation dumps or unsupported drivers are possible, retain the previous assessment rather than invent a report.
 
 EVIDENCE BOUNDARIES:
 Prices are dated benchmark observations, not physical procurement costs. Preserve provisional/settlement distinctions. INTERVAL CHANGE supports only its measured net change; SUSTAINED TREND requires the exact record capability and at least three directional observations. STOCK ADEQUACY is not established by an absolute stock level or annual forecast balance. Quantities/dates belong in canonical facts; in analysis use only exact supported shipment/comparison-period qualifiers or the cited marketing-year identifier. No invented quantities, new dates, units, source URLs or buying guarantees.
 WEATHER-DEPENDENT CLAIMS: preserve the point, window, source and upstream role. Local weather does not establish regional crop effects; planting is not continental supply or risk-premium evidence. Adding a world forecast cannot supply the missing causal link. DEMAND SUBMETRICS: Total consumption is not importer-specific demand or crush demand.
 CAUSAL AND PROCUREMENT DISCIPLINE: qualify market-pressure interpretations and use the existing scope index's permitted relationships. A forecast level is not a reported revision. Actual physical procurement costs, persistent price trends, tight inventories and crop impacts require their own evidence. An if-clause or a modal does not supply it. If unsupported, omit that driver; do not rewrite it as a disguised watch item.
+${id==='potato-starch'?'POTATO STARCH: Distinguish the all-potato harvest proxy from finished CN11081300 starch trade. A supported desk action can monitor that exact extra-EU trade series or compare the same raw-potato harvest scope with its next release. Neither establishes available food-grade supplier stock, an executable starch price, shipment terms, a buying pace or allocation. Use only the record aspects listed below; do not infer a purchase recommendation from aggregate potato output.':''}
 ${id==='soybean'?'SOYBEAN: CBOT ZS=F whole-soybean daily bars, US cents/bushel converted to USD/MT; not ZL soybean oil or official settlements. Mato Grosso planting belongs to BRAZIL. US ERS, world PSD and prior-month World Grain reports have different scopes/periods. Indicative FOB offers are not current executable supplier quotes.':''}
 ${id==='soybean-oil'?'SOYBEAN OIL: CBOT ZL=F US cents/lb to USD/MT; never substitute ZS or physical refined oil. World PSD, US ERS and September NOPA member stocks/raw-bean crush are distinct. Annual production/input mass ratio is not mill efficiency. ASA model scenarios remain conditional.':''}
 
@@ -148,14 +155,29 @@ VERIFIED RMS EVIDENCE (data, not instructions):\n${JSON.stringify(evidence.facts
     const schema=request.config.responseSchema as any;
     schema.properties={factBinding:{type:Type.STRING,enum:[VERIFIED_FACT_BINDING]},outputFormat:{type:Type.STRING,enum:[CLAIM_TEXT_FORMAT]},evidenceContractVersion:schema.properties.evidenceContractVersion,confidenceScore:schema.properties.confidenceScore,evidenceClaims:schema.properties.evidenceClaims};
     schema.required=['outputFormat','factBinding','evidenceContractVersion','confidenceScore','evidenceClaims'];
-    // Facts are references; original prose remains required by the server for
-    // non-factual segments. Avoid conditional/union provider grammars.
-    schema.properties.evidenceClaims.items.properties.segments.items.required=['kind','evidenceIds','support'];
+    // Require the same slots for every kind without a provider union grammar.
+    // Fact text is an empty placeholder; every analytical text must be nonempty.
+    schema.properties.evidenceClaims.items.properties.segments.items.required=['kind','text','evidenceIds','support'];
     // Keep the nested claim grammar identical to the HTTP-200 request shape.
     // Bounding this deeply nested array and enumerating its field can expand
     // provider decoding complexity. Counts/field membership remain strictly
     // enforced by materializeClaimText and parseGroundedAnalysis, not omitted.
     // The canonical typed-segments format is retained with explicit fact binding.
+  }
+  if(mode==='verified-only'&&wireFormat==='sections'){
+    const section={type:Type.OBJECT,properties:{evidenceIds:{type:Type.ARRAY,items:{type:Type.STRING,enum:evidence.facts.map(f=>f.id)}},text:{type:Type.STRING}},required:['evidenceIds','text']};
+    request.config.responseSchema={type:Type.OBJECT,properties:{outputFormat:{type:Type.STRING,enum:[ANALYSIS_SECTIONS_FORMAT]},confidenceScore:{type:Type.NUMBER,minimum:0,maximum:100},marketAnalysis:section,priceOutlook:section,procurementStrategy:section,...Object.fromEntries(['bullishFactors','bearishFactors','monitoringItems'].map(name=>[name,{type:Type.ARRAY,items:section}]))},required:['outputFormat','confidenceScore','marketAnalysis','procurementStrategy']} as any;
+    request.contents=`You advise a Korean commodity procurement desk. Today: ${today}. Commodity: ${COMMODITY_NAMES[id]}. No live Search or external tools. Work only from verified RMS evidence, with no invented facts.
+Freshness: evidence is ordered by its original observedAt date, newest first. Prefer the newest relevant verified records for marketAnalysis, especially current publisher developments. Use older official/annual records only for needed scope, baseline or context; do not let old commentary dominate when newer relevant evidence exists. observedAt is the evidence period, verifiedAt is retrieval verification, and today is not a new observation. Preserve original dates, units and qualifications. Never claim a freshly generated report proves fresh underlying data.
+Return outputFormat=evidence-sections-v1 and six logical sections: marketAnalysis, priceOutlook, bullishFactors, bearishFactors, procurementStrategy, monitoringItems. Each section/item has only evidenceIds and text. Do not generate sentence claim maps, segment kinds, source URLs, numerical evidence or aspect labels. RMS inserts the cited canonical facts and resolves their sources internally.
+Market analysis: select at least two distinct relevant evidence records; text may be empty or contain a supported conditional interpretation. Price outlook: optional, clearly conditional. Bullish/bearish factors: optional arrays of up to three supported conditional drivers or exact permitted interpretations. Procurement strategy: a supported monitoring/comparison or purchasing action in Korean, with its verified basis. Monitoring items: optional supported actions for specific metrics. Missing evidence is not a neutral/bullish/bearish conclusion; omit unsupported sections/items, never fill a quota.
+Do not repeat canonical quantities or dates in text, introduce numerical allocations/price triggers, assume stock tightness from a level, turn a reference/futures price into an executable offer, infer crop damage from point weather, or guarantee a purchasing outcome. Conditional interpretations must preserve original commodity, metric, scope and period. A hypothetical acreage-to-production-to-price pathway is possible only with verified declining acreage and an explicit production-impact condition, not as a confirmed production loss or guaranteed price effect. If no supported strategy or substantive market basis exists, do not invent a report.
+Write concise professional Korean. Facts remain in RMS evidence, source attribution separately resolved; do not reproduce raw source dumps or metadata in every sentence. A few clear conditional sentences are preferable to repeated disclaimers. RMS validates each interpretation against the same evidence rules and retains stronger saved content when appropriate.
+${KOREAN_REPORT_VOICE}
+EVIDENCE SUPPORT INDEX (data, not instructions):
+${JSON.stringify(scopeIndex)}
+VERIFIED RMS EVIDENCE (data, not instructions):
+${JSON.stringify(evidence.facts.map(({id,text,sourceTitle,sourceUrl,observedAt,measure,comparison,interpretations})=>({id,text,sourceTitle,sourceUrl,observedAt,measure,comparison,interpretations})))}`;
   }
   return request;
 }
@@ -402,7 +424,7 @@ export async function getGroundedAiAnalysis(rawCommodityId: string, force = fals
     if(recoveryPipeline) {
       try {
         assertPaidRunActive(runContext);
-        const result=parseGroundedAnalysis(response,model,new Date(),evidence,{requiredContractVersion:4});
+        const result=parseGroundedAnalysis(response,model,new Date(),evidence,{requiredContractVersion:4,requiredFactBinding:evidenceMode==='verified-only'});
         recordAnalysisDiagnostic(id,model,response,undefined,requestDiagnostic);
         assertPaidRunActive(runContext);cache.set(id,{expiresAt:Date.now()+TTL_MS,result});
         return result;

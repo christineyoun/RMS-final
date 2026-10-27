@@ -1,4 +1,5 @@
 import {materializeClaimText} from './analysisClaimText.ts';
+import {canonicalAnalysisQualityIssues} from './analysisPublicationQuality.ts';
 /** Pure response handling: never synthesizes prose, numbers or source URLs. */
 import type { GroundedAiAnalysis, GroundedAiSource } from './liveAiAnalysisService.ts';
 import {validAnalysisFact,type AnalysisEvidence} from './analysisEvidence.ts';
@@ -123,7 +124,7 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
   return {sources:[...new Map(selected.map(f=>[f.sourceUrl,{url:f.sourceUrl,title:f.sourceTitle}])).values()],
     audit:{path:'verified-rms-evidence',version:4,contractVersion:structured?4:'legacy',...(data.factBinding?{factBinding:data.factBinding}:{}),claims:data.evidenceClaims,facts:selected}};
 }
-export function parseGroundedAnalysis(response:any,model:string,now=new Date(),evidence?:AnalysisEvidence,options:{requiredContractVersion?:4}={}):GroundedAiAnalysis {
+export function parseGroundedAnalysis(response:any,model:string,now=new Date(),evidence?:AnalysisEvidence,options:{requiredContractVersion?:4;requiredFactBinding?:boolean}={}):GroundedAiAnalysis {
   const candidate=response?.candidates?.[0];
   if(response?.promptFeedback?.blockReason)throw new AnalysisValidationError('response',['prompt-blocked:'+response.promptFeedback.blockReason]);
   if(!candidate)throw new AnalysisValidationError('response',['no-candidate']);
@@ -132,17 +133,21 @@ export function parseGroundedAnalysis(response:any,model:string,now=new Date(),e
   if(!text)throw new AnalysisValidationError('response',['empty-text']);
   let data:any;
   try{data=JSON.parse(text);}catch{throw new AnalysisValidationError('parsing',['invalid-json']);}
+  const sectionResponse=data?.outputFormat==='evidence-sections-v1';
   try{data=materializeClaimText(data,evidence,now);}catch(error){throw new AnalysisValidationError('schema',[(error as Error).message]);}
   const issues:string[]=[];
   if(!data||typeof data!=='object'||Array.isArray(data))throw new AnalysisValidationError('schema',['expected-object']);
   if(options.requiredContractVersion&&data.evidenceContractVersion!==options.requiredContractVersion)issues.push('required-evidence-contract-version:4');
+  if(options.requiredFactBinding&&data.factBinding!=='verified-records-v1')issues.push('required-verified-fact-binding');
   if(typeof data.confidenceScore!=='number'||!Number.isFinite(data.confidenceScore)||data.confidenceScore<0||data.confidenceScore>100)issues.push('confidenceScore: expected number 0–100');
-  for(const [field,min] of [['deskRecommendation',4],['executiveSummary',140]] as const)
+  for(const [field,min] of [['deskRecommendation',4],['executiveSummary',sectionResponse?1:140]] as const)
     if(typeof data[field]!=='string'||data[field].trim().length<min)issues.push(`${field}: expected string length >= ${min}; received ${typeof data[field]==='string'?data[field].trim().length:typeof data[field]}`);
   for(const field of ['bullishFactors','bearishFactors','watchItems']) {
     if(!Array.isArray(data[field])||data[field].length<(data.factBinding==='verified-records-v1'?0:2)||data[field].length>3||data[field].some((x:any)=>typeof x!=='string'||x.trim().length<4))issues.push(field+': expected supported nonempty strings, up to 3 (legacy reports need at least 2)');
   }
   if(issues.length)throw new AnalysisValidationError('schema',issues);
+  const qualityIssues=canonicalAnalysisQualityIssues(data);
+  if(qualityIssues.length)throw new AnalysisValidationError('schema',qualityIssues);
   let sources=supportedSearchSources(response,data);
   let evidenceAudit:any={path:'google-search',version:2,groundingMetadata:candidate.groundingMetadata};
   if(!sources.length){
@@ -153,6 +158,7 @@ export function parseGroundedAnalysis(response:any,model:string,now=new Date(),e
       throw error;
     }
   }
+  if(sectionResponse)evidenceAudit={...evidenceAudit,outputFormat:data.sectionFormat,omittedSections:data.omittedSections,sectionCoverage:data.sectionCoverage};
   // Model-invented source lists never become trusted source links.
   if(data.sources!==undefined&&(!Array.isArray(data.sources)||data.sources.some((s:any)=>!sources.some(v=>v.url===(typeof s==='string'?s:s?.url)))))
     throw new AnalysisValidationError('sources',['fabricated-or-unverified-source-url']);

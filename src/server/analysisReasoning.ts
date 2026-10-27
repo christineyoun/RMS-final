@@ -70,7 +70,16 @@ export function validateConditionalReasoning(text:string,refs:AnalysisFact[],opt
   const qualified=/(?:가능성|가능하|수\s*있|여지|일\s*수|잠재적)/.test(consequence);
   if(!qualified&&!action)issues.push('unqualified-consequence');
   const premise=/(?:보고서|report).*(?:발표|release)/i.test(antecedent)?consequence:antecedent;
-  issues.push(...validateClaimReferences(premise,refs,options.support,{adviceTarget:adviceOnly||!!basis,assertionScope:!!causal}));
+  // A verified acreage decline is not a verified production loss. Permit only
+  // an explicit hypothetical production-impact pathway, with a qualified price
+  // effect. All geography, commodity, numeric and certainty checks still run.
+  const acreagePath=options.kind==='conditional'&&!!divider&&
+    refs.some(f=>f.measure?.metric==='acreage'&&f.comparison?.metric==='acreage'&&f.comparison.direction==='decrease'&&f.comparison.observationCount>=2)&&
+    /(?:재배|수확|파종)면적.{0,15}(?:감소|축소).{0,30}(?:실제|향후).{0,15}생산.{0,12}(?:감소|차질).{0,15}(?:이어|영향)/.test(antecedent)&&
+    /(?:선물|가격).{0,20}(?:상승|상방).{0,12}압력/.test(consequence)&&qualified;
+  if(options.kind==='conditional'&&refs.some(f=>f.measure?.metric==='acreage')&&/생산/.test(text)&&!acreagePath)issues.push('unsupported-acreage-production-scenario');
+  const referenceIssues=validateClaimReferences(premise,refs,options.support,{adviceTarget:adviceOnly||!!basis,assertionScope:!!causal||acreagePath});
+  issues.push(...referenceIssues.filter(i=>!(acreagePath&&i==='claim-evidence-metric-mismatch:production')));
   if(causal)issues.push(...validateClaimReferences(text,refs,options.support,{assertionScope:true}).filter(i=>/subject-mismatch|geography-mismatch|benchmark|futures-not-physical/.test(i)));
   if(basis&&/(?:도입\s*(?:원가|비용)|조달\s*(?:원가|비용)|실제\s*공급사\s*견적)/.test(antecedent)&&
     !refs.some(f=>f.measure?.scope.includes('verified-physical-procurement')))

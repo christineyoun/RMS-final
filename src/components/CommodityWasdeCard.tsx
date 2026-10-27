@@ -290,7 +290,45 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   }
 
   const yearLabel=(year:string)=>['wheat','corn','soybean','soybean-oil'].includes(normalizedId)&&/^20\d{2}$/.test(year)?year+'/'+String(Number(year)+1).slice(-2):year;
-  const renderSupplyGrid=(data:WasdeRecord,showSupplyFigures:boolean,previous=false)=>(
+
+  return (
+    <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className || ''}`.trim()}>
+      {/* Upper Content Section */}
+      <div className="flex-1 space-y-3">
+        {/* Card Header */}
+        <div className="flex items-center justify-between pb-2 border-b border-[#f3f4f6]">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
+            <h3 className="text-base font-bold text-slate-900 break-keep">
+              글로벌 수급 밸런스 (Global S&D Balance)
+            </h3>
+            {isLoading && (
+              <span className="relative flex h-2 w-2 ml-1 shrink-0" aria-description="동기화 중">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4F46E5]"></span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Dynamic 6-Grid S&D Telemetry Card */}
+        <div className="text-xs text-slate-500" data-supply-year="current">Market Year: {!showSupplyFigures?'—':yearLabel(data.marketYear)}</div>
+        <SupplyMetricGrid data={data} showSupplyFigures={showSupplyFigures} commodityId={normalizedId}/>
+        <div className="text-xs text-slate-500" data-supply-year="previous">Market Year: {yearLabel(String(Number(data.marketYear)-1))}</div>
+        <SupplyMetricGrid data={previousData||data} showSupplyFigures={!!previousData} previous commodityId={normalizedId}/>
+
+
+      </div>
+
+      {/* Footer Source — the underlying verifiedAt stays available for freshness checks. */}
+      <SourceAttribution className="mt-auto pt-4 justify-end text-right" aria-description={isVerifiedUsdaCommodity && usdaVerifiedAt ? 'USDA 자료 검증일: '+usdaVerifiedAt.slice(0,10) : undefined} entries={[{label:'USDA FAS PSD Online',url:'https://apps.fas.usda.gov/psdonline/app/index.html'}]}/>
+    </div>
+  );
+};
+
+export function SupplyMetricGrid({data,showSupplyFigures,previous=false,commodityId}:{data:WasdeRecord;showSupplyFigures:boolean;previous?:boolean;commodityId:string}){
+ const isSoybeanOil=commodityId==='soybean-oil';
+ return (
     <div data-supply-grid={previous?'previous':'current'} className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] wasde-grid gap-3">
           {/* Box 1: 총생산 (Production) */}
           <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
@@ -340,10 +378,10 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
           <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
             <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">{isSoybeanOil ? '원료 대두 압착량 (연간 전망)' : 'Area Harvested (수확 면적)'}</span>
             <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-area"}>
-              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?(data.crush1000MT/1000).toFixed(3)+' MMT':(previous?'—':'N/A') : !showSupplyFigures || !data.areaHarvestedMHA ? (previous?'—':'N/A') : <>{data.areaHarvestedMHA.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M HA</>}
+              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?(data.crush1000MT/1000).toFixed(3)+' MMT':'N/A' : !showSupplyFigures || !data.areaHarvestedMHA ? 'N/A' : <>{data.areaHarvestedMHA.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M HA</>}
             </span>
             <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?data.crush1000MT.toLocaleString('en-US')+' kMT':(previous?'—':'공식 압착량 미확인') : !showSupplyFigures || !data.areaHarvestedKHA ? (previous?'—':'공식 면적 미연동') : <>{data.areaHarvestedKHA.toLocaleString('en-US')} kHA</>}
+              {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?data.crush1000MT.toLocaleString('en-US')+' kMT':'공식 압착량 미확인' : !showSupplyFigures || !data.areaHarvestedKHA ? '공식 면적 미연동' : <>{data.areaHarvestedKHA.toLocaleString('en-US')} kHA</>}
             </span>
           </div>
 
@@ -351,48 +389,15 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
           <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
             <span className="text-[10px] text-[#6b7280] block font-sans">{isSoybeanOil ? '생산/압착량 환산율' : '단수/수확량 (Yield)'}</span>
             <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-yield"}>
-              {isSoybeanOil ? showSupplyFigures&&data.oilCrushRatioPct!==undefined?data.oilCrushRatioPct.toFixed(2)+'%':(previous?'—':'N/A') : !showSupplyFigures || !data.yieldMTHA ? (previous?'—':'N/A') : <>{data.yieldMTHA.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT/HA</>}
+              {isSoybeanOil ? showSupplyFigures&&data.oilCrushRatioPct!==undefined?data.oilCrushRatioPct.toFixed(2)+'%':'N/A' : !showSupplyFigures || !data.yieldMTHA ? 'N/A' : <>{data.yieldMTHA.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT/HA</>}
             </span>
             <span className="text-[10px] font-mono text-[#6b7280] block mt-0.5">
-              {isSoybeanOil ? '생산 ÷ 압착량 · 연간 전망' : !showSupplyFigures || !data.yieldKGHA ? (previous?'—':'공식 단수 미연동') : <>{data.yieldKGHA.toLocaleString('en-US')} kg/HA</>}
+              {isSoybeanOil ? '생산 ÷ 압착량 · 연간 전망' : !showSupplyFigures || !data.yieldKGHA ? '공식 단수 미연동' : <>{data.yieldKGHA.toLocaleString('en-US')} kg/HA</>}
             </span>
           </div>
         </div>
   );
 
-  return (
-    <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className || ''}`.trim()}>
-      {/* Upper Content Section */}
-      <div className="flex-1 space-y-3">
-        {/* Card Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-[#f3f4f6]">
-          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-            <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
-            <h3 className="text-base font-bold text-slate-900 break-keep">
-              글로벌 수급 밸런스 (Global S&D Balance)
-            </h3>
-            {isLoading && (
-              <span className="relative flex h-2 w-2 ml-1 shrink-0" aria-description="동기화 중">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4F46E5]"></span>
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Dynamic 6-Grid S&D Telemetry Card */}
-        <div className="text-xs text-slate-500" data-supply-year="current">Market Year: {!showSupplyFigures?'—':yearLabel(data.marketYear)}</div>
-        {renderSupplyGrid(data,showSupplyFigures)}
-        <div className="text-xs text-slate-500" data-supply-year="previous">Market Year: {yearLabel(String(Number(data.marketYear)-1))}</div>
-        {renderSupplyGrid(previousData||data,!!previousData,true)}
-
-
-      </div>
-
-      {/* Footer Source — the underlying verifiedAt stays available for freshness checks. */}
-      <SourceAttribution className="mt-auto pt-4 justify-end text-right" aria-description={isVerifiedUsdaCommodity && usdaVerifiedAt ? 'USDA 자료 검증일: '+usdaVerifiedAt.slice(0,10) : undefined} entries={[{label:'USDA FAS PSD Online',url:'https://apps.fas.usda.gov/psdonline/app/index.html'}]}/>
-    </div>
-  );
-};
+}
 
 export default CommodityWasdeCard;

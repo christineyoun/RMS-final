@@ -1,4 +1,5 @@
 import {validAnalysisFact,type AnalysisEvidence} from './analysisEvidence.ts';
+import {ANALYSIS_SECTIONS_FORMAT,compileAnalysisSections} from './analysisSections.ts';
 /** Single-source wire representation for claim-contract-v5. No prose repair.
  * Legacy responses retain their exact text/map validation, including diagnostics.
  */
@@ -7,6 +8,10 @@ export const VERIFIED_FACT_BINDING='verified-records-v1';
 const singles=['deskRecommendation','executiveSummary'];
 const lists=['bullishFactors','bearishFactors','watchItems'];
 export function materializeClaimText(data:any,evidence?:AnalysisEvidence,now=new Date()):any {
+ if(data?.outputFormat===ANALYSIS_SECTIONS_FORMAT){
+  const compiled=compileAnalysisSections(data,evidence,now);
+  return {...materializeClaimText(compiled.data,evidence,now),sectionFormat:ANALYSIS_SECTIONS_FORMAT,omittedSections:compiled.omitted,sectionCoverage:compiled.coverage};
+ }
  if(!data||typeof data!=='object'||Array.isArray(data)||data.outputFormat===undefined)return data;
  if(data.outputFormat!==CLAIM_TEXT_FORMAT)throw Error('unknown-claim-text-format');
  const allowed=new Set(['outputFormat','evidenceContractVersion','confidenceScore','evidenceClaims','factBinding']);
@@ -19,7 +24,9 @@ export function materializeClaimText(data:any,evidence?:AnalysisEvidence,now=new
   data=structuredClone(data);
   for(const claim of Array.isArray(data.evidenceClaims)?data.evidenceClaims:[])for(const segment of Array.isArray(claim?.segments)?claim.segments:[]){
    if(segment?.kind!=='fact')continue;
-   if(segment.text!==undefined)throw Error('model-factual-text-in-reference-mode');
+   // New requests require a text slot for every kind. An empty fact slot is
+   // only a reference placeholder; older omitted slots remain replayable.
+   if(segment.text!==undefined&&segment.text!=='')throw Error('model-factual-text-in-reference-mode');
    if(!Array.isArray(segment.evidenceIds)||segment.evidenceIds.length!==1||!facts.has(segment.evidenceIds[0])||!Array.isArray(segment.support)||segment.support.length)throw Error('invalid-canonical-fact-reference');
    segment.text=facts.get(segment.evidenceIds[0])!.text;
   }
