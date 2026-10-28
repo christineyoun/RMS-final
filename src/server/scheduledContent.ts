@@ -1,5 +1,6 @@
 /** Atomic selection of existing-format approved news/analysis snapshots.
  * Readers never collect, generate, or mutate. Original snapshots remain retained. */
+import {compareNewsContent} from './newsContentChanges.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -50,6 +51,7 @@ export function publishScheduledContent(updates:Record<string,any>,runId:string,
    if(!incoming.length&&saved)continue;
    const articles=acceptedScheduledNews(key.slice(5),[...incoming,...(saved?.payload?.articles||[])]);
    if(!articles.length)throw Error('No independently verified substantive articles');
+   if(saved&&!compareNewsContent(saved.payload.articles||[],articles).hasNewContent)continue;
    payload={...payload,success:true,articles};
   }
   const saved={key,payload,runId,updatedAt:new Date().toISOString(),sourceStatus:'scheduled-verified'},body=JSON.stringify(saved),sha256=hash(body);

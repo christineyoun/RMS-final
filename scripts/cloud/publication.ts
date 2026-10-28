@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {spawn} from 'node:child_process';
+import {spawn,type ChildProcess} from 'node:child_process';
+import {PrivateReaderStartupError,waitForPrivateReaderReady,stopPrivateReader} from './privateReaderLifecycle.ts';
 import {pathToFileURL} from 'node:url';
 import {capturePublicBundle,sha256,gcsRead,gcsWrite,readCloudPointer,type PublicBundle,type PublicationPointer,withCloudPublicationLease} from '../../src/server/cloudPublication.ts';
 const roots=['.rms-stage3','.rms-price-history','.rms-origin-verified','src/data'];
@@ -39,19 +40,58 @@ export async function publish(bundle:PublicBundle,state:Uint8Array,previousGener
  await gcsWrite(bucket,'current.json',Buffer.from(JSON.stringify(pointer)),previousGeneration);
  console.log('Promoted saved publication',bundle.revision,bundle.publishedAt);
 }
-export async function privateServer(workspace:string,action:(base:string)=>Promise<void>){
- const appRoot=path.resolve(import.meta.dirname,'../..'),port=Number(process.env.RMS_CAPTURE_PORT)||18081;
+export async function privateServer(workspace:string,action:(base:string)=>Promise<void>,options:{spawnReader?:(env:NodeJS.ProcessEnv)=>ChildProcess;timeoutMs?:number;probe?:(port:number,signal:AbortSignal)=>Promise<boolean>;shutdownGraceMs?:number}={}){
+ const appRoot=path.resolve(import.meta.dirname,'../..'),port=Number(process.env.RMS_CAPTURE_PORT??18081);
+ if(!Number.isInteger(port)||port<1||port>65535)throw Error('Invalid private saved-reader port');
  const env:NodeJS.ProcessEnv={...process.env,NODE_ENV:'production',PORT:String(port),RMS_APP_ROOT:appRoot,RMS_PUBLIC_READONLY:'0',RMS_DISABLE_SCHEDULERS:'1'};
  delete env.GEMINI_API_KEY;delete env.GOOGLE_API_KEY;delete env.RMS_GEMINI_API_KEY_FILE;
- const child=spawn(process.execPath,['--import',path.join(appRoot,'node_modules/tsx/dist/loader.mjs'),path.join(appRoot,'server.ts')],{cwd:workspace,env,stdio:['ignore','pipe','pipe']});
- let log='';child.stdout.on('data',v=>{log+=v;});child.stderr.on('data',v=>{log+=v;});
- try{let ready=false;for(let i=0;i<100;i++){await new Promise(r=>setTimeout(r,100));if(log.includes('Server running on port')){ready=true;break;}if(child.exitCode!==null)break;}if(!ready)throw Error('Private saved-reader server did not start: '+log.slice(-1000));await action('http://127.0.0.1:'+port);}finally{if(child.exitCode===null&&child.signalCode===null){const stopped=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await stopped;}}
+ let child:ChildProcess;
+ try{child=options.spawnReader?options.spawnReader(env):spawn(process.execPath,['--import',path.join(appRoot,'node_modules/tsx/dist/loader.mjs'),path.join(appRoot,'server.ts')],{cwd:workspace,env,stdio:['ignore','pipe','pipe']});}
+ catch{throw new PrivateReaderStartupError('spawn-error',0,null,null,'unclassified');}
+ let output='',ready=false,spawnFailure:unknown=null;
+ const append=(value:Buffer)=>{output=(output+String(value)).slice(-4096);if(new RegExp(`Server running on port ${port}(?:\\r?\\n|$)`).test(output))ready=true;};
+ child.stdout?.on('data',append);child.stderr?.on('data',append);
+ child.on('error',e=>{spawnFailure=e;});
+ try{
+  await waitForPrivateReaderReady(child,()=>ready,()=>spawnFailure,port,{timeoutMs:options.timeoutMs,probe:options.probe,output:()=>output});
+  await action('http://127.0.0.1:'+port);
+ }finally{await stopPrivateReader(child,options.shutdownGraceMs);}
 }
+/** The same saved-only news readers used by the dashboard, without starting a
+ * server or invoking collectors. One broken reader cannot suppress other crops. */
+export async function savedPriorNews(workspace=process.cwd(),options:{readApproved?:(id:string,workspace:string)=>any[];readVerified?:(id:string)=>any[];select?:(id:string,articles:any[])=>any[]}={}):Promise<Record<string,any[]>>{
+ if(await fs.realpath(workspace)!==await fs.realpath(process.cwd()))throw Error('Saved prior-news workspace must be the restored current directory');
+ const [{COMMODITY_IDS},{readScheduledContent},{savedVerifiedCommodityNews},{selectProcurementNews}]=await Promise.all([
+  import('../../src/services/commodityQuoteSource.ts'),import('../../src/server/scheduledContent.ts'),import('../../src/server/stage3DailyUpdates.ts'),import('../../src/server/newsProcurementSelection.ts')
+ ]);
+ const warn=(id:string,reader:string)=>{try{console.warn('Saved prior-news unavailable',JSON.stringify({commodity:id,reader}));}catch{}};
+ return Object.fromEntries(COMMODITY_IDS.map(id=>{
+  let approved:any[]=[],verified:any[]=[];
+  try{approved=options.readApproved?options.readApproved(id,workspace):readScheduledContent('news-'+id,workspace)?.payload?.articles||[];}catch{warn(id,'approved');}
+  try{verified=(options.readVerified||savedVerifiedCommodityNews)(id);}catch{warn(id,'verified');}
+  try{return [id,(options.select||selectProcurementNews)(id,[...approved,...verified])];}catch{warn(id,'selection');return [id,approved];}
+ }));
+}
+const safeFailureCode=(error:unknown)=>{
+ try{
+ if(error instanceof PrivateReaderStartupError)return error.code;
+ if(error instanceof SyntaxError)return 'invalid-saved-json';
+ // Inspect only an own string value, never invoke an arbitrary getter/toString.
+ const message=error instanceof Error?Object.getOwnPropertyDescriptor(error,'message')?.value:undefined;
+ if(typeof message==='string'){
+  if(/^Publication changed during capture/.test(message))return 'publication-revision-race';
+  if(/^(?:Saved publication identity|Public bundle and private state publication mismatch|Required saved response missing|Saved benchmark missing|Unreviewed or invalid saved response)/.test(message))return 'saved-publication-validation';
+  if(/^Cloud publication (?:read|write) failed/.test(message))return 'cloud-storage-operation';
+  if(/^Private state integrity mismatch/.test(message))return 'private-state-integrity';
+ }
+ }catch{/* Diagnostic inspection must never block free publication. */}
+ return 'unexpected-error';
+};
 /** Keep source collection and paid generation outcomes independent. Dependencies
  * are injectable for offline integration checks against the real workflow. */
 export async function runRefreshWorkflow(paidPolicy:import('../../src/server/scheduledAi.ts').ScheduledAiPolicy|null,store?:import('../../src/server/scheduledAi.ts').ScheduledJournalStore,options:{
  runner?:Pick<ReturnType<typeof import('../../src/server/freeSourceRefresh.ts').createFreeSourceRunner>,'check'|'retryFailed'>;
- now?:()=>Date;priorNews?:Record<string,any[]>;runAi?:typeof import('../../src/server/scheduledAi.ts').runScheduledAi;publishOverview?:typeof import('../../src/server/freeDailyJobs.ts').publishDailyOverview;
+ now?:()=>Date;priorNews?:Record<string,any[]>;loadPriorNews?:(workspace:string)=>Promise<Record<string,any[]>>;runAi?:typeof import('../../src/server/scheduledAi.ts').runScheduledAi;publishOverview?:typeof import('../../src/server/freeDailyJobs.ts').publishDailyOverview;
 }={}){
  const {recordPaidRequestEvent}=await import('../../src/server/paidRequestTransport.ts');
  // Workflow telemetry is best effort; storage/console failures must not block publication.
@@ -77,17 +117,21 @@ export async function runRefreshWorkflow(paidPolicy:import('../../src/server/sch
   let aiStage:'prior-news-capture'|'scheduled-ai'='prior-news-capture';
   try{
    let priorNews=options.priorNews;
-   if(!priorNews){let baseline:PublicBundle|undefined;await privateServer(process.cwd(),async base=>{baseline=await capturePublicBundle(base);});
-    priorNews=Object.fromEntries(Object.entries(baseline!.responses).filter(([key])=>key.startsWith('/api/market-intelligence?commodity=')).map(([key,value])=>[new URL(key,'http://localhost').searchParams.get('commodity'),value.payload.articles||[]]));}
+   if(!priorNews){
+    try{priorNews=await(options.loadPriorNews||savedPriorNews)(process.cwd());}
+    catch(error){priorNews={};recordEvent({phase:'prior-news-unavailable',day:t.day,reason:safeFailureCode(error)});
+     try{console.warn('Previous saved news unavailable; independent AI and free publication continue');}catch{}
+    }
+   }
    aiStage='scheduled-ai';
    const runAi=options.runAi||(await import('../../src/server/scheduledAi.ts')).runScheduledAi;
    aiResult=await runAi(paidPolicy,store!,{priorNews});
    try{console.log('Scheduled AI result:',JSON.stringify({attempts:aiResult.attempts,accepted:aiResult.accepted,estimatedUsd:aiResult.estimatedUsd,estimatedKrw:aiResult.estimatedKrw,fx:aiResult.budget}));}catch{}
   }catch(error){
    aiError=true;
-   // Never inspect/stringify thrown values: messages, stacks and custom fields
-   // can contain credentials, private reader logs, requests or model responses.
-   const diagnostic={phase:'scheduled-ai-failed',day:t.day,reason:'generation-evidence-or-journal-failed',stage:aiStage,errorType:typeof error};
+   // Never log arbitrary messages/stacks/custom fields; only fixed codes from
+   // safeFailureCode may supplement the stage/type diagnostics.
+   const diagnostic={phase:'scheduled-ai-failed',day:t.day,reason:'generation-evidence-or-journal-failed',stage:aiStage,errorType:typeof error,errorCode:safeFailureCode(error)};
    recordEvent(diagnostic);
    try{console.error('Scheduled Gemini failed; free updates and previous accepted AI retained',JSON.stringify(diagnostic));}catch{}
   }
@@ -129,7 +173,11 @@ if(command==='prepare'){
  let paidPolicy:ReturnType<typeof configuredScheduledPolicy>=null;
  try{paidPolicy=configuredScheduledPolicy();}catch{console.error('Scheduled paid policy not approved/valid; free data continues, AI retained');}
  const result=await runRefreshWorkflow(paidPolicy,paidPolicy?cloudScheduledJournal((await import('../../src/server/freeSourceRefresh.ts')).freeRefreshDay().day):undefined);if(!result)return;
- await privateServer(workspace,async base=>{const bundle=await capturePublicBundle(base);await publish(bundle,await archiveState(workspace),generation||'0');});
+ try{await privateServer(workspace,async base=>{const bundle=await capturePublicBundle(base);await publish(bundle,await archiveState(workspace),generation||'0');});}
+ catch(error){
+  try{console.error('Final saved publication failed',JSON.stringify({stage:'final-publication-capture',errorCode:safeFailureCode(error),...(error instanceof PrivateReaderStartupError?{elapsedMs:error.elapsedMs,exitCode:error.exitCode,signalCode:error.signalCode,hint:error.hint}:{})}));}catch{}
+  throw new Error('Final saved publication failed: '+safeFailureCode(error));
+ }
  });
 }else throw Error('Commands: prepare, check-state, seed, refresh');
 }

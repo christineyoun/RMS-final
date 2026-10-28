@@ -11,7 +11,8 @@ export function canonicalAnalysisQualityIssues(data:any):string[]{
   const factual=claim.segments.filter((s:any)=>s.kind==='fact'),facts=factual.map((s:any)=>s.evidenceIds?.[0]);
   if(new Set(facts).size!==facts.length||new Set(factual.map((s:any)=>normalized(s.text))).size!==facts.length)issues.push('repeated-factual-premise:'+claim.field);
   if(claim.field==='executiveSummary'&&new Set(facts).size<2)issues.push('incomplete-summary-factual-coverage');
-  if(claim.field==='executiveSummary'&&factual.length&&factual.every((s:any)=>/원문 인용:/.test(s.text)))issues.push('raw-evidence-only-summary');
+  const visibleFactual=data.sectionFormat==='evidence-sections-v1'?claim.segments.filter((s:any)=>s.kind==='reported-fact'):factual;
+  if(claim.field==='executiveSummary'&&visibleFactual.length&&visibleFactual.every((s:any)=>/원문 인용:/.test(s.text)))issues.push('raw-evidence-only-summary');
   if(/^(?:bullishFactors|bearishFactors)\./.test(claim.field)&&!claim.segments.some((s:any)=>s.kind==='conditional'||s.kind==='interpretation'))issues.push('missing-supported-market-driver:'+claim.field);
   if(/^watchItems\./.test(claim.field)&&!claim.segments.some((s:any)=>s.kind==='recommendation'||s.kind==='conditional'))issues.push('missing-supported-monitoring-action:'+claim.field);
   const text=normalized(claim.segments.map((s:any)=>s.text).join(' '));

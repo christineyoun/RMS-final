@@ -1,5 +1,6 @@
 /** Explicit weekday paid authorization; never imported by the public viewer.
  * Existing research/verification/transport are reused. No legacy control toggles. */
+import {compareNewsContent} from './newsContentChanges.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -79,9 +80,8 @@ export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJou
      if(kind==='news'){
       const accepted=acceptedScheduledNews(id,payload.articles||[]);if(!accepted.length)throw Error('No accepted, independently verified substantive news');const prior=options.priorNews?.[id]||[];
       const ranked=selectProcurementNews(id,[...accepted,...prior]);
-      const newUrls=new Set(accepted.map(a=>a.originalUrl));
       const selected=acceptedScheduledNews(id,ranked);
-      if(!selected.some(a=>newUrls.has(a.originalUrl)))throw Error('No verified candidate improves the current selection');
+      if(!compareNewsContent(prior,selected).hasNewContent)throw new PaidRequestError('no-new-or-updated-news-content');
       payload.articles=selected;
      }else if(snapshotIssues(phase,payload).length||payload.data?.status!=='live')throw Error('Existing analysis acceptance failed');
      if(kind==='analysis'){
