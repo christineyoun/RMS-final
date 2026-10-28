@@ -1,0 +1,386 @@
+{
+  "source": "Real October 28 AI-only paid run; unchanged generated bodies, October 27 verified evidence",
+  "evidenceFixtureSha256": "14d544c53b70a3d5a3a0478bfe785ae5c1b11039bbe79d513be517acb98cf36d",
+  "analysis": [
+    {
+      "id": "wheat",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:36:57.816Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 88,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "publisher-185966cf8551538e",
+            "publisher-943c1a6f3d1ea167",
+            "publisher-eabd6eceb560e6d9",
+            "wheat-srw-2026-10-23",
+            "wheat-srw-2026-10-16"
+          ],
+          "text": "2026년 10월 23일 기준 U.S. Wheat Associates 보고서에서 미국 SRW 12월물 선물 관측치는 229.64 USD/MT를 기록하여 10월 16일의 242.69 USD/MT 대비 낮은 수준을 나타냈습니다. 10월 27일 보도에 따르면 국제 밀 가격은 10월 23일 기준 미국산(단백질 11.5%) 0.22 EUR/kg, 프랑스산(단백질 11.0%) 0.29 EUR/kg, 우크라이나산(단백질 11.0%) 0.107 EUR/kg 등으로 전반적인 안정세를 유지하고 있습니다. 한편 10월 26일 보도에서는 우크라이나산 밀(단백질 11.0%) FOB 가격이 10월 초 0.122 EUR/kg에서 10월 23일 0.107 EUR/kg으로 하락하였으며, 흑해 지역 평화 협상 가능성 등에 따른 리스크 프리미엄 축소가 주요 거래소 선물의 하방 압력으로 언급되었습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "wheat-srw-2026-10-23",
+            "article-wheat-a4474a501a90",
+            "psd-28",
+            "psd-125"
+          ],
+          "text": "미국 SRW 선물 벤치마크 및 산지별 지표 가격을 실제 한국향 공급사 실행 견적과 직접 비교하여 운임 및 품질 프리미엄 차이를 검증하십시오. 우크라이나 등 흑해산 저가 오퍼의 경우 산지 가격 할인 외에 오데사 항만 및 내륙 운송 차질 등 물류 위험과 도착 원가를 대조해야 합니다. 아울러 USDA 차기 발표에서 세계 밀 생산 및 소비 전망 수치의 조정 여부를 점검하여 수급 평가에 반영하십시오."
+        },
+        "bearishFactors": [
+          {
+            "evidenceIds": [
+              "publisher-eabd6eceb560e6d9"
+            ],
+            "text": "흑해 지역 평화 협상 가능성과 주요 산지의 양호한 기상 여건 및 대규모 수확 전망으로 인한 리스크 프리미엄 축소."
+          },
+          {
+            "evidenceIds": [
+              "publisher-943c1a6f3d1ea167"
+            ],
+            "text": "풍부한 글로벌 공급량과 흑해 지역의 저렴한 공급 물량에 따른 유럽 선물 가격 하방 압력 및 수출 경쟁력 부담."
+          }
+        ],
+        "bullishFactors": [
+          {
+            "evidenceIds": [
+              "publisher-943c1a6f3d1ea167"
+            ],
+            "text": "2026/27 유럽 겨울 밀 시즌의 중앙 유럽 가뭄 및 발트해 연안 수해로 인한 파종 지연 등 지역별 기상 리스크."
+          },
+          {
+            "evidenceIds": [
+              "article-wheat-49e02e08c386"
+            ],
+            "text": "투입비 상승에 따른 2027년 수확용 EU 연질밀 재배면적 축소(약 2%) 전망."
+          }
+        ],
+        "monitoringItems": [
+          {
+            "evidenceIds": [
+              "wheat-srw-2026-10-23",
+              "publisher-185966cf8551538e"
+            ],
+            "text": "미국 SRW 12월 선물 가격(229.64 USD/MT) 및 주요 산지별 지표 가격과 국내 입고 견적 간 스프레드 점검."
+          },
+          {
+            "evidenceIds": [
+              "psd-28",
+              "psd-125",
+              "psd-176"
+            ],
+            "text": "USDA PSD 차기 보고서의 2026/27 세계 밀 생산(822,390천 MT), 소비(823,729천 MT), 기말재고(276,038천 MT) 전망치 수정 추이 확인."
+          }
+        ],
+        "priceOutlook": {
+          "evidenceIds": [
+            "psd-28",
+            "psd-125"
+          ],
+          "text": "차기 수급 전망에서 세계 밀 생산 전망이 소비 전망 대비 상대적으로 상향 조정될 경우 선물 시장에 하방 압력이 발생할 수 있으며, 반대의 경우 상방 압력이 가해질 수 있습니다."
+        }
+      }
+    },
+    {
+      "id": "corn",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:05.957Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 88,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "corn-zc-2026-10-27",
+            "corn-zc-2026-10-26",
+            "publisher-c4bad1a917d91d10",
+            "publisher-3e70eb5e22695aea"
+          ],
+          "text": "CBOT 옥수수 선물(ZC=F) 일봉 가격은 2026년 10월 26일 톤당 179.12달러(455 US¢/bu)에서 10월 27일 톤당 178.53달러(453.5 US¢/bu)로 관측되었습니다. 10월 26일자 보도에 따르면 미국 내 옥수수 수확 진행에 따른 가용 공급 증가와 수출 판매 부진, 흑해산 공급 경쟁 등으로 미국 및 유럽 가격이 압박을 받고 있으며, 미국 옥수수 수출량은 전년 대비 34% 낮은 수준으로 집계되었습니다. 반면 10월 27일자 인도 시장 보도에서는 카리프 수확 유입에도 불구하고 흉작 및 에탄올·사료 수요 지지로 현지 수급이 타이트한 흐름을 보이고 있는 것으로 보고되었습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "corn-zc-2026-10-27",
+            "publisher-9837f1706b84a1e0"
+          ],
+          "text": "CBOT 옥수수 일봉(10월 27일 톤당 178.53달러)과 10월 22일 기준 보고된 미국산 FOB 참고 호가(11월 선적 걸프 221.44달러, PNW 236.80달러)는 실제 한국 도착 비용을 직접 대변하지 않습니다. 구매 데스크는 해상 운임 변동성을 감안하여 미국 걸프·PNW 및 기타 원산지별 공급사의 확정 견적(C&F/CIF)을 직접 접수하고, 선물 벤치마크와의 스프레드를 비교·검증한 후 선적 계약을 검토하십시오."
+        },
+        "bearishFactors": [
+          {
+            "evidenceIds": [
+              "publisher-c4bad1a917d91d10"
+            ],
+            "text": "미국 내 수확 진행에 따른 가용 공급 확대와 전년 대비 34% 낮은 수출 판매 실적, 우크라이나 관련 물류 제한 속 경쟁적인 흑해산 공급."
+          }
+        ],
+        "bullishFactors": [
+          {
+            "evidenceIds": [
+              "publisher-3e70eb5e22695aea"
+            ],
+            "text": "인도 시장의 신곡 수확에도 불구하고 나타난 흉작 및 강한 에탄올·사료 수요, 운송비 상승에 따른 현지 공급 제약."
+          }
+        ],
+        "monitoringItems": [
+          {
+            "evidenceIds": [
+              "publisher-9837f1706b84a1e0",
+              "corn-zc-2026-10-27"
+            ],
+            "text": "CBOT 옥수수 선물 일봉 추이 및 미국 걸프(Gulf)와 PNW 간 FOB 호가 격차, 발틱 운임 지수 등 해상 물류비 변동성 점검."
+          },
+          {
+            "evidenceIds": [
+              "psd-28",
+              "psd-125"
+            ],
+            "text": "USDA PSD 차기 발표의 2026/27 세계 옥수수 생산(1,293,750천 MT) 및 소비(1,313,129천 MT) 전망치 수정 여부 확인."
+          }
+        ]
+      }
+    },
+    {
+      "id": "soybean",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:15.692Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 88,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "soybean-zs-2026-10-27",
+            "soybean-zs-wow-2026-10-20--2026-10-27",
+            "article-soybean-5ad8e9ed2f04-brazil-planting",
+            "publisher-6158b98c1f4ef185",
+            "article-soybean-2096bd6a545f-export-offer",
+            "article-soybean-abe078d1656b-us-production"
+          ],
+          "text": "2026년 10월 27일 기준 CBOT 대두 선물 일봉 가격은 460.49 USD/MT(1253.25 US¢/bu)로 관측되었으며, 10월 20일 관측값(458.65 USD/MT) 대비 0.4% 상승하였습니다. 10월 19일 보도에 따르면 브라질 마토그로소의 2026/27년 대두 파종률은 약 52%로 집계되어 5년 평균치인 약 43%를 웃돌았습니다. Conab의 10월 15일 보고서에서는 2026/27년 브라질 대두 생산량이 전년 대비 0.7% 증가한 1억 8,160만 톤, 수출량은 1.5% 증가한 1억 1,797만 톤에 달할 것으로 전망되었습니다. 한편 10월 15일 기준 11월 선적 FOB 오퍼는 미국 뉴올리언스가 505.23 USD/MT, 브라질 산투스가 517.38 USD/MT로 보도되었습니다. 같은 날 USDA ERS는 2026/27년 미국 대두 생산 전망을 전월 대비 27 million bushels 상향한 4.56 billion bushels로 제시하였습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "article-soybean-2096bd6a545f-export-offer",
+            "soybean-zs-2026-10-27",
+            "article-soybean-abe078d1656b-us-stocks"
+          ],
+          "text": "미국 뉴올리언스와 브라질 산투스 간의 보도된 FOB 오퍼 차이를 참고 지표로 삼아 국내 실수요용 실행 공급사 견적의 FOB 및 운임 조건을 직접 대조 점검하십시오. CBOT 선물 잠정 일봉(460.49 USD/MT)과 실제 수입 공급사 호가 간의 기저(Basis) 변동을 검증하여 구매 협상에 반영해야 합니다. 아울러 USDA ERS가 발표한 2026/27년 미국 기말재고 전망치(315 million bushels)의 향후 개정치를 추적하여 수급 변동성을 점검하십시오."
+        },
+        "bullishFactors": [
+          {
+            "evidenceIds": [
+              "article-soybean-abe078d1656b-us-exports"
+            ],
+            "text": "USDA ERS의 2026/27년 미국 대두 수출 전망이 전월 대비 10 million bushels 상향된 약 1.7 billion bushels로 보고되어 향후 추가 상향 시 선물 시장에 상승 압력으로 작용할 수 있습니다."
+          },
+          {
+            "evidenceIds": [
+              "psd-125"
+            ],
+            "text": "USDA PSD 2026년 10월 보고 기준 2026/27년 세계 대두 소비 전망은 442,177천 MT로 제시되었으며, 향후 소비 전망 상향 시 선물 시장 상승 요인이 될 수 있습니다."
+          }
+        ],
+        "priceOutlook": {
+          "evidenceIds": [
+            "soybean-zs-2026-10-27",
+            "soybean-zs-mom-2026-09-28--2026-10-27"
+          ],
+          "text": "대두 선물 가격은 2026년 9월 28일 473.35 USD/MT에서 10월 27일 460.49 USD/MT로 한 달간 -2.72% 하락한 상태이며, 이는 두 관측일 사이의 순변화로 향후 추세를 단정할 수 없으므로 후속 거래일의 정산 가격 형성을 관찰해야 합니다."
+        }
+      }
+    },
+    {
+      "id": "soybean-oil",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:24.028Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 88,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "soybean-oil-zl-2026-10-27",
+            "soybean-oil-zl-wow",
+            "soybean-oil-zl-mom",
+            "article-oil-ers-us-supply",
+            "article-oil-ers-world-exports",
+            "article-oil-nopa-stocks",
+            "article-oil-nopa-crush"
+          ],
+          "text": "2026-10-27 기준 CBOT 대두유(ZL=F) 선물 일봉 가격은 66.8 US¢/lb(1472.69 USD/MT)로 기록되었습니다. 해당 관측치는 2026-10-20 대비 0.11% 상승하였으나, 2026-09-28 대비로는 0.46% 하락한 수준입니다. 미국 수급과 관련하여 USDA ERS의 2026년 10월 보고서에서는 2026/27년 미국 대두유 총공급 전망치를 전월 전망 대비 80 million pounds 하향 조정한 35.3 billion pounds로 제시하였습니다. 아울러 동 보고서는 팜유 공급 제약에 따라 일부 국가가 대두유 및 채종유로 대체할 것으로 예상되어 세계 대두유 수출 전망이 상향 조정되었다고 밝혔습니다. 한편 Fastmarkets 보도에 따르면 2026년 9월 NOPA 회원사 기준 대두유 재고는 1.05 billion pounds로 전월 대비 12.3% 감소하였으며, 원료 대두 압착량은 196.3 million bushels로 집계되었습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "soybean-oil-zl-2026-10-27",
+            "psd-28",
+            "psd-125"
+          ],
+          "text": "CBOT 원유 대두유 선물 지표(2026-10-27 기준 1472.69 USD/MT)는 정제유 현물 가격이나 한국 도착 원가와 차이가 있으므로, 실제 국내 반입용 공급사 실행 견적과의 차이를 직접 대조하십시오. 또한 향후 발표되는 USDA PSD 세계 대두유 2026/27년 수급 전망에서 연간 생산량(기존 75,241천 MT)과 소비량(기존 73,483천 MT)의 수정 여부를 점검하여 선물 시장의 수급 압력 변화를 지속 확인하십시오."
+        },
+        "priceOutlook": {
+          "evidenceIds": [
+            "psd-28",
+            "psd-125"
+          ],
+          "text": "USDA 2026-10 전망 기준 2026/27 세계 대두유 생산 전망은 75,241천 MT, 소비 전망은 73,483천 MT로 제시되어 있습니다. 향후 발표에서 생산 및 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다."
+        }
+      }
+    },
+    {
+      "id": "palm-oil",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:30.693Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 88,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "palm-cpo-2026-10-19",
+            "comparison-palm-cpo-2026-10-14--palm-cpo-2026-10-19",
+            "palm-olein-2026-10-19",
+            "comparison-palm-olein-2026-10-14--palm-olein-2026-10-19",
+            "article-c28b5041c4320fa1",
+            "article-6165641469888b39"
+          ],
+          "text": "2026년 10월 19일 기준 쿠알라룸푸르 FCPOc1 CPO 종가는 4797 MYR/MT를 기록하였으며, 2026년 10월 14일 대비 3.85% 상승했습니다. 반면 동일한 2026년 10월 19일 기준 부르사 말레이시아 FPOLc1 RBD Olein 종가는 1167.5 USD/MT로 확인되었고, 2026년 10월 14일 대비 가격 변동이 없었습니다. 발행물 보도에 따르면 10월 전반기 말레이시아 팜유 수출량은 이전 기간 대비 43.2%에서 58.3% 증가한 것으로 집계되었습니다. 아울러 말레이시아 팜유협회(MPOA) 측은 2026년 전체 생산량이 2025년에 기록한 2028만 톤 기록과 일치하거나 이를 넘어설 것으로 전망하고 있습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "palm-cpo-2026-10-19",
+            "palm-olein-2026-10-19",
+            "article-c8c3579be3bed12c"
+          ],
+          "text": "국내 조달 데스크는 선물 벤치마크인 10월 19일 CPO 4797 MYR/MT 및 RBD Olein 1167.5 USD/MT 지표와 공급사가 실제 제시하는 계약 견적 간의 차이를 대조하십시오. 또한 MPOB가 발표한 9월 말레이시아 팜유 재고(351만 톤) 이후 발표될 후속 월간 수급 실적을 지속적으로 검토하여 구매 의사결정의 기초 근거로 활용하시기 바랍니다."
+        },
+        "priceOutlook": {
+          "evidenceIds": [
+            "psd-28",
+            "psd-125"
+          ],
+          "text": "향후 USDA PSD 전망에서 2026/27 세계 팜유 생산 전망치(78921천 MT)와 소비 전망치(78059천 MT)가 상향 또는 하향 조정되는 경우, 선물 시장의 수급 압력에 제한적인 변화가 발생할 가능성이 있습니다."
+        }
+      }
+    },
+    {
+      "id": "sugar",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:37.297Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 85,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "article-sugar-gsx-brazil",
+            "article-sugar-gsx-harvest",
+            "article-sugar-gsx-season",
+            "psd-28",
+            "psd-sugar-domestic-use"
+          ],
+          "text": "GSX 2026년 10월 1일 보고서에 따르면 브라질의 분쇄 지속과 설탕 비중 확대로 인한 공급 증가, 인도 및 태국의 예상보다 강한 수확 수치가 나타날 경우를 하방 요인으로 보는 조건부 전망이 제시되었습니다. 또한 10월 중순 시작될 것으로 예상되는 인도의 2026/27 분쇄 작업이 수율 및 회수율을 확인하며 단기 가격 변동성을 유발할 수 있는 관찰 요인으로 언급되었습니다. 몬순 영향은 인도의 2026/27 분쇄에 반영되겠으나, 엘니뇨의 본격적인 영향은 2027/28 수확기에 나타날 가능성이 높다는 견해가 제시되었습니다. 한편 USDA의 2026년 5월 전망 기준 2026/27 마케팅연도 세계 설탕 생산은 184,854천 MT, 소비(국내사용)는 180,536천 MT로 각각 전망된 바 있습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "psd-176",
+            "psd-forecast-stock-balance",
+            "article-sugar-gsx-harvest"
+          ],
+          "text": "차기 발표될 USDA PSD 공식 수급 전망에서 세계 설탕 2026/27 기말재고 수치(기존 44,410천 MT)의 수정 여부를 대조 점검하십시오. 아울러 10월 중순 이후 가시화되는 인도 압착 수율 및 실제 출하 보고를 확인하고 공급사 견적과의 벤치마크 편차를 검토하십시오."
+        },
+        "monitoringItems": [
+          {
+            "evidenceIds": [
+              "article-sugar-gsx-harvest",
+              "article-sugar-gsx-brazil"
+            ],
+            "text": "10월 중순 개시되는 인도 사탕수수 분쇄 수율 추이와 브라질의 설탕 생산 배분(sugar mix) 동향 점검"
+          },
+          {
+            "evidenceIds": [
+              "psd-176",
+              "psd-forecast-stock-balance"
+            ],
+            "text": "2026/27 마케팅연도 세계 설탕 기말재고 전망(기준치 44,410천 MT)의 차기 발표치 수정 여부 확인"
+          }
+        ]
+      }
+    },
+    {
+      "id": "potato-starch",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:43.798Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 82,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "article-potato-market",
+            "potato-official-trade",
+            "potato-official-harvest"
+          ],
+          "text": "ChemAnalyst의 2026년 10월 5일 보도에 따르면, 유럽 원료 감자 가용량 제약 우려에도 불구하고 가공사 커버리지와 하류 수요 조절 영향으로 9월 말 완제품 감자전분 가격은 대체로 안정적인 흐름을 유지하였습니다. Eurostat Comext 공식 무역 통계상 2025년 9월부터 2026년 8월까지 12개월간 EU27의 비EU 대상 완제품 감자전분(CN 11081300) 수출량은 500.51천 MT, 수입량은 13.72천 MT로 집계되었습니다. 한편 Eurostat의 2025년 연간 통계에 따르면 독일, 프랑스, 네덜란드, 덴마크 4개국의 전체 감자 생산량은 35,254.22천 MT, 수확 면적은 781.6천 ha로 나타났습니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "article-potato-market",
+            "article-potato-kmc"
+          ],
+          "text": "유럽 완제품 감자전분 공급선별 오퍼 가격과 실제 출하 가용 일정을 대조 확인하십시오. KMC Agro의 8월 2차 시험굴취에서 보고된 전분 함량(20.4%) 및 품종·포장별 편차를 참고하되, 향후 발표될 10월 최종 수확 결과 및 가공사별 수율 공시를 추가로 점검하여 조달 조건을 검토하시기 바랍니다."
+        },
+        "monitoringItems": [
+          {
+            "evidenceIds": [
+              "article-potato-market"
+            ],
+            "text": "가공사의 원료 감자 조달 상황과 향후 저장 손실 및 품질 변동 관련 보고를 모니터링합니다."
+          },
+          {
+            "evidenceIds": [
+              "article-potato-kmc"
+            ],
+            "text": "덴마크 및 주요 유럽 가공사의 최종 수확 결과 및 실제 전분 추출 수율 발표치를 점검합니다."
+          },
+          {
+            "evidenceIds": [
+              "potato-official-trade"
+            ],
+            "text": "Eurostat Comext를 통한 EU27의 완제품 감자전분 월별 역외 수출입 물량 추이를 지속 확인합니다."
+          }
+        ]
+      }
+    },
+    {
+      "id": "tapioca-starch",
+      "model": "gemini-3.8-flash",
+      "recordedAt": "2026-10-28T00:37:49.821Z",
+      "body": {
+        "outputFormat": "evidence-sections-v1",
+        "confidenceScore": 80,
+        "marketAnalysis": {
+          "evidenceIds": [
+            "ttsa-2026-10-20",
+            "ttsa-2026-10-06"
+          ],
+          "text": "태국타피오카전분협회(TTSA)의 FOB Bangkok 기준 타피오카전분 공식 주간 고시 가격은 2026년 10월 6일 695 USD/MT를 기록했습니다. 이후 2026년 10월 20일 관측에서는 690 USD/MT로 확인되었습니다. 해당 수치는 FOB 방콕 기준의 가공 전분 가격이며, 한국 도착도 가격이나 원료 카사바 뿌리의 생산량 지표와는 구별됩니다."
+        },
+        "procurementStrategy": {
+          "evidenceIds": [
+            "ttsa-2026-10-20"
+          ],
+          "text": "현재 확인 가능한 최신 TTSA FOB Bangkok 기준 가격인 690 USD/MT를 기준 지표로 삼아 실제 태국 및 베트남 공급사가 제시하는 식품용 타피오카전분 실행 견적과 대조하십시오. 해당 고시 가격은 참고용 FOB 오퍼이므로, 해상 운임과 제반 비용이 반영된 국내 실수요 도착도 견적의 유효성을 개별 확인한 후 계약 조건을 검토하시기 바랍니다."
+        },
+        "monitoringItems": [
+          {
+            "evidenceIds": [
+              "ttsa-2026-10-20"
+            ],
+            "text": "TTSA의 차기 타피오카전분 FOB Bangkok 주간 공시 가격 변동 내역 점검"
+          },
+          {
+            "evidenceIds": [
+              "ttsa-2026-10-20"
+            ],
+            "text": "공식 FOB 고시 가격과 실제 동남아 공급사의 선적 오퍼 가격 간 차이 확인"
+          }
+        ]
+      }
+    }
+  ]
+}

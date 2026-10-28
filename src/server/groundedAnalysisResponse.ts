@@ -1,5 +1,5 @@
 import {validateReportedFact} from './analysisReportedFact.ts';
-import {materializeClaimText} from './analysisClaimText.ts';
+import {materializeClaimText,visibleClaimText} from './analysisClaimText.ts';
 import {canonicalAnalysisQualityIssues} from './analysisPublicationQuality.ts';
 /** Pure response handling: never synthesizes prose, numbers or source URLs. */
 import type { GroundedAiAnalysis, GroundedAiSource } from './liveAiAnalysisService.ts';
@@ -90,7 +90,7 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
     const maps=data.evidenceClaims.filter((c:any)=>c?.field===field);
     if(maps.length!==1||!Array.isArray(maps[0].segments)||!maps[0].segments.length){issues.push('missing-claim-coverage:'+field);continue;}
     const segments=maps[0].segments;
-    if(segments.map((s:any)=>s?.text).join(' ')!==value)issues.push('unmapped-material-assertion:'+field);
+    if(visibleClaimText(segments,data.sectionFormat==='evidence-sections-v1')!==value)issues.push('unmapped-material-assertion:'+field);
     let factual=false,actionable=false;
     for(const segment of segments){
       if(!segment||typeof segment.text!=='string'){issues.push('invalid-segment:'+field);continue;}

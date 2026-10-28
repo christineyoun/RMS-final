@@ -7,10 +7,20 @@ export const CLAIM_TEXT_FORMAT='typed-segments-v1';
 export const VERIFIED_FACT_BINDING='verified-records-v1';
 const singles=['deskRecommendation','executiveSummary'];
 const lists=['bullishFactors','bearishFactors','watchItems'];
+/** Canonical reference records remain in the audit; section prose alone is visible.
+ * Legacy typed-segment reports keep their original rendering contract. */
+export function visibleClaimText(segments:any[],sections=false):string {
+ return segments.filter(s=>!sections||s.kind!=='fact').map(s=>s.text).join(' ');
+}
 export function materializeClaimText(data:any,evidence?:AnalysisEvidence,now=new Date()):any {
  if(data?.outputFormat===ANALYSIS_SECTIONS_FORMAT){
   const compiled=compileAnalysisSections(data,evidence,now);
-  return {...materializeClaimText(compiled.data,evidence,now),sectionFormat:ANALYSIS_SECTIONS_FORMAT,omittedSections:compiled.omitted,sectionCoverage:compiled.coverage};
+  const result=materializeClaimText(compiled.data,evidence,now);
+  for(const claim of result.evidenceClaims){
+   const text=visibleClaimText(claim.segments,true),[field,index]=claim.field.split('.');
+   if(index===undefined)result[field]=text;else result[field][Number(index)]=text;
+  }
+  return {...result,sectionFormat:ANALYSIS_SECTIONS_FORMAT,omittedSections:compiled.omitted,sectionCoverage:compiled.coverage};
  }
  if(!data||typeof data!=='object'||Array.isArray(data)||data.outputFormat===undefined)return data;
  if(data.outputFormat!==CLAIM_TEXT_FORMAT)throw Error('unknown-claim-text-format');

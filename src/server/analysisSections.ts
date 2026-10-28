@@ -2,6 +2,7 @@
  * Factual prose, conditional interpretations and actions have distinct checks. */
 import {validAnalysisFact,type AnalysisEvidence,type AnalysisFact} from './analysisEvidence.ts';
 import {factClaimContext,type ClaimSupport} from './analysisClaimSupport.ts';
+import {splitAnalysisStatements} from './analysisStatementLanguage.ts';
 import {validateReportedFact} from './analysisReportedFact.ts';
 import {validateConditionalReasoning} from './analysisReasoning.ts';
 export const ANALYSIS_SECTIONS_FORMAT='evidence-sections-v1';
@@ -39,7 +40,7 @@ export function compileAnalysisSection(value:any,evidence:AnalysisEvidence,now:D
   if(core)refs.sort((a,b)=>Date.parse(b.observedAt)-Date.parse(a.observedAt));
   const facts=refs.map(f=>({kind:'fact',text:'',evidenceIds:[f.id],support:[]}));
   if(!value.text.trim()){if(core)return facts;throw Error('missing-section-analysis');}
-  const sentences=value.text.trim().split(/(?<=[.!?])\s+(?=[가-힣])/);
+  const sentences=splitAnalysisStatements(value.text);
   return [...facts,...sentences.flatMap((text:string,index:number)=>{try{return [bindText(text,refs,kind)];}catch(error){throw Error('sentence-'+index+':'+(error as Error).message);}})];
 }
 export function compileAnalysisSections(data:any,evidence:AnalysisEvidence|undefined,now:Date){
