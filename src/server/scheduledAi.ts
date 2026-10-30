@@ -14,6 +14,7 @@ import {acceptedScheduledNews,publishScheduledContent,readScheduledContent} from
 import {analysisReplacementIssues,analysisContentUnchanged} from './analysisPublicationQuality.ts';
 import {gcsRead,gcsWrite} from './cloudPublication.ts';
 import {scheduledAnalysisEvidence} from './scheduledEvidence.ts';
+import {analysisGenerationReadiness} from './analysisExpressionHints.ts';
 import {assertPaidRunActive,recordPaidRequestEvent,PaidRequestError} from './paidRequestTransport.ts';
 import {savedGeminiBudget,type KrwBudgetPolicy} from './geminiKrwBudget.ts';
 import {AnalysisValidationError} from './groundedAnalysisResponse.ts';
@@ -78,7 +79,15 @@ export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJou
       journal!.requests.push({runId:ctx.runId,phase,attempt:r.attempt,model:r.model,reservedUsd:r.reservedUsd,reservedKrw:budget.safetyKrwPerUsd===null?null:Math.ceil(r.reservedUsd*budget.safetyKrwPerUsd)});await store.save(journal!);
      },onUsage:async r=>{const request=journal!.requests.find(x=>x.phase===phase&&x.attempt===r.attempt)!;request.estimatedUsd=r.estimatedUsd;request.estimatedKrw=budget.safetyKrwPerUsd===null?null:Math.ceil(r.estimatedUsd*budget.safetyKrwPerUsd);await store.save(journal!);}};
     try{
-     if(kind==='analysis'){ctx.evidenceMode='verified-only';ctx.scheduledEvidence=await scheduledAnalysisEvidence(id,updates['news-'+id]?.articles,root,now());}
+     if(kind==='analysis'){
+      ctx.evidenceMode='verified-only';
+      ctx.scheduledEvidence=await scheduledAnalysisEvidence(id,updates['news-'+id]?.articles,root,now());
+      // Production preflight: don't pay Gemini when the evidence cannot support
+      // both directions and a scoped procurement action. Injected offline
+      // analysis stubs retain their existing independent contract tests.
+      if(!options.analysis&&!analysisGenerationReadiness(ctx.scheduledEvidence).feasible)
+       throw new PaidRequestError('analysis-evidence-not-ready');
+     }
      const payload=await withAuthorizedStage3Run(ctx,async()=>kind==='news'?{success:true,articles:await news(id)}:await analysis(id));
      assertPaidRunActive(ctx);
      if(!ctx.successfulCalls)throw Error('No successful metered generation');

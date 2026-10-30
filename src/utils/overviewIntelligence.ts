@@ -24,7 +24,22 @@ export function aggregateOverview(inputs:SavedOverviewInput[],now=Date.now()){
  const freshness=(a:any)=>{const age=(now-Date.parse(a.publishedAt))/86400000;return age<=14?2:age<=30?1:0;};
  const significance=(theme:string)=>/crop|weather|logistic|ethanol|biofuel|stocks/.test(theme)?3:/balance|supply|regional-prices|export/.test(theme)?2:1;
  const issueScore=(a:any)=>Math.min(4,Math.max(0,Number(a.priority)||0))*2+Math.max(0,30-(now-Date.parse(a.publishedAt))/86400000)+Math.min(2,a.commodities.length-1)+significance(a.theme)+Number(a.sourceType==='official');
- const issues:any[]=[],themes=new Set<string>(),covered=new Set<string>();while(issues.length<4){const left=[...byUrl.values()].filter(a=>!issues.includes(a));if(!left.length)break;left.sort((a,b)=>Date.parse(b.publishedAt)-Date.parse(a.publishedAt)||issueScore(b)-issueScore(a)||b.commodities.length-a.commodities.length||Number(a.commodities.every((id:string)=>covered.has(id)))-Number(b.commodities.every((id:string)=>covered.has(id)))||significance(b.theme)-significance(a.theme)||Number(themes.has(a.theme))-Number(themes.has(b.theme))||Number(b.sourceType==='official')-Number(a.sourceType==='official')||b.publishedAt.localeCompare(a.publishedAt)||a.url.localeCompare(b.url));const a=left[0];issues.push(a);themes.add(a.theme);a.commodities.forEach((id:string)=>covered.add(id));}
+ const issues:any[]=[],themes=new Set<string>(),covered=new Set<string>(),publishers=new Set<string>();
+ while(issues.length<4){
+  const left=[...byUrl.values()].filter(a=>!issues.includes(a));if(!left.length)break;
+  // Freshness is an eligibility gate, not a reason to show four nearly identical
+  // stories about the same crop. Prefer uncovered commodities within the same
+  // 14-day publication window, then a different publisher/theme and relevance.
+  const novel=(a:any)=>a.commodities.some((id:string)=>!covered.has(id));
+  const publisher=(a:any)=>String(a.sourceName||a.source||'').trim().toLowerCase();
+  left.sort((a,b)=>freshness(b)-freshness(a)||
+   Number(novel(b))-Number(novel(a))||
+   Number(!publishers.has(publisher(b)))-Number(!publishers.has(publisher(a)))||
+   Number(!themes.has(b.theme))-Number(!themes.has(a.theme))||
+   issueScore(b)-issueScore(a)||Number(b.sourceType==='official')-Number(a.sourceType==='official')||
+   Date.parse(b.publishedAt)-Date.parse(a.publishedAt)||a.url.localeCompare(b.url));
+  const a=left[0];issues.push(a);themes.add(a.theme);publishers.add(publisher(a));a.commodities.forEach((id:string)=>covered.add(id));
+ }
  const dates=analyses.map(a=>a.generatedAt).sort();return{brief,issues,directives,fragments,missing,analyses:analyses.map(a=>({id:a.id,generatedAt:a.generatedAt,deskRecommendation:a.deskRecommendation})),sourceDates:dates.length?`${dates[0].slice(0,10)}–${dates.at(-1)!.slice(0,10)}`:'',inputArticleCount:inputs.reduce((n,v)=>n+v.articles.length,0),distinctArticleCount:byUrl.size};
 }
 export async function loadOverviewIntelligence(fetcher:typeof fetch=fetch,signal?:AbortSignal){

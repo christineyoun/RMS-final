@@ -9,7 +9,7 @@ import {publishScheduledContent,readScheduledContent} from '../scheduledContent.
 const policy=JSON.parse(fs.readFileSync('scripts/cloud/weekday-ai-policy.approved.json','utf8'));
 const old=process.cwd(),env={...process.env},native=fetch,root=fs.mkdtempSync(path.join(os.tmpdir(),'rms-isolation-'));
 mock.timers.enable({apis:['Date'],now:new Date('2026-11-26T00:05:00Z')});
-const body=(summary:string)=>({success:true,data:{executiveSummary:(summary+' 원문 근거 기반 공급 전망을 비교하고 실제 선적 조건을 확인합니다. ').repeat(8),deskRecommendation:'조건 확인 후 검토',bullishFactors:[],bearishFactors:[],watchItems:[],sources:[{title:'official source',url:'https://www.usda.gov/'}],generatedAt:new Date().toISOString(),status:'live'}});
+const body=(summary:string)=>({success:true,data:{executiveSummary:(summary+' 원문 근거 기반 공급 전망을 비교하고 실제 선적 조건을 확인합니다. ').repeat(8),deskRecommendation:'조건 확인 후 검토',bullishFactors:['OFFLINE 검증된 상승 동인 점검'],bearishFactors:['OFFLINE 검증된 하락 동인 점검'],watchItems:['OFFLINE 후속 수급 발표 점검'],sources:[{title:'official source',url:'https://www.usda.gov/'}],generatedAt:new Date().toISOString(),status:'live'}});
 let requests=0;
 try{
  for(const freeSuccess of [true,false])for(const status of [200,402,429,503]){

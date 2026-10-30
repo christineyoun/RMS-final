@@ -139,17 +139,13 @@ function validateSnapshot(key:string, value:any):boolean {
     const valid=(a:any)=>validEvidenceUrl(a?.originalUrl) && recent(a?.publishedAt) &&
       a.linkStatus==='verified' &&
       !!(a?.sourceName || a?.source) && a?.unavailable!==true;
-    if(key==='news-wheat'||key==='news-corn'||key==='news-soybean') {
-      const informative = (a:any) => assessNewsSummary(a?.summary || a?.summary_kr,
-        a?.title || a?.title_kr, key.slice('news-'.length)).pass;
-      // A substantive verified subset is valid; four is a maximum, never a quota.
-      return value.success===true && Array.isArray(articles) && articles.length>=1 && articles.length<=4 &&
-        articles.every((a:any)=>valid(a) && informative(a)) &&
-        new Set(articles.map((a:any)=>String(a.originalUrl).toLowerCase().replace(/\/+$/,''))).size===articles.length;
-    }
-    return value.success===true && Array.isArray(articles) &&
-      articles.some((a:any)=>valid(a) && assessNewsSummary(a?.summary||a?.summary_kr,
-        a?.title||a?.title_kr,key.slice('news-'.length)).pass);
+    // Apply the same full-batch verified-source and substantive-summary gate
+    // to all eight commodities. One valid card cannot authorize invalid peers.
+    const informative=(a:any)=>assessNewsSummary(a?.summary||a?.summary_kr,
+      a?.title||a?.title_kr,key.slice('news-'.length)).pass;
+    return value.success===true && Array.isArray(articles) && articles.length>=1 && articles.length<=4 &&
+      articles.every((a:any)=>valid(a)&&informative(a)) &&
+      new Set(articles.map((a:any)=>String(a.originalUrl).toLowerCase().replace(/\/+$/,''))).size===articles.length;
   }
   if(key==='wheat-recommendation') return value.success===true &&
     typeof value.recommendation?.summaryParagraph==='string' &&

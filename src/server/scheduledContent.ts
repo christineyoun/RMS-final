@@ -23,18 +23,49 @@ export function acceptedScheduledNews(id:string,articles:any[]){
    assessNewsSummary(a.summary,a.title,id).pass&&!reviewMarketSummary(a.title,a.summary,e.excerpt,id);
  }));
 }
-export function readScheduledContent(key:string,root=process.cwd()):any|null{
- if(!validKey(key))return null;
+/** A bad active AI pointer must not erase a previously accepted immutable report.
+ * Recovery is read-only: verify each content hash and the original acceptance
+ * contract; do not rewrite the manifest, its generation date, or provider data.
+ * News intentionally has no such fallback: an invalid/withdrawn article cannot
+ * be resurrected by scanning historical publications. */
+function verifiedImmutable(key:string,sha256:string,root:string):any|null{
+ if(!/^[a-f0-9]{64}$/.test(sha256))return null;
  try{
-  const ref=readFreeJson('scheduled-content-current.json',directory(root))?.entries?.[key];
-  if(!ref||! /^[a-f0-9]{64}$/.test(ref.sha256))return null;
-  const bytes=fs.readFileSync(path.join(directory(root),'snapshots/scheduled-content',ref.sha256+'.json'),'utf8');
-  if(hash(bytes)!==ref.sha256)return null;
-  const saved=JSON.parse(bytes);if(saved.key!==key)return null;
-  if(key.startsWith('analysis-')&&snapshotIssues(key,saved.payload).length)return null;
-  if(key.startsWith('news-')){const articles=acceptedScheduledNews(key.slice(5),saved.payload.articles||[]);if(!articles.length)return null;return {...saved,payload:{...saved.payload,articles}};}
+  const bytes=fs.readFileSync(path.join(directory(root),'snapshots/scheduled-content',sha256+'.json'),'utf8');
+  if(hash(bytes)!==sha256)return null;
+  const saved=JSON.parse(bytes);
+  if(saved.key!==key)return null;
+  if(key.startsWith('analysis-')&&(!['live','cached'].includes(saved.payload?.data?.status)||snapshotIssues(key,saved.payload).length))return null;
   return saved;
  }catch{return null;}
+}
+function lastAcceptedImmutableAnalysis(key:string,root:string):any|null{
+ const folder=path.join(directory(root),'snapshots/scheduled-content');
+ let names:string[];
+ try{names=fs.readdirSync(folder).filter(n=>/^[a-f0-9]{64}\.json$/.test(n));}catch{return null;}
+ let selected:any=null;
+ for(const name of names){
+  const saved=verifiedImmutable(key,name.slice(0,-5),root);
+  if(!saved)continue;
+  const date=Date.parse(saved.payload.data.generatedAt);
+  const old=selected?Date.parse(selected.payload.data.generatedAt):-Infinity;
+  if(date>old||(date===old&&String(saved.updatedAt||'')>String(selected?.updatedAt||'')))selected=saved;
+ }
+ return selected;
+}
+export function readScheduledContent(key:string,root=process.cwd()):any|null{
+ if(!validKey(key))return null;
+ const analysis=key.startsWith('analysis-');
+ try{
+  const ref=readFreeJson('scheduled-content-current.json',directory(root))?.entries?.[key];
+  const saved=typeof ref?.sha256==='string'?verifiedImmutable(key,ref.sha256,root):null;
+  if(saved){
+   if(analysis)return saved;
+   const articles=acceptedScheduledNews(key.slice(5),saved.payload.articles||[]);
+   return articles.length?{...saved,payload:{...saved.payload,articles}}:null;
+  }
+ }catch{/* Attempt read-only recovery for previously accepted analysis only. */}
+ return analysis?lastAcceptedImmutableAnalysis(key,root):null;
 }
 export function publishScheduledContent(updates:Record<string,any>,runId:string,root=process.cwd()){
  const dir=directory(root),prior=readFreeJson('scheduled-content-current.json',dir),entries={...prior?.entries},accepted:string[]=[];

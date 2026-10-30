@@ -15,7 +15,7 @@ let journal:DailyAiJournal|null=null,transports=0,fixturePrompt='';const store={
 const metered=()=>trackedGeminiGenerate({model:getStage3RunContext()!.analysisModel,contents:fixturePrompt,config:{}},async p=>{
  const r=await p.config.httpOptions.fetch('https://generativelanguage.googleapis.com/offline-fixture',{method:'POST'});assert(r.ok);return {usageMetadata:{promptTokenCount:100,candidatesTokenCount:100}};
 });
-const body=(id:string)=>({success:true,data:{executiveSummary:('OFFLINE approved fixture '+id+' 원문 근거 기반 공급 전망을 비교하고 실제 선적 조건을 확인합니다. ').repeat(6),deskRecommendation:'OFFLINE 조건 확인 후 검토',bullishFactors:[],bearishFactors:[],watchItems:[],sources:[{title:'OFFLINE official source',url:'https://www.usda.gov/'}],generatedAt:new Date().toISOString(),status:'live'}});
+const body=(id:string)=>({success:true,data:{executiveSummary:('OFFLINE approved fixture '+id+' 원문 근거 기반 공급 전망을 비교하고 실제 선적 조건을 확인합니다. ').repeat(6),deskRecommendation:'OFFLINE 조건 확인 후 검토',bullishFactors:['OFFLINE 검증된 상승 동인 점검'],bearishFactors:['OFFLINE 검증된 하락 동인 점검'],watchItems:['OFFLINE 후속 수급 발표 점검'],sources:[{title:'OFFLINE official source',url:'https://www.usda.gov/'}],generatedAt:new Date().toISOString(),status:'live'}});
 try{
  process.chdir(root);process.env.RMS_STAGE3_RUNTIME_ROOT=root;
  globalThis.fetch=async()=>{assert(journal!.requests.length>transports,'Durable reservation must precede every transport');transports++;return Response.json({});};
