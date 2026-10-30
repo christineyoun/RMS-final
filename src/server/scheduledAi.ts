@@ -11,11 +11,12 @@ import {acquirePaidLease,hasOutstandingPaidRequest} from './paidJobLease.ts';
 import {snapshotIssues} from './mvpEvidence.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
 import {acceptedScheduledNews,publishScheduledContent,readScheduledContent} from './scheduledContent.ts';
-import {analysisReplacementIssues} from './analysisPublicationQuality.ts';
+import {analysisReplacementIssues,analysisContentUnchanged} from './analysisPublicationQuality.ts';
 import {gcsRead,gcsWrite} from './cloudPublication.ts';
 import {scheduledAnalysisEvidence} from './scheduledEvidence.ts';
 import {assertPaidRunActive,recordPaidRequestEvent,PaidRequestError} from './paidRequestTransport.ts';
 import {savedGeminiBudget,type KrwBudgetPolicy} from './geminiKrwBudget.ts';
+import {AnalysisValidationError} from './groundedAnalysisResponse.ts';
 
 export type ScheduledAiPolicy=KrwBudgetPolicy&{version:'weekday-ai-prepaid-v3';enabled:boolean;approvalId:string;analysisModel:string;newsModel:string;monthlyOperatingBudgetKrw:number;funding:'manual-prepaid';automaticTopUp:false;automaticPayment:false};
 export const policyHash=(p:ScheduledAiPolicy)=>createHash('sha256').update(JSON.stringify(p)).digest('hex');
@@ -35,8 +36,12 @@ export function configuredScheduledPolicy(){
  if(!process.env.GEMINI_API_KEY)throw Error('Approved scheduled policy requires its private Gemini secret');
  return p;
 }
-export type DailyAiJournal={version:2;day:string;policyHash:string;budget:ReturnType<typeof savedGeminiBudget>;phases:Record<string,{status:string;error?:string;reason?:string}>;accepted?:Record<string,any>;requests:Array<{runId?:string;phase:string;attempt:number;model:string;reservedUsd:number;reservedKrw?:number|null;estimatedUsd?:number;estimatedKrw?:number|null}>};
+export type DailyAiJournal={version:2;day:string;policyHash:string;budget:ReturnType<typeof savedGeminiBudget>;phases:Record<string,{status:string;error?:string;reason?:string;validationIssues?:string[];generationSucceeded?:boolean}>;accepted?:Record<string,any>;requests:Array<{runId?:string;phase:string;attempt:number;model:string;reservedUsd:number;reservedKrw?:number|null;estimatedUsd?:number;estimatedKrw?:number|null}>};
 export interface ScheduledJournalStore{read:()=>Promise<DailyAiJournal|null>;save:(j:DailyAiJournal)=>Promise<void>}
+export class ScheduledPublicationError extends Error{
+ readonly code='scheduled-content-publication-failed';
+ constructor(public analysisResults:ReturnType<typeof scheduledAnalysisResults>){super('scheduled-content-publication-failed');}
+}
 /** Under the existing workflow lease. Independent of publication promotion so a
  * crash/failed upload cannot erase paid reservations and silently spend again. */
 export function cloudScheduledJournal(day:string):ScheduledJournalStore{
@@ -87,16 +92,18 @@ export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJou
      if(kind==='analysis'){
       let previous=readScheduledContent(phase,root)?.payload;
       if(!previous)try{previous=JSON.parse(fs.readFileSync(path.join(root,'.rms-stage3/snapshots',phase+'.json'),'utf8')).payload;}catch{}
+      if(analysisContentUnchanged(payload.data,previous?.data))throw new PaidRequestError('analysis-content-unchanged');
       if(previous&&!snapshotIssues(phase,previous).length&&analysisReplacementIssues(payload.data,previous.data).length)throw Error('Analysis section coverage regression; retain previous');
      }
-     updates[phase]=payload;journal.accepted={...updates};journal.phases[phase]={status:'accepted'};
+     updates[phase]=payload;journal.accepted={...updates};journal.phases[phase]={status:'accepted',generationSucceeded:ctx.successfulCalls>0};
      // News has its own accepted checkpoint; a later rejected AI response cannot suppress it.
      recordPaidRequestEvent({runId:ctx.runId,phase:'content-accepted',kind,commodity:id,...(kind==='analysis'?{lastSuccessfulAnalysisAt:now().toISOString()}:{} )});
      if(kind==='news')(options.commit||((u,r)=>publishScheduledContent(u,r,root)))(updates,runId);
     }catch(error){
      // Never persist arbitrary provider messages or response content.
      const reason=error instanceof PaidRequestError?error.code:'generation-or-evidence-validation';
-     journal.phases[phase]={status:'retained-previous',reason,error:reason};
+     // Validation issue codes are internal, not arbitrary provider messages.
+     journal.phases[phase]={status:'retained-previous',reason,error:reason,generationSucceeded:ctx.successfulCalls>0,...(error instanceof AnalysisValidationError?{validationIssues:error.issues}:{} )};
      recordPaidRequestEvent({runId:ctx.runId,phase:'content-retained',commodity:id,kind,reason,responseStatus:error instanceof PaidRequestError?error.status??null:null});
     }
     finally{ctx.cancelled=true;ctx.abortController!.abort();await store.save(journal);}
@@ -104,7 +111,30 @@ export async function runScheduledAi(policy:ScheduledAiPolicy,store:ScheduledJou
   }
   // Final atomic checkpoint includes earlier news checkpoints. Failed items keep
   // their prior manifest entry or original approved snapshot.
-  (options.commit||((u,r)=>publishScheduledContent(u,r,root)))(updates,runId);
-  return {day:t.day,budget,phases:journal.phases,attempts:journal.requests.length,estimatedUsd:charged(journal),estimatedKrw:chargedKrw(journal,budget.safetyKrwPerUsd),accepted:Object.keys(updates)};
+  try{(options.commit||((u,r)=>publishScheduledContent(u,r,root)))(updates,runId);}
+  catch{
+   for(const id of COMMODITY_IDS){const phase=journal.phases['analysis-'+id];if(phase?.status==='accepted')journal.phases['analysis-'+id]={...phase,status:'publication-failed',reason:'scheduled-content-publication-failed'};}
+   await store.save(journal);
+   throw new ScheduledPublicationError(scheduledAnalysisResults(journal,updates,root));
+  }
+  const analysisResults=scheduledAnalysisResults(journal,updates,root);
+  return {day:t.day,budget,phases:journal.phases,analysisResults,attempts:journal.requests.length,estimatedUsd:charged(journal),estimatedKrw:chargedKrw(journal,budget.safetyKrwPerUsd),accepted:Object.keys(updates)};
  }finally{release();}
+}
+
+/** Read-only execution summary; generation, validation and saved selection differ. */
+export function scheduledAnalysisResults(journal:DailyAiJournal,updates:Record<string,any>,root=process.cwd()){
+ return COMMODITY_IDS.map(id=>{
+   const phase=journal.phases['analysis-'+id];
+   let saved=readScheduledContent('analysis-'+id,root)?.payload?.data;
+   if(!saved)try{const prior=JSON.parse(fs.readFileSync(path.join(root,'.rms-stage3/snapshots/analysis-'+id+'.json'),'utf8')).payload;if(!snapshotIssues('analysis-'+id,prior).length)saved=prior.data;}catch{}
+   const selected=updates['analysis-'+id]?.data;
+   const published=!!saved&&!!selected&&saved.generatedAt===selected.generatedAt&&saved.executiveSummary===selected.executiveSummary;
+   const unchanged=!!phase&&/unchanged|no-new/.test(phase.reason||'');
+   const validated=phase?.status==='accepted'||phase?.status==='publication-failed'||unchanged;
+   return {commodity:id,status:!phase||/not-authoriz|not-permitted/.test(phase.reason||'')?'Not authorized':unchanged?'Unchanged':validated&&published?'Updated':validated&&!saved?'Rejected':saved?'Retained previous report':'Rejected',
+    generationSucceeded:phase?.generationSucceeded??false,validationSucceeded:validated,publicationSucceeded:published,
+    generatedAt:saved?.generatedAt??null,evidenceDates:[...new Set((saved?.evidenceAudit?.facts||[]).map((f:any)=>f.observedAt))].sort(),
+    reason:phase?.validationIssues?.join('; ')||phase?.reason||(phase?.status==='accepted'&&!published?'publication-not-confirmed':!phase?'not-authorized':null)};
+  });
 }

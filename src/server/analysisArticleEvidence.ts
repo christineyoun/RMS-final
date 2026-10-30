@@ -12,7 +12,7 @@ import {collectAnalysisEvidence,trustedAnalysisUrl,validAnalysisFact,type Analys
 import {selectMarketEvidence} from './newsEvidenceQuality.ts';
 
 const sha=(s:string)=>createHash('sha256').update(s).digest('hex');
-const topics:Record<string,RegExp>={soybean:/soybeans?|soya\s*beans?|대두/i,'soybean-oil':/soybean\s*oil|soya\s*oil|soyoil|대두유/i,
+const topics:Record<string,RegExp>={wheat:/wheat|소맥|밀/i,corn:/corn|maize|옥수수/i,'tapioca-starch':/tapioca|cassava|타피오카/i,soybean:/soybeans?|soya\s*beans?|대두/i,'soybean-oil':/soybean\s*oil|soya\s*oil|soyoil|대두유/i,
   'palm-oil':/palm\s*oil|palm\s*olein|\bCPO\b|팜유/i,sugar:/sugar|원당|설탕/i,'potato-starch':/potato\s*starch|starch\s*potato|potato\s*processing|감자.*전분/i};
 export function originalArticleFact(html:string,sourceUrl:string,publishedAt:string,id:string,verifiedAt:string):AnalysisFact|null {
   if(!trustedAnalysisUrl(sourceUrl)||!topics[id]||html.length<500||html.length>2_000_000)return null;
@@ -23,18 +23,22 @@ export function originalArticleFact(html:string,sourceUrl:string,publishedAt:str
   const jsonDate=/"datePublished"\s*:\s*"([^"]+)"/.exec(html)?.[1];
   const mpobDate=mpob?/(\d{2})-(\d{2})-(20\d{2})\s*\|/.exec(bodyText):null;
   const sunDate=new URL(sourceUrl).hostname.endsWith('sunsirs.com')?/(January|February|March|April|May|June|July|August|September|October|November|December) \d{1,2} 20\d{2} \d{2}:\d{2}:\d{2}/.exec(bodyText)?.[0]:undefined;
-  const rawDate=$('meta[property="article:published_time"]').attr('content')||$('meta[name="date"]').attr('content')||$('time[datetime]').first().attr('datetime')||jsonDate||(mpobDate?`${mpobDate[3]}-${mpobDate[2]}-${mpobDate[1]}`:undefined)||sunDate;
+  const igrainDate=new URL(sourceUrl).hostname==='www.igrain.in'?/^(\d{1,2}-[A-Za-z]{3}-20\d{2})\s/.exec($('.sp-date').first().text().trim())?.[1]:undefined;
+  const rawDate=$('meta[property="article:published_time"]').attr('content')||$('meta[name="date"]').attr('content')||$('time[datetime]').first().attr('datetime')||jsonDate||(mpobDate?`${mpobDate[3]}-${mpobDate[2]}-${mpobDate[1]}`:undefined)||sunDate||igrainDate;
   if(!rawDate||!Number.isFinite(Date.parse(rawDate))||!Number.isFinite(Date.parse(publishedAt)))return null;
-  const date=new Date(rawDate).toISOString().slice(0,10),now=new Date(verifiedAt);
+  // Civil publication dates must not move backwards in an Asia/Seoul process.
+  const named=/^(\d{1,2})-([A-Za-z]{3})-(20\d{2})\s*$/.exec(rawDate),months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const date=/^20\d{2}-\d{2}-\d{2}/.test(rawDate)?rawDate.slice(0,10):named?`${named[3]}-${String(months.findIndex(m=>m.toLowerCase()===named[2].toLowerCase())+1).padStart(2,'0')}-${named[1].padStart(2,'0')}`:new Date(rawDate).toISOString().slice(0,10),now=new Date(verifiedAt);
   if(date!==new Date(publishedAt).toISOString().slice(0,10)||Date.parse(date)>now.getTime()||now.getTime()-Date.parse(date)>31*86400000||!topics[id].test(title))return null;
   $('script,style,noscript,nav,footer,header,aside').remove();
-  const root=$('article,main,[itemprop="articleBody"],.article-content,.news-content').first();
+  const root=$('article,main,[itemprop="articleBody"],.article-content,.news-content,.sp-body').first();
   const paragraphs=(root.length?root:$('body')).find('p').toArray().map(p=>$(p).text().replace(/\s+/g,' ').trim());
   const selected=selectMarketEvidence(paragraphs,id,1800);
-  if(!selected.anchorCount)return null;
-  const excerpt=selected.excerpt.split(/(?<=[.!?])\s+/).find(s=>s.length>=45&&s.length<=650&&topics[id].test(s));
+  const policy=(id==='sugar'&&new URL(sourceUrl).hostname==='www.chinimandi.com'&&paragraphs.some(p=>p.includes('the government has issued directions that sugar diversion for ethanol be reduced to zero for ESY 2026-27.')))?paragraphs.find(p=>p.includes('the government has issued directions that sugar diversion for ethanol be reduced to zero for ESY 2026-27.')):undefined;
+  if(!selected.anchorCount&&!policy)return null;
+  const excerpt=(selected.excerpt||policy||'').split(/(?<=[.!?])\s+/).find(s=>s.length>=45&&s.length<=650&&topics[id].test(s));
   if(!excerpt)return null;
-  const fact:AnalysisFact={id:'article-'+sha(sourceUrl).slice(0,16),commodity:id,topic:id==='palm-oil'?'팜유':id==='soybean-oil'?'대두유':id==='soybean'?'대두':id==='sugar'?'설탕':'감자전분',
+  const fact:AnalysisFact={id:'article-'+sha(sourceUrl).slice(0,16),commodity:id,topic:id==='palm-oil'?'팜유':id==='soybean-oil'?'대두유':id==='soybean'?'대두':id==='sugar'?'설탕':id==='wheat'?'소맥':id==='corn'?'옥수수':id==='tapioca-starch'?'타피오카전분':'감자전분',
     text:`${date} ${title} 원문 인용: “${excerpt}”`,sourceUrl,sourceTitle:title,observedAt:date,verifiedAt,verification:'original-record',recordSha256:sha(html)};
   return validAnalysisFact(fact,id,now)?fact:null;
 }

@@ -571,7 +571,7 @@ export class MarketIntelligenceService {
     // Avoid duplicate paid research when navigating between commodities or tabs.
     const cached = intelligenceCache.get(key);
     if (!force && cached && now < cached.expiresAt) {
-      return cached.articles;
+      return selectProcurementNews(key,cached.articles,now);
     }
 
     // Wheat pilot: never treat historical, manually authored example headlines as verified current news.

@@ -5,11 +5,15 @@ import {factClaimContext,type ClaimSupport} from './analysisClaimSupport.ts';
 import {splitAnalysisStatements} from './analysisStatementLanguage.ts';
 import {validateReportedFact} from './analysisReportedFact.ts';
 import {validateConditionalReasoning} from './analysisReasoning.ts';
+import {ANALYSIS_BRIEF_STYLE} from './analysisBriefContract.ts';
+import {sourcePropositionSupport} from './analysisSourcePropositions.ts';
 export const ANALYSIS_SECTIONS_FORMAT='evidence-sections-v1';
 const fields=['marketAnalysis','priceOutlook','bullishFactors','bearishFactors','procurementStrategy','monitoringItems'];
 /** Resolve the least sufficient verified support using the existing reasoning
  * checks. No model-supplied kind, per-sentence ID map or capability label. */
 function bindText(text:string,available:AnalysisFact[],kind:'conditional'|'recommendation'){
+ const action=sourcePropositionSupport(text,available,'action');
+ if(action)return {kind:'reported-action',text,evidenceIds:action,support:[]};
  const factual=validateReportedFact(text,available);
  if(!factual.issues.length)return {kind:'reported-fact',text,evidenceIds:factual.evidenceIds,support:[]};
  if(kind==='conditional')for(const f of available)if(f.comparison&&f.interpretations?.includes(text))return {kind:'interpretation',text,evidenceIds:[f.id],support:[]};
@@ -46,24 +50,35 @@ export function compileAnalysisSection(value:any,evidence:AnalysisEvidence,now:D
 export function compileAnalysisSections(data:any,evidence:AnalysisEvidence|undefined,now:Date){
  if(!evidence||evidence.facts.some(f=>!validAnalysisFact(f,evidence.commodity,now)))throw Error('invalid-section-evidence');
  const known=new Map(evidence.facts.map(f=>[f.id,f]));
- if(known.size!==evidence.facts.length||Object.keys(data).some(k=>!['outputFormat','confidenceScore',...fields].includes(k)))throw Error('invalid-section-envelope');
+ if(known.size!==evidence.facts.length||Object.keys(data).some(k=>!['outputFormat','confidenceScore','reportStyle',...fields].includes(k))||data.reportStyle!==undefined&&data.reportStyle!==ANALYSIS_BRIEF_STYLE)throw Error('invalid-section-envelope');
+ const brief=data.reportStyle===ANALYSIS_BRIEF_STYLE;
  const omitted:Array<{section:string;reason:string}>=[];
  const coverage:Record<string,boolean|number>={marketAnalysis:true,procurementStrategy:true,priceOutlook:false,bullishFactors:0,bearishFactors:0,monitoringItems:0};
  const section=(value:any,kind:'conditional'|'recommendation',core=false)=>compileAnalysisSection(value,evidence,now,kind,core);
  const checked=(name:string,kind:'conditional'|'recommendation',core=false)=>{try{return section(data[name],kind,core);}catch(error){throw Error(name+':'+(error as Error).message);}};
- const claims:any[]=[{field:'executiveSummary',segments:checked('marketAnalysis','conditional',true)},{field:'deskRecommendation',segments:checked('procurementStrategy','recommendation')}];
+ const market=brief?String(data.marketAnalysis?.text||'').trim().split(/\n\s*\n/):[];
+ if(brief&&market.length!==2)throw Error('brief-market-outlook:exactly-two-paragraphs');
+ const summary=brief?market.flatMap((text,index)=>section({...data.marketAnalysis,text},index?'recommendation':'conditional',true).map(s=>({...s,paragraph:index}))):checked('marketAnalysis','conditional',true);
+ // Each paragraph may use the same evidence. Keep one canonical audit premise.
+ const seenFacts=new Set<string>();
+ const claims:any[]=[{field:'executiveSummary',segments:summary.filter(s=>s.kind!=='fact'||!seenFacts.has(s.evidenceIds[0])&&!!seenFacts.add(s.evidenceIds[0]))},{field:'deskRecommendation',segments:checked('procurementStrategy','recommendation')}];
  const used=new Set(claims.flatMap(c=>c.segments.filter((s:any)=>s.kind!=='fact').map((s:any)=>s.text)));
  const unique=(parts:any[])=>{const texts=parts.filter(s=>s.kind!=='fact').map(s=>s.text);if(new Set(texts).size!==texts.length||texts.some(t=>used.has(t)))throw Error('repeated-optional-analysis');for(const t of texts)used.add(t);};
  // Do not turn missing optional evidence into an affirmative neutral conclusion.
+ if(brief&&data.priceOutlook===undefined)throw Error('brief-required-section:priceOutlook');
  if(data.priceOutlook!==undefined)try{
-  const parts=section(data.priceOutlook,'conditional'),summary=claims[0].segments;unique(parts);
-  for(const part of parts)if(part.kind!=='fact'||!summary.some((s:any)=>s.kind==='fact'&&s.evidenceIds[0]===part.evidenceIds[0]))summary.push(part);
+  const parts=section(data.priceOutlook,'conditional'),summary=claims[0].segments;if(!brief)unique(parts);
+  for(const part of parts){
+   if(brief&&summary.some((s:any)=>s.kind===part.kind&&s.text===part.text&&JSON.stringify(s.evidenceIds)===JSON.stringify(part.evidenceIds)))continue;
+   if(part.kind!=='fact'||!summary.some((s:any)=>s.kind==='fact'&&s.evidenceIds[0]===part.evidenceIds[0]))summary.push(brief?{...part,auditOnly:true}:part);
+  }
   coverage.priceOutlook=true;
- }catch(error){omitted.push({section:'priceOutlook',reason:(error as Error).message});}
+ }catch(error){if(brief)throw error;omitted.push({section:'priceOutlook',reason:(error as Error).message});}
  for(const [input,output,kind]of [['bullishFactors','bullishFactors','conditional'],['bearishFactors','bearishFactors','conditional'],['monitoringItems','watchItems','recommendation']] as const){
-  const list=data[input];if(list===undefined)continue;
+  const list=data[input];if(list===undefined){if(brief)throw Error('brief-required-section:'+input);continue;}
+  if(brief&&(!Array.isArray(list)||list.length<1||list.length>3))throw Error('brief-required-section:'+input);
   if(!Array.isArray(list)||list.length>3){omitted.push({section:input,reason:'invalid-optional-section'});continue;}
-  let index=0;for(const item of list)try{const parts=section(item,kind);unique(parts);claims.push({field:output+'.'+index,segments:parts});index++;}catch(error){omitted.push({section:input+'.'+list.indexOf(item),reason:(error as Error).message});}
+  let index=0;for(const item of list)try{const parts=section(item,kind);unique(parts);claims.push({field:output+'.'+index,segments:parts});index++;}catch(error){if(brief)throw Error(input+'.'+list.indexOf(item)+':'+(error as Error).message);omitted.push({section:input+'.'+list.indexOf(item),reason:(error as Error).message});}
   coverage[input]=index;
  }
  return {data:{outputFormat:'typed-segments-v1',factBinding:'verified-records-v1',evidenceContractVersion:4,confidenceScore:data.confidenceScore,evidenceClaims:claims},omitted,coverage};

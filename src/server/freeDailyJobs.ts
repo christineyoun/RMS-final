@@ -1,3 +1,4 @@
+import {refreshSharedPublisherNews} from './sharedPublisherNews.ts';
 import {scfiReuseAuthorization,SSE_SCFI_URL} from './scfiScraperService.ts';
 import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
 import fs from 'node:fs';import path from 'node:path';
@@ -28,7 +29,7 @@ async function origin(id:string){const {originRadarService:s}=await import('./or
  const weather=originWeatherPublicationStatus(r);const dates=weather.dates,errors=weather.errors;
  writeFreeJson('free-origin-'+id+'.json',r);return packet(r,dates.at(-1),errors?`${errors} origins retain older or incomplete weather evidence`:undefined);
 }
-async function news(id:string){
+async function legacyNews(id:string){
  if(['soybean','soybean-oil','palm-oil'].includes(id)){const r=id==='soybean'?await(await import('./soybeanNewsPersistence.ts')).refreshSoybeanNews():id==='soybean-oil'?await(await import('./soybeanOilVerifiedNews.ts')).refreshSoybeanOilNews():await(await import('./palmVerifiedNews.ts')).refreshPalmNews();return packet(r.articles||r,(r.articles||[]).map((a:any)=>a.publishedAt).sort().at(-1),r.lastError);}
  let discovery:any,accepted:any[]=[];
  if(id==='wheat'){const [feed,pages]=await Promise.all([(await import('./wheatFeedDiscovery.ts')).discoverWheatPublisherFeeds(),(await import('./wheatPublicPageDiscovery.ts')).discoverWheatPublicPages()]);discovery={candidates:[...pages.candidates,...feed.candidates]};const seen=new Set();const items=discovery.candidates.filter((x:any)=>{if(seen.has(x.originalUrl))return false;seen.add(x.originalUrl);return true;}).slice(0,12);accepted=(await(await import('./wheatArticleVerification.ts')).verifyWheatNewsLinksReported(items)).accepted;}
@@ -43,6 +44,11 @@ async function news(id:string){
  }
  const value={checkedAt:new Date().toISOString(),candidates:accepted,discoveryCount:discovery.candidates.length,status:'verified-originals-awaiting-editorial-review',limitation:discovery.limitation};writeFreeJson('free-news-candidates-'+id+'.json',value);
  return packet(accepted,accepted.map(a=>a.publishedAt).sort().at(-1),accepted.length?undefined:'No original public articles verified; approved saved news retained');
+}
+async function news(id:string){
+ let legacy:any;try{legacy=await legacyNews(id);}catch{}
+ const result=await refreshSharedPublisherNews(id);
+ return packet(result.articles,result.articles.map(a=>a.publishedAt).sort().at(-1),result.articles.length?undefined:legacy?.lastError||'No eligible source-bound Korean news; prior valid content retained');
 }
 export function originWeatherPublicationStatus(r:any){const errors=r.origins.filter((o:any)=>{const evidence=Array.isArray(o.weatherEvidence)?o.weatherEvidence:[o.weatherEvidence?.shared||o.weatherEvidence];return !evidence.length||evidence.some((e:any)=>!e||e.retrievalFailed||e.history?.length!==28||e.rainfallDays!==7||e.temperatureDays!==7||e.minimumTemperatureDays!==7);}).length;const dates=r.origins.flatMap((o:any)=>Array.isArray(o.weatherEvidence)?o.weatherEvidence:[o.weatherEvidence?.shared||o.weatherEvidence]).map((e:any)=>e?.lastDay).filter(Boolean).sort();return {errors,dates};}
 export function dailyFreeSourceJobs():FreeSourceJob[]{return [

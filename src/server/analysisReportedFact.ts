@@ -6,6 +6,7 @@ import {factualLanguage,splitAnalysisStatements} from './analysisStatementLangua
 import {supportedFactualProjection} from './analysisFactualPropositions.ts';
 import type {AnalysisFact} from './analysisEvidence.ts';
 import {newsNumbersIssue} from './newsEvidenceQuality.ts';
+import {sourcePropositionSupport} from './analysisSourcePropositions.ts';
 
 const normalize=(s:string)=>s.normalize('NFKC').replace(/\s+/g,' ').trim();
 const forecast=/전망|예상|추정|forecast|expected|estimate/i;
@@ -22,6 +23,8 @@ function tokens(text:string){
 /** Keep every sentence's own context. Do not join separate records or harvest
  * an unrelated number elsewhere on a publisher page to support an assertion. */
 export function validateReportedFact(text:string,refs:AnalysisFact[]):{issues:string[];evidenceIds:string[]} {
+ const sourced=sourcePropositionSupport(text,refs);
+ if(sourced)return {issues:[],evidenceIds:sourced};
  const projected=supportedFactualProjection(text,refs);
  if(projected)return {issues:[],evidenceIds:projected};
  const statements=splitAnalysisStatements(text).flatMap(s=>s.split(/(?<=(?:이며|이고|반면),)\s+/));

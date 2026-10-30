@@ -60,7 +60,7 @@ try{
   assert.equal(parseAi(ai).status,'live',id+' full analysis accepted');
   const unsupportedAi=structuredClone(ai);unsupportedAi.evidenceClaims[1].segments[1].text=`세계 ${ko} 생산 전망을 고려해 물량의 50%를 즉시 구매하십시오.`;assert.throws(()=>parseAi(unsupportedAi),/unsupported/);
   const dumpedAi=structuredClone(ai);dumpedAi.evidenceClaims[2].segments.pop();assert.throws(()=>parseAi(dumpedAi),/missing-supported-market-driver/);
-  // All eight last-good assessments survive a weaker update, even when every section remains nonempty.
+  // Legacy reports retain item-coverage protection; brief reports have their own contract.
   const data:any={status:'live',executiveSummary:`OFFLINE-MOCK ${ko} 시장의 검증된 수급 및 구매 검토 조건을 설명하는 한국어 요약입니다. `.repeat(6),deskRecommendation:'같은 범위의 공표 수치를 비교하십시오.',generatedAt:now.toISOString(),sources:[{url:input.originalUrl}],bullishFactors:['검증된 공급 요인','별도의 수요 요인'],bearishFactors:['검증된 하방 요인'],watchItems:['후속 발표 관찰','동일 범위 지표 비교'],evidenceAudit:{factBinding:'verified-records-v1'}};
   publishScheduledContent({['analysis-'+id]:{success:true,data}},'OFFLINE-MOCK-good',root);
   const before=fs.readFileSync(path.join(root,'.rms-stage3/scheduled-content-current.json'),'utf8'),weak={...data,bullishFactors:data.bullishFactors.slice(0,1),watchItems:data.watchItems.slice(0,1)};

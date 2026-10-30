@@ -1,10 +1,13 @@
 export const remainingIds = ['soybean','soybean-oil','palm-oil','sugar','potato-starch','tapioca-starch'];
+import {ANALYSIS_BRIEF_STYLE,briefPresentationIssues} from './analysisBriefContract.ts';
+import {acceptedBriefEvidenceIssues} from './groundedAnalysisResponse.ts';
 export function snapshotIssues(key:string, body:any):string[] {
   if (!body || typeof body!=='object') return ['response-not-an-object'];
   if (body.error || body.success===false) return [String(body.error || body.errorMessage || body.status || 'upstream-unsuccessful')];
   if(key.startsWith('analysis-')) {
     const a=body.data;
     if(!a) return ['analysis-data-missing'];
+    if(a.evidenceAudit?.reportStyle===ANALYSIS_BRIEF_STYLE){const issues=[...briefPresentationIssues(a),...acceptedBriefEvidenceIssues(a,key.slice(9))];if(issues.length)return issues;}
     return [typeof a.executiveSummary!=='string' || a.executiveSummary.trim().length<(a.evidenceAudit?.outputFormat==='evidence-sections-v1'?1:140) ? 'executiveSummary-missing-or-too-short' : '',
       typeof a.deskRecommendation!=='string' || !a.deskRecommendation.trim() ? 'deskRecommendation-missing' : '',
       !Number.isFinite(Date.parse(a.generatedAt)) ? 'generatedAt-missing-or-invalid' : '',

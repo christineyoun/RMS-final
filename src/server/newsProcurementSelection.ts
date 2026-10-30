@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import reviewed from '../data/news_procurement_reviews.json';
 import {assessNewsSummary} from '../utils/newsSummaryQuality.ts';
+import {eligibleMarketIssue} from '../utils/marketIssueEligibility.ts';
 type Item={originalUrl:string;publishedAt:string;title:string;summary:string;sourceName?:string;sourceType?:string;unavailable?:boolean;[key:string]:any};
 type ReviewMap=Record<string,Array<{url:string;publishedAt:string;sourceSummarySha256:string;priority:number;theme:string;eventKey:string;decision:string;rationale:string;title?:string;summary?:string}>>;
 const hash=(s:string)=>createHash('sha256').update(s).digest('hex');
@@ -15,13 +16,14 @@ export function selectProcurementNews<T extends Item>(commodity:string,verified:
  const seen=new Set<string>();
  const candidates=verified.flatMap((article,index)=>{
   const url=String(article.originalUrl||'').replace(/\/$/,''),date=Date.parse(article.publishedAt);
-  if(article.unavailable||seen.has(url)||!Number.isFinite(date)||date>now||!assessNewsSummary(article.summary,article.title,commodity).pass)return [];
+  if(!eligibleMarketIssue(article,now)||seen.has(url)||!assessNewsSummary(article.summary,article.title,commodity).pass)return [];
   seen.add(url);
   const r=reviews[commodity]?.find(r=>r.url===article.originalUrl&&r.publishedAt===article.publishedAt&&r.sourceSummarySha256===hash(article.summary));
   if(r?.decision==='omit')return [];
   // Bound summaries retain the exact wording validated against their receipt.
   // Editorial selection metadata may rank/omit; it cannot rewrite that evidence binding.
-  const title=article.verifiedSourceEvidence?article.title:r?.title||article.title,summary=article.verifiedSourceEvidence?article.summary:r?.summary||article.summary;
+  const bound=article.verifiedSourceEvidence||article.sourceBinding==='original-propositions-v1';
+  const title=bound?article.title:r?.title||article.title,summary=bound?article.summary:r?.summary||article.summary;
   // A reviewed cross-commodity summary must identify this crop, like any saved card.
   if(!assessNewsSummary(summary,title,commodity).pass)return [];
   const text=title+' '+summary;

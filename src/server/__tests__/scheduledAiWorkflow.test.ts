@@ -56,8 +56,16 @@ try{
  assert.deepEqual(readScheduledContent('analysis-wheat',root),beforeOutage);
  mock.timers.setTime(new Date('2026-11-27T00:05:00Z').getTime());journal=null;transports=0;
  const recovered=await runScheduledAi(policy,store,{root,news:async()=>{await metered();return [];},analysis:async id=>{await metered();return body(id);}});
- assert(recovered.accepted.includes('analysis-wheat'));assert.equal(transports,16);assert.equal(recovered.budget.safetyKrwPerUsd,null);
- assert.equal(readScheduledContent('analysis-wheat',root)?.payload.data.generatedAt,'2026-11-27T00:05:00.000Z');
+ assert.equal(recovered.analysisResults.find(r=>r.commodity==='wheat')?.status,'Unchanged');assert.equal(transports,16);assert.equal(recovered.budget.safetyKrwPerUsd,null);
+ assert.equal(readScheduledContent('analysis-wheat',root)?.payload.data.generatedAt,beforeOutage.payload.data.generatedAt,'identical prose and evidence retain their original generation date');
+ // Final publication failure is distinct from generation/validation success.
+ const stableManifest=fs.readFileSync(path.join(root,'.rms-stage3/scheduled-content-current.json'));
+ journal=null;transports=0;
+ await assert.rejects(runScheduledAi(policy,store,{root,news:async()=>{await metered();return [];},analysis:async id=>{await metered();const p=body(id);p.data.executiveSummary+=' A separately validated offline revision.';return p;},commit:()=>{throw Error('OFFLINE publication storage failure');}}),(error:any)=>{
+  assert.equal(error.code,'scheduled-content-publication-failed');assert.equal(error.analysisResults.length,8);
+  const row=error.analysisResults.find((r:any)=>r.commodity==='wheat');assert.equal(row.generationSucceeded,true);assert.equal(row.validationSucceeded,true);assert.equal(row.publicationSucceeded,false);assert.equal(row.status,'Retained previous report');return true;
+ });
+ assert.deepEqual(fs.readFileSync(path.join(root,'.rms-stage3/scheduled-content-current.json')),stableManifest);
  mock.timers.setTime(new Date('2026-10-26T00:05:00Z').getTime());
  const feed='<rss><item><title>Cassava starch export demand changes</title><link>https://commodity-board.com/cassava-starch-export-demand-changes</link><pubDate>2026-10-23</pubDate></item></rss>';
  assert.equal(parseAdditionalFeed(feed,'tapioca-starch',{url:'https://commodity-board.com/feed/',host:'commodity-board.com',publisher:'Commodity Board',sourceType:'news'}).length,1);

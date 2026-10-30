@@ -10,7 +10,7 @@ import {assessNewsSummary} from '../utils/newsSummaryQuality.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
 import {snapshotIssues} from './mvpEvidence.ts';
 import {COMMODITY_IDS} from '../services/commodityQuoteSource.ts';
-import {analysisReplacementIssues} from './analysisPublicationQuality.ts';
+import {analysisReplacementIssues,analysisContentUnchanged} from './analysisPublicationQuality.ts';
 const hash=(value:string)=>createHash('sha256').update(value).digest('hex');
 const directory=(root:string)=>path.join(root,'.rms-stage3');
 const validKey=(key:string)=>['analysis-','news-'].some(p=>key.startsWith(p)&&COMMODITY_IDS.includes(key.slice(p.length) as any));
@@ -44,6 +44,7 @@ export function publishScheduledContent(updates:Record<string,any>,runId:string,
   if(key.startsWith('analysis-')&&(payload?.data?.status!=='live'||snapshotIssues(key,payload).length))throw Error('Analysis not accepted by existing snapshot checks');
   if(key.startsWith('analysis-')){
    const previous=readScheduledContent(key,root)?.payload||readFreeJson(key+'.json',path.join(dir,'snapshots'))?.payload;
+   if(analysisContentUnchanged(payload.data,previous?.data))continue;
    if(previous&&!snapshotIssues(key,previous).length&&analysisReplacementIssues(payload.data,previous.data).length)continue;
   }
   if(key.startsWith('news-')){

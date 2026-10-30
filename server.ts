@@ -1,3 +1,4 @@
+import {refreshEvidenceFirst,evidenceFirstStatus} from './src/server/evidenceFirstWorkflow.ts';
 import {withSavedDataRead} from './src/server/freeRefreshNetwork.ts';
 import {startPublicationHistory,comparisonFor} from './src/server/overviewMarketHistory.ts';
 import {captureOverviewPublication} from './src/server/overviewPublishedInputs.ts';
@@ -30,6 +31,14 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
 
   app.use((req,_res,next)=>{const u=new URL(req.url,'http://localhost');const explicit=u.searchParams.get('force')==='true'||u.searchParams.get('forceRefresh')==='true'||/refresh|\/control\//.test(u.pathname)&&u.pathname!=='/api/rms/refresh-status';if(explicit)next();else withSavedDataRead(next);});
+  app.get('/api/rms/evidence-first/status',(_req,res)=>{res.setHeader('Cache-Control','no-store');res.json(evidenceFirstStatus());});
+  app.post('/api/rms/evidence-first/refresh',express.json({limit:'2kb'}),async(req,res)=>{
+    if(process.env.RMS_PUBLIC_READONLY==='1'){res.status(403).json({error:'Public read-only mode'});return;}
+    const ids=req.body?.commodities;
+    if(!Array.isArray(ids)||!ids.length||ids.length>8||ids.some(id=>typeof id!=='string')){res.status(400).json({error:'Explicit commodity selection required'});return;}
+    try{res.setHeader('Cache-Control','no-store');res.json(await refreshEvidenceFirst(ids));}
+    catch{res.status(400).json({error:'Invalid or unavailable non-paid refresh'});}
+  });
   app.post('/api/rms/palm/free-refresh',async(_req,res)=>{try{res.json(await refreshPalmPageSources());}catch{res.status(503).json({success:false,error:'Free Palm source refresh failed; saved data retained'});}});
 
   app.post('/api/rms/soybean-oil/news-refresh',async(req,res)=>{
@@ -69,7 +78,7 @@ async function startServer() {
     app.use(vite.middlewares);
     console.log('Dev: Mounted Vite middleware.');
   } else {
-    const distPath = path.join(process.env.RMS_APP_ROOT||process.cwd(), 'dist');
+    const distPath = process.env.RMS_DIST_DIR||path.join(process.env.RMS_APP_ROOT||process.cwd(), 'dist');
     const indexPath = path.join(distPath, 'index.html');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -82,7 +91,7 @@ async function startServer() {
     console.log('Production: Serving static assets from dist/.');
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, process.env.RMS_BIND_HOST||'0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
     if(process.env.RMS_DISABLE_SCHEDULERS==='1'||process.env.RMS_PUBLIC_READONLY==='1'){
       console.log('[RMS] Scheduled refresh startup disabled for this session; saved settings unchanged.');

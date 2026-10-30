@@ -244,6 +244,7 @@ export default function App() {
       {/* 3. Main Content Area */}
       <main className="ml-64 mt-14 p-4 flex-1 min-h-[calc(100vh-56px)] overflow-x-hidden print:ml-0 print:mt-0 print:p-0 print:min-h-0 print:overflow-visible">
         <div className="max-w-[1680px] mx-auto print:max-w-full">
+
           {activeView === 'main-dashboard' || !currentCommodity ? (
             <OverviewTerminal
               commodities={mappedCommodities}

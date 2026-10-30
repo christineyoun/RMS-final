@@ -1,3 +1,4 @@
+import {readSharedPublisherNews} from './sharedPublisherNews.ts';
 import {policyRecordPresentation} from '../utils/overviewMacroPresentation.ts';
 import {readScheduledContent} from './scheduledContent.ts';
 import {readFreePublication,freeRefreshStatus} from './freeDailyPublication.ts';
@@ -195,7 +196,7 @@ function status() {
   };
 }
 /** Existing source-specific verified readers; also retained as merge candidates. */
-export function savedVerifiedCommodityNews(id:string):any[]{
+function legacyVerifiedCommodityNews(id:string):any[]{
  if(id==='wheat')return readVerifiedWheatNews();
  if(id==='soybean-oil')return readVerifiedSoybeanOilNews();
  if(id==='soybean')return [...readVerifiedSoybeanNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='American Soybean Association')];
@@ -206,6 +207,7 @@ export function savedVerifiedCommodityNews(id:string):any[]{
  if(id==='palm-oil')return [...readVerifiedPalmNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='USDA ERS')];
  return [];
 }
+export function savedVerifiedCommodityNews(id:string):any[]{return [...readSharedPublisherNews(id),...legacyVerifiedCommodityNews(id)];}
 function savedNewsResponse(id:string, verified:any[]) {
   const articles=selectProcurementNews(id,verified);
   return {success:true,articles,sourceStatus:'verified-retained-originals',

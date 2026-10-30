@@ -11,7 +11,7 @@ import {parseGroundedAnalysis,AnalysisValidationError} from '../groundedAnalysis
 import {newsNumbersIssue} from '../newsEvidenceQuality.ts';
 import {evaluateSavedNewsSummaries} from '../marketIntelligenceService.ts';
 import {compareNewsContent} from '../newsContentChanges.ts';
-import {publishScheduledContent,readScheduledContent} from '../scheduledContent.ts';
+import {publishScheduledContent,readScheduledContent,acceptedScheduledNews} from '../scheduledContent.ts';
 import {aggregateOverview} from '../../utils/overviewIntelligence.ts';
 import type {AnalysisEvidence} from '../analysisEvidence.ts';
 const native=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Network/paid requests prohibited in hotfix tests');};
@@ -61,8 +61,8 @@ try{
   let full:any;try{const data=parseGroundedAnalysis(response(item.body),item.model,now,item.evidence,{requiredContractVersion:4,requiredFactBinding:true});full={accepted:true,coverage:data.evidenceAudit?.sectionCoverage,omitted:data.evidenceAudit?.omittedSections};}catch(e){assert(e instanceof AnalysisValidationError);full={accepted:false,stage:e.stage,issues:e.issues};assert(!e.issues.includes('unsupported-section-analysis'),'specific failure reasons, not systemic classifier error');}
   replay.analysis.push({id:item.id,sections,full});
  }
- for(const item of fixture.news){const r=evaluateSavedNewsSummaries(item.id,item.inputs,item.text,['wheat','corn','soybean'].includes(item.id)?false:true,{requireEvidenceIds:true});if(r.articles.length){const dir=path.join(temp,'news-'+item.id),key='news-'+item.id;publishScheduledContent({[key]:{success:true,articles:r.articles}},'offline-news',dir);const file=path.join(dir,'.rms-stage3/scheduled-content-current.json'),before=fs.readFileSync(file);assert.deepEqual(publishScheduledContent({[key]:{success:true,articles:[...r.articles].reverse()}},'offline-reordered',dir).accepted,[]);assert.deepEqual(fs.readFileSync(file),before,'reorder does not rewrite publication or dates');}
- replay.news.push({id:item.id,accepted:r.articles.map((a:any)=>({url:a.originalUrl,publishedAt:a.publishedAt,summary:a.summary})),rejections:r.rejections});}
+ for(const item of fixture.news){const r=evaluateSavedNewsSummaries(item.id,item.inputs,item.text,['wheat','corn','soybean'].includes(item.id)?false:true,{requireEvidenceIds:true});const eligible=acceptedScheduledNews(item.id,r.articles);if(eligible.length){const dir=path.join(temp,'news-'+item.id),key='news-'+item.id;publishScheduledContent({[key]:{success:true,articles:eligible}},'offline-news',dir);const file=path.join(dir,'.rms-stage3/scheduled-content-current.json'),before=fs.readFileSync(file);assert.deepEqual(publishScheduledContent({[key]:{success:true,articles:[...eligible].reverse()}},'offline-reordered',dir).accepted,[]);assert.deepEqual(fs.readFileSync(file),before,'reorder does not rewrite publication or dates');}
+ replay.news.push({id:item.id,publicationEligible:eligible.length,accepted:r.articles.map((a:any)=>({url:a.originalUrl,publishedAt:a.publishedAt,summary:a.summary})),rejections:r.rejections});}
  const sugar=replay.news.find((r:any)=>r.id==='sugar');assert(!sugar.rejections.some((r:any)=>r.reason==='unsupported-number:110억'),'actual crore equivalence fixed; independent source checks retained');
  const potato=replay.news.find((r:any)=>r.id==='potato-starch');assert.equal(potato.accepted.length,0,'actual yield conflation still rejected');
  const article=(url:string,summary='검증된 옥수수 수출 100톤.')=>({originalUrl:url,title:'옥수수 수출',summary,publishedAt:'2026-10-26',sourceName:'USDA'});

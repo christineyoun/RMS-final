@@ -1,6 +1,8 @@
 import {validateReportedFact} from './analysisReportedFact.ts';
 import {materializeClaimText,visibleClaimText} from './analysisClaimText.ts';
 import {canonicalAnalysisQualityIssues} from './analysisPublicationQuality.ts';
+import {ANALYSIS_BRIEF_STYLE,briefPresentationIssues} from './analysisBriefContract.ts';
+import {sourcePropositionSupport} from './analysisSourcePropositions.ts';
 /** Pure response handling: never synthesizes prose, numbers or source URLs. */
 import type { GroundedAiAnalysis, GroundedAiSource } from './liveAiAnalysisService.ts';
 import {validAnalysisFact,type AnalysisEvidence} from './analysisEvidence.ts';
@@ -103,6 +105,9 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
         // unit and value together. Matching a number somewhere on a page is unsafe.
         if(refs.length!==1||segment.text!==refs[0]!.text)issues.push('unsupported-factual-claim:'+field);
         factual=true;
+      }else if(segment.kind==='reported-action'){
+        if(!sourcePropositionSupport(segment.text,refs as any,'action'))issues.push('unsupported-source-scoped-action:'+field);
+        else actionable=true;
       }else if(segment.kind==='reported-fact'){
         const verdict=validateReportedFact(segment.text,refs as any);
         if(verdict.issues.length)issues.push(...verdict.issues.map(reason=>'unsupported-reported-fact:'+reason+':'+field));
@@ -129,7 +134,21 @@ function suppliedEvidenceSources(data:any,evidence:AnalysisEvidence|undefined,no
   return {sources:[...new Map(selected.map(f=>[f.sourceUrl,{url:f.sourceUrl,title:f.sourceTitle}])).values()],
     audit:{path:'verified-rms-evidence',version:4,contractVersion:structured?4:'legacy',...(data.factBinding?{factBinding:data.factBinding}:{}),claims:data.evidenceClaims,facts:selected}};
 }
-export function parseGroundedAnalysis(response:any,model:string,now=new Date(),evidence?:AnalysisEvidence,options:{requiredContractVersion?:4;requiredFactBinding?:boolean}={}):GroundedAiAnalysis {
+/** Reuse the same claim validator at the brief publication/read boundary.
+ * Old accepted reports use their original generation time for evidence age;
+ * this never re-dates a retained report or authorizes a new provider request. */
+export function acceptedBriefEvidenceIssues(data:any,commodity:string):string[]{
+ if(data?.evidenceAudit?.reportStyle!==ANALYSIS_BRIEF_STYLE)return [];
+ const audit=data.evidenceAudit;
+ if(!Array.isArray(audit.facts)||!Array.isArray(audit.claims)||audit.facts.some((f:any)=>f.commodity!==commodity))return ['invalid-brief-publication-audit'];
+ const mapped={...data,sectionFormat:'evidence-sections-v1',factBinding:'verified-records-v1',evidenceContractVersion:4,evidenceClaims:audit.claims};
+ try{
+  const checked=suppliedEvidenceSources(mapped,{commodity,facts:audit.facts,failures:[]},new Date(data.generatedAt));
+  if(!Array.isArray(data.sources)||data.sources.length!==checked.sources.length||data.sources.some((s:any)=>!checked.sources.some(v=>v.url===s.url&&v.title===s.title)))return ['brief-publication-source-mismatch'];
+  return canonicalAnalysisQualityIssues(mapped,{commodity,facts:audit.facts,failures:[]});
+ }catch(e){return e instanceof AnalysisValidationError?e.issues:['invalid-brief-publication-audit'];}
+}
+export function parseGroundedAnalysis(response:any,model:string,now=new Date(),evidence?:AnalysisEvidence,options:{requiredContractVersion?:4;requiredFactBinding?:boolean;requiredReportStyle?:boolean}={}):GroundedAiAnalysis {
   const candidate=response?.candidates?.[0];
   if(response?.promptFeedback?.blockReason)throw new AnalysisValidationError('response',['prompt-blocked:'+response.promptFeedback.blockReason]);
   if(!candidate)throw new AnalysisValidationError('response',['no-candidate']);
@@ -142,6 +161,8 @@ export function parseGroundedAnalysis(response:any,model:string,now=new Date(),e
   try{data=materializeClaimText(data,evidence,now);}catch(error){throw new AnalysisValidationError('schema',[(error as Error).message]);}
   const issues:string[]=[];
   if(!data||typeof data!=='object'||Array.isArray(data))throw new AnalysisValidationError('schema',['expected-object']);
+  if(options.requiredReportStyle&&data.reportStyle!==ANALYSIS_BRIEF_STYLE)issues.push('required-report-style:'+ANALYSIS_BRIEF_STYLE);
+  if(data.reportStyle===ANALYSIS_BRIEF_STYLE)issues.push(...briefPresentationIssues(data));
   if(options.requiredContractVersion&&data.evidenceContractVersion!==options.requiredContractVersion)issues.push('required-evidence-contract-version:4');
   if(options.requiredFactBinding&&data.factBinding!=='verified-records-v1')issues.push('required-verified-fact-binding');
   if(typeof data.confidenceScore!=='number'||!Number.isFinite(data.confidenceScore)||data.confidenceScore<0||data.confidenceScore>100)issues.push('confidenceScore: expected number 0–100');
@@ -151,11 +172,11 @@ export function parseGroundedAnalysis(response:any,model:string,now=new Date(),e
     if(!Array.isArray(data[field])||data[field].length<(data.factBinding==='verified-records-v1'?0:2)||data[field].length>3||data[field].some((x:any)=>typeof x!=='string'||x.trim().length<4))issues.push(field+': expected supported nonempty strings, up to 3 (legacy reports need at least 2)');
   }
   if(issues.length)throw new AnalysisValidationError('schema',issues);
-  const qualityIssues=canonicalAnalysisQualityIssues(data);
+  const qualityIssues=canonicalAnalysisQualityIssues(data,evidence);
   if(qualityIssues.length)throw new AnalysisValidationError('schema',qualityIssues);
   let sources=supportedSearchSources(response,data);
   let evidenceAudit:any={path:'google-search',version:2,groundingMetadata:candidate.groundingMetadata};
-  if(!sources.length){
+  if(sectionResponse||!sources.length){
     try{const checked=suppliedEvidenceSources(data,evidence,now);sources=checked.sources;evidenceAudit=checked.audit;}
     catch(error){
       if(error instanceof AnalysisValidationError)throw new AnalysisValidationError(error.stage,[...error.issues,
@@ -163,7 +184,7 @@ export function parseGroundedAnalysis(response:any,model:string,now=new Date(),e
       throw error;
     }
   }
-  if(sectionResponse)evidenceAudit={...evidenceAudit,outputFormat:data.sectionFormat,omittedSections:data.omittedSections,sectionCoverage:data.sectionCoverage};
+  if(sectionResponse)evidenceAudit={...evidenceAudit,outputFormat:data.sectionFormat,...(data.reportStyle?{reportStyle:data.reportStyle}:{}),omittedSections:data.omittedSections,sectionCoverage:data.sectionCoverage};
   // Model-invented source lists never become trusted source links.
   if(data.sources!==undefined&&(!Array.isArray(data.sources)||data.sources.some((s:any)=>!sources.some(v=>v.url===(typeof s==='string'?s:s?.url)))))
     throw new AnalysisValidationError('sources',['fabricated-or-unverified-source-url']);

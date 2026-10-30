@@ -12,5 +12,8 @@ export function observationFingerprint(value:any):string{
 export function readFreePublication(){return readFreeJson('free-daily-publication.json');}
 export function freeRefreshStatus(directory=freeRoot()){
  const run=readFreeJson('free-source-refresh.json',directory),history=readFreeJson('free-source-observations.json',directory)||{};
- return {running:run?.status==='running',lastAttempt:run,lastSuccessfulRefreshAt:history.lastSuccessfulRefreshAt||null,lastPublicationAt:history.lastPublicationAt||null,automaticPaidAI:false};
+ const lease=readFreeJson('free-source-refresh.lock',directory);let ownerAlive=false;
+ if(Number.isInteger(lease?.pid)&&lease.pid>0)try{process.kill(lease.pid,0);ownerAlive=true;}catch(e){ownerAlive=(e as NodeJS.ErrnoException).code==='EPERM';}
+ const interrupted=run?.status==='running'&&!ownerAlive;
+ return {running:run?.status==='running'&&ownerAlive,interrupted,lastScheduledAttempt:readFreeJson('free-source-scheduled.json',directory),lastAttempt:run,lastSuccessfulRefreshAt:history.lastSuccessfulRefreshAt||null,lastPublicationAt:history.lastPublicationAt||null,automaticPaidAI:false};
 }

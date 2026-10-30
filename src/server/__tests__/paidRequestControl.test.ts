@@ -3,13 +3,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
+import {mock as testClock} from 'node:test';
 import {GoogleGenAI as SDK} from '@google/genai';
 import {GoogleGenAI} from '../paidGeminiGuard.ts';
 import {withAuthorizedStage3Run,type Stage3RunContext} from '../stage3Runtime.ts';
 import {hasOutstandingPaidRequest,acquirePaidLease} from '../paidJobLease.ts';
 import {approveStandaloneRun,runStandaloneAnalysis,standaloneContext,standalonePreflight,standaloneStatus} from '../standaloneAnalysis.ts';
 import {buildRecoveryAnalysisRequest} from '../liveAiAnalysisService.ts';
-import {collectAnalysisEvidence} from '../analysisEvidence.ts';
+import type {AnalysisEvidence} from '../analysisEvidence.ts';
 
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'rms-paid-controls-'));
 const nativeFetch=globalThis.fetch;globalThis.fetch=async()=>{throw Error('Real network prohibited');};
@@ -121,9 +122,16 @@ try{
     const release=acquirePaidLease('request','stale-fixture');assert.ok(hasOutstandingPaidRequest());release();
     assert.equal(fs.existsSync(path.join(root,'.rms-stage3/paid-analysis-job.lock')),false);
   }
-  const evidence=collectAnalysisEvidence('palm-oil');
-  const bounded=buildRecoveryAnalysisRequest('gemini-3.8-flash','palm-oil',evidence,new Date().toISOString().slice(0,10),'verified-only');
-  assert.deepEqual(bounded.config.tools,[]);assert.equal(bounded.config.maxOutputTokens,8192);assert.ok(bounded.contents.includes('No live Search'));
-  assert.throws(()=>buildRecoveryAnalysisRequest('gemini-3.8-flash','palm-oil',{commodity:'palm-oil',facts:[],failures:['unavailable']},'2026-10-20','verified-only'),/no paid request made/);
+  // Request-control contract, independent of ignored runtime receipts and cwd.
+  // Keep authentic archived dates; freeze only this pure builder check, after
+  // all real-clock deadline/lease tests. Source verification has separate tests.
+  const frozen=JSON.parse(fs.readFileSync(new URL('./fixtures/analysis-grounding-evidence-v1.json',import.meta.url),'utf8'));
+  const evidence:AnalysisEvidence=structuredClone(frozen.packets['palm-oil']);
+  testClock.timers.enable({apis:['Date'],now:new Date(frozen.checkedAt)});
+  try{
+    const bounded=buildRecoveryAnalysisRequest('gemini-3.8-flash','palm-oil',evidence,frozen.checkedAt.slice(0,10),'verified-only');
+    assert.deepEqual(bounded.config.tools,[]);assert.equal(bounded.config.maxOutputTokens,8192);assert.ok(bounded.contents.includes('No live Search'));
+    assert.throws(()=>buildRecoveryAnalysisRequest('gemini-3.8-flash','palm-oil',{commodity:'palm-oil',facts:[],failures:['unavailable']},'2026-10-20','verified-only'),/no paid request made/);
+  }finally{testClock.timers.reset();}
   console.log('PASS: installed SDK defaults; exactly one mock HTTP attempt on 429/503; deadline and caller/job/body abort; late-result discard; unknown timeout cost; per-run budget; cross-process and repeated-job locks; verified-only/no-Search profile; zero network/paid calls.');
 }finally{globalThis.fetch=nativeFetch;delete process.env.RMS_STAGE3_RUNTIME_ROOT;delete process.env.RMS_ANALYSIS_RECOVERY_ROOT;fs.rmSync(temp,{recursive:true,force:true});}

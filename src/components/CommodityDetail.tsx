@@ -592,9 +592,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
 
     fetchAiAnalysis();
-
+    const reload=()=>{void fetchAiAnalysis();};window.addEventListener('rms-evidence-updated',reload);
     return () => {
-      isMounted = false;
+      isMounted = false;window.removeEventListener('rms-evidence-updated',reload);
     };
   }, [selectedCommodity, isSyncing]);
 
@@ -684,9 +684,17 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     return () => { isMounted = false; };
   }, [isCorn, isSyncing]);
 
-  // Universal USDA FAS PSD fetch logic for ALL commodities (Corn, Soybeans, Wheat, etc.)
+  // Starches use their commodity-specific source paths, not an unsupported
+  // USDA world PSD request. Clear the previous commodity's balance on navigation.
   useEffect(() => {
     let isMounted = true;
+    if (commodity.id === 'potato-starch' || commodity.id === 'tapioca-starch') {
+      setUsdaData(null);
+      lastSuccessfulUsdaDataRef.current = null;
+      setIsUsdaLoading(false);
+      setIsUsdaFailed(false);
+      return () => { isMounted = false; };
+    }
     setIsUsdaLoading(true);
 
     const fetchUsdaPsd = async () => {

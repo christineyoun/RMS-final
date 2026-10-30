@@ -51,13 +51,49 @@ function interval(f:AnalysisFact){
 }
 export function supportedPriceStatement(text:string,refs:AnalysisFact[]):string[]|null {
  if(/\b[DPQ]\d+\b/.test(text))return null;
+ // A scoped qualitative endpoint comparison may omit raw dates/amounts from
+ // the visible brief. The cited verified interval still binds those identities.
+ // This does not grant a sustained trend, current-market or causal conclusion.
+ const qualitative=/^확인된 두 관측 사이 (.+?)(?:은|는|이|가) (상승|하락|동일)(?:했습니다|하게 유지되었습니다|한 수준입니다)\.$/.exec(normalized(text));
+ if(qualitative)for(const f of refs){
+  const checked=interval(f);
+  if(checked&&identity(qualitative[1],f)&&f.comparison?.direction===({상승:'increase',하락:'decrease',동일:'unchanged'} as const)[qualitative[2]])return [f.id];
+ }
+ if(qualitative)for(const a of refs)for(const b of refs){
+  if(a.comparison||b.comparison||!a.measure||!b.measure||a.observedAt>=b.observedAt||a.commodity!==b.commodity||!identity(qualitative[1],a)||!identity(qualitative[1],b)||!sameSeries(a,b)||['benchmark','scope','unit','valueKind'].some(k=>(a.measure as any)[k] !== (b.measure as any)[k]))continue;
+  if([a,b].some(f=>!Number.isFinite(f.measure!.value)||!prices(normalized(f.text)).values.some(p=>same(p,{value:f.measure!.value,unit:f.measure!.unit}))))continue;
+  const direction=b.measure.value>a.measure.value?'상승':b.measure.value<a.measure.value?'하락':'동일';
+  if(direction===qualitative[2])return [a.id,b.id];
+ }
+ // A limitation on an explicit two-observation comparison is not a forecast.
+ if(text.trim()==='해당 수치는 특정 두 관측 시점 간의 변화이며 지속적인 가격 추세를 나타내지 않습니다.'){
+  const f=refs.find(f=>interval(f)&&f.comparison?.observationCount===2);
+  if(f)return [f.id];
+ }
  const dates:string[]=[],percentages:number[]=[];
  let s=normalized(text).replace(/20\d{2}-\d{2}-\d{2}/g,d=>{dates.push(d);return 'D'+(dates.length-1);});
  const q=prices(s);s=q.skeleton.replace(/(-?[0-9]+(?:\.[0-9]+)?)%/g,(_,v)=>{percentages.push(Number(v));return 'P'+(percentages.length-1);});
  if(!q.values.length||q.values.some(v=>!Number.isFinite(v.value)))return null;
- const single=/^D0 기준 (.+?)(?:은|는|이|가)? Q0(?:\s*\(Q1\))?(?:로|를|으로)? (?:기록되었습니다|기록했습니다|관측되었습니다|확인되었습니다)\.$/.exec(s)
+ // Two independent endpoint changes may share the same current date. Bind
+ // BOTH baselines and directions; never infer a continuous or causal trend.
+ const dual=/^D0 대비 D1 (.+?)(?:은|는) Q0에서 Q1로 (상승|하락)했으나, D2의 Q2와 비교한 두 관측 사이에서는 (상승|하락)을 기록했습니다\.$/.exec(s);
+ if(dual&&dates.length===3&&q.values.length===3&&!percentages.length){
+  const direction=(a:Quote,b:Quote)=>b.value>a.value?'상승':b.value<a.value?'하락':'동일';
+  for(const f of refs)for(const g of refs){
+   const a=interval(f),b=interval(g);
+   if(!a||!b||!identity(dual[1],f)||!identity(dual[1],g)||f.commodity!==g.commodity||!sameSeries(f,g)||['scope','benchmark','unit'].some(k=>(f.measure as any)[k]!==(g.measure as any)[k]))continue;
+   if(a.a===dates[0]&&a.b===dates[1]&&b.a===dates[2]&&b.b===dates[1]&&same(a.x,q.values[0])&&same(a.y,q.values[1])&&same(b.x,q.values[2])&&same(b.y,q.values[1])&&direction(a.x,a.y)===dual[2]&&direction(b.x,b.y)===dual[3])return [f.id,g.id];
+  }
+ }
+ // An explicit dated observation may refer to "이후" only when every supplied
+ // record names the SAME instrument/source/scope. Never infer a benchmark from
+ // a mixed evidence pool or infer a new date from narrative order.
+ if(/^이후 D0 관측에서는 Q0로 확인되었습니다\.$/.test(s)&&dates.length===1&&q.values.length===1&&!percentages.length&&refs.length&&refs.every(f=>!f.comparison&&f.measure?.metric==='price'&&f.measure.valueKind==='actual'&&f.commodity===refs[0].commodity&&f.sourceUrl===refs[0].sourceUrl&&['benchmark','scope','unit'].every(k=>(f.measure as any)[k]===(refs[0].measure as any)[k]))){
+  const f=refs.find(f=>matchesObservation(f,dates[0],q.values));if(f)return [f.id];
+ }
+ const single=/^D0(?: 기준)? (.+?)(?:은|는|이|가)? Q0(?:\s*\(Q1\))?(?:로|를|으로)? (?:기록되었습니다|기록했습니다|관측되었습니다|확인되었습니다)\.$/.exec(s)
   ||/^(.+?)(?:은|는) D0 Q0를 기록했습니다\.$/.exec(s);
- if(single&&dates.length===1&&!percentages.length&&q.values.length<=2){const f=refs.find(f=>identity(single[1],f)&&matchesObservation(f,dates[0],q.values));if(f)return [f.id];}
+ if(single&&dates.length===1&&!percentages.length&&q.values.length<=2){const f=refs.find(f=>(identity(single[1],f)||single[1]==='CBOT 대두 일봉 가격'&&f.commodity==='soybean'&&f.measure?.benchmark==='CBOT:ZS=F'&&f.measure.scope==='Yahoo-generic-futures-daily-bar-not-verified-settlement')&&matchesObservation(f,dates[0],q.values));if(f)return [f.id];}
  // Two endpoints; an explicit comparison requires same source, benchmark,
  // metric, scope, unit and kind. Unknown wording fails instead of stripping it.
  const forward=/^(.+?)(?:은|는) D0 Q0(?:\(Q1\))?에서 D1 Q(?:1|2)(?:\(Q3\))?로 관측되었습니다\.$/.exec(s);

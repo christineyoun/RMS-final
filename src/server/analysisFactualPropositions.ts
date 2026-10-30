@@ -64,6 +64,72 @@ function translatedExportReport(text:string,refs:AnalysisFact[]):string[]|null {
  }
  return null;
 }
+function reportedSoybeanParaphrase(text:string,refs:AnalysisFact[]):string[]|null{
+ const planting=/^(?:(20\d{2})년 )?(\d{1,2})월 (\d{1,2})일 보도에 따르면 브라질 마토그로소의 (20\d{2}\/\d{2})년 대두 파종률은 약 ([\d.]+)%로 집계되어 5년 평균치인 약 ([\d.]+)%를 웃돌았습니다\.$/.exec(text);
+ const combinedPlanting=/^브라질 마토그로소의 (20\d{2}\/\d{2})년 대두 파종률은 약 ([\d.]+)%로 5년 평균 ([\d.]+)%를 웃도는 진척을 나타냈으며 북부 일부의 건조 우려가 함께 보고되었습니다\.$/.exec(text);
+ const offer=/^(?:한편 )?(\d{1,2})월 (\d{1,2})일 기준 (\d{1,2})월 선적 FOB 오퍼는 미국 뉴올리언스(?:가)? ([\d.]+) USD\/MT, 브라질 산투스(?:가)? ([\d.]+) USD\/MT로 (?:보도되었습니다|확인되었습니다)\.$/.exec(text);
+ for(const f of refs){
+  const c=f.referenceContext;if(f.commodity!=='soybean'||c?.receiptSha256!==f.recordSha256||!f.sourceUrl.startsWith('https://commodity-board.com/'))continue;
+  const q=c.quote.replace(/[‐‑–—]/g,'-');
+  if(combinedPlanting){
+   const [,period,value,baseline]=combinedPlanting;
+   const source=/Mato Grosso planting is reported at around ([\d.]+)% complete, ahead of its five-year average near ([\d.]+)%, though some northern areas complain about dryness\./.exec(q);
+   if(source&&f.measure?.metric==='planting-progress'&&f.measure.valueKind==='actual'&&f.measure.unit==='%'&&f.measure.scope==='Brazil:Mato Grosso:'+period+':reported-planting'&&f.measure.value===Number(value)&&Number(value)>Number(baseline)&&Number(source[1])===Number(value)&&Number(source[2])===Number(baseline)&&f.text.includes(period+'년')&&f.text.includes('일부 북부 지역 건조 우려'))return [f.id];
+  }
+  if(planting){
+   const [,explicitYear,month,day,period,value,baseline]=planting,year=explicitYear||f.observedAt.slice(0,4);
+   if(f.observedAt!==year+'-'+month.padStart(2,'0')+'-'+day.padStart(2,'0')||f.measure?.metric!=='planting-progress'||f.measure.valueKind!=='actual'||f.measure.unit!=='%'||f.measure.scope!=='Brazil:Mato Grosso:'+period+':reported-planting'||f.measure.value!==Number(value)||Number(value)<=Number(baseline))continue;
+   const source=/Mato Grosso planting is reported at around ([\d.]+)% complete, ahead of its five-year average near ([\d.]+)%/.exec(q);
+   if(source&&Number(source[1])===Number(value)&&Number(source[2])===Number(baseline)&&f.text.includes(period+'년'))return [f.id];
+  }
+  if(offer){
+   const [,month,day,shipment,us,br]=offer,year=f.observedAt.slice(0,4);
+   if(f.observedAt!==year+'-'+month.padStart(2,'0')+'-'+day.padStart(2,'0')||f.measure?.metric!=='price'||f.measure.unit!=='USD/MT'||f.measure.valueKind!=='actual'||f.measure.value!==Number(us))continue;
+   const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+   if(!f.measure.scope.startsWith('reported-'+months[Number(shipment)-1]?.slice(0,3)+year+'-US-NewOrleans-FOB-offer'))continue;
+   const source=/As of ([A-Za-z]+) (\d+), US soybeans for ([A-Za-z]+) shipment were quoted at ([\d.]+) US-dollars per tonne FOB New Orleans, compared with ([\d.]+) US-dollars per tonne FOB Santos for Brazilian beans\./.exec(q);
+   if(source&&months[Number(month)-1]===source[1]&&Number(day)===Number(source[2])&&months[Number(shipment)-1]===source[3]&&Number(us)===Number(source[4])&&Number(br)===Number(source[5]))return [f.id];
+  }
+ }
+ return null;
+}
+function attributedSoybeanForecast(text:string,refs:AnalysisFact[]):string[]|null{
+ const claim=/^미국 농무부 ERS 전망에서 (20\d{2}\/\d{2})년 미국 대두 생산 전망은 ([\d.]+) billion bushels로 제시되었습니다\.$/.exec(text);
+ if(!claim)return null;
+ const [,period,value]=claim;
+ const f=refs.find(f=>f.commodity==='soybean'&&f.verification==='original-record'&&f.sourceUrl==='https://www.ers.usda.gov/topics/crops/soybeans-and-oil-crops/market-outlook'&&f.measure?.metric==='생산'&&f.measure.valueKind==='forecast'&&f.measure.scope==='US:'+period+':October2026-forecast'&&f.observedAt==='2026-10-15'&&f.measure.unit==='billion bushels'&&f.measure.value===Number(value)&&f.text.includes(period+'년 미국 대두 생산 전망 '+value+' billion bushels'));
+ return f?[f.id]:null;
+}
+function officialPotatoStatistics(text:string,refs:AnalysisFact[]):string[]|null{
+ const trade=/^Eurostat Comext 공식 무역 통계상 (20\d{2})년 (\d{1,2})월부터 (20\d{2})년 (\d{1,2})월까지 12개월간 EU27의 비EU 대상 완제품 감자전분\(CN 11081300\) 수출량은 ([\d,.]+)천 MT, 수입량은 ([\d,.]+)천 MT로 집계되었습니다\.$/.exec(text);
+ const harvest=/^(?:한편 )?Eurostat의 (20\d{2})년 연간 통계에 따르면 독일, 프랑스, 네덜란드, 덴마크 4개국의 전체 감자 생산량은 ([\d,.]+)천 MT, 수확 면적은 ([\d,.]+)천 ha로 나타났습니다\.$/.exec(text);
+ const num=(s:string)=>Number(s.replaceAll(',',''));
+ for(const f of refs){
+  if(f.commodity!=='potato-starch'||!f.measure)continue;
+  if(trade){
+   const [,y,m,y2,m2,exp,imp]=trade,start=y+'-'+m.padStart(2,'0'),end=y2+'-'+m2.padStart(2,'0');
+   if(f.sourceUrl!=='https://ec.europa.eu/eurostat/databrowser/view/DS-045409/default/table?lang=en'||f.measure.benchmark!=='Eurostat:Comext:11081300'||f.measure.scope!=='EU27:extra-EU:CN11081300:'+start+'~'+end||f.observedAt!==end||f.measure.unit!=='천 MT'||f.measure.valueKind!=='actual'||f.measure.value!==num(exp)||(Number(y2)-Number(y))*12+Number(m2)-Number(m)+1!==12)continue;
+   const original=/수출 ([\d.]+) 천 MT, 수입 ([\d.]+) 천 MT\./.exec(f.text);
+   if(original&&Number(original[1])===num(exp)&&Number(original[2])===num(imp))return [f.id];
+  }
+  if(harvest){
+   const [,year,production,area]=harvest;
+   if(f.sourceUrl!=='https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en'||f.measure.benchmark!=='Eurostat:apro_cpnh1'||f.measure.scope!=='DE,FR,NL,DK:all-potatoes:'+year||f.measure.valueKind!=='proxy'||f.measure.unit!=='천 MT'||f.measure.value!==num(production)||f.observedAt!==year+'-12-31')continue;
+   const original=/전체 감자\(종자용 포함\) 생산 ([\d.]+) 천 MT[\s\S]*?수확면적 ([\d.]+) 천 ha,/.exec(f.text);
+   if(original&&Number(original[1])===num(production)&&Number(original[2])===num(area))return [f.id];
+  }
+ }
+ return null;
+}
 export function supportedFactualProjection(text:string,refs:AnalysisFact[]):string[]|null {
- return supportedPriceStatement(text,refs)||sameIntervalReport(text,refs)||observedComparison(text,refs)||translatedExportReport(text,refs);
+ // Omitting a number is not a license to generalize the scope. This closed
+ // Korean paraphrase describes ONLY the classification of a world annual
+ // forecast, never adequacy, a revision, actual supply or a price consequence.
+ const classified=/^세계 (소맥|옥수수|대두유|대두|팜유|설탕(?:\(원심분리당\))?|감자전분|타피오카전분) (생산|소비|수출|기말재고) 전망은 연간 전망치입니다\.$/.exec(factualLanguage(text));
+ if(classified){
+  const crop:Record<string,string>={소맥:'wheat',옥수수:'corn',대두:'soybean',대두유:'soybean-oil',팜유:'palm-oil',설탕:'sugar','설탕(원심분리당)':'sugar',감자전분:'potato-starch',타피오카전분:'tapioca-starch'};
+  const f=refs.find(f=>f.commodity===crop[classified[1]]&&f.measure?.metric===classified[2]&&f.measure.valueKind==='forecast'&&/^world:20\d{2}\/20\d{2}$/.test(f.measure.scope)&&f.topic===classified[1]);
+  if(f)return [f.id];
+ }
+ return supportedPriceStatement(text,refs)||sameIntervalReport(text,refs)||observedComparison(text,refs)||translatedExportReport(text,refs)||reportedSoybeanParaphrase(text,refs)||attributedSoybeanForecast(text,refs)||officialPotatoStatistics(text,refs);
 }

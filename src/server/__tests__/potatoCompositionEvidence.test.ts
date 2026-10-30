@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {collectPotatoCompositionEvidence,readPotatoCompositionEvidence} from '../potatoCompositionEvidence.ts';
+import {composeEvidenceFirstReport,publishEvidenceFirstReport} from '../evidenceFirstReport.ts';
+import {renderedEvidenceReport} from '../evidenceReportRendering.tsx';
+import {readScheduledContent} from '../scheduledContent.ts';
+const originals=JSON.parse(fs.readFileSync(new URL('./fixtures/potatoOfficialOriginalOct29.json',import.meta.url),'utf8'));
+const root=fs.mkdtempSync(path.join(os.tmpdir(),'rms-potato-originals-'));
+const now=new Date('2026-10-29T09:00:00Z');
+const fetcher:typeof fetch=async input=>{const r=Object.values(originals).find((r:any)=>r.url===String(input)) as any;assert(r,'only exact official URLs');return new Response(r.body);};
+try {
+ const first=await collectPotatoCompositionEvidence(root,now,fetcher);
+ assert.equal(first.evidence.facts.length,2);assert.deepEqual(first.evidence.failures,[]);
+ const harvest=first.evidence.facts.find(f=>f.id==='potato-official-harvest')!;
+ const trade=first.evidence.facts.find(f=>f.id==='potato-official-trade')!;
+ assert.equal(harvest.observedAt,'2025-12-31');assert.equal(harvest.measure?.value,35254.22);
+ assert(harvest.text.includes('전분용 감자·완제품 감자전분 생산량'));
+ assert.equal(trade.observedAt,'2026-08');assert.equal(trade.measure?.value,500.51);
+ assert(trade.text.includes('역내 교역 제외'));assert(trade.text.includes('가격·단가·소비·생산·재고'));
+ const publisher=JSON.parse(fs.readFileSync(new URL('./fixtures/livePublisherPassagesOct29.json',import.meta.url),'utf8')).facts.filter((f:any)=>f.commodity==='potato-starch');
+ const evidence={commodity:'potato-starch',facts:[...publisher,...first.evidence.facts],failures:[]};
+ const before=composeEvidenceFirstReport({...evidence,facts:publisher},now);assert.equal(before.status,'retain-previous','publisher-only gap must remain rejected');
+ const published=publishEvidenceFirstReport(evidence,now,root,'offline-original-eurostat-recovery',renderedEvidenceReport);
+ assert.equal(published.status,'composed');if(published.status==='composed'){assert(published.published);assert(published.report.deskRecommendation.includes('오퍼'));assert(published.report.watchItems.some(s=>s.includes('저장')));}
+ const saved=readScheduledContent('analysis-potato-starch',root);assert(saved);
+ const unchanged=publishEvidenceFirstReport(evidence,new Date(+now+1000),root,'offline-identical',renderedEvidenceReport);assert(unchanged.status==='composed'&&!unchanged.published);assert.equal(unchanged.selected?.payload.data.generatedAt,saved.payload.data.generatedAt);
+ const rejected=publishEvidenceFirstReport({...evidence,facts:publisher},new Date(+now+2000),root,'offline-incomplete',renderedEvidenceReport);assert.equal(rejected.status,'retain-previous');assert.equal(rejected.selected?.payload.data.generatedAt,saved.payload.data.generatedAt);
+ const failed=await collectPotatoCompositionEvidence(root,new Date(+now+1000),async()=>new Response('',{status:503}));
+ assert.equal(failed.rows.filter(r=>r.status==='failed').length,3);
+ assert.deepEqual(failed.evidence.facts,first.evidence.facts,'failed fetch preserves authentic prior records and verification dates');
+ const dir=path.join(root,'.rms-stage3/evidence/potato-official');
+ const pointer=JSON.parse(fs.readFileSync(path.join(dir,'exports.json'),'utf8'));
+ const receiptPath=path.join(dir,pointer.sha256+'.json');const bytes=fs.readFileSync(receiptPath);
+ const receipt=JSON.parse(bytes.toString());receipt.body=receipt.body.replace('11081300','11081200');fs.writeFileSync(receiptPath,JSON.stringify(receipt));
+ assert(!readPotatoCompositionEvidence(root,now).facts.some(f=>f.id==='potato-official-trade'),'tampered original fails closed');
+ fs.writeFileSync(receiptPath,bytes);fs.unlinkSync(receiptPath);
+ assert(readPotatoCompositionEvidence(root,now).failures.includes('potato-official-trade-receipt-unavailable-or-invalid'));
+ assert.equal(readPotatoCompositionEvidence(root,new Date(+now+8*86400000)).facts.length,0,'expired receipt cannot authorize current collection');
+ console.log('PASS real Eurostat originals, exact quantities/scopes/dates, failed-fetch retention, tamper/missing/expiry rejection');
+} finally {fs.rmSync(root,{recursive:true,force:true});}

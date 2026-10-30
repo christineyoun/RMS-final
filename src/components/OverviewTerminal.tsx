@@ -254,8 +254,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     let disposed=false,active=false;let controller:AbortController|null=null;
     const update=async()=>{if(disposed||active||document.visibilityState==='hidden')return;active=true;controller=new AbortController();try{const data=await loadOverviewIntelligence(fetch,controller.signal);if(!disposed)setIntelligence(data);}catch(error){if(!disposed)setIntelligence(null);}finally{active=false;}};
     void update();const timer=window.setInterval(()=>void update(),60000);
-    window.addEventListener('focus',update);document.addEventListener('visibilitychange',update);
-    return()=>{disposed=true;controller?.abort();clearInterval(timer);window.removeEventListener('focus',update);document.removeEventListener('visibilitychange',update);};
+    window.addEventListener('focus',update);window.addEventListener('rms-evidence-updated',update);document.addEventListener('visibilitychange',update);
+    return()=>{disposed=true;controller?.abort();clearInterval(timer);window.removeEventListener('focus',update);window.removeEventListener('rms-evidence-updated',update);document.removeEventListener('visibilitychange',update);};
   },[isSyncing]);
   const localMarketIssues=intelligence?.issues||[];
 
@@ -1078,7 +1078,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </span>
               
               {(intelligence?.directives||[]).map(d=>(
-                <div key={d.commodity} data-overview-directive={d.commodity} aria-description={d.reason+' · '+d.generatedAt.slice(0,10)} className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
+                <div key={d.commodity} data-overview-directive={d.commodity} aria-description={d.reason} className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
                   <span className="px-2 py-0.5 bg-[#DF0029] border border-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">{d.name}</span>
                   <span className="text-xs font-bold text-slate-800 break-keep">{formalAiText(d.recommendation)}</span>
                 </div>

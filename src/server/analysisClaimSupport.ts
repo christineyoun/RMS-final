@@ -19,7 +19,7 @@ const vocabulary:Record<Metric,RegExp>={
   inventory:/재고|\bstocks?\b|inventor/i,
   production:/생산|수확|작황|\bproduction\b|\bharvest\b/i,
   consumption:/소비|수요|\bconsumption\b|\bdemand\b/i,
-  exports:/수출|선적|\bexports?\b|\bshipment/i,
+  exports:/수출|선적(?!\s*(?:조건|일정))|\bexports?\b|\bshipment/i,
 };
 // Soybean oil must never be resolved as whole soybeans. Benchmark aliases are
 // identity, not proof of a measurement/trend; metrics are checked separately.
@@ -111,7 +111,8 @@ export function validateClaimReferences(premise:string,refs:AnalysisFact[],suppo
     if(/세계|글로벌|world|global/i.test(premise)&&inventory.length&&inventory.some(f=>f.measure?.scope.startsWith('US:')))issues.push('oil-inventory-geography-mismatch');
     if(/현재|지금|현시점|current/i.test(premise)&&inventory.some(f=>f.measure?.scope.includes('NOPA-members')))issues.push('oil-inventory-reference-period-mismatch');
     if(/USDA/.test(premise)&&inventory.some(f=>f.measure?.scope.includes('NOPA-members')))issues.push('oil-inventory-source-mismatch');
-    if(/정제유|현물|도착 원가/.test(premise)&&refs.some(f=>f.measure?.benchmark==='CBOT:ZL=F'))issues.push('futures-not-physical-procurement-price');
+    const offerCheck=options.adviceTarget&&/(?:공급사.{0,12}(?:오퍼|견적)|정제유 오퍼)/.test(premise)&&/비교|대조|확인|점검/.test(premise)&&!/동일|같은 가격|일치|실행 가격|반영했/.test(premise);
+    if(/정제유|현물|도착 원가/.test(premise)&&refs.some(f=>f.measure?.benchmark==='CBOT:ZL=F')&&!offerCheck)issues.push('futures-not-physical-procurement-price');
   }
   const compatible=(subject:string,target:string)=>subject===target||subject==='palm-oil'&&['palm-cpo','palm-olein'].includes(target);
   const relevant=(c:typeof contexts[number])=>(!named.length||named.some(s=>compatible(s,c.subject)))&&

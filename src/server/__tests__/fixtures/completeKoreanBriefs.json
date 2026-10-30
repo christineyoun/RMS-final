@@ -1,0 +1,423 @@
+{
+  "provenance": "Human-authored offline compatibility examples, NOT Gemini outputs. All facts refer to unchanged October 27 verified records; Tapioca also uses the original archived Viet Bac publisher excerpt, never its rejected model summary.",
+  "bodies": {
+    "wheat": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 65,
+      "marketAnalysis": {
+        "text": "세계 소맥 생산 전망은 822390 천 MT입니다. 세계 소맥 수출 전망은 208968 천 MT입니다. 확인된 두 관측 사이 미국 SRW 선물 관측가는 하락했습니다. 소맥 SRW의 해당 가격 관측은 실제 공급사 확정 오퍼나 한국 도착원가를 뜻하지 않습니다. 세계 소맥의 연간 생산 전망은 월간 실적과 구분해야 합니다. 세계 소맥 기말재고 전망은 276038 천 MT입니다. 세계 소맥 기말재고 전망만으로 현재의 현물 공급 여유나 구매 원가를 판단할 수는 없습니다. 소맥 SRW의 가격 지표와 실제 매입 조건은 통화와 규격 및 인도 조건을 구분해 비교해야 합니다.\n\n소맥 선물 관측값과 실제 공급사 오퍼를 비교하고 구매 규격별 계약 조건을 점검하십시오. 세계 소맥 수출 전망의 다음 발표를 확인한 후 공급사 견적과 선적 조건을 대조하여 조달 시점을 검토하십시오.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125",
+          "psd-176",
+          "psd-88",
+          "wheat-srw-2026-10-23",
+          "wheat-srw-2026-10-16"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "소맥 SRW 관측값과 공급사 오퍼 비교",
+        "evidenceIds": [
+          "wheat-srw-2026-10-23"
+        ]
+      },
+      "priceOutlook": {
+        "text": "향후 세계 소맥 생산 전망과 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "향후 세계 소맥 생산 전망이 하향되면 선물가격 상승 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "향후 세계 소맥 소비 전망이 하향되면 선물가격 하락 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-125"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "세계 소맥 수출 전망의 수정 여부와 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-88"
+          ]
+        }
+      ]
+    },
+    "corn": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 65,
+      "marketAnalysis": {
+        "text": "확인된 두 관측 사이 CBOT 옥수수 선물 일봉 가격은 하락했습니다. 세계 옥수수 생산 전망은 1293750 천 MT입니다. 세계 옥수수 소비 전망은 1313129 천 MT입니다. 세계 옥수수 수출 전망은 210719 천 MT입니다. 옥수수의 해당 가격 관측은 실제 공급사 확정 오퍼나 한국 도착원가를 뜻하지 않습니다. 세계 옥수수 기말재고 전망은 280440 천 MT입니다. 세계 옥수수 기말재고 전망만으로 현재의 현물 공급 여유나 구매 원가를 판단할 수는 없습니다. 옥수수의 가격 지표와 실제 매입 조건은 통화와 규격 및 인도 조건을 구분해 비교해야 합니다.\n\n옥수수 선물가격과 공급사 견적을 대조하고 선적 조건을 확인한 뒤 조달 시점을 검토하십시오. 세계 옥수수 생산 전망의 수정 여부를 점검하고 실제 공급사 오퍼를 비교하여 구매 조건을 확인하십시오.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125",
+          "psd-176",
+          "psd-88",
+          "corn-zc-2026-10-27",
+          "corn-zc-2026-10-26"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "옥수수 선물가격·선적 조건 대조",
+        "evidenceIds": [
+          "corn-zc-2026-10-27"
+        ]
+      },
+      "priceOutlook": {
+        "text": "향후 세계 옥수수 생산 전망과 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "향후 세계 옥수수 생산 전망이 하향되면 선물가격 상승 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "향후 세계 옥수수 소비 전망이 하향되면 선물가격 하락 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-125"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "세계 옥수수 수출 전망의 수정 여부와 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-88"
+          ]
+        }
+      ]
+    },
+    "soybean": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 65,
+      "marketAnalysis": {
+        "text": "세계 대두 소비 전망은 442177 천 MT입니다. 확인된 두 관측 사이 CBOT 대두 선물 일봉 가격은 상승했습니다. 세계 대두 생산 전망은 442700 천 MT입니다. 세계 대두 기말재고 전망은 124278 천 MT입니다. 대두의 해당 가격 관측은 실제 공급사 확정 오퍼나 한국 도착원가를 뜻하지 않습니다. 세계 대두 수출 전망은 191995 천 MT입니다. 세계 대두 기말재고 전망만으로 현재의 현물 공급 여유나 구매 원가를 판단할 수는 없습니다. 대두의 가격 지표와 실제 매입 조건은 통화와 규격 및 인도 조건을 구분해 비교해야 합니다.\n\n대두 선물가격과 원산지별 공급사 오퍼를 비교하고 품질 규격과 납기를 확인하십시오. 세계 대두 소비 전망의 다음 발표를 점검한 뒤 실제 공급사 견적과 선적 조건을 대조하여 조달 일정을 검토하십시오.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125",
+          "psd-176",
+          "psd-88",
+          "soybean-zs-2026-10-27",
+          "soybean-zs-2026-10-20"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "대두 선물과 원산지별 견적 비교",
+        "evidenceIds": [
+          "soybean-zs-2026-10-27"
+        ]
+      },
+      "priceOutlook": {
+        "text": "향후 세계 대두 생산 전망과 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "향후 세계 대두 생산 전망이 하향되면 선물가격 상승 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "향후 세계 대두 소비 전망이 하향되면 선물가격 하락 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-125"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "세계 대두 수출 전망의 수정 여부와 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-88"
+          ]
+        }
+      ]
+    },
+    "soybean-oil": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 65,
+      "marketAnalysis": {
+        "text": "확인된 두 관측 사이 CBOT 대두유 선물 일봉 가격은 하락했습니다. 세계 대두유 수출 전망은 14949 천 MT입니다. 세계 대두유 생산 전망은 75241 천 MT입니다. 세계 대두유 소비 전망은 73483 천 MT입니다. 대두유의 해당 가격 관측은 실제 공급사 확정 오퍼나 한국 도착원가를 뜻하지 않습니다. 세계 대두유 기말재고 전망은 6854 천 MT입니다. 세계 대두유 기말재고 전망만으로 현재의 현물 공급 여유나 구매 원가를 판단할 수는 없습니다. 대두유의 가격 지표와 실제 매입 조건은 통화와 규격 및 인도 조건을 구분해 비교해야 합니다.\n\n대두유 선물가격과 정제유 공급사 오퍼를 비교한 후 실제 선적 조건을 확인하십시오. 세계 대두유 수출 전망의 수정 여부를 점검하고 공급사 견적의 제품 규격과 납기를 대조하여 계약 조건을 검토하십시오.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125",
+          "psd-176",
+          "psd-88",
+          "soybean-oil-zl-2026-10-27",
+          "soybean-oil-zl-2026-10-26"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "대두유 선물·정제유 오퍼 대조",
+        "evidenceIds": [
+          "soybean-oil-zl-2026-10-27"
+        ]
+      },
+      "priceOutlook": {
+        "text": "향후 세계 대두유 생산 전망과 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "향후 세계 대두유 생산 전망이 하향되면 선물가격 상승 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "향후 세계 대두유 소비 전망이 하향되면 선물가격 하락 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-125"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "세계 대두유 수출 전망의 수정 여부와 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-88"
+          ]
+        }
+      ]
+    },
+    "palm-oil": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 65,
+      "marketAnalysis": {
+        "text": "확인된 두 관측 사이 말레이시아 CPO 선물 종가는 상승했습니다. 세계 팜유 기말재고 전망은 13697 천 MT입니다. 세계 팜유 생산 전망은 78921 천 MT입니다. 세계 팜유 수출 전망은 43747 천 MT입니다. CPO의 해당 가격 관측은 실제 공급사 확정 오퍼나 한국 도착원가를 뜻하지 않습니다. 세계 팜유 소비 전망은 78059 천 MT입니다. 세계 팜유 기말재고 전망만으로 현재의 현물 공급 여유나 구매 원가를 판단할 수는 없습니다. CPO의 가격 지표와 실제 매입 조건은 통화와 규격 및 인도 조건을 구분해 비교해야 합니다.\n\nCPO와 RBD 올레인 각각의 공급사 오퍼를 비교한 뒤 구매 제품의 규격과 납기를 확인하십시오. 세계 팜유 기말재고 전망의 다음 발표를 점검하고 실제 공급사 견적과 인도 조건을 대조하여 조달 일정을 검토하십시오.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125",
+          "psd-176",
+          "psd-88",
+          "palm-cpo-2026-10-19",
+          "palm-cpo-2026-10-14",
+          "palm-olein-2026-10-19"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "CPO·올레인 제품별 오퍼 비교",
+        "evidenceIds": [
+          "palm-cpo-2026-10-19",
+          "palm-olein-2026-10-19"
+        ]
+      },
+      "priceOutlook": {
+        "text": "향후 세계 팜유 생산 전망과 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-125"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "향후 세계 팜유 생산 전망이 하향되면 선물가격 상승 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "향후 세계 팜유 소비 전망이 하향되면 선물가격 하락 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-125"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "세계 팜유 수출 전망의 수정 여부와 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-88"
+          ]
+        }
+      ]
+    },
+    "sugar": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 65,
+      "marketAnalysis": {
+        "text": "세계 설탕(원심분리당) 생산 전망은 184854 천 MT입니다. 세계 설탕(원심분리당)의 계산된 연간 국내사용 전망은 180536 천 MT입니다. 세계 설탕(원심분리당) 수출 전망은 62324 천 MT입니다. 세계 설탕(원심분리당) 기말재고 전망은 44410 천 MT입니다. 세계 설탕(원심분리당) 기초재고 전망은 43523 천 MT입니다. 세계 설탕(원심분리당)의 연간 생산 전망은 월간 실적과 구분해야 합니다. 세계 설탕(원심분리당) 기말재고 전망만으로 현재의 현물 공급 여유나 구매 원가를 판단할 수는 없습니다. 세계 설탕(원심분리당)의 연간 수출 전망은 월간 실적과 구분해야 합니다.\n\n세계 설탕 생산 전망과 소비 전망의 다음 발표를 함께 비교하고 공급사 계약 조건을 점검하십시오. 세계 설탕 수출 전망의 수정 여부를 확인한 뒤 공급사 오퍼와 실제 선적 조건을 대조하여 조달 시점을 검토하십시오.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-sugar-domestic-use",
+          "psd-176",
+          "psd-88",
+          "psd-20"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "세계 설탕 생산·소비 전망과 오퍼 점검",
+        "evidenceIds": [
+          "psd-28",
+          "psd-sugar-domestic-use"
+        ]
+      },
+      "priceOutlook": {
+        "text": "향후 세계 설탕(원심분리당) 생산 전망과 소비 전망의 상대적 수정 방향에 따라 선물 시장의 수급 압력이 변동될 수 있습니다.",
+        "evidenceIds": [
+          "psd-28",
+          "psd-sugar-domestic-use"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "향후 세계 설탕(원심분리당) 생산 전망이 하향되면 선물가격 상승 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-28"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "향후 세계 설탕(원심분리당) 소비 전망이 하향되면 선물가격 하락 압력이 생길 수 있습니다.",
+          "evidenceIds": [
+            "psd-sugar-domestic-use"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "세계 설탕(원심분리당) 수출 전망의 수정 여부와 공급사 오퍼를 비교하십시오.",
+          "evidenceIds": [
+            "psd-88"
+          ]
+        }
+      ]
+    },
+    "potato-starch": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 62,
+      "marketAnalysis": {
+        "text": "보관된 유럽 시장평가에서는 원료감자 가용량 제약 우려에도 완제품 감자전분 가격이 대체로 안정적이었습니다. 가공사의 커버리지와 하류 구매 조절이 당시 가격 안정의 배경으로 제시됐습니다. 원료 품질 저하와 저장 손실은 후속 공급 여건에서 살펴야 할 조건부 위험으로 제시됐습니다. 독일·프랑스·네덜란드·덴마크의 전체 감자 생산은 종자용을 포함한 원료 지표로 완제품 감자전분 생산량과 구분해야 합니다. 역외 감자전분 교역은 완제품의 흐름을 보여주지만 역내 거래와 소비·재고·가격을 직접 나타내지는 않습니다. 해당 시장평가만으로 정확한 현물 오퍼나 실제 완제품 공급 부족을 판단할 수는 없습니다.\n\n감자전분 공급사 오퍼와 원료 저장 품질을 비교하고 실제 납품 조건을 확인하십시오. 완제품 가격의 후속 평가와 공급사의 원료 확보 범위를 함께 점검한 뒤 조달 일정을 검토하십시오.",
+        "evidenceIds": [
+          "article-potato-market",
+          "potato-official-harvest",
+          "potato-official-trade"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "감자전분 실물 오퍼와 원료 품질 비교",
+        "evidenceIds": [
+          "article-potato-market"
+        ]
+      },
+      "priceOutlook": {
+        "text": "해당 시장평가만으로 정확한 현물 오퍼나 실제 완제품 공급 부족을 판단할 수는 없습니다.",
+        "evidenceIds": [
+          "article-potato-market"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "보관된 시장평가의 원료 품질·저장 손실 위험",
+          "evidenceIds": [
+            "article-potato-market"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "당시 가공사 커버리지와 하류 구매 조절에 따른 가격 안정",
+          "evidenceIds": [
+            "article-potato-market"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "감자전분 후속 오퍼·원료 확보 범위·저장 품질 점검",
+          "evidenceIds": [
+            "article-potato-market"
+          ]
+        }
+      ]
+    },
+    "tapioca-starch": {
+      "outputFormat": "evidence-sections-v1",
+      "reportStyle": "procurement-brief-v1",
+      "confidenceScore": 62,
+      "marketAnalysis": {
+        "text": "확인된 두 관측 사이 TTSA FOB 방콕 기준 타피오카전분 공식 주간 고시 가격은 하락했습니다. 보관된 베트남 시장자료에서는 카사바와 타피오카전분 수출 오퍼가 혼재되어 있었습니다. 해당 자료가 인용한 중국 시장평가에서는 원료비가 가격을 지지했지만 제한적인 매수 관심이 추가 상승을 억제했습니다. 베트남 수출 참고가격은 품질과 규격 및 목적지에 따라 달라지며 실제 확정 거래가격과 구분해야 합니다. 중국 내수 가격과 FOB·DAF 수출 호가는 운송 및 세금 조건이 달라 직접적인 수출 마진으로 비교할 수 없습니다. 서로 다른 제품의 가격을 비교할 때는 제품 규격과 포장·인도 조건을 함께 확인해야 합니다.\n\n타피오카전분 공급사 견적은 제품 규격과 포장·인도 조건을 먼저 맞춘 뒤 비교하십시오. 중국의 후속 매수 동향과 원료 가격을 확인하고 실제 납품 일정에 맞춰 조달 조건을 검토하십시오.",
+        "evidenceIds": [
+          "publisher-7ede64a2bae9e4b4",
+          "ttsa-2026-10-06",
+          "ttsa-2026-10-20"
+        ]
+      },
+      "procurementStrategy": {
+        "text": "타피오카전분 오퍼의 규격·납기 비교",
+        "evidenceIds": [
+          "publisher-7ede64a2bae9e4b4"
+        ]
+      },
+      "priceOutlook": {
+        "text": "보관된 베트남 시장자료에는 전반적인 가격 상승을 예상할 명확한 근거가 제시되지 않았습니다.",
+        "evidenceIds": [
+          "publisher-7ede64a2bae9e4b4"
+        ]
+      },
+      "bullishFactors": [
+        {
+          "text": "보관된 중국 시장평가에서 제시된 원료비의 가격 지지",
+          "evidenceIds": [
+            "publisher-7ede64a2bae9e4b4"
+          ]
+        }
+      ],
+      "bearishFactors": [
+        {
+          "text": "당시 중국의 제한적인 매수 관심에 따른 추가 상승 억제",
+          "evidenceIds": [
+            "publisher-7ede64a2bae9e4b4"
+          ]
+        }
+      ],
+      "monitoringItems": [
+        {
+          "text": "타피오카전분 오퍼와 품질·포장·인도 조건 비교",
+          "evidenceIds": [
+            "publisher-7ede64a2bae9e4b4"
+          ]
+        }
+      ]
+    }
+  }
+}

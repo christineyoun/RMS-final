@@ -1,0 +1,838 @@
+{
+  "origin": "Actual anonymous original HTML collection, October 29 2026. Frozen source-bound regression inputs, not evidence of a future live refresh.",
+  "facts": [
+    {
+      "id": "live-article-a4474a501a90d0c9",
+      "commodity": "wheat",
+      "topic": "소맥",
+      "text": "2026-10-17 Ukrainian Wheat Prices Ease on Logistics Risks and Weak Demand — CMB News 원문 인용: “Ukrainian wheat prices soften as Odesa export risks, average yields and cheaper Black Sea/EU competition weigh on FOB and CPT values.”",
+      "sourceUrl": "https://commodity-board.com/ukrainian-wheat-eases-as-logistics-risks-outweigh-solid-crop",
+      "sourceTitle": "Ukrainian Wheat Prices Ease on Logistics Risks and Weak Demand — CMB News",
+      "observedAt": "2026-10-17",
+      "verifiedAt": "2026-10-29T02:08:10.072Z",
+      "verification": "original-record",
+      "recordSha256": "04951131060fb86d15a4ad8797240069a1c6110b5d961c347a7aca445b1e3c74",
+      "referenceContext": {
+        "receiptSha256": "04951131060fb86d15a4ad8797240069a1c6110b5d961c347a7aca445b1e3c74",
+        "quote": "Price-UpdateWheatUAUkrainian Wheat Eases as Logistics Risks Outweigh Solid CropCMBCMB News EditorialEditorial DeskOctober 17, 2026Ukrainian wheat prices soften as Odesa export risks, average yields and cheaper Black Sea/EU competition weigh on FOB and CPT values. Short-term bearish bias.Ukrainian wheat prices have turned slightly softer, with Odesa feed and mid‑protein grades drifting lower while top‑protein FOB and FCA values hold flat. The market remains under pressure from logistics uncertainty around Odesa ports and subdued import demand, despite a solid 2026 wheat crop and firm CBOT and MATIF benchmarks. Ukrainian wheat continues to trade at a wide discount to both U.S. and French origins, keeping Black Sea supplies competitive but capping any short‑term rebound. Domestic supply is ample after an average harvest, and farmer selling remains selective, yet buyers are in no rush amid volatile freight and insurance costs. With CBOT December 2026 soft red winter wheat futures retreating and European milling wheat only modestly supported, Ukrainian exporters face a buyer’s market over the coming days. Prices Origin Location Type / Grade Delivery Current price (EUR) Previous price (EUR) Direction Last update UA Odesa Wheat, protein min. 12.50%, 98% purity FOB 0.143 0.143 Stable 2026-10-16 UA Odesa Wheat, protein min. 10.50%, 95% purity FOB 0.125 0.129 Lower 2026-10-16 UA Odesa Wheat, protein min. 11.00%, 98% purity FOB 0.109 0.117 Lower 2026-10-16 UA Kyiv Wheat, protein min. 11.50%, 98% purity FCA 0.16 0.16 Stable 2026-10-15 UA Odesa Wheat, protein min. 11.50%, 98% purity FCA 0.17 0.17 Stable 2026-10-15 UA Odesa Wheat, grade 2 CPT 0.174 0.176 Slightly lower 2026-10-15 UA Odesa Wheat, grade 3 CPT 0.151 0.158 Lower 2026-10-15 UA Odesa Wheat, feed, moisture 14% max CPT 0.138 0.144 Lower 2026-10-15 FR Paris Wheat, protein min. 11.00%, 98% purity FOB 0.29 0.29 Stable 2026-10-16 US Washington D.C. Wheat, protein min. 11.50%, CBOT FOB 0.22 0.22 Stable 2026-10-16 Find the full table with current prices and trends on CMBroker.Open Charts → Ukrainian FOB Odesa mid‑protein wheat has softened 3–7% since early October, while high‑protein and FCA inland prices are broadly unchanged. French and U.S. reference prices remain far above Ukrainian levels, with MATIF December 2026 milling wheat quoted in the mid‑€240s/ton range and CBOT December 2026 SRW futures recently near 660.50 USc/bu, both easing on the day. This maintains a clear Black Sea discount but sends a modestly bearish signal for the short term. Supply, Demand & Trade Flows Ukraine’s 2026 wheat crop is estimated around the low‑ to mid‑20‑million‑ton range by several analytical groups, roughly in line with last season and supported by generally favourable weather during key development stages. Total grain output remains robust, which keeps domestic wheat availability comfortable despite war‑related losses of area and infrastructure. On the export side, Ukraine’s 2026/27 wheat shipments are expected to stay well below pre‑war potential, even though USDA and local associations have repeatedly nudged export forecasts higher over recent months. Persistent logistics issues – constrained rail and river capacity and periodic disruptions at Black Sea ports – continue to limit the pace at which supplies can leave Odesa and other corridors, reinforcing the discount structure versus EU and U.S. origins. Globally, USDA projections point to a relatively tight but not crisis‑level wheat balance in 2026/27, with world production near 820 million tons and only marginally below earlier expectations. However, a run of weaker harvests and weather‑related problems among several major exporters has heightened sensitivity to any new supply shocks, so markets remain quick to react to news from the Black Sea and U.S. Plains. BASIC CMBROKER · EXCLUSIVE COMMODITIES Exclusive commodities on CMBroker Wheat🇺🇦 protein min. 12,50% FOB 0.14 €/kg (from UA) Get your delivery cost → Wheat🇺🇦 protein min. 10,50% FOB 0.12 €/kg (from UA) Get your delivery cost → Wheat🇺🇦 protein min. 11,00% FOB 0.11 €/kg (from UA) Get your delivery cost → Weather Outlook – Ukraine (UA) Near‑term weather across key wheat regions in Ukraine, including Odesa and central oblasts, is seasonally mild with scattered showers and no immediate frost risk over the next few days, according to short‑range forecasts from regional ag‑weather services. While rainfall may briefly slow field work and internal logistics, it is broadly supportive for soil moisture ahead of winter and does not pose a serious quality threat to already‑harvested grain. With the main 2026 wheat harvest largely completed earlier in the season and yields described as average in farm and ministry commentary, near‑term weather is now more relevant for winter crop establishment than for old‑crop supply. As a result, weather is a secondary driver for spot price moves in the coming three days compared with currency, freight and port‑access headlines. Fundamentals & Market Drivers Ample domestic supply: Recent estimates indicate a 2026 wheat harvest broadly similar to 2025, leaving Ukraine with sufficient exportable surplus despite war‑related constraints. Logistics bottlenecks: Transportation through Odesa and alternative routes remains intermittently disrupted, keeping internal basis weak and pressuring CPT and mid‑protein FOB prices as exporters factor in logistics risk premiums. Global benchmarks softening: CBOT December 2026 wheat futures fell by around 1–1.5% on October 16, with intra‑day quotes near 660.50 USc/bu, while MATIF milling wheat eased below recent highs. This global softness filters into Black Sea offers. Strong Black Sea discount: Ukrainian FOB Odesa values around 0.109–0.143 EUR remain deeply discounted versus French FOB around 0.29 EUR, sustaining demand from price‑driven buyers but limiting any price rebound. Trading Outlook (Next 3 Days) Exporters: Consider locking in selected nearby sales on high‑protein parcels at current FOB Odesa levels (0.143 EUR) where freight and insurance are already arranged, as the global futures backdrop is slightly weakening and basis could soften if logistics headlines deteriorate. Domestic buyers (feed and flour mills): Use the current dip in CPT Odesa feed and mid‑grade wheat (0.138–0.151 EUR) to extend short‑term coverage, as downside from here appears limited unless CBOT and MATIF drop sharply again. Producers: With FCA Kyiv and Odesa 11.50% protein holding steady at 0.16–0.17 EUR, avoid aggressive selling of high‑quality lots in the immediate term and focus instead on moving lower grades where price erosion has been most pronounced. 3‑Day Regional Price Bias Ukraine – Odesa (FOB): Mildly bearish for mid‑protein (10.5–11.0%) as global futures softness, wide origin discounts and lingering export‑corridor risk keep buyers cautious; high‑protein FOB likely to stay mostly range‑bound. Ukraine – Odesa/Kyiv (FCA, CPT): Slightly bearish to sideways, with recent reductions in CPT feed and grade‑3 prices suggesting further small downward adjustments are possible if farmer selling picks up. Reference hubs – CBOT & MATIF: Short‑term tone is modestly weak after Friday’s decline in Chicago and softer European milling wheat settlements, limiting upside for Ukrainian quotes through early next week. #price-update#wheatBASICLive ChartFind the interactive chart on CMBroker.Open Charts →"
+      }
+    },
+    {
+      "id": "live-article-49e02e08c3861c56",
+      "commodity": "wheat",
+      "topic": "소맥",
+      "text": "2026-10-16 EU Soft Wheat Area Cut and Stable Spot Prices – Wheat Market Outlook — CMB News 원문 인용: “EU soft wheat area for 2027 is seen 2% lower on rising input costs.”",
+      "sourceUrl": "https://commodity-board.com/eu-soft-wheat-area-cut-signals-tighter-2027-balance-despite-calm-spot-prices",
+      "sourceTitle": "EU Soft Wheat Area Cut and Stable Spot Prices – Wheat Market Outlook — CMB News",
+      "observedAt": "2026-10-16",
+      "verifiedAt": "2026-10-29T02:08:10.072Z",
+      "verification": "original-record",
+      "recordSha256": "3549c950c610bb9ea2cd38e1a1f419ce8448adb1accdbac18c548a7a689f5e3d",
+      "referenceContext": {
+        "receiptSha256": "3549c950c610bb9ea2cd38e1a1f419ce8448adb1accdbac18c548a7a689f5e3d",
+        "quote": "WheatEU Soft Wheat Area Cut Signals Tighter 2027 Balance Despite Calm Spot PricesCMBCMB News EditorialEditorial DeskOctober 16, 2026EU soft wheat area for 2027 is seen 2% lower on rising input costs. Spot wheat prices in UA and DE remain stable. Outlook points to a gradually tighter balance.EU soft wheat area for the 2027 harvest is now expected to shrink by around 2%, led by rising input costs and a slight downgrading of planted area estimates. While spot prices in key Black Sea and EU origins remain broadly stable, the forward balance for 2027 is quietly tightening. The latest planting outlook from Expana and complementary estimates from Strategie Grains point to a smaller European soft wheat area in the next crop cycle. Higher operating costs are discouraging marginal hectares, particularly in lower-yielding or riskier regions. At the same time, current spot quotations in Ukraine and Germany show only modest day‑to‑day moves, signalling comfortable nearby availability but growing sensitivity to weather and yield risks for 2027. With maize area also expected to decline further in the EU, substitution dynamics in feed demand could lend medium‑term support to wheat if weather turns adverse. Prices Spot wheat prices in key reporting locations have been relatively steady in October, with only small adjustments in Ukrainian CPT and German EXW values over recent sessions. Origin Location Specification Delivery terms Latest price (EUR) Previous price (EUR) Last update Ukraine Kyiv Wheat, protein min. 11.50%, 98% purity FCA 0.16 0.16 2026-10-15 Ukraine Odesa Wheat, protein min. 11.50%, 98% purity FCA 0.17 0.17 2026-10-15 Ukraine Odesa Wheat, grade 2 CPT 0.176 0.174 2026-10-14 Ukraine Odesa Wheat, grade 3 CPT 0.158 0.16 2026-10-14 Germany Drentwede Wheat, feed grade, moisture 14% max EXW 0.25 0.248 2026-10-15 Find the full table with current prices and trends on CMBroker.Open Charts → Over the past three weeks, Ukrainian CPT prices for feed and milling grades have oscillated in a narrow band, while German EXW feed wheat has edged modestly higher from 0.235 to 0.25 EUR. At the same time, benchmark FOB quotes from France and the US have remained broadly unchanged in October, reflecting a global market that is well supplied in the short term but attentive to forward acreage signals. Supply & Demand Expana now projects the European soft wheat area for the next harvest to be around 2% lower than for 2026, citing rising operating costs as the main factor behind reduced sowings. Strategie Grains has also slightly trimmed its area estimate, confirming a more cautious planting stance by EU farmers. This contraction in area comes on top of wider cereal adjustments in the EU: recent analysis indicates continued pressure on maize area and production, which could lift the relative importance of wheat and barley in feed rations in the 2026/27 and 2027/28 seasons. With current stocks still comfortable after large recent crops, the immediate balance remains adequate, but the margin for error in 2027 is narrowing if yields disappoint. BASIC CMBROKER · EXCLUSIVE COMMODITIES Exclusive commodities on CMBroker Wheat🇺🇦 protein min. 11.50% FCA 0.16 €/kg (from UA) Get your delivery cost → Wheat🇺🇦 protein min. 11.50% FCA 0.18 €/kg (from UA) Get your delivery cost → Wheat🇺🇦 protein min. 9,50% FCA 0.14 €/kg (from UA) Get your delivery cost → Weather & Planting Conditions Early autumn weather across key EU wheat regions has been mixed, with some areas facing lingering soil dryness and others benefitting from more balanced rainfall. In parts of northern France, agronomic advisories are still stressing careful timing of sowing and herbicide strategies in the context of relatively dry topsoils, even though planting windows remain open. For Eastern Europe and the Black Sea region, initial reports suggest that sowing is progressing, albeit with localized delays where late summer dryness or logistical constraints persist. Against the backdrop of slightly lower intended area, any extended period of dryness or excessive rain over the coming weeks would quickly translate into higher sensitivity of 2027 yield expectations, and thus into more volatile price risk premia. Fundamentals & 2027 Outlook The 2% cut in EU soft wheat area for 2027 primarily reflects cost pressure: higher prices for fertilizers, crop protection and energy are discouraging plantings on marginal land. The confirmation of a similar direction from both Expana and Strategie Grains strengthens the signal that the 2027 crop will start from a structurally smaller base. How far this translates into lower production will depend heavily on yields and weather. If 2027 growing conditions are near trend, output losses versus 2026 could remain moderate. However, after several seasons marked by weather volatility and regional drought episodes, the risk profile is skewed: a normal‑to‑good yield outcome would cap prices, while a weather shock could tighten the EU and global balance rapidly, given reduced area and already lower maize output expectations in the region. Trading Outlook (Next Weeks) Producers (EU): Consider moderate forward hedging for 2027 where margin coverage is achievable; the area cut argues for some price support, but nearby supplies and stable spot prices argue against aggressive selling at current levels. Consumers (feed & flour mills): Use current spot stability in UA and DE to extend coverage modestly into Q1–Q2 2027, focusing on quality spreads, but keep flexibility for potential weather‑driven setbacks that could offer dips. Traders: Watch EU weather and any revisions to sowing estimates closely; a further downgrade in area or early‑season crop ratings would justify building length in EU/Black Sea origins relative to other grains. 3-Day Price Indication Ukraine, FCA Kyiv/Odesa (11.5% protein): Sideways; prices have been stable at 0.16–0.17 EUR and are likely to remain range‑bound in the very short term. Ukraine, CPT Odesa (grades 2–3, feed): Slightly firm bias after the latest small upticks, but no clear breakout expected within the next three trading days. Germany, EXW Drentwede (feed wheat): Mildly supportive tone after the recent lift to 0.25 EUR, with limited upside potential near term unless fresh weather or logistics news emerges. #wheatBASICLive ChartFind the interactive chart on CMBroker.Open Charts →"
+      }
+    },
+    {
+      "id": "live-article-a6898a5133d8e9b5",
+      "commodity": "corn",
+      "topic": "옥수수",
+      "text": "2026-10-28 Corn market outlook: harvest pressure, EU imports up, Ukraine flows uncertain — CMB News 원문 인용: “Corn futures stay weak as US harvest and strong Argentina supply weigh on prices, while EU imports rise and Ukrainian exports via Black Sea remain uncertain.”",
+      "sourceUrl": "https://commodity-board.com/corn-market-under-harvest-pressure-as-eu-imports-surge-and-ukraine-flows-stutter",
+      "sourceTitle": "Corn market outlook: harvest pressure, EU imports up, Ukraine flows uncertain — CMB News",
+      "observedAt": "2026-10-28",
+      "verifiedAt": "2026-10-29T02:08:22.155Z",
+      "verification": "original-record",
+      "recordSha256": "a40848a6631c996f3830fec4f12189b95bad774f5563f980ca4d7f640e90ebd7",
+      "referenceContext": {
+        "receiptSha256": "a40848a6631c996f3830fec4f12189b95bad774f5563f980ca4d7f640e90ebd7",
+        "quote": "CornCorn Market Under Harvest Pressure as EU Imports Surge and Ukraine Flows StutterCMBCMB News EditorialEditorial DeskOctober 28, 2026Corn futures stay weak as US harvest and strong Argentina supply weigh on prices, while EU imports rise and Ukrainian exports via Black Sea remain uncertain.Corn markets remain under downward pressure, with futures on both sides of the Atlantic near recent lows as the U.S. harvest advances and Argentina’s crop outlook improves. Physical corn in key EU cash markets has stabilized after a sharp pullback, but underlying sentiment stays bearish given ample global supply and still-fragile Ukrainian export logistics. Amid this weakness, EU import demand for corn is robust and well ahead of last year, helped by reduced barley exports and competitive offers from the U.S., Brazil and, earlier in the season, Ukraine. However, fresh Ukrainian volumes into the EU have slowed markedly in the latest week, underlining ongoing risks around Black Sea and Danube logistics. For European feed users, current prices offer attractive coverage opportunities, while producers face a challenging margin environment. Prices Euronext corn (Nov 2026) last traded at 283.25 EUR/t, with the benchmark Mar 2027 contract at 263.25 EUR/t and slightly lower along the nearby curve, reflecting persistent pressure but a modest inverse versus more distant months. The curve turns noticeably lower by late 2027–2028, with Nov 2027 at 226.50 EUR/t and Nov 2028 at 207.50 EUR/t, signalling expectations of comfortable medium-term supply. At the CBOT, front-month Dec 2026 corn stands around 449.50 USc/bu, only marginally above the previous close after hitting its lowest settlement since 2 July amid harvest pressure and a firmer U.S. dollar. The U.S. market remains capped by large supplies and the prospect of higher ending stocks, as also highlighted by recent global balance assessments. In the cash market, German feed corn EXW Drentwede is quoted at 0.27 EUR/kg (feed grade, 14% moisture max), down from 0.275 EUR/kg on 26 October, extending the gradual decline seen since mid-October. Ukrainian feed-grade corn CPT Odesa is indicated at 0.138 EUR/kg for 14% moisture max (98% purity), down from 0.142 EUR/kg on 26 October, while Ukrainian FOB corn Odesa is at 0.134 EUR/kg, also easing from 0.139 EUR/kg. French yellow corn FOB Paris is steady at 0.28 EUR/kg. Organic corn starch FOB New Delhi remains stable at 1.33 EUR/kg, highlighting that value-added and specialty corn products are less affected by the current feed-grain weakness than bulk feed-grade markets. Supply & Demand Corn futures at Euronext closed mixed on Tuesday, with the most-traded Mar 2027 contract slipping by 1.50 EUR to 263.25 EUR/t. In Chicago, Dec 2026 corn lost 6.25 USc/bu on the day to close at 448.75 USc/bu, underlining the prevailing bearish tone. The downtrend on the U.S. market has continued, driven primarily by the ongoing U.S. harvest and a stronger dollar against the euro, yen and pound, which erodes export competitiveness from the U.S. side. The U.S. harvest is now well advanced, with around 60% of corn area reported harvested as of the week ending 25 October, moderately behind some recent fast years but sufficient to keep steady selling pressure on futures and basis levels. The combination of another large U.S. crop and improving export competition from South America is contributing to expectations of higher U.S. ending stocks in 2026/27. Argentina is reinforcing the global supply cushion: the USDA agricultural attaché in Buenos Aires has raised the country’s corn production forecast from 55 to 62 million tonnes, sharply improving the outlook after previous weather-related setbacks. This upgrade is a key bearish driver for international benchmarks, especially for the deferred 2027 contracts, as it signals greater export availability from the first half of 2027 onward. In Europe, fundamental signals are more nuanced. German cash corn prices recovered slightly on Tuesday after steep declines on Friday and Monday, reflecting still relatively tight local availability. Nonetheless, EU import flows remain strong, helping to cap domestic prices and balance the feed grain complex. BASIC CMBROKER · EXCLUSIVE COMMODITIES Exclusive commodities on CMBroker Corn🇩🇪 feed grade, moisture: 14 % max EXW 0.27 €/kg (from DE) Get your delivery cost → Corn🇺🇦 feed grade, moisture: 14 % max CPT 0.14 €/kg (from UA) Get your delivery cost → Corn🇮🇳 starch FOB 1.33 €/kg (from IN) Get your delivery cost → EU Trade & Ukraine Flows Since the start of the season up to 25 October, EU corn imports have reached 7.114 million tonnes, 36% above last year. Shipments from the U.S. rose year-on-year from 1.17 to 1.39 million tonnes, while volumes from Brazil fell from 2.89 to 1.95 million tonnes. Ukraine nearly doubled its corn exports to the EU from 835,000 to 1.66 million tonnes over the same period, confirming its continued importance as a flexible supplier. However, latest weekly data show a clear loss of momentum: only 40,000 tonnes of Ukrainian corn reached the EU in the past week, indicating that hopes for a rapid normalization of Black Sea exports remain unfulfilled. This slowdown comes against the background of continuing logistical constraints and security risks for shipping via Black Sea ports and the need to increasingly rely on Danube and overland routes. While the EU has significantly increased overall corn imports, its barley exports are lagging, with cumulative shipments at 2.272 million tonnes, 42% below last year despite a small weekly increase of 50,000 tonnes. This shift supports relative demand for corn in feed rations but, given ample import availability, has not been sufficient to reverse the broader price downtrend. For Ukrainian exporters, Danube and alternative corridors partly offset lost Black Sea capacity, but shipped volumes tend to be shorter-haul and more spot-oriented, limiting forward hedging and adding basis volatility along the chain. Weather Snapshot In the U.S. Corn Belt, recent conditions have generally been dry enough to support harvest progress, with only localized moisture delays and no widespread frost damage reported in the latest USDA Crop Progress updates. This favors rapid completion of fieldwork and accelerates the arrival of new-crop supplies into the pipeline, reinforcing near-term pressure on Chicago futures. In Argentina, forecasts for 28–30 October indicate mostly warm conditions with patchy showers across key agricultural regions, with daytime highs locally reaching around the low 30s °C. While not extreme, such patterns maintain a generally favorable early planting environment following recent rains. Weather risk therefore appears limited in the immediate term, consistent with the upgraded Argentine production outlook. Trading Outlook Feed users / livestock integrators (EU): Current Euronext levels around 260–280 EUR/t, combined with softening cash prices in Germany (0.27 EUR/kg EXW) and competitive Black Sea offers, present attractive opportunities to extend feed coverage into Q1–Q2 2027. Consider layering in purchases on further dips, especially if U.S. harvest pressure pushes CBOT to fresh seasonal lows. Producers (EU): With futures curves discounted for 2027–28 and local cash values retreating, price risk management should focus on protecting downside via options rather than aggressive forward sales at current depressed levels. Selling rallies tied to any logistical or weather scare in Ukraine or South America may offer better hedging windows. Physical traders: Basis opportunities persist between tight German and some Western EU markets and softer export-oriented origins such as Ukraine and Brazil. However, continued uncertainty around Black Sea and Danube logistics argues for cautious shipment planning and diversified routing. 3-Day Price Indication & Direction Market Reference Latest level 3-day bias Euronext corn Mar 2027 263.25 EUR/t Slightly lower to sideways as U.S. harvest pressure persists and Argentina outlook improves. CBOT corn Dec 2026 449.50 USc/bu Downside risk remains, with scope for brief technical bounces from oversold levels. Germany cash Feed corn EXW Drentwede 0.27 EUR/kg Mostly sideways, with mild softness possible if import flows into the EU stay strong. Ukraine cash Feed corn CPT Odesa 0.138 EUR/kg Sideways to slightly weaker amid logistical uncertainty and strong competition from South America. Find the full table with current prices and trends on CMBroker.Open Charts → #cornBASICLive ChartFind the interactive chart on CMBroker.Open Charts →"
+      }
+    },
+    {
+      "id": "live-article-e6a10820c940050b",
+      "commodity": "corn",
+      "topic": "옥수수",
+      "text": "2026-10-28 Corn Market Analysis: Ukraine Harvest Delays, Logistics Squeeze and Price Outlook — CMB News 원문 인용: “Low prices, high drying costs and logistics issues push Ukrainian farmers to delay corn harvest into spring 2027, reshaping export timing and quality risks.”",
+      "sourceUrl": "https://commodity-board.com/ukraine-s-high-moisture-corn-supply-delayed-quality-at-risk",
+      "sourceTitle": "Corn Market Analysis: Ukraine Harvest Delays, Logistics Squeeze and Price Outlook — CMB News",
+      "observedAt": "2026-10-28",
+      "verifiedAt": "2026-10-29T02:08:22.155Z",
+      "verification": "original-record",
+      "recordSha256": "9ea67f9795370ca4b352320e6a4ecde1a262f637d556cf956d1e8bfd41067711",
+      "referenceContext": {
+        "receiptSha256": "9ea67f9795370ca4b352320e6a4ecde1a262f637d556cf956d1e8bfd41067711",
+        "quote": "CornUkraine’s High-Moisture Corn: Supply Delayed, Quality at RiskCMBCMB News EditorialEditorial DeskOctober 28, 2026Low prices, high drying costs and logistics issues push Ukrainian farmers to delay corn harvest into spring 2027, reshaping export timing and quality risks.Low grain prices, high drying costs and constrained logistics are pushing a growing number of Ukrainian farmers to leave corn in the field over winter, delaying a portion of 2026/27 supply into spring 2027 while raising quality and food-safety risks. The corn market is being reshaped less by crop volume than by the timing and quality of exportable Ukrainian supplies. Producers facing moisture levels above 30% in northern and central regions are increasingly unwilling to harvest at a loss, especially as logistics bottlenecks and leftover stocks from previous seasons limit storage and export capacity. At the same time, drier southern fields have largely been harvested, creating a two-speed crop with uneven quality. The result is a near-term abundance of low-priced, high-cost-to-move corn within Ukraine, but growing uncertainty about how much of it will still meet export-grade standards by late winter. Prices Domestic and export-oriented Ukrainian corn prices remain under pressure as new-crop supply collides with limited logistics. Recent market assessments show FOB Ukraine corn around $230/mt, while CPT Black Sea indices point to flat values despite harvest progress, indicating subdued buying interest and weak export pull. Company-level indications support the picture of depressed internal prices: several farms report that the value of wet corn barely covers, or even falls short of, combined drying, handling and freight costs. This aligns with consultancy data showing EXW and CPT Ukraine corn trading at notable discounts to FOB benchmarks amid high inland logistics and drying expenses. Origin Specification Delivery term Latest price (EUR/kg) 1-week trend Ukraine, Odesa Corn, non-organic FOB 0.134 Lower vs 0.139 Ukraine, Odesa Corn, feed grade, 14% moisture, 98% purity CPT 0.142 Flat vs 0.142 Ukraine, Odesa Corn, yellow feed grade, 14.5% moisture, 98% purity FCA 0.16 Softer vs 0.17 Germany, Drentwede Corn, feed grade, 14% moisture EXW 0.27 Slightly lower vs 0.275 France, Paris Corn, yellow FOB 0.28 Unchanged w/w Find the full table with current prices and trends on CMBroker.Open Charts → The softening in Ukrainian and German quotations over October underscores how physical oversupply and expensive logistics are capping any upside from firm global benchmarks. Until inland margins improve, bids for high-moisture or remote-origin corn are likely to stay defensive. Supply & Demand Ukrainian producers are sharply split in their harvest strategies. TG Agro in the Kyiv and Zhytomyr regions plans to leave about 80% of its corn acreage unharvested over winter, while ATK expects to postpone harvesting on roughly 70% of its crop. Individual farmers such as Dmytro Solomakha are considering similar decisions on around 30% of their fields. The trigger is economics: in northern and western areas, moisture levels of 26–34% mean that mechanical harvest followed by artificial drying can be commercially unviable at today’s grain prices. Industry estimates suggest that drying costs alone may approach or exceed the farmgate value of the grain in some cases, particularly where on-farm energy prices and elevator tariffs are high. At the same time, Ukraine’s logistics system remains constrained. High transport tariffs, expensive alternative export corridors and delays shipping carryover stocks from previous harvests are tying up storage and capital. Official and industry data indicate that corn harvesting is running well behind historical pace, while early-October exports are markedly below last year. For many producers, leaving grain standing acts as a temporary “storage in the field” solution to bridge this bottleneck. Not all companies can afford such a strategy. HarvEast, for example, plans to complete harvesting before spring to avoid yield and quality losses and to protect the 2027 planting schedule. To compensate for limited conventional storage, the company is deploying polymer grain bags. Zakhidnyi Buh also targets completion between mid-November and early December, signalling that better-capitalised operators still view timely harvest as the lesser risk. BASIC CMBROKER · EXCLUSIVE COMMODITIES Exclusive commodities on CMBroker Corn🇩🇪 feed grade, moisture: 14 % max EXW 0.27 €/kg (from DE) Get your delivery cost → Corn🇮🇳 starch FOB 1.33 €/kg (from IN) Get your delivery cost → Corn🇺🇦 FOB 0.13 €/kg (from UA) Get your delivery cost → Fundamentals & Quality Risks Crop conditions are highly uneven across Ukraine. In the south, ATK has already finished harvesting corn fields with average moisture around 14.7%, pointing to relatively favourable drying costs and faster marketability. By contrast, fields in Zhytomyr are showing moisture as high as 32–34%, making them prime candidates for delayed harvest. Weather has also clipped yield potential in some central regions. At Peremoha farm in Cherkasy, summer drought cut corn yields to about 4 t/ha, compared with earlier expectations of 8–10 t/ha. While this reduces local supply, it does not offset nationwide volume sufficiently to tighten the market given the broader logistics and price context. Delaying harvest allows cobs to dry naturally, cutting energy costs and easing pressure on overbooked dryers. However, it introduces significant agronomic and commercial risks. Corn left standing through winter is more exposed to stalk lodging, ear loss, pest damage and weathering, all of which can reduce harvestable volume and test weight. Fusarium infection and resulting mycotoxin contamination are particular concerns. Prolonged field exposure in damp or freeze-thaw conditions can sharply degrade grain quality. Zakhidnyi Buh has already warned that corn harvested after winter may be suitable mainly for industrial processing rather than premium feed or food channels if quality deteriorates. This implies that a noticeable share of the 2026 crop could be effectively downgraded by spring 2027, limiting the pool of export-grade material even if nominal tonnage remains high. Weather & Near-Term Outlook Seasonal forecasts for November in Ukraine point to near-normal temperatures with mixed precipitation patterns across key corn belts. Such conditions could permit gradual field drying in some regions but also raise the risk of intermittent rains and wet snow, especially in northern oblasts, which may increase lodging and disease pressure. If early winter remains relatively mild and dry, farmers delaying harvest could benefit from lower moisture content and reduced drying bills. However, any shift toward persistent wet or stormy weather would quickly tilt the balance toward higher quality losses. Given the already high share of unharvested area, weather over the coming 6–8 weeks will be critical for how much of Ukraine’s corn ends up in export channels versus domestic industrial or low-grade feed use. Market & Trading Outlook Short term (next 1–3 months): Global benchmarks are likely to stay capped by heavy nearby Ukrainian and EU supply, while Ukraine’s internal prices remain compressed by drying and freight costs. Basis variability by moisture, location and delivery term will be wide. Late winter to spring 2027: If significant volumes remain in the field, quality downgrades and mycotoxin concerns may tighten effective export supply, potentially widening spreads between top-grade Ukrainian corn and downgraded or industrial-only lots. Risk balance: Downside risk dominates for low-quality, high-moisture or logistically remote corn, whereas upside risk increases for dry, promptly deliverable parcels that meet strict feed and food specs. Strategic Pointers for Market Participants Feed buyers (EU, Mediterranean): Use current weakness to secure coverage in export-grade Ukrainian and EU origins, but insist on tight quality and mycotoxin clauses, especially for late-winter shipment windows. Ukrainian producers: Carefully model field-drying savings versus potential yield and quality losses. Where moisture is already in the mid-20s and storage is available, prioritise timely harvest to preserve export options. Traders & logistics firms: Consider differentiated pricing grids that reward low moisture and early delivery. There may be value in structuring industrial-use flows for downgraded post-winter corn if export standards cannot be met. 3-Day Directional Price Indication Ukraine (FOB Odesa, non-organic corn, EUR): Sideways to slightly softer; abundant unsold supply and costly inland logistics offset any external support. EU (Germany EXW feed corn, France FOB yellow corn, EUR): Mildly soft bias, tracking Black Sea competitiveness and comfortable feed grain availability. Premium products (organic starch corn, EUR): Stable; niche demand and limited supply keep these segments largely insulated from bulk feed volatility. #cornBASICLive ChartFind the interactive chart on CMBroker.Open Charts →"
+      }
+    },
+    {
+      "id": "live-article-ecc0e7f8ff254fbb",
+      "commodity": "corn",
+      "topic": "옥수수",
+      "text": "2026-10-28 Corn Market Update: Softer Indian Corn Oil Demand, Stable Global Corn Prices — CMB News 원문 인용: “Corn market brief: weaker Indian corn oil demand, easing EU/Black Sea feed corn prices, and seasonal, stock-driven outlook for Q4 2026.”",
+      "sourceUrl": "https://commodity-board.com/corn-market-steady-but-under-pressure-from-softer-corn-oil-demand-in-india",
+      "sourceTitle": "Corn Market Update: Softer Indian Corn Oil Demand, Stable Global Corn Prices — CMB News",
+      "observedAt": "2026-10-28",
+      "verifiedAt": "2026-10-29T02:08:22.155Z",
+      "verification": "original-record",
+      "recordSha256": "50031a4495e4d3cdd378c3cfdc7a7e92c6130af371cdba354116af0fe7f06136",
+      "referenceContext": {
+        "receiptSha256": "50031a4495e4d3cdd378c3cfdc7a7e92c6130af371cdba354116af0fe7f06136",
+        "quote": "CornCorn Market Steady but Under Pressure from Softer Corn Oil Demand in IndiaCMBCMB News EditorialEditorial DeskOctober 28, 2026Corn market brief: weaker Indian corn oil demand, easing EU/Black Sea feed corn prices, and seasonal, stock-driven outlook for Q4 2026.India’s vegetable oil complex is in a mixed phase, and softer demand for corn oil from selected industrial buyers and food processors is adding a mild bearish undertone to the wider corn value chain. At the same time, international corn prices remain broadly stable, with only modest harvest pressure and no acute supply shock in major origins. Overall, the market is balanced, with near‑term direction hinging on seasonal consumption, available stocks and the relative pricing of competing vegetable oils. Indian vegetable oil markets currently show diverging trends between oils, which is curbing aggressive forward buying of corn oil. The competitive relationship between palm, soya and sunflower oil is central for refiners and processors, and recent reports highlight that part of the industrial and food sector has reduced purchasing interest in corn oil in selected wholesale markets. This is consistent with a more cautious procurement stance after earlier price increases in the broader edible oil basket and amid uncertainties around the festive demand peak. Prices Recent physical indications in Europe and the Black Sea show a mild softening in feed-grade and bulk corn values. In Germany, corn feed grade (moisture 14% max) EXW Drentwede last traded at 0.27 EUR/kg on 26 October 2026, slightly below quotations seen in mid‑October. In Ukraine, bulk corn FOB Odesa is indicated at 0.134 EUR/kg, with CPT Odesa feed corn around 0.142 EUR/kg, both lower than earlier in the month. French yellow corn FOB Paris is steady at 0.28 EUR/kg. Origin Specification Delivery term Latest price (EUR/kg) Last update Germany (DE) Corn, feed grade, moisture 14% max EXW Drentwede 0.27 2026‑10‑26 Ukraine (UA) Corn FOB Odesa 0.134 2026‑10‑23 Ukraine (UA) Corn, feed grade, moisture 14% max, 98% purity CPT Odesa 0.142 2026‑10‑23 France (FR) Corn, yellow FOB Paris 0.28 2026‑10‑23 India (IN) Corn starch, organic FOB New Delhi 1.33 2026‑10‑24 Find the full table with current prices and trends on CMBroker.Open Charts → On the futures side, U.S. corn prices in Illinois have eased modestly over the past week, reflecting ongoing harvest progress and comfortable near‑term supply, but remain above early‑October lows, signalling that downside in global benchmarks is currently limited. Supply & Demand The key short‑term fundamental for corn within India is the vegetable oil balance rather than direct feed or food grain tightness. Industry reports underline that India’s edible oil needs remain heavily import‑dependent, so domestic usage of corn oil is highly sensitive to international price spreads between palm, soya, sunflower and niche oils. Currently, competition among edible oils is intense. With palm and soybean oil still dominating the blend for both retail and industrial users, corn oil is mostly a marginal or premium component. That makes it particularly exposed when processors scale back on higher‑priced ingredients or optimise recipes, explaining the observed reduction in purchasing interest from some industrial buyers and food processors in India. This demand softness for corn oil only indirectly affects global bulk corn, but it tempers enthusiasm on the processing side. BASIC CMBROKER · EXCLUSIVE COMMODITIES Exclusive commodities on CMBroker Corn🇩🇪 feed grade, moisture: 14 % max EXW 0.27 €/kg (from DE) Get your delivery cost → Corn🇮🇳 starch FOB 1.33 €/kg (from IN) Get your delivery cost → Corn🇺🇦 FOB 0.13 €/kg (from UA) Get your delivery cost → Fundamentals & Weather Global corn fundamentals remain relatively comfortable for now, with large Northern Hemisphere harvests progressing and no major production shock reported in key exporters. In the U.S. Midwest, mid‑fall weather has turned more favourable for fieldwork, with alternating dry windows and passing fronts allowing harvest to advance without major delays. In South America, the seasonal forecast for October–December points to mixed rainfall patterns: above‑average precipitation is expected in parts of southern Brazil and Argentina, while some central and northern Brazilian regions may see drier‑than‑normal conditions. While this is still early in the planting and first‑crop development window, markets will monitor any persistent dryness closely, as it could become a more supportive factor for prices later in the season. Outlook & Trading Recommendations Looking ahead, corn price direction will largely depend on three intertwined factors: seasonal consumption trends in India’s vegetable oil sector, the evolution of domestic and international corn stocks, and the relative pricing of corn oil versus competing edible oils. If palm and soybean oil retain a strong cost advantage, Indian processors are likely to continue limiting corn oil usage, keeping that segment of demand on the softer side. Feed manufacturers and livestock producers: Use the recent easing in German and Black Sea corn prices to extend coverage modestly into Q4, but avoid over‑committing until South American weather risks become clearer. Vegetable oil refiners and food processors in India: Maintain a cautious, hand‑to‑mouth approach to corn oil procurement while monitoring palm and soya oil spreads; consider opportunistic buying only if discounts to competing oils widen materially. Traders and exporters: In Ukraine and the EU, be prepared for continued competitive pressure on FOB values if harvest progress stays smooth and demand from India’s oil sector remains restrained. 3‑Day Price Indication Germany EXW Drentwede feed corn: After the move to 0.27 EUR/kg, prices are likely to trade sideways with a slightly softer bias over the next three days, barring any sharp move in futures. Ukraine FOB/CPT Odesa corn: With current levels at 0.134 EUR/kg (FOB) and 0.142 EUR/kg (CPT), quotes are expected to remain under mild pressure amid firm competition from other Black Sea origins. France FOB Paris yellow corn: At 0.28 EUR/kg, the market looks range‑bound in the very short term, closely tracking Euronext corn futures and overall grain sentiment. #cornBASICLive ChartFind the interactive chart on CMBroker.Open Charts →"
+      }
+    },
+    {
+      "id": "live-article-e19bdc9ad7a50b70",
+      "commodity": "corn",
+      "topic": "옥수수",
+      "text": "2026-10-16 Corn market outlook: US harvest pressure vs tight EU balance — CMB News 원문 인용: “Corn prices hit a nine‑week low in Chicago on heavy US harvest pressure, while EU cash markets stay firm amid weak local crop and Ukraine logistics risks.”",
+      "sourceUrl": "https://commodity-board.com/corn-under-dual-pressure-us-harvest-weighs-eu-cash-market-holds-firm",
+      "sourceTitle": "Corn market outlook: US harvest pressure vs tight EU balance — CMB News",
+      "observedAt": "2026-10-16",
+      "verifiedAt": "2026-10-29T02:08:22.155Z",
+      "verification": "original-record",
+      "recordSha256": "ef4fa8215264c5d2b00a8694edaacc0575a699e055417dcf3d2446b4aaa8b9e1",
+      "referenceContext": {
+        "receiptSha256": "ef4fa8215264c5d2b00a8694edaacc0575a699e055417dcf3d2446b4aaa8b9e1",
+        "quote": "CornCorn Under Dual Pressure: US Harvest Weighs, EU Cash Market Holds FirmCMBCMB News EditorialEditorial DeskOctober 16, 2026Corn prices hit a nine‑week low in Chicago on heavy US harvest pressure, while EU cash markets stay firm amid weak local crop and Ukraine logistics risks.Corn futures in Chicago are sliding to the lowest levels in around nine weeks as the fast‑paced US harvest swells nearby supply, while European cash markets remain firm on a historically weak EU crop and ongoing uncertainty around Ukrainian exports. The global balance for 2026/27 is comfortable on paper after upward revisions to US and Brazilian output, but regional tightness and logistics risks in Europe are supporting basis levels and import demand. In the US Midwest, harvest has moved into full gear, intensifying commercial hedge pressure and pushing CBOT contracts to fresh two‑month lows, even as the USDA is expected to confirm only moderate export sales later today. In contrast, EU spot prices stay elevated despite a small setback on Euronext, reflecting a sharply reduced local crop and strong feed competition. The International Grains Council (IGC) now pegs world corn production at a record level, yet Europe will still rely heavily on imports from the US, Brazil and, to a significant extent, Ukraine, where war‑related disruptions continue to cloud supply reliability. Prices Corn closed in Chicago at its lowest level in roughly nine weeks (13 August comparison) as the US Corn Belt harvest accelerates and nearby supply weighs on futures. Recent commentary on December CBOT corn highlights a drop to fresh two‑month lows amid strong harvest and hedge selling, amplified by a firm US dollar that dampens export competitiveness. In Europe, futures at Euronext have seen a mild pullback, but sentiment in the physical market remains firm, with cash prices holding at comparatively high levels and no clear trend reversal in sight. This divergence reflects regional tightness rather than global scarcity, as local buyers compete for limited nearby supplies. Origin Location Specification Delivery term Current price (EUR/kg) Previous price (EUR/kg) Last update Ukraine Odesa Corn, yellow feed grade, 14.5% max moisture FCA 0.17 0.17 2026-10-15 Ukraine Odesa Corn, feed grade, 14% max moisture, 98% purity CPT 0.153 0.156 2026-10-14 Germany Drentwede Corn, feed grade, 14% max moisture EXW 0.288 0.285 2026-10-13 France Paris Corn, yellow FOB 0.27 0.27 2026-10-09 Find the full table with current prices and trends on CMBroker.Open Charts → Supply & Demand The IGC has raised its 2026/27 global corn production forecast by 6 million tonnes to 1.307 billion tonnes, driven mainly by improved US crop prospects. The US corn harvest estimate was lifted from 401.3 to 407.3 million tonnes, mirroring last week’s USDA upward revision and reinforcing the perception of ample global supply. In sharp contrast, the EU corn crop outlook has deteriorated further. Expana now forecasts EU production at just 44.9 million tonnes in 2026/27, down 1.3 million tonnes from its previous estimate and the lowest level since 1990. The firm expects this decline to cut EU corn use in livestock feeding by around 8 million tonnes, or 13.5% below the five‑year average, underlining structural demand rationing in the bloc. Despite increased availability from the US and Brazil, Expana projects that the EU will still require roughly 11 million tonnes of Ukrainian corn to balance its 2026/27 needs. However, conflict‑related disruptions continue to challenge Ukrainian exports: rail deliveries of grain to Ukrainian ports slumped by almost 39% in September, and Black Sea port operations remain constrained, forcing more flows via Danube and overland routes and adding to logistics costs and timing risks. BASIC CMBROKER · EXCLUSIVE COMMODITIES Exclusive commodities on CMBroker Corn🇺🇦 yellow feed grade, moisture: 14.5% max FCA 0.16 €/kg (from UA) Get your delivery cost → Corn🇺🇦 feed grade, moisture: 14 % max CPT 0.14 €/kg (from UA) Get your delivery cost → Corn🇩🇪 feed grade, moisture: 14 % max EXW 0.27 €/kg (from DE) Get your delivery cost → Fundamentals & Regional Highlights In Brazil, Conab pegs 2026/27 total corn production at 148 million tonnes, up 2.4% year on year and well above USDA’s 139‑million‑tonne projection. Brazilian exports are estimated at 46 million tonnes, 4.8% higher than in the previous season, reinforcing Brazil’s status as a key residual supplier into deficit regions such as the EU and MENA. Meanwhile, the latest USDA balance adjustments leave US 2026/27 ending stocks noticeably above the previous five marketing years, while export sales cover only about 23% of the annual export programme — the weakest coverage at this stage in six seasons. This slow export pace, combined with the rapid harvest progress, is a major weight on CBOT prices and encourages storage and basis‑focused strategies rather than outright futures length. Within Europe, cash market firmness is visible in domestic quotations: EXW German feed corn in Drentwede is indicated at 0.288 EUR/kg, up from 0.285 EUR/kg on 13 October, while FOB French yellow corn at Paris is steady at 0.27 EUR/kg. Ukrainian offers from Odesa show slight weakness on a CPT basis but stable FCA values, reflecting both competitive pricing and elevated logistics risk premiums. Weather & Harvest Outlook Weather across the US Corn Belt has generally supported a rapid harvest, with recent weeks characterised by mostly dry conditions that facilitate fieldwork but may limit any late yield gains. Market focus is now shifting from potential production surprises to the pace at which this crop moves into commercial channels and export pipelines, particularly ahead of the winter logistics period. In the EU, the season’s poor yield outcome is largely set, and the short‑term weather outlook plays a smaller role for corn fundamentals than logistics and demand. In the Black Sea region, ongoing security risks around Ukrainian ports and infrastructure continue to inject volatility into freight and insurance costs, with any further escalation likely to support EU and US replacement values. Trading Outlook Importers (EU, MENA): Consider layering in coverage for Q4 2026–Q1 2027 on price dips in Chicago, using US and Brazilian origins to diversify away from Ukrainian logistics risk, while maintaining some flexibility in case of further Black Sea disruptions. Producers (US/EU): US farmers may benefit from on‑farm storage and basis‑oriented hedging, as large global supplies cap flat price but regional basis could improve post‑harvest. EU growers face supportive local cash markets and may scale sales gradually rather than front‑loading, given the structurally tight EU balance. Traders: Watch today’s delayed USDA export report, weekly US export sales, and Ukrainian corridor developments closely; weak US sales alongside any fresh disruption news could widen transatlantic and intra‑EU spreads further. 3‑Day Regional Directional View CBOT corn futures: Bias mildly lower to sideways over the next three sessions as harvest pressure persists and ahead of confirmation of export sales volumes. Euronext corn: Sideways to slightly firmer, with local tightness and strong cash demand offsetting spill‑over weakness from Chicago. Physical EU & Black Sea: EU domestic values (Germany, France) likely to remain firm; Ukrainian FCA/CPT indications may show modest volatility depending on day‑to‑day logistics and security headlines in the Black Sea and Danube corridors. #cornBASICLive ChartFind the interactive chart on CMBroker.Open Charts →"
+      }
+    },
+    {
+      "id": "live-article-1c0f8bc88cef9edf",
+      "commodity": "soybean-oil",
+      "topic": "대두유",
+      "text": "2026-10-19 US soybean oil demand moves up again in September as soybean oil stocks slide to 12-year low 원문 인용: “In the US, soybean oil is the primary vegetable oil feedstock used in the production of biomass-based diesel and renewable diesel fuel.”",
+      "sourceUrl": "https://www.fastmarkets.com/insights/us-soybean-oil-demand-moves-up-again-in-september-as-soybean-oil-stocks-slide-to-12-year-low/",
+      "sourceTitle": "US soybean oil demand moves up again in September as soybean oil stocks slide to 12-year low",
+      "observedAt": "2026-10-19",
+      "verifiedAt": "2026-10-29T02:08:41.801Z",
+      "verification": "original-record",
+      "recordSha256": "2dbc0c8b90362d61fa3c7aa07e53373f38b272359b0d5c414d080e8dc38e2e0a",
+      "referenceContext": {
+        "receiptSha256": "2dbc0c8b90362d61fa3c7aa07e53373f38b272359b0d5c414d080e8dc38e2e0a",
+        "quote": "US soybean oil demand moves up again in September as soybean oil stocks slide to 12-year low For a seventh consecutive month, implied US soybean oil consumption moved up in September, as stockpiles declined to their lowest level since 2014. October 19, 2026 By Amanda Luhavalja Agriculture Soy Soy oil Data released by the National Oilseed Processors Association (NOPA) on October 15 showed that soybean oil stocks among members were down by 12.3% on the month to 1.05 billion pounds in September, from 1.20 billion pounds in August. The latest stock figure was also down by 15.3% from 1.24 billion pounds of soybean oil in September 2025. NOPA members process about 99% of all US soybeans. In the US, soybean oil is the primary vegetable oil feedstock used in the production of biomass-based diesel and renewable diesel fuel. Demand for soybean oil started to increase earlier in the year, particularly from the biofuel sector, amid increased clarity regarding the 45Z Clean Fuel Production Credit and the finalization of 2026-2027 Renewable Volume Obligations (RVOs) biofuel blending mandates. Still, in the last month or so, biofuel sector demand for soybean oil and other feedstocks slowed, market sources said, with several biofuel production plants reportedly offline for planned and unplanned maintenance at the US Gulf Coast and in the Midwest. The latest NOPA data also showed that as US soybean oil stocks continued to decrease, soybean crush also extended lower in September, slipping to a 13-month low at 196.3 million bushels. The September crush was down by 4.4% from 205.456 million bushels in August. Trading sources attributed the sharp month-on-month decline in soybean crush to a normal seasonal slowdown in operations and a weather-related slowdown in processing across the western US Corn Belt. In the second half of September, crushers struggled to procure soybeans following heavy rains in parts of the Midwest that impacted soybean quality and caused harvest delays. Crushers in and around Iowa were the most impacted, with some running tight or out of soybeans, trading sources said. US soybean crush hit record highs earlier this year amid solid processing margins and strong domestic soybean oil demand. The crush industry has been expanding since 2021, with the build-out progressing through facility upgrades and the construction of new plants to meet increased demand for soybean oil from the US biofuel and food and feed sectors. In mid-September, CHS announced it would proceed with the construction of a proposed $770 million processing plant near Evansville, Wisconsin. The new facility will have the capacity to process 80 million bushels of soybeans each year. Completion is targeted for the fall of 2028. In its monthly World Agricultural Supply and Demand Estimates (WASDE) released Friday October 9, USDA maintained its outlook for 2026-2027 US soybean oil consumption for biofuel production at 17.8 billion pounds. This is up by 22% from an expected 14.55 billion pounds in the 2025-2026 season. US soybean oil demand from all industry sectors was anticipated to reach 30.305 billion pounds in 2025-2026 and roughly 33.11 billion pounds in the 2026-2027 season. USDA remains bullish on US soybean oil consumption heading into 2027 following the finalization of RVOs earlier this spring that expanded feedstock demand from the biofuel sector. Under the US Renewable Fuel Standard (RFS), obligated parties, which include oil refiners, must blend billions of gallons of biofuel into the US fuel mix or purchase Renewable Identification Numbers (RINs) from other blenders or producers each year. The latest EMTS data showed the biomass-based diesel industry is ramping up production to meet the stronger renewable blending volumes established under Set 2. D4 RIN generation reached 753 million in September, up by 8.7% from August and by 13.7% from September 2025. Explore Fastmarkets soybean oil prices"
+      }
+    },
+    {
+      "id": "live-article-a191185a3711df19",
+      "commodity": "soybean-oil",
+      "topic": "대두유",
+      "text": "2026-10-15 Soybean oil prices fall amid new US biofuel proposals 원문 인용: “Soybean oil futures on the Chicago Board of Trade (CBOT) extended their decline on October 14 amid uncertainty over US biofuel policy and increasing supplies of newly harvested soybeans.”",
+      "sourceUrl": "https://ukragroconsult.com/en/news/soybean-oil-prices-fall-amid-new-us-biofuel-proposals/",
+      "sourceTitle": "Soybean oil prices fall amid new US biofuel proposals",
+      "observedAt": "2026-10-15",
+      "verifiedAt": "2026-10-29T02:08:41.801Z",
+      "verification": "original-record",
+      "recordSha256": "b936f76a2ecb2955b6aafd4e6ecd3b371da46ca8c5a2b7499f87f59854d3e795",
+      "referenceContext": {
+        "receiptSha256": "b936f76a2ecb2955b6aafd4e6ecd3b371da46ca8c5a2b7499f87f59854d3e795",
+        "quote": "Home Agricultural market news Soybean oil prices fall amid new US biofuel proposals 11:50, 15 October 2026 Source: Spglobal Soybean oil futures on the Chicago Board of Trade (CBOT) extended their decline on October 14 amid uncertainty over US biofuel policy and increasing supplies of newly harvested soybeans. The December contract fell by 1.34% to 67.11 cents/lb during the first half of the trading session, down 4.24% from the previous session’s intraday high. On October 13, prices had climbed to 70.08 cents/lb before closing at 68.02 cents/lb, down 0.89%. The main factor weighing on the market was a new proposal announced by the US Environmental Protection Agency (EPA) on October 13. The agency proposed reallocating approximately 770 mln Renewable Identification Numbers (RINs) associated with exemptions granted to small refineries from renewable fuel obligations. The total volume of exemptions for 2025 amounted to 1.76 billion RINs, compared with the previously anticipated 990 mln. The reallocation is intended to preserve renewable fuel requirements, supporting demand for feedstocks used in biofuel production, particularly soybean oil. The EPA is considering two options for implementing the proposal: distributing the additional obligations equally between 2026 and 2027 or assigning the entire volume to 2027. No final decision has been made, and the public comment period will remain open until December 4. According to market participants, full reallocation had already been largely priced in, limiting the proposal’s ability to provide sustained support for futures. Instead, uncertainty over the implementation timeline increased volatility in soybean oil prices. Additional pressure on the market is coming from the accelerating US soybean harvest. According to USDA, as of October 11, American farmers had harvested 46% of soybean acreage, compared with 25% a week earlier. However, harvesting progress remains below the five-year average of 50%. Increasing arrivals of newly harvested soybeans are accompanied by more active commercial hedging, adding downward pressure on oilseed futures. The recent price decline highlights the US soybean oil market’s sensitivity to government regulation of the biofuel sector. On October 7, December CBOT soybean oil futures had already fallen by 3.19% in a single trading session, settling at 67.68 cents/lb. Future price movements will largely depend on the EPA’s final decisions regarding the allocation of biofuel obligations between 2026 and 2027, as well as the pace of new soybean crop deliveries and demand from the processing industry. Tags: soybean oil, prices, biofuel, global market Read also 28 October 2026 Turkey warns Ukraine and Russia against further attacks on ships in the Black Sea 28 October 2026 More than 20 thsd freight wagons accumulate at Ukraine’s western rail border... 28 October 2026 World Bank forecasts 10% rise in food commodity prices in 2026 amid global risks 28 October 2026 Wilmar’s profit falls 25% as soybean crushing margins weaken 28 October 2026 Brazil’s wheat imports could reach 10 mln tons, a 30-year high Got additional questions? We will be happy to assist! Contact us Write to us Our manager will contact you soon Your name Your email Your phone number is Country Your company"
+      }
+    },
+    {
+      "id": "live-article-c8c3579be3bed12c",
+      "commodity": "palm-oil",
+      "topic": "팜유",
+      "text": "2026-10-12 Malaysia’s total palm oil stocks up 24.5% to 3.5 mil tonnes in September — MPOB 원문 인용: “KUALA LUMPUR (Oct 12): Malaysia’s total palm oil stocks rose by 691,835 tonnes, or 24.54%, to 3.51 million tonnes in September this year from 2.8 million tonnes a month earlier, according to the Malaysian Palm Oil Board (MPOB).”",
+      "sourceUrl": "https://theedgemalaysia.com/node/821487",
+      "sourceTitle": "Malaysia’s total palm oil stocks up 24.5% to 3.5 mil tonnes in September — MPOB",
+      "observedAt": "2026-10-12",
+      "verifiedAt": "2026-10-29T02:08:57.169Z",
+      "verification": "original-record",
+      "recordSha256": "6fa00029eef8d357ff546638807b0cd901f294eada6b1ed8c9dd8f0a891eb4a9",
+      "referenceContext": {
+        "receiptSha256": "6fa00029eef8d357ff546638807b0cd901f294eada6b1ed8c9dd8f0a891eb4a9",
+        "quote": "Thursday 29 Oct 2026BURSASGXVegoilsMake The Edge Malaysia your preferred source on GoogleKUALA LUMPUR (Oct 12): Malaysia’s total palm oil stocks rose by 691,835 tonnes, or 24.54%, to 3.51 million tonnes in September this year from 2.8 million tonnes a month earlier, according to the Malaysian Palm Oil Board (MPOB). MPOB said crude palm oil (CPO) stocks increased 31.88%, or 522,905 tonnes, to 2.16 million tonnes in September from 1.64 million tonnes in August. “Processed palm oil stockpile jumped 14.33 %, or 168,930 tonnes, to 1.34 million tonnes from 1.17 million tonnes in August,” it said in its Malaysian Palm Oil Industry, August 2026, performance report. On production, MPOB said CPO output rose 16.48%, or 299,451 tonnes, to 2.11 million tonnes in September. This compared to 1.81 million tonnes a month earlier, while palm kernel output gained 18.16% month-on-month to 508,392 tonnes from 430,599 tonnes. Crude palm kernel oil production increased 4.91% to 209,381 tonnes from August, while palm kernel cake output climbed 7.81 % to 232,696 tonnes. MPOB said palm oil exports, however, declined 12.13% in September 2026 to 1.22 million tonnes from a month earlier. Palm kernel oil exports fell 34.09% to 74,364 tonnes from a month ago. Palm kernel cake exports fell by 3.99% to 204,687 tonnes. Meanwhile, oleochemical exports increased 2.62% to 239,723 tonnes from August, while biodiesel exports fell 91.69% to 2,930 tonnes from last month. MPOB reported zero CPO imports in September. Processed palm oil inched up 3.49% to 51,252 tonnes from 49,524 tonnes, while palm oil leaped 17.25% to 58,064 tonnes from the preceding month. Uploaded by Magessan Varatharaja Most ReadJust InCopyright © 1999-2026 The Edge Communications Sdn. Bhd. 199301012242 (266980-X). All rights reservedPrintText SizeShare"
+      }
+    },
+    {
+      "id": "live-article-c410a01fffc3e11d",
+      "commodity": "palm-oil",
+      "topic": "팜유",
+      "text": "2026-10-01 Palm oil may gain premium over soyoil in 2027 on supply risks, says industry official 원문 인용: “30/09/2026 (Reuters), Mumbai - Palm oil could trade at a premium to soyoil in 2027 as El Niño threatens production and rising biodiesel demand in top exporter Indonesia tightens supplies, a senior industry official told Reuters on Tuesday.”",
+      "sourceUrl": "https://prestasisawit.mpob.gov.my/ms/palmnews/news/40027",
+      "sourceTitle": "Palm oil may gain premium over soyoil in 2027 on supply risks, says industry official",
+      "observedAt": "2026-10-01",
+      "verifiedAt": "2026-10-29T02:08:57.169Z",
+      "verification": "original-record",
+      "recordSha256": "630b3b9e637dc260f4948dcfb15b35abeab84720ef91f1f2799199b03d3f1a2e",
+      "referenceContext": {
+        "receiptSha256": "630b3b9e637dc260f4948dcfb15b35abeab84720ef91f1f2799199b03d3f1a2e",
+        "quote": "PALM NEWS MALAYSIAN PALM OIL BOARD Thursday, 29 Oct 2026 Jumlah Bacaan: 346 printer MARKET DEVELOPMENT Palm oil may gain premium over soyoil in 2027 on supply risks, says industry official calendar01-10-2026 | linkReuters | Share This Post: 30/09/2026 (Reuters), Mumbai - Palm oil could trade at a premium to soyoil in 2027 as El Niño threatens production and rising biodiesel demand in top exporter Indonesia tightens supplies, a senior industry official told Reuters on Tuesday. Palm oil supplies are expected to tighten in 2027 as El Niño-induced dry weather weighs on production, potentially lifting prices above rival soyoil, as happened in 2024, Eddy Martono, chairman of the Indonesian Palm Oil Association, said. Palm oil, mainly produced in Indonesia and Malaysia, competes with soyoil from South America and sunflower oil from the Black Sea region. Indonesia's palm oil output in 2027 will fall 3.7% to 56.6 million metric tons, while demand for biodiesel is likely to rise 18.5% from a year earlier to a record 17.4 million tons, Martono said. Higher domestic consumption amid lower output is expected to cut Indonesia's exports by 14.9% in 2027 to 26.5 million tons, their lowest level since 2016, he said. - Reuters https://www.thestar.com.my/business/business-news/2026/09/30/palm-oil-may-gain-premium-over-soyoil-in-2027-on-supply-risks-says-industry-official Penafian. Semua maklumat yang diterbitkan dianggap benar. MPOB tidak bertanggungjawab untuk sebarang kerosakan yang disebabkan oleh penggunaan mana-mana maklumat. 2026 © MPOB. Hak cipta terpelihara."
+      }
+    },
+    {
+      "id": "live-article-c28b5041c4320fa1",
+      "commodity": "palm-oil",
+      "topic": "팜유",
+      "text": "2026-10-19 SunSirs: Malaysia’s Palm Oil Exports Surge in First Half of October 원문 인용: “According to cargo surveyors, Malaysia’s palm oil exports for the first half of October increased by 43.2% to 58.3% compared to the previous period.”",
+      "sourceUrl": "https://www.sunsirs.com/commodity-news/petail-36906.html",
+      "sourceTitle": "SunSirs: Malaysia’s Palm Oil Exports Surge in First Half of October",
+      "observedAt": "2026-10-19",
+      "verifiedAt": "2026-10-29T02:08:57.169Z",
+      "verification": "original-record",
+      "recordSha256": "c387e74c9251395d74aba3e8bea7fb63b7060c2342800c2409d69e4800f34aad",
+      "referenceContext": {
+        "receiptSha256": "c387e74c9251395d74aba3e8bea7fb63b7060c2342800c2409d69e4800f34aad",
+        "quote": "SunSirs--China Commodity Data Group Language 中文 日本語 한국어 русский deutsch français español Português عربي türk Tiếng Việt Sign In Join Now Contact Us About SunSirs News News Search Home Commodity Index Commodity News Commodity Intelligence Commodity Price Futures Price Sourcing Service Subscription Service China Suppliers Events Home > Palm Oil News > News Detail Palm Oil News SunSirs: Malaysia’s Palm Oil Exports Surge in First Half of October October 19 2026 10:02:44SunSirs(Selena) According to cargo surveyors, Malaysia’s palm oil exports for the first half of October increased by 43.2% to 58.3% compared to the previous period. As a major global producer and exporter of palm oil, Malaysia’s 43.2% surge in exports during the first half of October reflects robust external demand. This has significantly strengthened expectations for a reduction in palm oil inventories, providing solid support for spot prices. In the futures market, this positive data is expected to bolster bullish sentiment, driving firmer price action for palm oil-related futures contracts. SunSirs has been continuously tracking price data for over 200 commodities for nearly 20 years, please contact support@sunsirs.com for subscription. 【Copyright Notice】In the spirit of openness and inclusiveness of the Internet, SunSirs welcomes all media and institutions to reprint and quote our original content. If reprinted, please mark the source SunSirs. Related Information SunSirs: Malaysia’s Palm Oil Inventories Hit Record High in Septembe2026-10-21SunSirs: China Palm Oil Market Sees Slight Gains in the First Half of October2026-10-20SunSirs: Agricultural Products Industries Bulk Commodity Intelligence (October 16, 2026)2026-10-16SunSirs: Malaysia Sees Significant Surge in Early-October Palm Oil Exports2026-10-14SunSirs: Palm Oil: Near Weak, Far Strong — Malaysia’s Stock Build vs. Long-Term Supply Risks from El Niño 2026-10-13 Exchange Rate: Hot News SunSirs: September 2026 Review on China Export Container Transport Market2026-10-29International Mining and Resources Conference + Expo (IMARC)2025-10-27SunSirs: Silver to Remain Range-bound in Short Term Amid Macro Headwinds 2026-10-29SunSirs: China Coastal Bulk Shipping Market Review – September 2026 2026-10-28SunSirs: China Grain & Agri-product Price Update (Oct 2026) 2026-10-28 8 Industries EnergyCalcined cokeCokeCoking coalDieselFuel OilGasolineLNGLPGMTBENaphthaPetroleum cokeThermal CoalWTI crude oilChemicals1,3-butadiene2-EHAcetic acidAcetic anhydrideAcetoneAcrylamideAcrylic acidActivated charcoalAdipic acidAluminum fluorideAmmonium biphosphateAmmonium nitrateAmmonium sulfateAnilineAsphaltBDOBenzeneBisphenol ABromineButyl acetateButyl AcrylateCalcium carbideCarbon blackCaustic sodaChloroformCompound FertilizerCryoliteCyclohexaneCyclohexanoneDBPDiammonium Hydrogen PhosphateDichloromethaneDiethylene glycolDimethyl carbonateDMFDOPECHEpoxy resinEthyl AcetateEthyl AcrylateEthyl alcoholEthylene glycolEthylene oxideFerrous lithium phosphateFluoriteFormaldehydeFormic acidHydrofluoric acidHydrogen peroxideindustrial saltIPAIron phosphateIsobutyraldehydeLiquid ammoniaLithium carbonateLithium hexafluorophosphateLithium hydroxideMaleic anhydrideMDIMEKMelamineMethanolMethyl methacrylateMIBKN-butanolN-MethylpyrrolidoneN-propanolNeopentyl glycolNitric acidOrthoboric acidPAPACPAMPhenolPhosphoric acidPhosphorus yellowPolysiliconPotassium chloridePotassium nitratePotassium sulfatePropylenePropylene GlycolPropylene oxidePXRefined naphthaleneSilicaSilicone DMCSoda ashSodium BicarbonateSodium metabisulfiteStyreneSulfurSulfuric acidTDITitanium DioxideTolueneTriethylamineUreaXyleneRubber & PlasticsABSAcrylonitrile-butadiene rubberBREPSEVAHDPELDPELLDPENatural rubberPA6PA66PCPETPMMAPOMPP(Drawing)PSPVCSBRTextileCotton LintCotton yarnPolyamide DTYPolyamide FDYPolyamide POYPolyester cotton yarnPolyester DTYPolyester FDYPolyester POYPolyester staple fiberPolyester yarnPTASpandexVinyl cyanideViscose staple fiberNon-ferrous MetalsAluminumAluminum oxideAmmonium paratungstateAntimonyCobaltCopperDy-Fe AlloyDysprosium oxideGoldLead ingotMagnesiumMetal DysprosiumMetal NeodymiumMetal SiliconNeodymium oxideNickelPr-Nd AlloyPraseodymium neodymium oxidePraseodymium oxideSilverTin ingotTungsten concentrateZinc ingotSteelCold rolled sheetColor coated sheetFerrosiliconGalvanized sheetHot rolled coilIron oreMild steel plateRebarSeamless tubeSilicomanganeseStainless steel plateSteel BilletSteel scrapWire RodBuilding MaterialsCorrugated paperGlassHardwood pulpWastepaperWhite BoardWhite cardboardAgricultural & Sideline ProductsCornCorn starchEggLive pigPalm OilRapeseedRapeseed mealRapeseed oilSoybeanSoybean mealSoybean OilWheatWhite granulated sugar Links: ChemNet Global - ChemNet News - China Chemical Network - Chemical CAS Database - ChemNet Mall - ChinaTexNet - Toocle Global Home About us Contact us Privacy Statement Help Broker Service © SunSirs All Rights Reserved. 浙B2-20080131-44 Submit Join Now> Please fill in the information carefully，the * is required. User Name： * Email： * Password： * Reenter Password： * Phone Number： First Name： Last Name： Company： Address： Please Select Submit"
+      }
+    },
+    {
+      "id": "live-article-6165641469888b39",
+      "commodity": "palm-oil",
+      "topic": "팜유",
+      "text": "2026-10-19 Malaysia May Hit Record Monthly Palm Oil Output 원문 인용: “Roslin Azmy Hassan, who heads the Malaysian Palm Oil Association, expects 2026 production to match or exceed the prior full-year record of 20.28 million tons set in 2025.”",
+      "sourceUrl": "https://www.briefs.co/news/malaysia-s-palm-oil-output-poised-for-october-record-with-20/",
+      "sourceTitle": "Malaysia May Hit Record Monthly Palm Oil Output",
+      "observedAt": "2026-10-19",
+      "verifiedAt": "2026-10-29T02:08:57.169Z",
+      "verification": "original-record",
+      "recordSha256": "2d6488634b5283172a88437ad6aabc8c37eaec43e6fb86d725efb4d274174d44",
+      "referenceContext": {
+        "receiptSha256": "2d6488634b5283172a88437ad6aabc8c37eaec43e6fb86d725efb4d274174d44",
+        "quote": "BriefsFinance BriefsFinance ✕ Free Newsletter Warning: Undefined variable $stocks in /var/www/briefs.co/htdocs/wp-content/plugins/oxygen/component-framework/components/classes/code-block.class.php(133) : eval()'d code on line 448 Warning: foreach() argument must be of type array|object, null given in /var/www/briefs.co/htdocs/wp-content/plugins/oxygen/component-framework/components/classes/code-block.class.php(133) : eval()'d code on line 448 Warning: Undefined variable $funds in /var/www/briefs.co/htdocs/wp-content/plugins/oxygen/component-framework/components/classes/code-block.class.php(133) : eval()'d code on line 472 Warning: foreach() argument must be of type array|object, null given in /var/www/briefs.co/htdocs/wp-content/plugins/oxygen/component-framework/components/classes/code-block.class.php(133) : eval()'d code on line 472 /* the link was here */ ×Free investor livestream — Nov 17How To Use ChatGPT & Claude To Research Stocks Like A Pro01The prompt we use to break down any stock02How to fact-check what AI tells you03How to compare two stocks in minutesSave my seat → NEWS / Global ScoopMalaysia's Palm Oil Output Poised for October Record, With 2027 Constraints on the HorizonAndre SavagePublished Oct 19, 2026 Share: Summary: Malaysia's growers say October could set a new monthly production high. Full-year output is likely to meet or surpass the 20.28 million tons peak from 2025, per the industry group's chief. Labor shortages and the lagged impact of El Niño threaten supplies in 2027. What just happened Malaysia's top growers say October is shaping up to be the biggest production month ever. The strength follows an all-time monthly high in September, when output jumped 16% from August to 2.12 million tons, lifting nationwide inventories 25% to 3.51 million tons. Last October's mark for the month was 2.04 million tons. Roslin Azmy Hassan, who heads the Malaysian Palm Oil Association, expects 2026 production to match or exceed the prior full-year record of 20.28 million tons set in 2025. He tied the recent lift in supply to replanted areas maturing since June, with younger palms yielding more fruit. As he put it, \"The better planting material bears more fruit compared with the material used 25 years ago.\" He added that after an October peak, output may taper in November and December, then run into tighter conditions in 2027 due to a lingering labor shortfall and the delayed hit from El Niño. Why prices and stocks moved Palm oil is up 18% in 2026 even as Malaysia - the world's No. 2 grower - has seen inventories climb to a record. Prices have been propelled by pricier global energy linked to conflict in the Middle East, Indonesia expanding its biodiesel mandate, and expectations that El Niño will curb production ahead. Benchmark futures touched 5,049 ringgit in mid September, the highest intraday level since December 2024. On Monday in Kuala Lumpur, prices briefly climbed 1.1% to 4,821 ringgit per ton before easing to 4,779 ringgit as of 4:15 p.m. local time. The supply surge since June has been helped by replanted, higher yielding estates coming into their stride, which has padded both output and stockpiles even as prices climbed. Palm oil remains a staple ingredient in foods and biofuels, so both energy markets and biofuel policy feed into demand. When market signals keep changing, stay steady with our free Market Briefs newsletter that sums it up in five minutes The risk ahead Roslin warned that today's big harvest is masking structural strain. Malaysia is short roughly 18,000 harvesters, which could leave about 8.6 million tons of fresh fruit bunches on the trees and translate into around 8 billion ringgit in lost revenue, or $1.96 billion. Planters have been pulling staff from maintenance to keep harvesting going, but that quick fix disrupts essentials like fertilizer application and general upkeep. The workforce gap has been hard to close. Plantations lean heavily on foreign labor, and rebuilding headcount after pandemic border curbs has been held back by quotas and tighter controls. That labor issue could combine with the delayed effects of El Niño to hit output next year, with the weather impact expected to show up more clearly in the second half of 2027. \"If you don't bring in new workers next year, then you'll see the impact on production,\" Roslin said. What this means for your portfolio Near term, Malaysia's bumper crop supports higher inventories alongside firm prices. Looking out, the setup shifts: costs have climbed over recent years to roughly 2,600 to 3,000 ringgit per ton, and with a planned minimum wage hike next year, plantation margins face additional pressure, which may prompt companies to pare back other expenditures. Add in the potential 2027 supply drag from a thinner workforce and a lagged El Niño, and price volatility stays on the table for palm oil and related consumer goods and biofuel plays. Across crops, commodities and policy, get a clear daily snapshot by signing up for the free Market Briefs DisclosureTrending BriefsUK lifts slot-machine duty to 25%, sparking rally in gambling stocksOct 28, 2026Ethiopia takes delivery of 12 Su-35 jets and four S-400 batteries from RussiaOct 28, 2026UK lifts bank surcharge to 6% for a 15-month stintOct 28, 2026Amazon rolls out Alexa-powered hardware, from new Echo speakers to a 16-inch smart displayOct 28, 2026Deutsche Bank hints at higher financial targets after standout Q3Oct 28, 2026Boston Scientific trims outlook, flags Q4 sales declineOct 28, 2026DHS blocks BGI-linked imports under forced-labor lawOct 28, 2026Brinker pops as Chili's traffic fuels a forecast hikeOct 28, 2026Wingstop Cuts Sales Forecast Again After Value Push Falls ShortOct 28, 2026Kalshi CEO weighs more guardrails as user losses draw heatOct 28, 2026 Get Market Briefs every morning for free!No fluff. No noise. No politics. Just finance news in 5 minutes.Subscribe FreeRecent NewsStock October 28, 2026UK lifts slot-machine duty to 25%, sparking rally in gambling stocksRead moreGlobal Scoop October 28, 2026Ethiopia takes delivery of 12 Su-35 jets and four S-400 batteries from RussiaRead moreEconomy October 28, 2026UK lifts bank surcharge to 6% for a 15-month stintRead moreTechnology October 28, 2026Amazon rolls out Alexa-powered hardware, from new Echo speakers to a 16-inch smart displayRead moreStock October 28, 2026Deutsche Bank hints at higher financial targets after standout Q3Read moreStock October 28, 2026Boston Scientific trims outlook, flags Q4 sales declineRead moreGlobal Scoop October 28, 2026DHS blocks BGI-linked imports under forced-labor lawRead moreStock October 28, 2026Brinker pops as Chili's traffic fuels a forecast hikeRead moreStock October 28, 2026Wingstop Cuts Sales Forecast Again After Value Push Falls ShortRead moreStock October 28, 2026Kalshi CEO weighs more guardrails as user losses draw heatRead moreEconomy October 28, 2026Capital goods power a bigger US goods trade gapRead moreStock October 28, 2026Heineken Weighs Future of South African Wine Labels After Distell DealRead moreStock October 28, 2026Stellantis says turnaround is taking hold after CEO sets up roughly 80 quality \"war rooms\"Read moreEconomy October 28, 2026Healey keeps £20,000 cash ISA limit and floats a starter ISA planRead moreReal Estate October 28, 2026Polus Capital Moves to Buy MesseTurm Debt at Steep DiscountRead moreTechnology October 28, 2026Samsung launches cuff-style Galaxy Buds On at $229, on sale Nov. 6Read moreEconomy October 28, 2026Commerce moves to slap about 260% tariffs on certain Chinese trailersRead moreEconomy October 28, 2026Standard Chartered Sees Data-Center Buildout Lifting Bank As Asia Joins RushRead moreTechnology October 28, 2026Russia puts Apple and Microsoft on data-handover registryRead moreGlobal Scoop October 28, 2026Saudi Oil Shipments Hold Near Wartime Highs Despite AttacksRead moreGlobal Scoop October 28, 2026Bombardier and BAE Systems team up on future combat air capabilitiesRead moreStock October 28, 2026Puig maps a 60% revenue climb to €8 billion by 2032, with eyes on top-tier beauty and fragrance slotsRead moreStock October 28, 2026Trans-Oil bonds sink as audited results pushed backRead moreGlobal Scoop October 28, 2026France-Germany Pact Puts 2035 Auto Climate Target at Risk, EU Climate Chief SaysRead moreTechnology October 28, 2026FEC pins down cause of e-filing outage as hack attempt probedRead moreEconomy October 28, 2026New Zealand Dollar Slides After RBNZ Keeps Rates UnchangedRead moreStock October 28, 2026DraftKings CEO says parents should talk to kids about gamblingRead moreTechnology October 28, 2026Google pushes TPUs beyond its own cloud, tapping Oracle to widen AI chip reachRead moreEconomy October 28, 2026Trump says Iran war ends \"whenever I want,\" as costs mount and approval dipsRead moreStock October 28, 2026Frontier hikes fares 71% in Q3 as fuel costs bite, still posts lossRead moreStock October 28, 2026Stellantis Shares Jump as Q3 Marks Progress on 60 Billion Euro TurnaroundRead moreReal Estate October 28, 2026Residential cruise hits a wall as fuel costs spike, leaving residents in CambodiaRead moreStock October 28, 2026Trian heads $1.4B offer to take Wendy's private at $7.35 a shareRead moreTechnology October 28, 2026Upwind Security secures $400 million, giving it a $3.8 billion valuationRead moreEconomy October 28, 2026Jake Paul backs AAM's bid to boost U.S. titanium sponge outputRead moreEconomy October 28, 2026Healey Will Raise Bank Surcharge, But Not Back To 8%Read moreTechnology October 28, 2026Moore Threads Posts 1,774% Sales Surge as Domestic AI Demand Heats UpRead moreGlobal Scoop October 28, 2026US military warns ships without business near Hormuz to steer clearRead moreEconomy October 28, 2026Swiss committee to weigh UBS capital plan on November 23-24Read moreStock October 28, 2026GE Vernova agrees to pay $9 billion for Trench Group to supercharge grid hardwareRead moreStock October 28, 2026Bayer wins China approval for stroke drug Asundexian, sold as SunharboRead moreStock October 28, 2026Biogen tops forecasts as newer medicines power Q3Read moreStock October 28, 2026Six Flags' New CEO Faces Safety, Debt and Attendance Headwinds Almost One Year InRead moreGlobal Scoop October 28, 2026South Africa skips awards in first gas-to-power tender, clouding coal exit timelineRead moreEconomy October 28, 2026AI Is Adding to U.S. Growth, Economists Say, Ahead of Oct. 29 GDP ReportRead moreGlobal Scoop October 28, 2026Europe may remove amoxicillin from critical list, pressuring last EU penicillin plantRead moreStock October 28, 2026UK bonds and stocks climb as Healey's low-drama budget lands as billedRead moreStock October 28, 2026Israeli Markets Slip After Tight Election Signals No Clear MajorityRead moreStock October 28, 2026Ping An Profit Drops 27% After Market Rout Hits InvestmentsRead moreTechnology October 28, 2026Volkswagen unveils China-built Vega software in push to steady sales slideRead moreEconomy October 28, 2026Uganda's Shilling Rebounds After Sharp Slide, Officials Promise Measured ResponseRead moreEconomy October 28, 2026UBS CEO floats relocating HQ as Swiss capital hike nears a voteRead moreEconomy October 28, 2026IMF says South Africa is regaining fiscal credibility, but reform pace must pick upRead moreStock October 28, 2026Mercedes plots China reboot as luxury demand sags, but says it is not leavingRead moreStock October 28, 2026Regulators Cancel Tera Yatirim License and Halt TradingRead moreGlobal Scoop October 28, 2026Zelenskyy presses Washington to lock in Patriot missile transfers before winterRead moreGlobal Scoop October 28, 2026Turkey launches Antalya AI pledge, to unveil at COP31Read moreStock October 28, 2026Adani Enterprises returns to profit as newer businesses scale upRead moreStock October 28, 2026UniCredit chair Padoan to exit after term ends in springRead moreStock October 28, 2026Unilever's North America Weakness Masks Stronger Emerging Market GainsRead "
+      }
+    },
+    {
+      "id": "live-article-863ff2ec748ed01c",
+      "commodity": "sugar",
+      "topic": "설탕",
+      "text": "2026-10-20 Sugar Production in Thailand Expected to Decline by 2.5 Million Tonnes 원문 인용: “Department of Agriculture’s (USDA) Foreign Agricultural Service (FAS) has projected that sugar production in Thailand will fall by 2.5 million tonnes—from 12 million tonnes in the 2025-26 season to 9.5 million tonnes in the 2026-27 season.”",
+      "sourceUrl": "https://www.igrain.in/posts/sugar-production-in-thailand-expected-to-decline-by",
+      "sourceTitle": "Sugar Production in Thailand Expected to Decline by 2.5 Million Tonnes",
+      "observedAt": "2026-10-20",
+      "verifiedAt": "2026-10-29T02:11:29.037Z",
+      "verification": "original-record",
+      "recordSha256": "e2eeccf5301b3aa3c4737b1dd5ce2804df77623009bb93e238fbe451bf70e7cb",
+      "referenceContext": {
+        "receiptSha256": "e2eeccf5301b3aa3c4737b1dd5ce2804df77623009bb93e238fbe451bf70e7cb",
+        "quote": "Bangkok. The Bangkok-based office of the U.S. Department of Agriculture’s (USDA) Foreign Agricultural Service (FAS) has projected that sugar production in Thailand will fall by 2.5 million tonnes—from 12 million tonnes in the 2025-26 season to 9.5 million tonnes in the 2026-27 season. However, given the substantial existing carryover stocks, the overall supply and availability of sugar are expected to remain favorable despite this decline in production.It is worth noting that Thailand is the world’s second-largest sugar exporter, trailing only Brazil. The USDA office estimates that Thailand’s total sugar exports for the 2026-27 marketing season will reach 7 million tonnes, comprising 3 million tonnes of raw sugar and 4 million tonnes of refined sugar. Additionally, domestic sugar consumption is projected at 3.3 million tonnes, bringing the total anticipated sugar utilization to 10.3 million tonnes. As consumption is expected to exceed production, Thailand’s surplus sugar stocks will decrease by 800,000 tonnes; nevertheless, the stock levels will remain quite high. According to the USDA office, the sugarcane crop in Thailand has been severely impacted by the El Niño weather pattern—which has led to reduced rainfall and higher temperatures—raising concerns about a significant drop in the average sugar recovery rate."
+      }
+    },
+    {
+      "id": "live-article-c600d673a6cb7ed0",
+      "commodity": "sugar",
+      "topic": "설탕",
+      "text": "2026-10-16 ESY 2026-27: OMCs invite bids for around 1100 crore litres of ethanol; Sugarcane Juice and B-Heavy Molasses excluded - ChiniMandi 원문 인용: “As per the tender document, the government has issued directions that sugar diversion for ethanol be reduced to zero for ESY 2026-27.”",
+      "sourceUrl": "https://www.chinimandi.com/esy-2026-27-omcs-invite-bids-for-around-1100-crore-litres-of-ethanol-sugarcane-juice-and-b-heavy-molasses-excluded/",
+      "sourceTitle": "ESY 2026-27: OMCs invite bids for around 1100 crore litres of ethanol; Sugarcane Juice and B-Heavy Molasses excluded - ChiniMandi",
+      "observedAt": "2026-10-16",
+      "verifiedAt": "2026-10-29T02:11:29.037Z",
+      "verification": "original-record",
+      "recordSha256": "42ab3631d3a3735e674662b6283aff01ce42fbdb5c15e2b6a3cfd3a7deb31ffa",
+      "referenceContext": {
+        "receiptSha256": "42ab3631d3a3735e674662b6283aff01ce42fbdb5c15e2b6a3cfd3a7deb31ffa",
+        "quote": "All NewsEnglishEthanol NewsMust Read ArticlesTop NewsTrendings AI Representational Image The Oil Marketing Companies (OMCs) have invited bids for the supply of around 1100 crore litres of Denatured Anhydrous Ethanol for cycle 1 of Ethanol Supply Year (ESY) 2026-27. As per the tender document, the government has issued directions that sugar diversion for ethanol be reduced to zero for ESY 2026-27. Thus, no offers have been sought for ethanol produced from Sugarcane Juice/ Sugar/Sugar Syrup and B-Heavy molasses in this Quantity Bid Tender. Accordingly, ethanol produced from different feedstocks namely C-Heavy molasses, Damaged Food Grains, Surplus Rice procured from FCI, Maize, Other Feedstock(s) as per National Policy on Biofuels (NPB) have been provided as separate categories in the Quantity Bid Form. The allocated quantities under this Quantity Bid will be procured as per the prevailing rates of ethanol during ESY 26-27 (as declared by OMCs / Government of India). The tender document specifies that bidders shall offer ethanol quantities in KL against the requirement of OMCs, feedstock wise – quarter wise for the period of 1st November 2026 to 31st October 2027 in this quantity bid for the quarters: ESY Quarter 1 (Q1): November 2026, December 2026 & January 2027, ESY Quarter 2 (Q2): February 2027, March 2027 & April 2027, ESY Quarter 3 (Q3): May 2027, June 2027 & July 2027 and ESY Quarter 4 (Q4): August 2027, September 2027 & October 2027. The validity of the bids submitted will be till 31st October 2027. As per the tender, any quantities of Ethanol already allocated to successful bidders under this Quantity Bid Tender for C1 of ESY 2026–27 shall be subject to the final outcome of proceedings arising from Writ Petition No. 109133 of 2025 (GM-RES), including following subjudice matters. Pending proceeding: 1. SLP (C) No. 22411 of 2026 (lead matter), SLP (C) Nos. 22531, 22648, 22922, 22963, 25589 and 26531 of 2026, and Transfer Case (Civil) Nos. 167 and 168 of 2026, pending before the Hon’ble Supreme Court of India. 2. W.P. No. 2298 of 2026 (Bombay High Court, Nagpur Bench) and C.W.J.C. No. 3296 of 2026 (Patna High Court), both transferred to the Hon’ble Supreme Court by order dated 04.08.2026. 3. all other connected or tagged matters and any other judicial proceedings before any Court or Tribunal relating to the ethanol allocation methodology of the OMCs, including Common Quantity Bid Tender No. 22376 dated 23.09.2025. “Pursuant to any order, direction, judgment, or determination passed in such proceedings, the Oil Marketing Companies (OMCs”) reserve the absolute right, at any stage and without liability, to revise, reallocate, reduce, withdraw, modify, or cancel any quantity allocated under this Tender. By participating in this Quantity Bid Tender, the Bidder unconditionally acknowledges and accepts this condition and waives any claim, demand, action, or proceeding against the OMCs arising out of, or in connection with, any such revision, reallocation, reduction, withdrawal, modification, or cancellation of allocated Ethanol quantities. Accordingly, no claim for compensation, damages —whether direct, indirect, or consequential—loss of profits, loss of opportunity, costs, or any other monetary or equitable relief shall lie against the OMCs in respect thereof,” the tender document further added. Click here to read the tender"
+      }
+    },
+    {
+      "id": "live-article-8140d62f190ae606",
+      "commodity": "potato-starch",
+      "topic": "감자전분",
+      "text": "2026-10-05 Tightening Feedstock Availability Supports European Potato Starch Market Ahead of October 원문 인용: “The European Potato starch market ended September on a stable-to-firm footing as tightening raw potato availability contrasted with relatively limited movement in finished Potato starch quotations.”",
+      "sourceUrl": "https://www.chemanalyst.com/NewsAndDeals/NewsDetails/tightening-feedstock-availability-supports-european-potato-starch-44823",
+      "sourceTitle": "Tightening Feedstock Availability Supports European Potato Starch Market Ahead of October",
+      "observedAt": "2026-10-05",
+      "verifiedAt": "2026-10-29T02:09:09.244Z",
+      "verification": "original-record",
+      "recordSha256": "29e4b6094ed69d08b1e7e4b703e1062f004c2c97886fb8504312e38637a954ba",
+      "referenceContext": {
+        "receiptSha256": "29e4b6094ed69d08b1e7e4b703e1062f004c2c97886fb8504312e38637a954ba",
+        "quote": "Welcome To ChemAnalyst ChemAnalystNews Market & Pricing Industry Product Launches Policy & Regulation Opinion Companies M & A Blogs Tightening Feedstock Availability Supports European Potato Starch Market Ahead of October Nicholas Sparks 05-Oct-2026 The European Potato starch market ended September on a stable-to-firm note as tightening raw potato availability increased supply concerns ahead of October. Germany and Poland are facing smaller potato crops because of reduced acreage, drought, heat, and weather-related quality issues, limiting the feedstock pool available for Potato starch production. Despite tighter raw material conditions, finished Potato starch prices remained largely stable by late September, reflecting adequate processor coverage and controlled downstream procurement. Storage and quality risks could become increasingly important as the new season progresses, particularly if additional losses reduce the volume of potatoes suitable for starch processing. Changes in global potato trade, including weaker Russian imports of Chinese potatoes, have had limited direct influence on European Potato starch prices so far. Looking into early October, the market is expected to remain stable to firm, with tighter processing-potato availability likely to cap downside potential. Further supply deterioration could strengthen producer pricing power and increase procurement risks for buyers. The European Potato starch market ended September on a stable-to-firm footing as tightening raw potato availability contrasted with relatively limited movement in finished Potato starch quotations. Weather-related crop losses in Germany and Poland, combined with reduced planted areas and higher production costs, are creating a more supportive supply backdrop for the ****-** campaign. However, processors remain sufficiently covered for the moment, preventing a sharp increase in Potato starch prices. In Poland, conventional Potato starch at FCA Lodz was assessed at EUR *.***/kg at the end of September, unchanged from mid-August and early September. The stability suggests that the tighter raw potato balance has not yet fully translated into the finished Potato starch market. At the same time, firmer table potato prices indicate growing competition for available raw material, which could gradually increase feedstock costs for Potato starch producers. Germany remains one of the... LOGIN TO VIEW THE FULL NEWS Stay ahead with essential market updates Join our WhatsApp Channel Related Products: Potato Starch Price Tags: Potato Starch Google News Add as Preferred Source View All Comments 24X7 Track Real Time Prices Potato Starch Read More Industry Report Potato Starch Market Analysis: Industry Market Size, Plant Capacity, Production, Operating Efficiency, Demand & Supply Gap, End-User Industries, Sales Channel, Regional Demand, Company Share, Manufacturing Process, 2015-2036 Read More Request For Demo Subscribe Today Track Prices of 1000+ Commodities Subscribe to our newsletter Invalid captcha Submit Download the app Popular News Leave a Comment × Post Comment Comments (0) We use cookies to deliver the best possible experience on our website. To learn more, visit our Privacy Policy. By continuing to use this site or by closing this box, you consent to our use of cookies. More info. Accept Company About ChemAnalyst Contact Us Download The App FAQ Make a Payment Useful Link Chemical Manufacturers Ranking Pharma Companies Procurement Guide Blogs Follow Us On Copyright © 2020 - | ChemAnalyst | All right reserved | Terms & Conditions | Privacy Policy"
+      }
+    },
+    {
+      "id": "live-article-7ede64a2bae9e4b4",
+      "commodity": "tapioca-starch",
+      "topic": "타피오카전분",
+      "text": "2026-10-19 Cassava Market Reference Bulletin – October 19, 2026 원문 인용: “According to TQ Industry’s compilation citing the Vietnam Cassava Association’s bulletin dated October 12, 2026:\nTapioca starch - FOB Ho Chi Minh City: USD 610–650/metric ton\nTapioca starch- DAF Lang Son: CNY 4,100–4,250/metric ton\nDried cassava chips- FOB Quy Nhon / Ho Chi Minh City, for China: USD 265/metric ton\nDried cassava chips - FOB, for South Korea:USD 320/metric ton\nFOB tapioca starch offers decreased by approximately USD 10/metric ton compared with the previous week.”",
+      "sourceUrl": "https://vietbacagroimex.com/en/posts/cassava-market-reference-bulletin-october-19-2026",
+      "sourceTitle": "Cassava Market Reference Bulletin – October 19, 2026",
+      "observedAt": "2026-10-19",
+      "verifiedAt": "2026-10-29T02:09:11.385Z",
+      "verification": "original-record",
+      "recordSha256": "ba96bfed3e6ca5af4b3eb3602e4badeda5c821df06bd7eefc5a298bd8c1cc2a6",
+      "referenceContext": {
+        "receiptSha256": "ba96bfed3e6ca5af4b3eb3602e4badeda5c821df06bd7eefc5a298bd8c1cc2a6",
+        "quote": "Cassava Market Reference Bulletin – October 19, 2026 The cassava and tapioca starch markets enter the new week with mixed export offers. Businesses should closely monitor Chinese buying activity, early-season raw material prices, and transportation costs to develop suitable delivery plans. Mục Lục Nội Dung Ẩn Cassava Market Reference Bulletin – October 19, 2026The cassava and tapioca starch markets enter the new week with mixed export offers. Businesses should closely monitor Chinese buying activity, early-season raw material prices, and transportation costs to develop suitable delivery plans.1. Vietnam’s Cassava and Tapioca Starch Export PricesAccording to TQ Industry’s compilation citing the Vietnam Cassava Association’s bulletin dated October 12, 2026:Product - Delivery Terms / Market - Reference PriceTapioca starch - FOB Ho Chi Minh City: USD 610–650/metric tonTapioca starch- DAF Lang Son: CNY 4,100–4,250/metric tonDried cassava chips- FOB Quy Nhon / Ho Chi Minh City, for China: USD 265/metric tonDried cassava chips - FOB, for South Korea:USD 320/metric tonFOB tapioca starch offers decreased by approximately USD 10/metric ton compared with the previous week. Reference prices at Lang Son and cassava chip export prices remained unchanged during the reporting period. Prices vary depending on quality, specifications, and destination market.2. Thailand Market ReferenceThe following data was published on the Thai Tapioca Trade Association (TTTA) website and checked on the morning of October 19, 2026:Product- Reference Price -Publication DateFresh cassava roots, 25% starch content: THB 3.50–4.15/kg - October 13, 2026Cassava chips-: USD 255–265/metric ton - October 13, 2026Tapioca starch - USD 645–655/metric ton -October 15, 2026Product grade, packaging, and delivery terms should be checked before making direct comparisons with Vietnamese quotations.3. Demand Developments in ChinaAccording to Mysteel’s reports dated October 9–10, 2026, China’s tapioca starch market remained at elevated price levels but lacked a clear direction. Input costs supported prices, while limited buying interest restrained further increases.Indicative offers recorded at the time of the reports were:Product Group - Price RangeVietnamese tapioca starch and mid-to-high-end Chinese domestic products: CNY 4,500–4,800/metric tonThai tapioca starch: CNY 4,900–5,500/metric tonThese are prices within the Chinese market, with delivery and tax conditions that differ from FOB or DAF quotations. Differences between these price levels should not be used directly to determine export profit margins.4. Market Assessment and Key Factors to MonitorThe reference data above does not yet provide a clear basis for anticipating a broad-based price increase. Businesses should prioritize sourcing against purchase orders, update factory prices, and confirm delivery schedules before finalizing contracts.Key factors to monitor this week include:Buying activity and restocking demand from Chinese customers.Cassava raw material prices, starch content, and early-season production progress.Freight rates, vessel schedules, and delivery costs to border checkpoints.Specific quality requirements for cassava chips, tapioca starch, and cassava flour.This bulletin was compiled on the morning of October 19, 2026, using the public sources mentioned above. Each price has its own reference date and does not represent a confirmed transaction price for October 19 or an official quotation from Viet Bac. Actual prices depend on quality, quantity, packaging, payment terms, and delivery conditions.VIET BAC AGRICULTURAL IMPORT EXPORT CO., LTD.Website: vietbacagroimex.com Related Articles News & Market Updates 16/10/2026 • Viet Bac Agro Admin TAPIOCA STARCH FOR EXPORT TAPIOCA STARCH FOR EXPORT Viet Bac Agricultural Import Export Co., Ltd. is accepting export orders for tapioca starch from the 2026–2027 crop season, working with importers, trading companies, and distribution partners .Under signed contracts with tapioca starch manufacturers in Thanh Hoa and Nghe An provinces, Viet Bac coordinates supply plans based on customers’ actual requirements. Our network of purchasing agents across cassava-growing regions helps consolidate fresh cassava supplies to support production for the new crop season .• Quality specifications and packaging requirements are agreed upon before contracts are signed. • Order quantities, production schedules, and delivery dates are arranged for each order. • Export documentation is coordinated to meet the requirements of the importing market... Read More 1 min read News & Market Updates 13/10/2026 • Viet Bac Agro Admin SON LA COFFEE – THE FLAVOR OF ARABICA FROM THE NORTHWESTERN MOUNTAINS SON LA COFFEE – THE FLAVOR OF ARABICA FROM THE NORTHWESTERN MOUNTAINS Amid the hills and mountains of Vietnam’s Northwest, Son La is a region with natural conditions well suited to Arabica coffee, also known as “coffee chè.” The local terrain, soil, and climate contribute to the distinctive character of its coffee beans, together with the cultivation and harvesting experience of local farmers. Read More 2 min read News & Market Updates 13/10/2026 • Viet Bac Agro Admin CASSAVA STARCH EXPORTS FOR THE 2026–2027 SEASON VIET BAC — CASSAVA STARCH EXPORTS FOR THE 2026–2027 SEASON Viet Bac Agricultural Import-Export Co., Ltd. is accepting export orders for cassava starch for the 2026–2027 season and warmly invites importers, trading companies, and distribution partners to cooperate with us. Read More 2 min read News & Market Updates 11/10/2026 • Viet Bac Agro Admin Vietnamese Dried Cassava Chips Supplier, Handling Sea Export Orders VIET BAC Agricultural Import Export Co., Ltd. supplies dried cassava chips from Vietnam for use in animal feed production, ethanol production, and industrial processing. We also handle orders for formal customs-cleared export through seaports according to customer requirements. Read More 2 min read"
+      }
+    }
+  ],
+  "sugarPriceFacts": [
+    {
+      "id": "sugar-sb-2026-09-28",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-09-28 ICE Sugar No.11 SB=F Yahoo 일봉 17.46 US¢/lb, 384.93 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-09-28",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 384.93,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-2026-10-21",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-21 ICE Sugar No.11 SB=F Yahoo 일봉 20.45 US¢/lb, 450.85 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-21",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 450.85,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-2026-10-22",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-22 ICE Sugar No.11 SB=F Yahoo 일봉 20.13 US¢/lb, 443.79 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-22",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 443.79,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-2026-10-23",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-23 ICE Sugar No.11 SB=F Yahoo 일봉 20.24 US¢/lb, 446.22 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-23",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 446.22,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-2026-10-26",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-26 ICE Sugar No.11 SB=F Yahoo 일봉 19.1 US¢/lb, 421.08 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-26",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 421.08,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-2026-10-27",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-27 ICE Sugar No.11 SB=F Yahoo 일봉 19.2 US¢/lb, 423.29 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-27",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 423.29,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-2026-10-28",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-28 ICE Sugar No.11 SB=F Yahoo 잠정 일봉 19.36 US¢/lb, 426.81 USD/MT (US¢/lb × 22.0462262185 환산). 일반 선물 연속 기호로 계약 월·롤오버·공식 정산은 미검증이며 정제 백설탕 현물·한국 도착 원가가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-28",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "771807f4b5bea811f65a8e27f764ddfc30e8498f1f08ad2166bcc335fbe6483b",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 426.81,
+        "valueKind": "actual"
+      }
+    },
+    {
+      "id": "sugar-sb-wow",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-10-21 대비 2026-10-28 설탕(원당) price 관측값: 450.85 → 426.81 USD/MT, 변화 -5.33%. WoW 두 관측일 순변화이며 지속 추세나 실행 가능한 구매 단가 변화가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-28",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "189a06c08be42a04b8b213a6d593f208d84eafce72873d180a02a8fa1236faa4",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 426.81,
+        "valueKind": "actual"
+      },
+      "comparison": {
+        "metric": "price",
+        "baselineId": "sugar-sb-2026-10-21",
+        "currentId": "sugar-sb-2026-10-28",
+        "direction": "decrease",
+        "pct": -5.33,
+        "observationCount": 2,
+        "monotonic": true
+      },
+      "interpretations": [
+        "해당 두 관측일 사이 설탕(원당) price 관측값은 하락했습니다."
+      ]
+    },
+    {
+      "id": "sugar-sb-mom",
+      "commodity": "sugar",
+      "topic": "설탕(원당)",
+      "text": "2026-09-28 대비 2026-10-28 설탕(원당) price 관측값: 384.93 → 426.81 USD/MT, 변화 10.88%. MoM 두 관측일 순변화이며 지속 추세나 실행 가능한 구매 단가 변화가 아닙니다.",
+      "sourceUrl": "https://finance.yahoo.com/quote/SB=F/history/",
+      "sourceTitle": "Yahoo Finance · ICE Sugar No.11 SB=F",
+      "observedAt": "2026-10-28",
+      "verifiedAt": "2026-10-29T02:08:58.739Z",
+      "verification": "original-record",
+      "recordSha256": "11cfc725e377b1e14a4ac2b8415ed708b3e287cb32ed67663d40af3b8e1220a1",
+      "measure": {
+        "metric": "price",
+        "scope": "ICE:Yahoo-generic-daily-bar-not-verified-settlement",
+        "benchmark": "ICE:SB=F",
+        "unit": "USD/MT",
+        "value": 426.81,
+        "valueKind": "actual"
+      },
+      "comparison": {
+        "metric": "price",
+        "baselineId": "sugar-sb-2026-09-28",
+        "currentId": "sugar-sb-2026-10-28",
+        "direction": "increase",
+        "pct": 10.88,
+        "observationCount": 2,
+        "monotonic": true
+      },
+      "interpretations": [
+        "해당 두 관측일 사이 설탕(원당) price 관측값은 상승했습니다."
+      ]
+    }
+  ],
+  "sugarCollectorSample": {
+    "version": 1,
+    "payload": {
+      "success": true,
+      "commodity": "sugar",
+      "symbol": "SB=F (ICE Sugar)",
+      "timeframe": "5Y",
+      "range": "5y",
+      "source": "ICE Futures U.S. / Yahoo Finance",
+      "exchange": "ICE Futures U.S.",
+      "provider": "Yahoo Finance",
+      "quoteUnit": "US¢/lb",
+      "priceUnit": "USD/MT",
+      "fetchedAt": "2026-10-29T02:15:45.883Z",
+      "latestMarketQuote": {
+        "quoteValue": 19.36,
+        "quoteUnit": "US¢/lb",
+        "usdPerMT": 426.81,
+        "asOf": "2026-10-28T16:59:59.000Z",
+        "tradingDate": "2026-10-28",
+        "type": "latest_quote_not_verified_settlement"
+      },
+      "historicalDataType": "Yahoo daily bars; settlement status not independently verified",
+      "contractSeries": {
+        "ticker": "SB=F",
+        "type": "Yahoo generic futures symbol",
+        "rolloverVerified": false
+      },
+      "data": [
+        {
+          "date": "2026-09-02",
+          "quoteValue": 18.7,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.7,
+          "usdPerMT": 412.26,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-03",
+          "quoteValue": 18.07,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.07,
+          "usdPerMT": 398.38,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-04",
+          "quoteValue": 18.07,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.07,
+          "usdPerMT": 398.38,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-08",
+          "quoteValue": 18.1,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.1,
+          "usdPerMT": 399.04,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-09",
+          "quoteValue": 18.4,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.4,
+          "usdPerMT": 405.65,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-10",
+          "quoteValue": 18.73,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.73,
+          "usdPerMT": 412.93,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-11",
+          "quoteValue": 18.15,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.15,
+          "usdPerMT": 400.14,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-14",
+          "quoteValue": 18.16,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.16,
+          "usdPerMT": 400.36,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-15",
+          "quoteValue": 17.94,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.94,
+          "usdPerMT": 395.51,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-16",
+          "quoteValue": 17.97,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.97,
+          "usdPerMT": 396.17,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-17",
+          "quoteValue": 17.42,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.42,
+          "usdPerMT": 384.05,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-18",
+          "quoteValue": 17.36,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.36,
+          "usdPerMT": 382.72,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-21",
+          "quoteValue": 17.48,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.48,
+          "usdPerMT": 385.37,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-22",
+          "quoteValue": 17.59,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.59,
+          "usdPerMT": 387.79,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-23",
+          "quoteValue": 17.75,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.75,
+          "usdPerMT": 391.32,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-24",
+          "quoteValue": 17.58,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.58,
+          "usdPerMT": 387.57,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-25",
+          "quoteValue": 17.5,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.5,
+          "usdPerMT": 385.81,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-28",
+          "quoteValue": 17.46,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.46,
+          "usdPerMT": 384.93,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-29",
+          "quoteValue": 17.82,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.82,
+          "usdPerMT": 392.86,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-09-30",
+          "quoteValue": 17.63,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 17.63,
+          "usdPerMT": 388.67,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-01",
+          "quoteValue": 18.94,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 18.94,
+          "usdPerMT": 417.56,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-02",
+          "quoteValue": 19.93,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 19.93,
+          "usdPerMT": 439.38,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-05",
+          "quoteValue": 20.73,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.73,
+          "usdPerMT": 457.02,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-06",
+          "quoteValue": 20.82,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.82,
+          "usdPerMT": 459,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-07",
+          "quoteValue": 20.83,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.83,
+          "usdPerMT": 459.22,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-08",
+          "quoteValue": 20.15,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.15,
+          "usdPerMT": 444.23,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-09",
+          "quoteValue": 20.25,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.25,
+          "usdPerMT": 446.44,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-12",
+          "quoteValue": 20.85,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.85,
+          "usdPerMT": 459.66,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-13",
+          "quoteValue": 21.11,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 21.11,
+          "usdPerMT": 465.4,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-14",
+          "quoteValue": 20.84,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.84,
+          "usdPerMT": 459.44,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-15",
+          "quoteValue": 21.13,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 21.13,
+          "usdPerMT": 465.84,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-16",
+          "quoteValue": 20.85,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.85,
+          "usdPerMT": 459.66,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-19",
+          "quoteValue": 20.57,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.57,
+          "usdPerMT": 453.49,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-20",
+          "quoteValue": 20.52,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.52,
+          "usdPerMT": 452.39,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-21",
+          "quoteValue": 20.45,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.45,
+          "usdPerMT": 450.85,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-22",
+          "quoteValue": 20.13,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.13,
+          "usdPerMT": 443.79,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-23",
+          "quoteValue": 20.24,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 20.24,
+          "usdPerMT": 446.22,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-26",
+          "quoteValue": 19.1,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 19.1,
+          "usdPerMT": 421.08,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-27",
+          "quoteValue": 19.2,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 19.2,
+          "usdPerMT": 423.29,
+          "isProvisional": false
+        },
+        {
+          "date": "2026-10-28",
+          "quoteValue": 19.36,
+          "quoteUnit": "US¢/lb",
+          "centsPerBushel": 19.36,
+          "usdPerMT": 426.81,
+          "isProvisional": true
+        }
+      ],
+      "priceInputs": {
+        "benchmark": "ICE:SB=F",
+        "observationDate": "2026-10-28",
+        "rawPrice": 19.36,
+        "rawUnit": "US¢/lb",
+        "usdPerMT": 426.81,
+        "comparisons": {
+          "wow": {
+            "pct": -5.33,
+            "amountUsdMt": -24.04,
+            "referenceDate": "2026-10-21"
+          },
+          "mom": {
+            "pct": 10.88,
+            "amountUsdMt": 41.88,
+            "referenceDate": "2026-09-28"
+          }
+        }
+      }
+    }
+  }
+}

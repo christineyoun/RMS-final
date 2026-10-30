@@ -22,7 +22,8 @@ export function refreshPalmPageSources(){
   if(palmActive)return palmActive;
   palmActive=(async()=>{const results=await Promise.allSettled([refreshPublicHistory('palm-oil'),refreshPalmNews(),loadAll8OriginRadar('palm-oil',true)]);return {success:true,kind:'free-palm-sources',results:results.map((r,i)=>({source:['prices','news','origins'][i],status:r.status==='fulfilled'?(r.value.lastError?'cached':'completed'):'failed',error:r.status==='fulfilled'?r.value.lastError:String(r.reason?.message||'Source failed')}))};})().finally(()=>{palmActive=null;});return palmActive;
 }
-export function freeRefreshSettings(){const cfg=read('settings.json')||{};return {enabled:cfg.freeAutoEnabled===true,hourKST:Number.isInteger(cfg.scheduleHourKST)?cfg.scheduleHourKST:9};}
+export function freeScheduleSettings(cfg:any={}){return {enabled:cfg.freeAutoEnabled===true,hourKST:Number.isInteger(cfg.scheduleHourKST)&&cfg.scheduleHourKST>=0&&cfg.scheduleHourKST<=23?cfg.scheduleHourKST:9};}
+export function freeRefreshSettings(){return freeScheduleSettings(read('settings.json')||{});}
 export function freeRefreshDay(now=new Date()){
   const values=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23',weekday:'short'}).formatToParts(now).map(p=>[p.type,p.value]));
   return {day:`${values.year}-${values.month}-${values.day}`,hour:Number(values.hour),weekday:!['Sat','Sun'].includes(values.weekday)};
@@ -48,9 +49,12 @@ export function createPotatoExportQuoteRefreshJob(fetchQuote:typeof fetchOfficia
 export const potatoExportQuoteRefreshJob=createPotatoExportQuoteRefreshJob();
 export const freeSourceJobs=dailyFreeSourceJobs;
 /** Injectable clock/storage/jobs let offline tests exercise the actual scheduler without touching other commodities. */
-export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;jobs?:()=>FreeSourceJob[];publish?:(run:any)=>Promise<any>}={}){
+export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;jobs?:()=>FreeSourceJob[];publish?:(run:any)=>Promise<any>;compose?:(run:any)=>Promise<any>}={}){
  const directory=options.directory||root(),now=options.now||(()=>new Date()),jobs=options.jobs||freeSourceJobs;
- const readRun=(file:string)=>readFreeJson(file,directory),save=(v:any)=>writeFreeJson('free-source-refresh.json',v,directory);
+ const readRun=(file:string)=>readFreeJson(file,directory);
+ // A manual run is an attempt, never the scheduled day's completion marker.
+ const scheduled=()=>{const saved=readRun('free-source-scheduled.json');const old=readRun('free-source-refresh.json');if(saved&&!(old?.status==='running'&&!old.trigger&&old.day>saved.day))return saved;return old&&(old.trigger==='scheduled'||old.trigger==='recovery'||!old.trigger&&old.status==='running')?old:null;};
+ const save=(v:any)=>{writeFreeJson('free-source-refresh.json',v,directory);if(v.trigger==='scheduled'||v.scheduledDay)writeFreeJson('free-source-scheduled.json',v,directory);};
  let active:Promise<any>|null=null;
  const refresh=(trigger='manual'):Promise<any>=>{
   if(active)return active;
@@ -63,15 +67,15 @@ export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;
     try{const old=readRun('free-source-refresh.lock');if(!old||live(old.pid))return null;fs.renameSync(lock,lock+'.abandoned-'+nonce);fs.writeFileSync(lock,JSON.stringify({pid:process.pid,nonce}),{flag:'wx'});}catch{return null;}finally{if(readRun('free-source-refresh.lock.recovery')?.nonce===nonce)fs.unlinkSync(recovery);}
    }
    try{
-    const day=freeRefreshDay(now()).day,previous=readRun('free-source-refresh.json');
+    const day=freeRefreshDay(now()).day,previous=trigger==='scheduled'||trigger==='recovery'?scheduled():readRun('free-source-refresh.json');
     if(trigger==='scheduled'&&previous?.day===day&&previous.status!=='running')return null;
     const recovering=trigger==='recovery';
     if(recovering&&(!previous||previous.day!==day||previous.status==='running'||(previous.recoveryPasses||0)>=1))return null;
     const retryKeys=new Set(recovering?previous.jobs.filter((j:any)=>['failed','retained-old-data'].includes(j.status)&&j.retryable!==false&&!/HTTP 403|permission|authorization|licensed|written authorization/i.test(j.error||'')).map((j:any)=>j.key):[]);
     if(recovering&&!retryKeys.size)return null;
-    const resumed=previous?.day===day&&previous.status==='running';
-    if(previous&&!resumed)fs.appendFileSync(path.join(directory,'free-source-refresh-history.jsonl'),JSON.stringify(previous)+'\n');
-    const run:any=recovering?{...previous,status:'running',recoveryPasses:(previous.recoveryPasses||0)+1,recoveryStartedAt:now().toISOString(),jobs:previous.jobs.filter((j:any)=>!retryKeys.has(j.key))}:resumed?{...previous,id:previous.id||nonce,resumedAt:now().toISOString()}:{day,id:nonce,trigger,startedAt:now().toISOString(),kind:'free-public-sources',status:'running',jobs:[]};save(run);
+    const resumed=previous?.day===day&&previous.status==='running'&&(trigger==='scheduled'?previous.trigger!=='manual':previous.trigger===trigger);
+    if(previous&&!resumed)fs.appendFileSync(path.join(directory,'free-source-refresh-history.jsonl'),JSON.stringify(previous.status==='running'?{...previous,status:'interrupted',abandonedAt:now().toISOString()}:previous)+'\n');
+    const run:any=recovering?{...previous,status:'running',recoveryPasses:(previous.recoveryPasses||0)+1,recoveryStartedAt:now().toISOString(),jobs:previous.jobs.filter((j:any)=>!retryKeys.has(j.key))}:resumed?{...previous,trigger:previous.trigger||trigger,...(trigger==='scheduled'?{scheduledDay:day}:{}),id:previous.id||nonce,resumedAt:now().toISOString()}:{day,id:nonce,trigger,...(trigger==='scheduled'?{scheduledDay:day}:{}),startedAt:now().toISOString(),kind:'free-public-sources',status:'running',jobs:[]};save(run);
     const observations=readRun('free-source-observations.json')||{jobs:{}},oldJobs=observations.jobs||{};
     const tasks=jobs().filter(j=>!recovering||retryKeys.has(j.key));let next=0;
     const worker=async()=>{while(next<tasks.length){const job=tasks[next++];if(resumed&&run.jobs.some((r:any)=>r.key===job.key))continue;
@@ -86,16 +90,28 @@ export function createFreeSourceRunner(options:{directory?:string;now?:()=>Date;
      }catch(e){row={...row,status:prior?'retained-old-data':'failed',observationDate:prior?.observationDate||null,lastVerifiedAt:prior?.lastVerifiedAt||null,error:(e as Error).message};}
      row.finishedAt=now().toISOString();run.jobs.push(row);save(run);writeFreeJson('free-source-observations.json',{...observations,jobs:oldJobs},directory);
     }};
-    const network=await withFreeNetwork(async()=>{await Promise.all([worker(),worker(),worker()]);return null;},row=>fs.appendFileSync(path.join(directory,'free-source-requests.jsonl'),JSON.stringify({runId:run.id,...row})+'\n'));run.requests=network.requests;
+    const network=await withFreeNetwork(async()=>{await Promise.all([worker(),worker(),worker()]);return null;},row=>fs.appendFileSync(path.join(directory,'free-source-requests.jsonl'),JSON.stringify({runId:run.id,...row})+'\n'));run.requests=[...(run.requests||[]),...network.requests];
     run.status=run.jobs.some((j:any)=>j.status==='failed'||j.status==='retained-old-data')?'partial':'completed';
-    run.completed=run.jobs.filter((j:any)=>j.status==='success'||j.status==='unchanged').map((j:any)=>j.key);run.finishedAt=now().toISOString();
+    run.completed=run.jobs.filter((j:any)=>j.status==='success'||j.status==='unchanged').map((j:any)=>j.key);run.sourcesFinishedAt=now().toISOString();
+    // Compose only after the existing non-paid collectors complete. Preserve
+    // injected/offline runner behavior and isolate per-commodity retention.
+    if(options.compose)try{run.evidenceFirst=await options.compose(run);}catch{run.evidenceFirst={error:'non-paid-composition-failed'};}
+    else if(!options.jobs)try{const {refreshEvidenceFirst}=await import('./evidenceFirstWorkflow.ts');run.evidenceFirst=await refreshEvidenceFirst(['wheat','corn','soybean','soybean-oil','palm-oil','sugar','potato-starch','tapioca-starch'],{reuseCollected:true,verifiedAfter:run.startedAt});}catch{run.evidenceFirst={error:'non-paid-composition-failed'};}
+    if(run.evidenceFirst?.error)run.status='partial';
+    run.finishedAt=now().toISOString();
     try{run.publication=await(options.publish||(options.jobs?async()=>null:publishDailyOverview))(run);}catch(e){run.status='partial';run.publicationError=(e as Error).message;}
-    const changed=run.jobs.some((j:any)=>j.status==='success');
-    writeFreeJson('free-source-observations.json',{...observations,jobs:oldJobs,lastSuccessfulRefreshAt:run.completed.length?run.finishedAt:observations.lastSuccessfulRefreshAt,lastPublicationAt:changed?run.finishedAt:observations.lastPublicationAt},directory);save(run);return run;
+    run.finishedAt=now().toISOString();
+    // Collection changes are not proof of successful publication.
+    const changed=!run.publicationError&&run.publication?.changed===true;
+    writeFreeJson('free-source-observations.json',{...observations,jobs:oldJobs,lastSuccessfulRefreshAt:run.completed.length?run.finishedAt:observations.lastSuccessfulRefreshAt,lastPublicationAt:changed?(run.publication.publishedAt||run.finishedAt):observations.lastPublicationAt},directory);save(run);return run;
+   }catch(e){
+    const interrupted=readRun('free-source-refresh.json');
+    if(interrupted?.status==='running'){interrupted.status='failed';interrupted.finishedAt=now().toISOString();interrupted.executionError='free-refresh-execution-failed';save(interrupted);}
+    throw e;
    }finally{if(readRun('free-source-refresh.lock')?.nonce===nonce)fs.unlinkSync(lock);}
   })();active=active.finally(()=>{active=null;});return active;
  };
- const check=()=>{const cfg=readRun('settings.json')||{},s={enabled:cfg.freeAutoEnabled===true,hourKST:9},last=readRun('free-source-refresh.json');
+ const check=()=>{const s=freeScheduleSettings(readRun('settings.json')||{}),last=scheduled();
   return !active&&freeRefreshDue(now(),s,last?.status==='running'?'':last?.day||'')?refresh('scheduled'):Promise.resolve(null);};
  return {refresh,check,retryFailed:()=>refresh('recovery')};
 }
