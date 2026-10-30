@@ -18,11 +18,11 @@ function checkedUrl(s:string){
   }catch{return null;}
 }
 const clean=(s:string)=>s.replace(/\s+/g,' ').trim();
-async function inspect(a:RetrievedSourceMetadata,key:string):Promise<RetrievedSourceMetadata|null>{
+async function inspect(a:RetrievedSourceMetadata,key:string,now=new Date()):Promise<RetrievedSourceMetadata|null>{
   const url=checkedUrl(a.originalUrl);if(!url||a.unavailable)return null;
   const allowed=topics[key];if(!allowed)return null;
   // Unknown publishers remain preserved on disk, but cannot establish procurement evidence.
-  if(key==='soybean-oil' && !/(^|\.)(usda\.gov|ers\.usda\.gov|ukragroconsult\.com|world-grain\.com|reuters\.com|agriculture\.com|dtnpf\.com|ahdb\.org\.uk|fas\.usda\.gov|biodieselmagazine\.com)$/.test(url.hostname))return null;
+  if(key==='soybean-oil' && !/(^|\.)(usda\.gov|ers\.usda\.gov|ukragroconsult\.com|world-grain\.com|reuters\.com|agriculture\.com|dtnpf\.com|ahdb\.org\.uk|fas\.usda\.gov|biodieselmagazine\.com|commodity-board\.com)$/.test(url.hostname))return null;
   try{
     const r=await fetch(url.toString(),{redirect:'manual',signal:AbortSignal.timeout(9000),headers:{'User-Agent':'Mozilla/5.0 (compatible; RMS Market Quality/1.0)','Accept':'text/html'}});
     if(!r.ok||!String(r.headers.get('content-type')).includes('html'))return null;
@@ -32,18 +32,18 @@ async function inspect(a:RetrievedSourceMetadata,key:string):Promise<RetrievedSo
     const text=clean($('article').first().text()||$('main').first().text()||$('body').text());
     const headText=clean(headline+' '+text.slice(0,6000));
     if(!headline||!hasMarketArticleBody(text,headline)||!allowed.test(headText))return null;
-    const date=String($('meta[property="article:published_time"]').attr('content')||$('meta[name="date"]').attr('content')||$('time[datetime]').first().attr('datetime')||'');
+    const date=String($('meta[property="article:published_time"]').attr('content')||$('meta[name="date"]').attr('content')||$('time[datetime]').first().attr('datetime')|| /\"datePublished\"\s*:\s*\"([^\"]+)\"/.exec(body)?.[1]||'');
     if(!date)return null;
     const pubDate=new Date(date);
-    if(!Number.isFinite(pubDate.getTime())||Date.now()-pubDate.getTime()>31*86400000||pubDate.getTime()>Date.now()+86400000)return null;
+    if(!Number.isFinite(pubDate.getTime())||now.getTime()-pubDate.getTime()>31*86400000||pubDate.getTime()>now.getTime()+86400000)return null;
     const day=pubDate.toISOString().slice(0,10);
     if(a.publishedAt && Math.abs(Date.parse(a.publishedAt)-Date.parse(day))>3*86400000)return null;
     return {...a,rawTitle:headline.slice(0,200),rawSnippet:text.slice(0,5000),publishedAt:day,
       sourceName:url.hostname.replace(/^www\./,''),unavailable:false};
   }catch{return null;}
 }
-export async function verifyOtherCommodityArticles(items:RetrievedSourceMetadata[],key:string){
+export async function verifyOtherCommodityArticles(items:RetrievedSourceMetadata[],key:string,now=new Date()){
   const selected=items.filter(v=>v.originalUrl&&!v.unavailable).slice(0,16);
-  const findings=await Promise.all(selected.map(a=>inspect(a,key)));
+  const findings=await Promise.all(selected.map(a=>inspect(a,key,now)));
   return findings.filter((a):a is RetrievedSourceMetadata=>!!a).slice(0,8);
 }

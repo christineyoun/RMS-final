@@ -30,20 +30,29 @@ async function origin(id:string){const {originRadarService:s}=await import('./or
  writeFreeJson('free-origin-'+id+'.json',r);return packet(r,dates.at(-1),errors?`${errors} origins retain older or incomplete weather evidence`:undefined);
 }
 async function legacyNews(id:string){
- if(['soybean','soybean-oil','palm-oil'].includes(id)){const r=id==='soybean'?await(await import('./soybeanNewsPersistence.ts')).refreshSoybeanNews():id==='soybean-oil'?await(await import('./soybeanOilVerifiedNews.ts')).refreshSoybeanOilNews():await(await import('./palmVerifiedNews.ts')).refreshPalmNews();return packet(r.articles||r,(r.articles||[]).map((a:any)=>a.publishedAt).sort().at(-1),r.lastError);}
+ let retainedLegacy:any=null;
+ if(['soybean','soybean-oil','palm-oil'].includes(id)){
+  try{
+   const r=id==='soybean'?await(await import('./soybeanNewsPersistence.ts')).refreshSoybeanNews():id==='soybean-oil'?await(await import('./soybeanOilVerifiedNews.ts')).refreshSoybeanOilNews():await(await import('./palmVerifiedNews.ts')).refreshPalmNews();
+   retainedLegacy=packet(r.articles||r,(r.articles||[]).map((a:any)=>a.publishedAt).sort().at(-1),r.lastError);
+  }catch(e){retainedLegacy=packet(null,null,'Legacy news check failed; prior verified articles retained');}
+  // Soybean retains its dedicated original-source workflow. Oil commodities
+  // also need free discovery, not only a fixed set of dated old URLs.
+  if(id==='soybean')return retainedLegacy;
+ }
  let discovery:any,accepted:any[]=[];
  if(id==='wheat'){const [feed,pages]=await Promise.all([(await import('./wheatFeedDiscovery.ts')).discoverWheatPublisherFeeds(),(await import('./wheatPublicPageDiscovery.ts')).discoverWheatPublicPages()]);discovery={candidates:[...pages.candidates,...feed.candidates]};const seen=new Set();const items=discovery.candidates.filter((x:any)=>{if(seen.has(x.originalUrl))return false;seen.add(x.originalUrl);return true;}).slice(0,12);accepted=(await(await import('./wheatArticleVerification.ts')).verifyWheatNewsLinksReported(items)).accepted;}
  else if(id==='corn'){const m=await import('./cornVerifiedNews.ts');discovery=await m.discoverCornFreeSources();accepted=(await m.verifyCornCandidates(discovery.candidates.slice(0,12))).accepted;}
  else {
   // These commodities have original-article verification but no standalone free index discovery.
   // Recheck the original approved article URLs; preserve Korean editorial summaries and receipts.
-  const inputs=await savedOverviewInputs();const prior=inputs.find(i=>i.id===id)?.articles||[];
+  let prior:any[]=[];try{const inputs=await savedOverviewInputs();prior=inputs.find(i=>i.id===id)?.articles||[];}catch{/* The saved gateway must not block free discovery. */}
   const extra=await discoverAdditionalNews(id);
-  accepted=await(await import('./all8ArticleVerification.ts')).verifyOtherCommodityArticles([...extra.candidates,...prior.map((a:any)=>({...a,rawTitle:a.sourceHeadline||a.title,rawSnippet:a.summary,rawId:a.id}))].slice(0,12),id);
+  accepted=await(await import('./all8ArticleVerification.ts')).verifyOtherCommodityArticles([...extra.candidates.slice(0,10),...prior.map((a:any)=>({...a,rawTitle:a.sourceHeadline||a.title,rawSnippet:a.summary,rawId:a.id}))].slice(0,12),id);
   discovery={candidates:[...extra.candidates,...prior],limitation:'Bounded original-publisher feeds; missing articles may be researched only within authorized paid context'};
  }
  const value={checkedAt:new Date().toISOString(),candidates:accepted,discoveryCount:discovery.candidates.length,status:'verified-originals-awaiting-editorial-review',limitation:discovery.limitation};writeFreeJson('free-news-candidates-'+id+'.json',value);
- return packet(accepted,accepted.map(a=>a.publishedAt).sort().at(-1),accepted.length?undefined:'No original public articles verified; approved saved news retained');
+ return packet(accepted,accepted.map(a=>a.publishedAt).sort().at(-1),accepted.length?undefined:retainedLegacy?.lastError||'No original public articles verified; approved saved news retained');
 }
 async function news(id:string){
  let legacy:any;try{legacy=await legacyNews(id);}catch{}
