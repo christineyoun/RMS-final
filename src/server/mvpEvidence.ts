@@ -12,7 +12,7 @@ export function snapshotIssues(key:string, body:any):string[] {
       typeof a.deskRecommendation!=='string' || !a.deskRecommendation.trim() ? 'deskRecommendation-missing' : '',
       !Number.isFinite(Date.parse(a.generatedAt)) ? 'generatedAt-missing-or-invalid' : '',
       !Array.isArray(a.sources) || !a.sources.some((s:any)=>{try{return new URL(s.url).protocol==='https:';}catch{return false;}}) ? 'grounded-sources-missing' : '',
-      ...['bullishFactors','bearishFactors','watchItems'].filter(k=>!Array.isArray(a[k])).map(k=>k+'-missing')].filter(Boolean) as string[];
+      ...['bullishFactors','bearishFactors','watchItems'].flatMap(k=>!Array.isArray(a[k])?[k+'-missing']:a[k].length===0?[k+'-empty']:[])].filter(Boolean) as string[];
   }
   if(key.startsWith('news-')) {
     if(!Array.isArray(body.articles)||!body.articles.length)return ['no-publishable-articles-after-source-and-summary-validation'];

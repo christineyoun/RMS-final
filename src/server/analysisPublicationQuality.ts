@@ -46,7 +46,7 @@ export function canonicalAnalysisQualityIssues(data:any,evidence?:AnalysisEviden
  * supported sections. Freshness alone is not a quality improvement. Never pad
  * unsupported sections to pass this guard: retain the previous report instead. */
 export function analysisReplacementIssues(candidate:any,previous:any):string[]{
- if(candidate?.evidenceAudit?.factBinding!=='verified-records-v1'||!previous)return [];
+ if(!candidate||!previous)return [];
  if(previous.evidenceAudit?.sectionCoverage?.priceOutlook===true&&candidate.evidenceAudit?.sectionCoverage?.priceOutlook!==true)return ['analysis-price-outlook-coverage-regression'];
  const items=(report:any)=>lists.map(k=>new Set((Array.isArray(report[k])?report[k]:[]).filter((s:any)=>typeof s==='string'&&s.trim()).map(normalized)).size);
  const next=items(candidate),prior=items(previous);
