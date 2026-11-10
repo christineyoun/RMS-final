@@ -1,19 +1,21 @@
-import {readSharedPublisherNews} from './sharedPublisherNews.ts';
+import {readCloudStep7Card} from './step7CloudCard.ts';
+import {readStep7LocalPreview} from './step7LocalPreview.ts';
 import {policyRecordPresentation} from '../utils/overviewMacroPresentation.ts';
-import {readScheduledContent} from './scheduledContent.ts';
+import {readScheduledContent,acceptedScheduledNews} from './scheduledContent.ts';
 import {readFreePublication,freeRefreshStatus} from './freeDailyPublication.ts';
 import {assessProcurementRisk} from '../utils/procurementRisk.ts';
 import {collectAnalysisEvidence} from './analysisEvidence.ts';
 import {selectProcurementNews} from './newsProcurementSelection.ts';
+import {recentMarketArticles} from './newsFreshnessPolicy.ts';
+import {newsRetentionDays} from './newsRetentionPolicy.ts';
+import {chooseVerifiedNewsDisplay} from './newsDisplayPolicy.ts';
+import {recoverVerifiedNewsCoverage} from './newsHistoryCoverage.ts';
 import {readVerifiedWheatNews} from './wheatSavedVerifiedNews.ts';
 import {readVerifiedCornNews} from './cornSavedVerifiedNews.ts';
 import {readVerifiedTapiocaNews} from './tapiocaVerifiedNews.ts';
 import {readVerifiedPotatoNews} from './potatoVerifiedNews.ts';
 import {readVerifiedSugarNews} from './sugarVerifiedNews.ts';
 import {rmsAiEditorial} from '../utils/rmsAiEditorial.ts';
-import {readVerifiedSoybeanOilNews} from './soybeanOilVerifiedNews.ts';
-import {standalonePreflight,standaloneContext,runStandaloneAnalysis,standaloneStatus} from './standaloneAnalysis.ts';
-import {promoteRetainedSoybeanResponse} from './retainedSoybeanPromotion.ts';
 /** Owner-gated standalone RMS AI execution and read-only saved snapshots.
  * Historical paid ledgers remain readable. Free-source scheduling is separate. */
 import fs from 'node:fs';
@@ -21,7 +23,6 @@ import {readVerifiedSoybeanNews} from './soybeanNewsPersistence.ts';
 import {readVerifiedPalmNews} from './palmVerifiedNews.ts';
 import {freeRefreshSettings} from './freeSourceRefresh.ts';
 import { remainingIds, snapshotIssues } from './mvpEvidence.ts';
-import {recoveryStatus} from './analysisRecovery.ts';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
@@ -133,7 +134,7 @@ function validateSnapshot(key:string, value:any):boolean {
     const recent=(d:unknown) => {
       if(typeof d!=='string') return false;
       const ms=Date.parse(d);
-      return Number.isFinite(ms) && ms>=Date.now()-30*86400000 && ms<=Date.now()+86400000;
+      return Number.isFinite(ms) && ms>=Date.now()-newsRetentionDays(key.slice(5))*86400000 && ms<=Date.now()+86400000;
     };
     const articles=value.articles;
     const valid=(a:any)=>validEvidenceUrl(a?.originalUrl) && recent(a?.publishedAt) &&
@@ -187,8 +188,8 @@ function status() {
       maxRuns:cornAiTestMaxRuns,usedRuns:cornAiRuns().length,runs:cornAiRuns()},
     soybeanMvp:{retired:true,maxRuns:2,usedRuns:soybeanMvpRuns().length,runs:soybeanMvpRuns()},
     remainingMvp:{retired:true,runs:readJson(remainingMvpFile)?.runs||[],maxEstimatedUsdPerRun:1.5},
-    analysisRecovery:recoveryStatus(),
-    standaloneAnalysis:standaloneStatus(),
+    analysisRecovery:{retired:true},
+    standaloneAnalysis:{retired:true,runs:[]},
     runCallAttempts:state.context?.attempts ?? 0,
     runEstimatedUsd:state.context ? Number(state.context.estimatedUsd.toFixed(4)) : 0,
     snapshots:listSnapshots(),
@@ -196,21 +197,23 @@ function status() {
   };
 }
 /** Existing source-specific verified readers; also retained as merge candidates. */
-function legacyVerifiedCommodityNews(id:string):any[]{
+export function savedVerifiedCommodityNews(id:string):any[]{
  if(id==='wheat')return readVerifiedWheatNews();
- if(id==='soybean-oil')return readVerifiedSoybeanOilNews();
- if(id==='soybean')return [...readVerifiedSoybeanNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='American Soybean Association')];
+ if(id==='soybean')return readVerifiedSoybeanNews();
  if(id==='potato-starch')return readVerifiedPotatoNews();
  if(id==='corn')return readVerifiedCornNews();
  if(id==='tapioca-starch')return readVerifiedTapiocaNews();
  if(id==='sugar')return readVerifiedSugarNews();
- if(id==='palm-oil')return [...readVerifiedPalmNews(),...readVerifiedSoybeanOilNews().filter(a=>a.sourceName==='USDA ERS')];
+ if(id==='palm-oil')return readVerifiedPalmNews();
  return [];
 }
-export function savedVerifiedCommodityNews(id:string):any[]{return [...readSharedPublisherNews(id),...legacyVerifiedCommodityNews(id)];}
 function savedNewsResponse(id:string, verified:any[]) {
-  const articles=selectProcurementNews(id,verified);
-  return {success:true,articles,sourceStatus:'verified-retained-originals',
+  // Shared all-eight-commodity display policy. Two recent reports are enough
+  // to avoid backfilling a current news section with older context; never
+  // invent stories to reach a quota. Previously accepted records stay saved.
+  const selected=selectProcurementNews(id,verified);
+  const {articles,sourceStatus}=chooseVerifiedNewsDisplay(selected);
+  return {success:true,articles,sourceStatus,
     procurementRisk:assessProcurementRisk(id,articles,collectAnalysisEvidence(id).facts)};
 }
 function respond(res:ServerResponse, code:number, body:unknown) {
@@ -333,7 +336,10 @@ function soybeanMvpRuns():any[] {const v=readJson(soybeanMvpFile)?.runs;return A
 
 export const RETIRED_AI_CONTROLS=Object.freeze([
   '/api/rms/control/analysis-recovery','/api/rms/control/soybean-mvp',
-  '/api/rms/control/remaining-mvp','/api/rms/control/corn-ai-test','/api/rms/control/refresh'
+  '/api/rms/control/remaining-mvp','/api/rms/control/corn-ai-test','/api/rms/control/refresh',
+  '/api/rms/control/standalone-analysis',
+  '/api/rms/control/promote-retained-soybean','/api/rms/control/promote-retained-soybean-oil',
+  '/api/rms/control/promote-retained-palm-oil','/api/rms/control/promote-retained-sugar','/api/rms/control/promote-retained-potato-starch'
 ]);
 
 export function createStage3Gateway() {
@@ -344,33 +350,38 @@ export function createStage3Gateway() {
       const id=(u.searchParams.get('commodity')||'wheat').trim().toLowerCase().replace(/_/g,'-');
       if(!commoditySet.has(id))return respond(res,400,{success:false,error:`Unknown commodity: ${id}`});
     }
+
+    // Explicit STEP 1–7-2 local integration. No Gemini API on page loads and no
+    // fallback to the obsolete AI snapshot when this mode is opted in.
+    // Cloud Run publication has a separate approval gate; this local receipt is
+    // explicitly NOT authorized for production publication.
+    if(req.method==='GET' && u.pathname.startsWith('/api/ai-analysis/')){
+      const id=u.pathname.slice('/api/ai-analysis/'.length);
+      if(!commoditySet.has(id))return respond(res,400,{success:false,error:'Unknown commodity'});
+      // Private Cloud Run JOB capture only. The public viewer serves a saved
+      // publication bundle; it never reads this private file or invokes Gemini.
+      if(process.env.RMS_STEP7_CLOUD_CAPTURE==='1' && process.env.CLOUD_RUN_JOB &&
+         process.env.RMS_CLOUD_FREE_JOB==='1' && process.env.RMS_STEP7_CLOUD_APPROVED==='YES' && !process.env.K_SERVICE){
+        const saved=readCloudStep7Card(id);
+        if(saved)return respond(res,200,{success:true,data:saved,status:saved.status,generatedAt:saved.generatedAt,
+          sourceCount:saved.sources.length,timestamp:new Date().toISOString(),analysisSource:'step7-verified-cloud'});
+        return respond(res,503,{success:false,status:'awaiting-step7-publication',error:'No approved STEP7 cloud card'});
+      }
+      // Prevent old paid/snapshot fallback even if preview mode was not explicitly enabled.
+      if(process.env.RMS_STEP7_LOCAL_PREVIEW!=='1')return respond(res,503,{success:false,status:'step7-not-configured',error:'STEP 7 운영 출판이 아직 연결되지 않았습니다. 기존 AI 분석은 중단되었습니다.'});
+      // A UI 'force' refresh re-reads the SAME saved preview; it never invokes paid Gemini.
+      if(u.searchParams.size && !(u.searchParams.size===1 && u.searchParams.get('force')==='true'))
+        return respond(res,403,{success:false,error:'STEP7 saved preview is read-only'});
+      let data:any=null;
+      try{data=readStep7LocalPreview(id,req.socket.remoteAddress);}
+      catch{return respond(res,503,{success:false,error:'Invalid STEP7 local preview receipt; existing result unchanged'});}
+      if(!data)return respond(res,503,{success:false,status:'awaiting-step7-preview',error:'STEP 7-2 미리보기 결과가 없습니다. 기존 AI 분석으로 대체하지 않습니다.'});
+      return respond(res,200,{success:true,data,status:data.status,generatedAt:data.generatedAt,
+        sourceCount:data.sources.length,timestamp:new Date().toISOString(),analysisSource:'step7-verified-local'});
+    }
+
     if(u.pathname==='/api/rms/refresh-status') return respond(res,200,status());
-    if(RETIRED_AI_CONTROLS.includes(u.pathname))return respond(res,410,{success:false,error:'Legacy AI execution retired. Use explicit commodity selection and per-run approval through /api/rms/control/standalone-analysis.'});
-    if(u.pathname==='/api/rms/control/promote-retained-soybean'||u.pathname==='/api/rms/control/promote-retained-soybean-oil'||u.pathname==='/api/rms/control/promote-retained-palm-oil'||u.pathname==='/api/rms/control/promote-retained-sugar'||u.pathname==='/api/rms/control/promote-retained-potato-starch'){
-      if(req.method!=='POST'||!isLoopback(req)||req.headers['x-rms-stage3-admin']!==internalSecret)
-        return respond(res,403,{success:false,error:'Local owner authorization required.'});
-      if(u.search||state.running)return respond(res,409,{success:false,error:'Fixed retained Soybean operation only; runner must be idle.'});
-      try{return respond(res,200,{success:true,...promoteRetainedSoybeanResponse(String(req.headers['x-rms-promotion-approval']||''),String(req.headers['x-rms-authorization-id']||''),u.pathname.endsWith('-potato-starch')?'potato-starch':u.pathname.endsWith('-sugar')?'sugar':u.pathname.endsWith('-palm-oil')?'palm-oil':u.pathname.endsWith('-oil')?'soybean-oil':'soybean')});}
-      catch(e){return respond(res,409,{success:false,error:String((e as Error).message)});}
-    }
-    if(u.pathname==='/api/rms/control/standalone-analysis') {
-      if(req.method!=='POST'||!isLoopback(req)||req.headers['x-rms-stage3-admin']!==internalSecret)
-        return respond(res,403,{success:false,error:'Local owner authorization required.'});
-      if(state.running)return respond(res,409,{success:false,error:'Another paid refresh is running.'});
-      const id=u.searchParams.get('commodity')||'',approval=String(req.headers['x-rms-paid-approval']||''),authorizationId=String(req.headers['x-rms-authorization-id']||'');
-      try{standalonePreflight(id,approval,authorizationId);}catch(e){return respond(res,409,{success:false,error:String((e as Error).message)});}
-      const runId='standalone-'+id+'-'+crypto.randomBytes(6).toString('hex'),ctx=standaloneContext(runId,id);
-      state.running=true;state.context=ctx;state.runId=runId;
-      void runStandaloneAnalysis(id,approval,authorizationId,ctx,async commodity=>{
-        const response=await fetch('http://127.0.0.1:3000/api/ai-analysis/'+commodity+'?force=true',{
-          headers:{'x-rms-stage3-job':internalSecret},signal:ctx.abortController!.signal});
-        const body=await response.json();
-        if(!response.ok)throw Error('HTTP '+response.status+': '+(body.error||'Analysis failed'));
-        return body;
-      }).catch(e=>console.error('[RMS standalone AI]',String((e as Error).message)))
-        .finally(()=>{state.running=false;state.context=null;state.runId=null;});
-      return respond(res,202,{success:true,runId,commodity:id,maxCalls:1,maxEstimatedUsd:0.25,requestDeadlineMs:60000,jobDeadlineMs:75000,evidenceMode:ctx.evidenceMode,warning:'Estimated local guard is not a provider billing cap.'});
-    }
+    if(RETIRED_AI_CONTROLS.includes(u.pathname))return respond(res,410,{success:false,error:'Legacy AI market analysis was retired. STEP 1–7–2 CLI is the only approved local analysis generator.'});
     if(u.pathname==='/api/rms/control/news-test') {
       if(req.method!=='POST' || !isLoopback(req) || req.headers['x-rms-stage3-admin']!==internalSecret) {
         return respond(res,403,{success:false,error:'Local owner-only command.'});
@@ -412,15 +423,67 @@ export function createStage3Gateway() {
     // A single accepted manifest switches news and analyses together. Shared by
     // commodity readers and the saved Overview input collector; no paid page reads.
     const scheduled=readScheduledContent(key);
-    if(scheduled)return respond(res,200,key.startsWith('news-')?savedNewsResponse(key.slice(5),[...scheduled.payload.articles,...savedVerifiedCommodityNews(key.slice(5))]):{...scheduled.payload,data:{...scheduled.payload.data,status:'cached'}});
-    if(key.startsWith('news-'))return respond(res,200,savedNewsResponse(key.slice(5),savedVerifiedCommodityNews(key.slice(5))));
+    if(scheduled){
+      if(key.startsWith('news-')){
+        const id=key.slice(5);
+        // Prefer accepted scheduled news; backfill only older evidence-approved
+        // saved snapshot records when fewer than four qualify. Never use
+        // unverifiable legacy templates as if they were freshly verified.
+        const published=scheduled.payload.articles;
+        const savedSnapshot=readSnapshot(key)?.payload?.articles;
+        const olderApproved=acceptedScheduledNews(id,Array.isArray(savedSnapshot)?savedSnapshot:[]);
+        const all=acceptedScheduledNews(id,[...published,...olderApproved]);
+        // Only hash-checked, still-qualified historical publications may fill
+        // vacant cards. Keep currently approved articles ahead of older context.
+        return respond(res,200,savedNewsResponse(id,recoverVerifiedNewsCoverage(id,all)));
+      }
+      return respond(res,200,{
+        ...scheduled.payload,
+        data:{...scheduled.payload.data,status:'cached'}
+      });
+    }
+    if(key.startsWith('news-')){
+      const id=key.slice(5);
+      // This branch previously bypassed readSnapshot('news-'+id) entirely.
+      // Preserve existing receipt-verified readers only; generic historical
+      // recovery supplies independently accepted, evidence-backed candidates.
+      // Do not import fixed historical article templates as current news.
+      const saved=readSnapshot(key)?.payload?.articles;
+      const pinned=acceptedScheduledNews(id,Array.isArray(saved)?saved:[]);
+      const current=savedVerifiedCommodityNews(id);
+      return respond(res,200,savedNewsResponse(id,recoverVerifiedNewsCoverage(id,[...pinned,...current])));
+    }
     if(key==='trade-policy'){
-      const p=readFreePublication()?.data?.transportPolicy?.policy;
-      if(p?.url&&p?.publishedOn)return respond(res,200,policyRecordPresentation({...p,title:p.title,summary:p.summary||p.title,recordKind:p.recordKind||'announcement',publishedAt:p.publishedOn,sourceUrl:p.url,sourceName:'Federal Register'}));
-      // The legacy Indonesia tax snapshot has no original dated receipt. Use the
-      // existing verified editorial as a clearly labelled industry outlook only.
-      const a=readVerifiedPalmNews().find((a:any)=>a.originalUrl==='https://prestasisawit.mpob.gov.my/ms/palmnews/news/40027');
-      return respond(res,200,policyRecordPresentation(a?{title:a.title,displayTitle:'인도네시아 팜유 수출 가용량 감소 전망',summary:'인도네시아 업계는 2027년 생산 감소와 바이오디젤 수요 증가를 전망했습니다.',procurementImplication:'수출 가용량이 줄 수 있어 공급처 오퍼와 선적 조건을 주시할 필요가 있습니다.',procurementStatus:'수출 가용량 주시 (중립)',recordKind:'industry-outlook',statusType:'neutral',publishedAt:a.publishedAt,sourceUrl:a.originalUrl,sourceName:'MPOB · Reuters'}:{title:'통상 정책',summary:'새 공식 발표가 확인되지 않았습니다.',statusType:'neutral',statusTag:'판정 보류'}));
+      const live=readJson(path.join(root,'free-transport-policy.json'));
+      const published=readFreePublication()?.data?.transportPolicy;
+      // The saved free refresh and shared publication can be at different
+      // revisions. Prefer a newer checked-at receipt, never a page-view fetch.
+      const transport=String(live?.checkedAt||'')>String(published?.checkedAt||'')?live:published||live;
+      const p=transport?.policy;
+      const age=p?.publishedOn?(Date.now()-Date.parse(p.publishedOn+'T12:00:00Z'))/86400000:Infinity;
+      let official=false;
+      try{const u=new URL(p?.url||'');official=u.protocol==='https:'&&(
+       (u.hostname==='customs.go.kr'||u.hostname.endsWith('.customs.go.kr'))||
+       u.hostname==='www.federalregister.gov'&&/^\/documents\/\d{4}\/\d{2}\/\d{2}\//.test(u.pathname)
+      );}catch{}
+      if(official&&Number.isFinite(age)&&age>=-1&&age<=45&&p?.title&&p?.sourceName){
+       return respond(res,200,policyRecordPresentation({...p,title:p.title,
+        summary:transport?.policyMonitor?.status==='sources-unavailable'
+          ?'이전에 확인된 공식 문서입니다. 최근 수집에 실패해 현재 상태를 재확인하지 못했습니다. '+(p.summary||'원문 재검토 필요')
+          :p.summary||'공식 문서가 확인되었습니다. 조달 영향은 원문 확인이 필요합니다.',
+        recordKind:p.recordKind||'announcement',publishedAt:p.publishedOn,
+        sourceUrl:p.url,sourceName:p.sourceName,checkedAt:transport?.checkedAt,
+        statusType:'neutral',statusTag:transport?.policyMonitor?.status==='sources-unavailable'?'기존 자료 · 재확인 필요':'원문 검토 필요',
+        sourceCoverage:transport?.policyMonitor?.coverage}));
+      }
+      const result=transport?.policyMonitor;
+      const summary=result?.status==='sources-unavailable'
+       ?'공식 출처에 접속하지 못해 최신 정책 발표 여부를 확인할 수 없습니다.'
+       :'모니터링 중인 공식 출처에서 관련 원자재의 새로운 정책 문서를 검증하지 못했습니다. 정책이 없다는 뜻은 아닙니다.';
+      return respond(res,200,policyRecordPresentation({title:'통상 정책',summary,
+       statusType:'neutral',statusTag:'판정 보류',checkedAt:result?.checkedAt||null,
+       sourceCoverage:result?.coverage||'관세청 및 미국 연방관보 일부 발표 범위',
+       sourceChecks:result?.sourceChecks||[]}));
     }
     const cached=readSnapshot(key);
     if(cached?.payload) {
@@ -438,10 +501,13 @@ export function createStage3Gateway() {
             (commodityId!=='corn' && commodityId!=='wheat' || a.linkStatus==='verified') &&
             assessNewsSummary(a.summary||a.summary_kr,a.title||a.title_kr,commodityId).pass
           );
-          return respond(res,200,{...cached.payload, articles:selectProcurementNews(commodityId,accepted),
+          const selected=selectProcurementNews(commodityId,accepted);
+          const recent=recentMarketArticles(selected,newsRetentionDays(commodityId));
+          return respond(res,200,{...cached.payload, articles:selected,
+            sourceStatus:recent.length?'saved-snapshot-not-live':'saved-snapshot-stale',
             verifiedLinkCount:accepted.filter((a:any)=>a.linkStatus==='verified').length,
             qualityFilteredCount:articles.length-accepted.length,
-            qualityStatus:accepted.length?'verified-selection':'no-suitable-verified-news'});
+            qualityStatus:selected.length?(recent.length?'verified-retained-selection':'verified-retained-stale'):'no-suitable-verified-news'});
         };
         if(commodityId==='wheat') {
           void sanitizeSavedWheatNews(cached.payload)

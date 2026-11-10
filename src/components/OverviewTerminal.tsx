@@ -229,14 +229,21 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data) {
+            const sourceChecks: Array<{source?: string; status?: string}> = Array.isArray(data.sourceChecks) ? data.sourceChecks : [];
+            const noRelevantOfficialPublication = !data.sourceUrl && data.statusTag === '판정 보류' &&
+              sourceChecks.length > 0 && sourceChecks.every(check => check.status === 'ok');
+            const monitoredSources = [...new Set(sourceChecks.map(check =>
+              check.source?.startsWith('Korea Customs Service') ? '관세청' :
+              check.source?.startsWith('U.S. Federal Register') ? '미국 연방관보' : null
+            ).filter((name) => name !== null))].join(' · ');
             setPolicyData({
               headline: data.title,
               subline: [data.publishedAt,data.summary].filter(Boolean).join(' · '),
               change: '',
-              status: data.statusTag,
+              status: noRelevantOfficialPublication ? '관련 공식 발표 확인되지 않음' : data.statusTag,
               badgeType: data.statusType === 'favorable' ? 'green' : data.statusType === 'warning' ? 'red' : 'amber',
               note: data.summary,
-              sourceUrl: data.sourceUrl, sourceName:data.sourceName,classificationLabel:data.classificationLabel,recordKindLabel:data.recordKindLabel
+              sourceUrl: data.sourceUrl, sourceName: noRelevantOfficialPublication ? monitoredSources : data.sourceName,classificationLabel:data.classificationLabel,recordKindLabel:data.recordKindLabel
             });
           }
         }
@@ -254,10 +261,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     let disposed=false,active=false;let controller:AbortController|null=null;
     const update=async()=>{if(disposed||active||document.visibilityState==='hidden')return;active=true;controller=new AbortController();try{const data=await loadOverviewIntelligence(fetch,controller.signal);if(!disposed)setIntelligence(data);}catch(error){if(!disposed)setIntelligence(null);}finally{active=false;}};
     void update();const timer=window.setInterval(()=>void update(),60000);
-    window.addEventListener('focus',update);window.addEventListener('rms-evidence-updated',update);document.addEventListener('visibilitychange',update);
-    return()=>{disposed=true;controller?.abort();clearInterval(timer);window.removeEventListener('focus',update);window.removeEventListener('rms-evidence-updated',update);document.removeEventListener('visibilitychange',update);};
+    window.addEventListener('focus',update);document.addEventListener('visibilitychange',update);
+    return()=>{disposed=true;controller?.abort();clearInterval(timer);window.removeEventListener('focus',update);document.removeEventListener('visibilitychange',update);};
   },[isSyncing]);
   const localMarketIssues=intelligence?.issues||[];
+  const policyCardUrl = policyData.sourceUrl && !isInvalidOrSearchUrl(policyData.sourceUrl)
+    ? policyData.sourceUrl
+    : 'https://www.customs.go.kr/kcs/selectBoardRssList.do?mi=7424';
+
 
   const [wasdeData, setWasdeData] = useState<any>({
     commodityName: '소맥 (Wheat)',
@@ -289,9 +300,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         const macro=data.overviewMacro;
         const percent=(n:number|null|undefined)=>typeof n==='number'&&Number.isFinite(n)?(n>=0?'+':'')+n.toFixed(2)+'%':'';
         const fx=macro?.fx;
-        if(fx)setFxData({rate:'USD/KRW '+fx.usdKrw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),eurRate:'EUR/KRW '+fx.eurKrw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+(percent(fx.eurChange)?' · '+percent(fx.eurChange):''),change:percent(fx.usdChange),status:'기준환율',badgeType:'amber',note:fx.date+(fx.previousDate?' · 전일 '+fx.previousDate+' 대비':'')});
+        if(fx)setFxData({rate:'USD/KRW '+fx.usdKrw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),eurRate:'EUR/KRW '+fx.eurKrw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+(percent(fx.eurChange)?' · '+percent(fx.eurChange):''),change:percent(fx.usdChange),status:'기준환율',badgeType:'amber',note:fx.date+(fx.previousDate?' · 직전 저장 기준일 '+fx.previousDate+' 대비':'')});
         const oil=macro?.energy;
-        setOilData(oil?{rate:'$'+oil.brent.toFixed(2)+' /bbl',secondary:'',change:percent(oil.brentChange),...brentCostSignal(oil.brentChange),note:(oil.sessionDate||oil.observationDate.slice(0,10))+' · '+(oil.comparisonBasis==='provider-reported-quote-change'?'Yahoo 호가 표시 변동 · 공식 종가·정산가 대비 아님 · 변동액 $'+oil.quoteChangeAmount.toFixed(2)+' · 역산 기준가 $'+oil.quoteReferencePrice.toFixed(2)+' (기준 거래일·계약 월물 미확인)':'Yahoo 비교 기준 확인 필요')}:{...DEFAULT_MACRO_FALLBACKS.oil,badgeType:'amber'});
+        setOilData(oil?{rate:'$'+oil.brent.toFixed(2)+'/bbl',secondary:'',change:percent(oil.brentChange),...brentCostSignal(oil.brentChange),note:(oil.sessionDate||oil.observationDate.slice(0,10))+' · '+(oil.comparisonBasis==='provider-reported-quote-change'?'Yahoo 호가 표시 변동 · 공식 종가·정산가 대비 아님 · 변동액 $'+oil.quoteChangeAmount.toFixed(2)+' · 역산 기준가 $'+oil.quoteReferencePrice.toFixed(2)+' (기준 거래일·계약 월물 미확인)':'Yahoo 비교 기준 확인 필요')}:{...DEFAULT_MACRO_FALLBACKS.oil,badgeType:'amber'});
         const freight=macro?.freight;
         setFreightData(freight?{rate:'SCFI '+freight.scfi.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' pts',secondary:'',change:percent(freight.changePct),status:'주간 지표 확인',badgeType:'amber',note:freight.observationDate+' · 주간 발표'}:{rate:'—',secondary:'',change:'',status:macro?.scfiStatus==='permission-required'?'이용 권한 확인 필요':'발표 자료 미확보',badgeType:'amber',note:'주간 발표'});
 
@@ -404,7 +415,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   최대 상승
                 </span>
                 <span
-                  onClick={() => onNavigate(topGainer.path)}
+                  onClick={() => { if (topGainer.path) onNavigate(topGainer.path); }}
                   className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-normal inline-flex items-center"
                 >
                   {topGainer.nameKo} ({topGainer.nameEn})
@@ -424,7 +435,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   최대 하락
                 </span>
                 <span
-                  onClick={() => onNavigate(topLoser.path)}
+                  onClick={() => { if (topLoser.path) onNavigate(topLoser.path); }}
                   className="text-[12px] font-semibold text-[#1e293b] hover:text-[#DF0029] cursor-pointer transition-colors leading-normal inline-flex items-center"
                 >
                   {topLoser.nameKo} ({topLoser.nameEn})
@@ -450,7 +461,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               {grainCommodities.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => onNavigate(item.path)}
+                  onClick={() => { if (item.path) onNavigate(item.path); }}
                   className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
                 >
                   <div>
@@ -489,7 +500,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         >
                           {commodityBenchmarkDisplay(item,currency).value}
                         </span>
-                        <span className="text-xs text-[#6b7280] ml-1">{commodityBenchmarkDisplay(item,currency).unit}</span>
+                        <span className="text-xs text-[#6b7280]">{commodityBenchmarkDisplay(item,currency).unit}</span>
                       </div>
                       <div className="w-16 h-5">
                         <svg
@@ -524,7 +535,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                       
                       <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
-                        <span>상세 분석</span>
+                        <span className="rms-card-action">상세 분석</span>
                         <span className="material-symbols-outlined text-[15px]">chevron_right</span>
                       </span>
                     </div>
@@ -550,7 +561,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 return (
                   <div
                     key={item.id}
-                    onClick={() => onNavigate(item.path)}
+                    onClick={() => { if (item.path) onNavigate(item.path); }}
                     className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between"
                   >
                     <div 
@@ -592,13 +603,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
                             {commodityBenchmarkDisplay(item,currency).value}
                           </span>
-                          <span className="text-xs text-[#6b7280] ml-1">{commodityBenchmarkDisplay(item,currency).unit}</span>
+                          <span className="text-xs text-[#6b7280]">{commodityBenchmarkDisplay(item,currency).unit}</span>
 
-                          {item.id === 'palm-oil' && (
-                            <p className="text-[10px] text-slate-400 font-mono mt-0.5 leading-none">
-                              MDEX (FCPO) · ({item._originalPrice ? item._originalPrice.toLocaleString('en-US') : '—'} USD/MT)
-                            </p>
-                          )}
                         </div>
                         <div className="w-16 h-5">
                           <svg
@@ -634,7 +640,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                       </div>
                       
                       <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
-                        <span>상세 분석</span>
+                        <span className="rms-card-action">상세 분석</span>
                         <span className="material-symbols-outlined text-[15px]">chevron_right</span>
                       </span>
                     </div>
@@ -662,7 +668,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 return (
                   <div
                     key={item.id}
-                    onClick={() => onNavigate(item.path)}
+                    onClick={() => { if (item.path) onNavigate(item.path); }}
                     className="commodity-card group cursor-pointer bg-white p-3.5 rounded-lg shadow-sm border border-[#e5e7eb] hover:border-[#DF0029] hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-3"
                   >
                     <div>
@@ -700,7 +706,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="font-mono text-xl font-bold text-[#111827]" id={`el-${item.id}-price`}>
                             {commodityBenchmarkDisplay(item,currency).value}
                           </span>
-                          <span className="text-xs text-[#6b7280] ml-1">
+                          <span className="text-xs text-[#6b7280]">
                             {commodityBenchmarkDisplay(item,currency).unit}
                           </span>
                         </div>
@@ -743,7 +749,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </div>
                         
                         <span className="text-xs font-bold text-[#374151] group-hover:text-[#DF0029] transition-colors flex items-center gap-0.5">
-                          <span>상세 분석</span>
+                          <span className="rms-card-action">상세 분석</span>
                           <span className="material-symbols-outlined text-[15px]">chevron_right</span>
                         </span>
                       </div>
@@ -880,6 +886,15 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
       <div className="overview-page-2 print:break-before-page flex flex-col space-y-4 print:space-y-3.5 w-full">
         {/* 1. Macroeconomic Sourcing Drivers Section */}
         <section className="macroeconomic-drivers-card bg-white p-4 print:p-2.5 rounded-lg shadow-sm border border-[#e5e7eb] space-y-3 print:space-y-1.5 pdf-section-card break-inside-avoid print:break-inside-avoid" id="macro-drivers-section">
+<style>{`
+/* rms-macro-source-card-hover */
+#macro-drivers-section a[id^="driver-"]:hover .rms-source,
+#macro-drivers-section a[id^="driver-"]:focus-visible .rms-source {
+color: #DF0029 !important;
+text-decoration: underline !important;
+text-underline-offset: 2px;
+}
+`}</style>
           <style>{`@layer components { #macro-drivers-section .macro-market-status { font-weight: 400 !important; border-radius: 4px !important; } #macro-drivers-section .macro-observation { font-weight: 500 !important; } }`}</style>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -893,10 +908,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:auto-rows-fr gap-4 print:gap-2">
             {/* Card 1: FX (USD/KRW) */}
-            <div
+            <a
               id="driver-fx"
+              href="https://www.kebhana.com/cont/mall/mall15/mall1501/index.jsp"
+              target="_blank" rel="noopener noreferrer"
               className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
@@ -917,33 +934,28 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 </div>
                 <div className="mt-2 print:mt-1 flex items-baseline justify-between">
                   <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-fx-val" aria-label={fxData.rate}>
-                    {fxData.rate.startsWith('USD/KRW ')?fxData.rate.slice(8)+' ₩':fxData.rate}
+                    {fxData.rate.startsWith('USD/KRW ')?'₩'+fxData.rate.slice(8):fxData.rate}
                   </div>
                   <span className="font-mono text-xs text-slate-400 font-normal" aria-label={fxData.eurRate}>
-                    {fxData.eurRate.startsWith('EUR/KRW ')?'EUR '+fxData.eurRate.slice(8).split(' · ')[0]+'₩':fxData.eurRate}
+                    {fxData.eurRate.startsWith('EUR/KRW ')?'EUR ₩'+fxData.eurRate.slice(8).split(' · ')[0]:fxData.eurRate}
                   </span>
                 </div>
               </div>
-              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
-                <span className={`macro-market-status text-[11px] font-normal px-2 py-0.5 rounded border ${
-                  fxData.change ? (fxData.change.startsWith('+') ? 'rms-status-negative bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]' : 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]') : 'bg-slate-50 border-slate-200 text-slate-600'
-                }`}>
-                  {fxData.change ? (fxData.change.startsWith('-') ? 'USD 하락' : 'USD 상승') : fxData.status}
-                </span>
-                <a
-                  href="https://www.kebhana.com/cont/mall/mall15/mall1501/index.jsp"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-end">
+                
+                <span
+                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   하나은행 실시간 시세 ↗
-                </a>
+                </span>
               </div>
-            </div>
+            </a>
 
             {/* Card 2: Oil (Brent) */}
-            <div
+            <a
               id="driver-energy"
+              href="https://finance.yahoo.com/quote/BZ=F/"
+              target="_blank" rel="noopener noreferrer"
               className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
@@ -972,21 +984,20 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 </div>
               </div>
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-end">
-                <a
-                  href="https://finance.yahoo.com/quote/BZ=F/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                <span
+                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   실시간 시세 ↗
-                </a>
+                </span>
               </div>
-            </div>
+            </a>
 
             {/* Card 3: Freight (BDI / SCFI) */}
-            <div
+            <a
               id="driver-freight"
-              className="group min-h-[182px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
+              href="https://www.tradlinx.com/ko/freight-index"
+              target="_blank" rel="noopener noreferrer"
+              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
                 <div className="flex items-center justify-between text-[#6b7280]">
@@ -1007,21 +1018,20 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                 </div>
               </div>
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-end">
-                <a
-                  href="https://www.tradlinx.com/ko/freight-index"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                <span
+                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
                   트레드링스 시세 ↗
-                </a>
+                </span>
               </div>
-            </div>
+            </a>
 
             {/* Card 4: Trade Policy */}
-            <div
+            <a
               id="driver-policy"
-              className="group min-h-[182px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
+              href={policyCardUrl}
+              target="_blank" rel="noopener noreferrer"
+              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
               <div>
                 <div className="flex items-center justify-between text-[#6b7280]">
@@ -1029,8 +1039,8 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
                       shield
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors truncate">
-                      통상 정책 · 수출 쿼터
+                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
+                      통상 정책 · 수출 쿼터 (Trade Policy · Export Quotas)
                     </span>
                   </div>
 
@@ -1040,24 +1050,30 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     {policyData.headline || DEFAULT_MACRO_FALLBACKS.policy.headline}
                   </div>
                   <div className="text-[11px] print:text-[10px] text-slate-500 font-normal leading-relaxed">
-                    {policyData.note || DEFAULT_MACRO_FALLBACKS.policy.subline}
+                    {policyData.status === '관련 공식 발표 확인되지 않음' ? '현재 모니터링 대상에서 새로운 통상 정책 및 수출 제한 관련 발표가 없습니다.' : (policyData.note || DEFAULT_MACRO_FALLBACKS.policy.subline)}
                   </div>
                 </div>
               </div>
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
-                <span className={'macro-market-status text-[11px] font-normal px-2 py-0.5 rounded border '+(policyData.badgeType==='green'?'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]':policyData.badgeType==='red'?'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]':'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]')}>
-                  {policyData.status}
-                </span>
-                <a
-                  href={policyData.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rms-source text-xs text-slate-600 hover:text-[#DF0029] hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                {policyData.status === '관련 공식 발표 확인되지 않음' ? (
+                  <span className="macro-market-status text-[11px] font-normal text-slate-600">{policyData.status === '관련 공식 발표 확인되지 않음' ? '신규 발표 없음' : policyData.status}</span>
+                ) : (<span className={'macro-market-status text-[11px] font-normal px-2 py-0.5 rounded border '+(policyData.badgeType==='green'?'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]':policyData.badgeType==='red'?'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]':'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]')}>
+                  {policyData.status === '관련 공식 발표 확인되지 않음' ? '신규 발표 없음' : policyData.status}
+                </span>)}
+                {policyData.sourceUrl ? (<span
+                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline underline-offset-2 font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
-                  {policyData.sourceName ? policyData.sourceName+' ↗' : '출처 미확인'}
-                </a>
+                  {policyData.sourceName ? policyData.sourceName+' ↗' : '원문 보기 ↗'}
+                </span>) : (
+                  <span className={policyData.status === '관련 공식 발표 확인되지 않음'
+    ? 'rms-source text-xs text-slate-600 font-semibold group-hover:text-[#DF0029] group-hover:underline underline-offset-2 transition-colors'
+    : 'rms-source text-xs text-slate-500 font-normal'}>
+                    {policyData.status === '관련 공식 발표 확인되지 않음' ?
+                      '모니터링 출처: ' + (policyData.sourceName || '공식 출처') + ' ↗' : '공식 출처 확인 불가'}
+                  </span>
+                )}
               </div>
-            </div>
+            </a>
           </div>
 
           {/* Footer Source */}
@@ -1078,7 +1094,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               </span>
               
               {(intelligence?.directives||[]).map(d=>(
-                <div key={d.commodity} data-overview-directive={d.commodity} aria-description={d.reason} className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
+                <div key={d.commodity} data-overview-directive={d.commodity} aria-description={d.reason+' · '+d.generatedAt.slice(0,10)} className="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-lg shadow-2xs">
                   <span className="px-2 py-0.5 bg-[#DF0029] border border-[#DF0029] text-white text-[11px] rounded font-bold shrink-0">{d.name}</span>
                   <span className="text-xs font-bold text-slate-800 break-keep">{formalAiText(d.recommendation)}</span>
                 </div>
@@ -1103,7 +1119,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
 
               <div className="space-y-2.5">
                 {localMarketIssues.map((issue) => (
-                  <article
+                  <a
+                    href={!isInvalidOrSearchUrl(issue.url) ? issue.url : undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     key={issue.id}
                     data-overview-issue={issue.url}
                     className="group p-3 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
@@ -1113,9 +1132,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                     </div>
 
                     <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors leading-snug break-keep">
-                      <a href={issue.url} target="_blank" rel="noopener noreferrer" className="group-hover:text-[#DF0029] transition-colors">
+                      <span className="group-hover:text-[#DF0029] transition-colors">
                         {issue.title}
-                      </a>
+                      </span>
                     </h4>
 
                     {issue.summary && (
@@ -1131,12 +1150,12 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         </span>
                       </div>
                       {!isInvalidOrSearchUrl(issue.url) ? (
-                        <a data-market-source className="rms-source font-sans hover:underline transition-colors" href={issue.url} target="_blank" rel="noopener noreferrer">{issue.source}{'\u00a0'}↗</a>
+                        <span data-market-source className="rms-source font-sans group-hover:underline transition-colors">{issue.source}{'\u00a0'}↗</span>
                       ) : (
                         <span data-market-source className="rms-source font-sans">{issue.source}</span>
                       )}
                     </div>
-                  </article>
+                  </a>
                 ))}
               </div>
             </div>

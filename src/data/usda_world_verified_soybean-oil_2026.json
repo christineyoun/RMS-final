@@ -1,6 +1,6 @@
 {
   "commodityCode": "4232000",
-  "verifiedAt": "2026-10-24T15:07:27.916Z",
+  "verifiedAt": "2026-11-10T00:00:42.969Z",
   "data": {
     "commodityCode": "4232000",
     "marketYear": "2026",
@@ -157,6 +157,5 @@
   },
   "commodity": "soybean-oil",
   "sourceUrl": "https://api.fas.usda.gov/api/psd/commodity/4232000/world/year/2026",
-  "observationStatus": "as-reported",
-  "retainedFrom": "src/data/usda_soybean_oil_last_verified.json"
+  "observationStatus": "as-reported"
 }

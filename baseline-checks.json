@@ -1,0 +1,10 @@
+{
+  "checks": {
+    "src/server/freeSourceRefresh.ts": "4e56b153846563ba3c3d1beb16f30e77f902626ce94d00401e6eb1f7f4f4db09",
+    "src/server/marketIntelligenceService.ts": "11e3bb9087c61dccda468f1cffcf28cb52432669f1a8056ceb3c990b619d6f29",
+    "src/server/scheduledAi.ts": "826536746072411b25ce6e2892313b66ac34dfa5e557b6070279710bf43c22f5",
+    "src/server/freeDailyJobs.ts": "11b3be43ff624109d02d5eba22308684233a714eb4eed1770ba69337929d5c3f",
+    "src/server/geminiApi.ts": "6f4656639b301b520b96dc2946cf4f8a754b69ec00b1ffdb7590532f98b8fa1a",
+    "src/components/CommodityDetail.tsx": "682e0620df89725bef4e82fdd74d56d7dabf2a247a0c0535830ebbce1fc12a48"
+  }
+}

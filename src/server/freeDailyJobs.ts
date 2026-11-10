@@ -1,26 +1,54 @@
-import {refreshSharedPublisherNews} from './sharedPublisherNews.ts';
 import {scfiReuseAuthorization,SSE_SCFI_URL} from './scfiScraperService.ts';
 import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
+import {otherCommodityVerificationPool} from './otherCommodityNewsPool.ts';
 import fs from 'node:fs';import path from 'node:path';
 import {sharedWeatherScreen} from './originWeatherService.ts';
 import type {FreeSourceJob} from './freeSourceRefresh.ts';
 import {readFreeJson,writeFreeJson,readFreePublication,observationFingerprint} from './freeDailyPublication.ts';
 import {parseDatedDisplayFx} from '../utils/soybeanPriceSnapshot.ts';
+import {buildVerifiedEcbSnapshot,verifiedEcbPrevious} from './ecbReferenceSnapshot.ts';
 const ids=['wheat','corn','soybean','soybean-oil','palm-oil','sugar','potato-starch','tapioca-starch'];
 const packet=(publication:any,observationDate:any,lastError?:any)=>({publication,verifiedAt:publication?.verifiedAt||publication?.checkedAt||publication?.fetchedAt||publication?.lastSuccessfulFetchAt,observationDate:observationDate?String(observationDate):null,lastError:lastError||undefined});
 const sourceError=(s:any)=>s.lastError||s.refreshFailed&&s.message||s.success===false&&(s.message||'No verified source response')||s.status==='last-verified'&&s.message&&!/Previously/.test(s.message)&&s.message;
 export function retainedFx(){
- const saved=readFreeJson('free-fx.json');if(saved)return saved;
- // Existing original FX response, verified in the preceding chart implementation.
- try{const dir='.rms-research/potato-exact-parity-2026-10-23/',raw=JSON.parse(fs.readFileSync(dir+'fx-received.json','utf8')),meta=JSON.parse(fs.readFileSync(dir+'visual-parity.json','utf8')).fx;if(parseDatedDisplayFx(raw,meta.retrievedAt))return {raw,verifiedAt:meta.retrievedAt};}catch{}return null;
+ const saved=readFreeJson('free-fx.json');
+ return saved&&parseDatedDisplayFx(saved.raw,saved.verifiedAt)?saved:null;
 }
-async function fxJob(){const url='https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,EUR,MYR';try{const r=await fetch(url);if(!r.ok)throw Error('Frankfurter HTTP '+r.status);const raw=await r.json(),verifiedAt=new Date().toISOString();if(!parseDatedDisplayFx(raw,verifiedAt))throw Error('Invalid official FX date or units');const saved={raw,verifiedAt};writeFreeJson('free-fx.json',saved);return packet(raw,raw.date);}catch(e){const old=retainedFx();if(old){writeFreeJson('free-fx.json',old);return packet(old.raw,old.raw.date,(e as Error).message);}throw e;}}
+async function fxJob(){
+ const url='https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,EUR,MYR';
+ try{
+  const response=await fetch(url,{signal:AbortSignal.timeout(15000)});
+  if(!response.ok)throw Error('Frankfurter HTTP '+response.status);
+  const raw=await response.json(),verifiedAt=new Date().toISOString();
+  const saved=buildVerifiedEcbSnapshot(raw,verifiedAt,retainedFx());
+  writeFreeJson('free-fx.json',saved);
+  return packet(saved.raw,saved.raw.date);
+ }catch(e){
+  const old=retainedFx();
+  if(old)return packet(old.raw,old.raw.date,(e as Error).message);
+  throw e;
+ }
+}
 async function history(id:string){
  if(id==='wheat'){const {usWheatPriceReportService:s}=await import('./usWheatService.ts');const r:any=await s.getPriceHistory(true);return packet(r,r.data?.at(-1)?.date||r.reportDate,r.sourceError||r.sourceStatus==='unavailable'&&'U.S. Wheat report unavailable');}
  if(id==='soybean'||id==='soybean-oil'){
   const r=id==='soybean'?await(await import('./soybeanIntelligenceService.ts')).soybeanIntelligenceService.getSoybeanPriceSnapshot(true,'scheduled'):await(await import('./soybeanOilIntelligenceService.ts')).soybeanOilIntelligenceService.getSoybeanOilPriceSnapshot(true,'scheduled');return packet(r,r.data.at(-1)?.date,r.lastError);
  }
- if(id==='palm-oil'||id==='tapioca-starch'){const {refreshPublicHistory}=await import('./publicPriceHistory.ts');const r=await refreshPublicHistory(id);return packet(r,r.points.map(p=>p.date).sort().at(-1),r.lastError);}
+ if(id==='palm-oil'||id==='tapioca-starch'){
+  const {refreshPublicHistory,PRICE_SOURCES}=await import('./publicPriceHistory.ts');
+  const r=await refreshPublicHistory(id);
+  const result=packet(r,r.points.map(p=>p.date).sort().at(-1),r.lastError);
+  if(id!=='palm-oil')return result;
+  // Show the independent CPO and Olein outcomes even when one source blocks a request.
+  // Overall source-job status retains its existing conservative error behavior.
+  const check=(url:string,benchmark:string)=>{
+    const entry=r.sourceChecks?.[url];
+    return {benchmark,status:entry?.error?'retained-old-data':entry?.lastSuccessAt?'verified':'not-verified',
+      lastAttemptAt:entry?.checkedAt||null,lastSuccessAt:entry?.lastSuccessAt||null,
+      latestPublisherObservation:entry?.lastObservationDate||null,error:entry?.error||null};
+  };
+  return {...result,refresh:{benchmarks:{cpo:check(PRICE_SOURCES.mpocCpo,'Bursa settlement via MPOC'),olein:check(PRICE_SOURCES.olein,'FPOLc1')}}};
+ }
  const r:any=id==='sugar'?await(await import('./sugarPriceSnapshotService.ts')).sugarPriceSnapshotService.getSnapshot(true):await(await import('./historicalPriceService.ts')).fetchHistoricalData(id,'5Y',true);
  await(await import('./savedGraphHistory.ts')).rememberGraphRefresh(id,r);return packet(r,r.data?.at(-1)?.date,r.lastError||r.success===false&&'History unavailable');
 }
@@ -29,34 +57,79 @@ async function origin(id:string){const {originRadarService:s}=await import('./or
  const weather=originWeatherPublicationStatus(r);const dates=weather.dates,errors=weather.errors;
  writeFreeJson('free-origin-'+id+'.json',r);return packet(r,dates.at(-1),errors?`${errors} origins retain older or incomplete weather evidence`:undefined);
 }
-async function legacyNews(id:string){
- if(['soybean','soybean-oil','palm-oil'].includes(id)){const r=id==='soybean'?await(await import('./soybeanNewsPersistence.ts')).refreshSoybeanNews():id==='soybean-oil'?await(await import('./soybeanOilVerifiedNews.ts')).refreshSoybeanOilNews():await(await import('./palmVerifiedNews.ts')).refreshPalmNews();return packet(r.articles||r,(r.articles||[]).map((a:any)=>a.publishedAt).sort().at(-1),r.lastError);}
- let discovery:any,accepted:any[]=[];
- if(id==='wheat'){const [feed,pages]=await Promise.all([(await import('./wheatFeedDiscovery.ts')).discoverWheatPublisherFeeds(),(await import('./wheatPublicPageDiscovery.ts')).discoverWheatPublicPages()]);discovery={candidates:[...pages.candidates,...feed.candidates]};const seen=new Set();const items=discovery.candidates.filter((x:any)=>{if(seen.has(x.originalUrl))return false;seen.add(x.originalUrl);return true;}).slice(0,12);accepted=(await(await import('./wheatArticleVerification.ts')).verifyWheatNewsLinksReported(items)).accepted;}
- else if(id==='corn'){const m=await import('./cornVerifiedNews.ts');discovery=await m.discoverCornFreeSources();accepted=(await m.verifyCornCandidates(discovery.candidates.slice(0,12))).accepted;}
- else {
-  // These commodities have original-article verification but no standalone free index discovery.
-  // Recheck the original approved article URLs; preserve Korean editorial summaries and receipts.
-  const inputs=await savedOverviewInputs();const prior=inputs.find(i=>i.id===id)?.articles||[];
-  const extra=await discoverAdditionalNews(id);
-  accepted=await(await import('./all8ArticleVerification.ts')).verifyOtherCommodityArticles([...extra.candidates,...prior.map((a:any)=>({...a,rawTitle:a.sourceHeadline||a.title,rawSnippet:a.summary,rawId:a.id}))].slice(0,12),id);
-  discovery={candidates:[...extra.candidates,...prior],limitation:'Bounded original-publisher feeds; missing articles may be researched only within authorized paid context'};
- }
- const value={checkedAt:new Date().toISOString(),candidates:accepted,discoveryCount:discovery.candidates.length,status:'verified-originals-awaiting-editorial-review',limitation:discovery.limitation};writeFreeJson('free-news-candidates-'+id+'.json',value);
- return packet(accepted,accepted.map(a=>a.publishedAt).sort().at(-1),accepted.length?undefined:'No original public articles verified; approved saved news retained');
-}
+/** All eight commodities use the same free candidate intake and age/publisher
+ * ordering. Wheat, Corn, Soybean and the other five retain their specialized
+ * original-publisher verification. This job NEVER generates Korean summaries or
+ * promotes candidates into published Market Intelligence. */
 async function news(id:string){
- let legacy:any;try{legacy=await legacyNews(id);}catch{}
- const result=await refreshSharedPublisherNews(id);
- return packet(result.articles,result.articles.map(a=>a.publishedAt).sort().at(-1),result.articles.length?undefined:legacy?.lastError||'No eligible source-bound Korean news; prior valid content retained');
+ const shared=await discoverAdditionalNews(id);
+ let specialty:any[]=[];
+ if(id==='wheat'){
+  const [feeds,pages]=await Promise.all([
+   (await import('./wheatFeedDiscovery.ts')).discoverWheatPublisherFeeds(),
+   (await import('./wheatPublicPageDiscovery.ts')).discoverWheatPublicPages()
+  ]);
+  specialty=[...pages.candidates,...feeds.candidates];
+ }else if(id==='corn'){
+  const result=await(await import('./cornVerifiedNews.ts')).discoverCornFreeSources();
+  specialty=result.candidates;
+ }else if(id==='soybean'){
+  const result=await(await import('./soybeanVerifiedNews.ts')).discoverSoybeanFreeSources();
+  specialty=result.candidates;
+ }else if(id==='soybean-oil'){
+  const result=await(await import('./soybeanOilSitemapDiscovery.ts')).discoverErsSoybeanOil();
+  specialty=result.candidates;
+ }
+ const candidates=otherCommodityVerificationPool(
+  specialty,shared.candidates,[],new Date(),16,id
+ );
+ const accepted=id==='wheat'
+  ? (await(await import('./wheatArticleVerification.ts')).verifyWheatNewsLinksReported(candidates)).accepted
+  : id==='corn'
+  ? (await(await import('./cornVerifiedNews.ts')).verifyCornCandidates(candidates)).accepted
+  : id==='soybean'
+  ? (await(await import('./soybeanVerifiedNews.ts')).verifySoybeanCandidates(candidates)).accepted
+  : await(await import('./all8ArticleVerification.ts')).verifyOtherCommodityArticles(candidates,id);
+ const value={
+  checkedAt:new Date().toISOString(),candidates:accepted,
+  discoveryCount:candidates.length,
+  status:'verified-originals-awaiting-editorial-review',
+  limitation:'Original-publisher evidence only; no Korean editorial or publication until separately authorized paid summarization',
+  ...(shared.errors.length?{discoveryWarnings:shared.errors.slice(0,12)}:{})
+ };
+ writeFreeJson('free-news-candidates-'+id+'.json',value);
+ return packet(accepted,accepted.map(a=>a.publishedAt).sort().at(-1),
+  accepted.length?undefined:'No original public articles verified; existing approved publication retained');
 }
+
 export function originWeatherPublicationStatus(r:any){const errors=r.origins.filter((o:any)=>{const evidence=Array.isArray(o.weatherEvidence)?o.weatherEvidence:[o.weatherEvidence?.shared||o.weatherEvidence];return !evidence.length||evidence.some((e:any)=>!e||e.retrievalFailed||e.history?.length!==28||e.rainfallDays!==7||e.temperatureDays!==7||e.minimumTemperatureDays!==7);}).length;const dates=r.origins.flatMap((o:any)=>Array.isArray(o.weatherEvidence)?o.weatherEvidence:[o.weatherEvidence?.shared||o.weatherEvidence]).map((e:any)=>e?.lastDay).filter(Boolean).sort();return {errors,dates};}
 export function dailyFreeSourceJobs():FreeSourceJob[]{return [
- {key:'transport-policy',commodity:'overview / wheat',source:'USDA AMS ocean grain freight + Federal Register (US wheat scope only)',cadenceHours:24,run:async()=>{const r=await(await import('./wheatOriginTransportPolicyService.ts')).wheatOriginTransportPolicyService.getEvidence();writeFreeJson('free-transport-policy.json',r);return packet(r,[r.freight?.observedOn,r.policy?.publishedOn].filter(Boolean).sort().at(-1),!r.freight&&!r.policy?'No currently verified US freight or relevant policy publication; absence is not proof of no restriction':undefined);}},
+ {key:'transport-policy',commodity:'overview / eight commodities',source:'Korea Customs Service official notices + U.S. Federal Register; original-page verified',cadenceHours:24,run:async()=>{
+  const [{screenOfficialTradePolicy},wheat]=await Promise.all([
+   import('./officialTradePolicyMonitor.ts'),
+   import('./wheatOriginTransportPolicyService.ts')
+  ]);
+  const [policyResult,freightResult]=await Promise.allSettled([
+   screenOfficialTradePolicy(),wheat.wheatOriginTransportPolicyService.getEvidence()
+  ]);
+  const policyMonitor=policyResult.status==='fulfilled'?policyResult.value:null;
+  const prior=readFreeJson('free-transport-policy.json')||{};
+  // Source outages do not become a false declaration of no policy.
+  const policy=policyMonitor?.status==='sources-unavailable'?prior.policy||null:policyMonitor?.policy||null;
+  const freight=freightResult.status==='fulfilled'?freightResult.value.freight||null:prior.freight||null;
+  const value={version:1,checkedAt:new Date().toISOString(),policy,freight,
+    policyMonitor:policyMonitor||{status:'sources-unavailable',checkedAt:new Date().toISOString(),
+      sourceChecks:[],coverage:'Korean Customs Service and U.S. Federal Register',
+      error:policyResult.status==='rejected'?String(policyResult.reason).slice(0,150):'No official response'}
+  };
+  writeFreeJson('free-transport-policy.json',value);
+  return packet(value,policy?.publishedOn||freight?.observedOn||null,
+   value.policyMonitor.status==='sources-unavailable'?'Official trade-policy sources unavailable; retained prior record is not a new announcement':undefined);
+ }},
  {key:'energy',commodity:'overview',source:'Yahoo Finance Brent public quote',run:async()=>{const r=await(await import('./geminiApi.ts')).fetchLiveCrudeOilData('BZ=F',0);if(!r.observationDate||!(r.currentPrice>0))throw Error('No dated verified Brent quote; previous publication retained');saveVerifiedEnergy(r);return packet(r,r.sessionDate||r.observationDate);}},
  {key:'freight',commodity:'overview',source:'Shanghai Shipping Exchange SCFI',cadenceHours:168,retryable:!!scfiReuseAuthorization(),run:async()=>{if(!scfiReuseAuthorization())throw Error('SCFI written display/export authorization not recorded; no source request attempted');const r=await(await import('./scfiScraperService.ts')).scrapeLiveScfiIndex(true);if(!r.observationDate)throw Error('SSE did not provide a verifiable SCFI publication date; retained cache is not a new observation');return packet(r,r.observationDate,r.lastError);}},
  {key:'fx',commodity:'overview',source:'ECB / Frankfurter',run:fxJob},
- ...ids.filter(i=>i!=='potato-starch').map(id=>({key:id+'-history',commodity:id,source:id==='wheat'?'U.S. Wheat Associates':id.includes('starch')?'TTSA':id==='palm-oil'?'Public palm publisher tables':'Yahoo Finance exchange-labelled history',run:()=>history(id)})),
+ ...ids.filter(i=>i!=='potato-starch').map(id=>({key:id+'-history',commodity:id,source:id==='wheat'?'U.S. Wheat Associates':id.includes('starch')?'TTSA':id==='palm-oil'?'MPOC Bursa CPO settlements + Investing.com RBD Olein':'Yahoo Finance exchange-labelled history',run:()=>history(id)})),
  ...ids.filter(i=>!i.includes('starch')).map(id=>({key:id+'-world',commodity:id,source:'USDA FAS PSD',cadenceHours:24,run:()=>world(id)})),
  {key:'potato-export-quote',commodity:'potato-starch',source:'Eurostat Comext DS-045409',cadenceHours:24,run:async()=>{const r=await(await import('./officialPotatoComextService.ts')).fetchOfficialPotatoExportQuote(true);return packet({data:r.data,changes:r.changes},r.data?.period,sourceError(r));}},
  {key:'potato-production-regions',commodity:'potato-starch',source:'Eurostat apro_cpnh1 + verified JRC MARS',cadenceHours:24,run:async()=>{const r=await(await import('./potatoProductionHistory.ts')).refreshRegionalPotatoProduction();return packet(r,r.points.map(p=>p.year).sort().at(-1),r.lastError);}},
@@ -82,8 +155,8 @@ export function overviewWeatherFromSaved(now=new Date()) {
 }
 // Saved observations only. A retrieval timestamp is not an SCFI release date.
 export function overviewMacroFromSaved(data:any) {
- const fx=data?.fx||retainedFx();let previous:any=null;
- try{const dir='.rms-research/potato-exact-parity-2026-10-23/';const raw=JSON.parse(fs.readFileSync(dir+'fx-received.json','utf8')),meta=JSON.parse(fs.readFileSync(dir+'visual-parity.json','utf8')).fx;if(parseDatedDisplayFx(raw,meta.retrievedAt)&&raw.base===fx?.raw?.base&&raw.date<fx.raw.date&&Date.parse(fx.raw.date)-Date.parse(raw.date)===86400000)previous={raw,verifiedAt:meta.retrievedAt};}catch{}
+ const fx=data?.fx||retainedFx();
+ const previous=verifiedEcbPrevious(fx);
  const validFx=fx&&parseDatedDisplayFx(fx.raw,fx.verifiedAt);
  const energy=data?.energy,validEnergy=typeof energy?.currentPrice==='number'&&Number.isFinite(energy.currentPrice)&&energy.currentPrice>0&&Number.isFinite(Date.parse(energy.observationDate))&&Date.parse(energy.observationDate)<=Date.now()&&energy.sourceUrl?.includes('/BZ=F?');
  const quote=energy?.quoteDisplay,validQuote=quote&&Number.isFinite(quote.price)&&quote.price>0&&Number.isFinite(Date.parse(quote.observationDate))&&Date.parse(quote.observationDate)<=Date.now();

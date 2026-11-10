@@ -40,8 +40,7 @@ import { fetchOtherCommodityWorldPsd } from './usdaOtherCommoditiesLiveService.t
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
 import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
-import { generateAiAnalysis, fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
-import { getGroundedAiAnalysis } from './liveAiAnalysisService.ts';
+import { fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
 import { amisService } from './amisService.ts';
 import { wheatIntelligenceService } from './wheatIntelligenceService.ts';
 import { originRadarService } from './originRadarService.ts';
@@ -49,7 +48,6 @@ import { cornIntelligenceService } from './cornIntelligenceService.ts';
 import { soybeanIntelligenceService } from './soybeanIntelligenceService.ts';
 import { soybeanOilIntelligenceService } from './soybeanOilIntelligenceService.ts';
 import { marketIntelligenceService } from './marketIntelligenceService.ts';
-import { rmsAiService } from './rmsAiService.ts';
 import type { NormalizedMarketData } from '../types.ts';
 import { centsPerLbToUsdPerMt, cornCentsPerBuToUsdPerMt, grainCentsPerBuToUsdPerMt } from '../utils/commodityConversions.ts';
 
@@ -174,37 +172,15 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
-    // AI Analysis Endpoint (Gemini Structured Output)
-    // Pre-Step-1 AI Studio market analysis route. Official statistics endpoints remain unchanged.
+    // Retired: the previous Gemini market-analysis generator must NEVER run.
+    // STEP 1–7–2 uses the saved read-only gateway. Market Intelligence is separate.
     if (url.startsWith('/api/ai-analysis/')) {
-      try {
-        const parsedUrl = new URL(url, 'http://localhost');
-        const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
-        // /api/ai-analysis/:commodity -> pathSegments[2]
-        const commodityParam = pathSegments[2] || 'corn';
-        const forceRefresh = parsedUrl.searchParams.get('force') === 'true';
-        const data = await getGroundedAiAnalysis(commodityParam, forceRefresh);
-
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Cache-Control', 'no-store'); // AI brief prices must not be cached for 1h
-        res.statusCode = 200;
-        res.end(JSON.stringify({
-          success: true,
-          data,
-          timestamp: new Date().toISOString(),
-          status: data.status,
-          generatedAt: data.generatedAt,
-          sourceCount: data.sources.length
-        }, null, 2));
-      } catch (err: any) {
-        res.statusCode = 502;
-        res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Cache-Control', 'no-store');
-        res.end(JSON.stringify({ success: false, status: 'unavailable', error: err.message }));
-      }
+      res.statusCode = 410;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(JSON.stringify({success:false,error:'Legacy AI analysis disabled. STEP 1–7–2 is the only analysis source.'}));
       return;
     }
-
 
     // Corn SCM Procurement Analysis Endpoint (CBOT ZC=F, USDA FAS PSD, AMIS)
     if (url.startsWith('/api/corn/procurement-analysis') || url.startsWith('/api/corn/analysis')) {
@@ -539,27 +515,12 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
-    // RMS AI & Risk Management Strategy Route
+    // Retired supplemental legacy AI strategy route; STEP 7 owns recommendations.
     if (url.startsWith('/api/rms/strategy')) {
-      try {
-        const parsedUrl = new URL(url, 'http://localhost');
-        const commodityId = parsedUrl.searchParams.get('commodityId') || 'wheat';
-        const commodityName = parsedUrl.searchParams.get('commodityName') || 'U.S. Wheat';
-        const {COMMODITY_IDS,quoteFromResponse}=await import('../services/commodityQuoteSource.ts');
-        if(!COMMODITY_IDS.some(id=>id===commodityId))throw Error('Unknown commodity');
-        const route=commodityId==='wheat'?'/api/uswheat/price-history':'/api/history?commodity='+commodityId+'&timeframe=5Y';
-        const snapshot=await savedGraphHistoryResponse(route),quote=quoteFromResponse(commodityId as typeof COMMODITY_IDS[number],snapshot?.payload);
-        if(!quote||quote.priceUsdMt<=0)throw Error('Verified price/history unavailable');
-        const history=(snapshot?.payload?.data||[]).filter((p:any)=>!p.isSynthetic).map((p:any)=>commodityId==='wheat'?p.srwMt:p.cpoUsd??p.usdPerMT).filter((n:any)=>Number.isFinite(n)&&n>0);
-        const evaluation = await rmsAiService.evaluateStrategy(commodityId,commodityName,quote.priceUsdMt,history,'USD/MT');
-        res.setHeader('Content-Type', 'application/json');
-        res.statusCode = 200;
-        res.end(JSON.stringify({ success: true, data: evaluation }, null, 2));
-      } catch (err: any) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ success: false, error: err.message }));
-      }
+      res.statusCode = 410;
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(JSON.stringify({success:false,error:'Legacy AI strategy retired. STEP 7 provides procurement recommendations.'}));
       return;
     }
 

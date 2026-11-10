@@ -13,7 +13,7 @@ import { exportGlobalDashboardToPdf } from './utils/exportDashboardPdf';
 
 export default function App() {
   const [activeView, setActiveView] = useState<string>('main-dashboard');
-  const [currency, setCurrency] = useState<Currency>('KRW');
+  const [currency, setCurrency] = useState<Currency>('USD');
   const [commodities, setCommodities] = useState<Commodity[]>(() => COMMODITIES.map(c => ({...c, price: 0, unit: 'USD / MT', changeWoW: null, changeMoM: null, sparkline: []})));
   const [macroDrivers, setMacroDrivers] = useState(MACRO_DRIVERS);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -244,7 +244,6 @@ export default function App() {
       {/* 3. Main Content Area */}
       <main className="ml-64 mt-14 p-4 flex-1 min-h-[calc(100vh-56px)] overflow-x-hidden print:ml-0 print:mt-0 print:p-0 print:min-h-0 print:overflow-visible">
         <div className="max-w-[1680px] mx-auto print:max-w-full">
-
           {activeView === 'main-dashboard' || !currentCommodity ? (
             <OverviewTerminal
               commodities={mappedCommodities}

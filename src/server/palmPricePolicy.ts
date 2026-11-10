@@ -3,7 +3,7 @@ import type {PublicHistory,PublicPricePoint} from './publicPriceHistory.ts';
 export type DatedPalmFx={rate:number;rateDate:string;sourceUrl:string;checkedAt:string};
 export function selectPalmObservations(history:PublicHistory,benchmark:PublicPricePoint['benchmark']){
   const selected=new Map<string,PublicPricePoint>();
-  const rank=(p:PublicPricePoint)=>(p.provenance==='source-verified'?10:0)+(p.sourceUrl==='https://www.investing.com/commodities/palm-oil-historical-data'?2:0);
+  const rank=(p:PublicPricePoint)=>(p.provenance==='source-verified'?10:0)+(p.sourceUrl==='https://www.mpoc.org.my/market-insight/daily-palm-oil-prices/'?3:p.sourceUrl==='https://www.investing.com/commodities/palm-oil-historical-data'?2:0);
   for(const point of history.points.filter(p=>p.benchmark===benchmark)){
     const old=selected.get(point.date);if(!old||rank(point)>rank(old))selected.set(point.date,point);
   }

@@ -13,7 +13,11 @@ try{process.chdir(root);fs.mkdirSync('src/data',{recursive:true});fs.writeFileSy
  // Receipt capture is invoked under an injected authorization, never a provider.
  const ctx={runId:'offline-receipt',permitted:true,attempts:1,successfulCalls:1,maxCalls:1,estimatedUsd:0,maxEstimatedUsd:0};
  const raw='[{"rawId":"offline","summary":"unaccepted original model output"}]';const receipt=withAuthorizedStage3Run(ctx,()=>recordNewsSummary('corn',[{rawId:'offline',rawSnippet:'original excerpt'}],{text:raw}));assert(receipt);const bytes=fs.readFileSync(receipt.file);assert.equal(createHash('sha256').update(bytes).digest('hex'),receipt.sha256);assert.equal(JSON.parse(bytes.toString()).response.text,raw);
- const plan=scheduledPhasePlan('2026-10-27');assert.equal(new Set(plan.slice(0,8).map(p=>p.id)).size,8);assert(plan.slice(0,8).every(p=>p.kind==='news'));assert(plan.slice(8).every(p=>p.kind==='analysis'));assert.notEqual(plan[0].id,scheduledPhasePlan('2026-10-28')[0].id);
+ const plan=scheduledPhasePlan('2026-10-27');
+ assert.equal(plan.length,8,'all eight Market Intelligence news phases remain scheduled');
+ assert.equal(new Set(plan.map(p=>p.id)).size,8,'no repeated news phase');
+ assert(plan.every(p=>p.kind==='news'),'legacy scheduled Gemini analysis must not run');
+ assert.notEqual(plan[0].id,scheduledPhasePlan('2026-10-28')[0].id,'daily phase rotation remains');
  // Isolate the demonstrated grammatical false positive; factual/scope checks remain.
  const advice=validateConditionalReasoning('차기 기말재고 전망치를 확인할 것을 권고합니다.',[],{kind:'recommendation',support:[]});assert(!advice.issues.includes('assertion-or-prediction-disguised-as-advice'));assert(advice.issues.length,'missing evidence is still rejected');
  const claim=validateConditionalReasoning('가격이 상승할 것으로 예상되므로 구매를 검토합니다.',[],{kind:'recommendation',support:[]});assert(claim.issues.includes('assertion-or-prediction-disguised-as-advice'));

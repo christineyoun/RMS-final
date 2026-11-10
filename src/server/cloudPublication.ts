@@ -69,7 +69,9 @@ export async function loadPublicBundle(){
 
 export async function withCloudPublicationLease<T>(action:()=>Promise<T>):Promise<T>{
  const bucket=process.env.RMS_STATE_BUCKET;if(!bucket)throw Error('Private state bucket missing');
- const key='locks/free-refresh.json',bytes=Buffer.from(JSON.stringify({execution:process.env.CLOUD_RUN_EXECUTION,expiresAt:Date.now()+7200000}));
+ const extendedStep7=process.env.CLOUD_RUN_JOB&&process.env.RMS_STEP7_SCHEDULE_MODE==='paid-cloud'&&process.env.RMS_STEP7_CLOUD_APPROVED==='YES';
+ const leaseTtlMs=extendedStep7?6*60*60*1000:7200000;
+ const key='locks/free-refresh.json',bytes=Buffer.from(JSON.stringify({execution:process.env.CLOUD_RUN_EXECUTION,expiresAt:Date.now()+leaseTtlMs}));
  let lease:any;
  try{lease=await gcsWrite(bucket,key,bytes);}catch{
   const old=await gcsRead(bucket,key),record=JSON.parse(Buffer.from(old.bytes).toString());

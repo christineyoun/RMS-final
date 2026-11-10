@@ -19,7 +19,10 @@ export const CORN_PUBLIC_SOURCES: Source[] = [
   {url:'https://grains.org/market_perspectives/',host:'grains.org',publisher:'U.S. Grains & BioProducts Council',kind:'index',sourceType:'official'},
   {url:'https://ahdb.org.uk/Query/4458?title=Latest+cereals+and+oilseeds+market+news',host:'ahdb.org.uk',publisher:'AHDB',kind:'index',sourceType:'official'}
 ];
-const allowedHosts=new Set(CORN_PUBLIC_SOURCES.map(x=>x.host));
+// RMS_MI_COVERAGE_V2: candidate sources also come from independently checked news links.
+const allowedHosts=new Set([...CORN_PUBLIC_SOURCES.map(x=>x.host),
+  'reuters.com','foodbusinessnews.net','agriculture.com','farmprogress.com',
+  'dtnpf.com','agricensus.com','ukragroconsult.com']);
 const normHost=(s:string)=>s.toLowerCase().replace(/^www\./,'');
 const strip=(s:unknown)=>String(s||'').replace(/\s+/g,' ').trim();
 const cornTerm=/\b(?:corn|maize|feed\s+grains?|ethanol|coarse\s+grains?)\b/i;

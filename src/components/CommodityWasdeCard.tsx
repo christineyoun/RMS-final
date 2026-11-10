@@ -273,7 +273,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
             <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
               <span className="text-[10px] text-[#6b7280] block font-sans">TTSA 기준시세 (FOB BKK)</span>
               <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                {tapiocaQuote ? `$${tapiocaQuote.usdPerMt.toFixed(2)} / MT` : 'N/A'}
+                {tapiocaQuote ? `$${tapiocaQuote.usdPerMt.toFixed(2)}/MT` : 'N/A'}
               </span>
               <span className="text-[10px] font-mono text-[#059669] font-semibold block mt-0.5">
                 {tapiocaQuote ? `발표 ${tapiocaQuote.date} · ${tapiocaQuote.wowPct !== null ? tapiocaQuote.wowPct.toFixed(2) + '% WoW' : '전주 대비 N/A'}` : '공식 주간 시세 확인 불가'}

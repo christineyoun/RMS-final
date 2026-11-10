@@ -13,7 +13,7 @@ export default function PotatoBenchmarkValue({quote,currency='KRW',fx}:{quote:Po
 export function PotatoBenchmarkDisplay({quote,failed=false,fx,currency='KRW'}:{currency?:Currency;quote:PotatoExportQuoteResponse|null;failed?:boolean;fx?:DatedDisplayFx|null}) {
   const data=quote?.data;
   const display=commodityBenchmarkDisplay(mapCommodityForDisplay({id:'potato-starch',price:0,_potatoExportQuote:quote||undefined} as Commodity,currency,fx||null),currency);
-  return <div className="flex items-baseline gap-1 min-w-0 flex-wrap sm:flex-nowrap">
+  return <div className="flex items-baseline gap-0 min-w-0 flex-wrap sm:flex-nowrap">
     <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 whitespace-nowrap">
       {display.value}
     </span>

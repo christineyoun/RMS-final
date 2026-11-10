@@ -9,18 +9,18 @@ import {mapCommodityForDisplay} from '../../services/commodityQuoteSource';
 import {parseDatedDisplayFx,soybeanDisplayFactor} from '../../utils/soybeanPriceSnapshot';
 import {latestCommonPalmSpread} from '../../utils/palmPriceIntegrity';
 
-assert.equal(formatSignedCurrencyPerMt(37588,'KRW'),'+₩37,588 /MT');
-assert.equal(formatSignedCurrencyPerMt(-23085,'KRW'),'−₩23,085 /MT');
+assert.equal(formatSignedCurrencyPerMt(37588,'KRW'),'+₩37,588/MT');
+assert.equal(formatSignedCurrencyPerMt(-23085,'KRW'),'−₩23,085/MT');
 for (const [currency,symbol] of [['USD','$'],['EUR','€'],['KRW','₩']] as const) {
   const decimals=currency==='KRW'?'':'.00';
-  assert.equal(formatSignedCurrencyPerMt(1234,currency),`+${symbol}1,234${decimals} /MT`);
-  assert.equal(formatSignedCurrencyPerMt(-1234,currency),`−${symbol}1,234${decimals} /MT`);
-  for(const value of [0,-0,0.001,-0.001]) assert.equal(formatSignedCurrencyPerMt(value,currency),`${symbol}0${decimals} /MT`);
+  assert.equal(formatSignedCurrencyPerMt(1234,currency),`+${symbol}1,234${decimals}/MT`);
+  assert.equal(formatSignedCurrencyPerMt(-1234,currency),`−${symbol}1,234${decimals}/MT`);
+  for(const value of [0,-0,0.001,-0.001]) assert.equal(formatSignedCurrencyPerMt(value,currency),`${symbol}0${decimals}/MT`);
   for(const value of [NaN,Infinity,-Infinity]) assert.equal(formatSignedCurrencyPerMt(value,currency),'--');
 }
-assert.equal(formatSignedCurrencyPerMt(12.345,'EUR'),'+€12.35 /MT');
-assert.equal(formatSignedCurrencyPerMt(-12.345,'USD'),'−$12.35 /MT');
-assert.equal(formatSignedCurrencyPerMt(12.6,'KRW'),'+₩13 /MT');
+assert.equal(formatSignedCurrencyPerMt(12.345,'EUR'),'+€12.35/MT');
+assert.equal(formatSignedCurrencyPerMt(-12.345,'USD'),'−$12.35/MT');
+assert.equal(formatSignedCurrencyPerMt(12.6,'KRW'),'+₩13/MT');
 
 const inputs=JSON.parse(fs.readFileSync(new URL('./fixtures/canonical-commodity-quotes.json',import.meta.url),'utf8'));
 const history=inputs['/api/history?commodity=palm-oil&timeframe=5Y'];

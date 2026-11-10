@@ -225,17 +225,6 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Currency Toggle */}
         <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
           <button
-            onClick={() => onToggleCurrency('KRW')}
-            className={`px-2.5 py-0.5 text-[10px] font-bold rounded transition-colors ${
-              currency === 'KRW'
-                ? 'bg-white text-[#DF0029] shadow-xs'
-                : 'text-[#6b7280] hover:text-[#111827]'
-            }`}
-            type="button"
-          >
-            KRW (₩)
-          </button>
-          <button
             onClick={() => onToggleCurrency('USD')}
             className={`px-2.5 py-0.5 text-[10px] font-bold rounded transition-colors ${
               currency === 'USD'
@@ -245,6 +234,17 @@ export const Header: React.FC<HeaderProps> = ({
             type="button"
           >
             USD ($)
+          </button>
+          <button
+            onClick={() => onToggleCurrency('KRW')}
+            className={`px-2.5 py-0.5 text-[10px] font-bold rounded transition-colors ${
+              currency === 'KRW'
+                ? 'bg-white text-[#DF0029] shadow-xs'
+                : 'text-[#6b7280] hover:text-[#111827]'
+            }`}
+            type="button"
+          >
+            KRW (₩)
           </button>
           <button
             onClick={() => onToggleCurrency('EUR')}
