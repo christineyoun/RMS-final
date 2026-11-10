@@ -45,7 +45,7 @@ export async function privateServer(workspace:string,action:(base:string)=>Promi
  delete env.GEMINI_API_KEY;delete env.GOOGLE_API_KEY;delete env.RMS_GEMINI_API_KEY_FILE;
  const child=spawn(process.execPath,['--import',path.join(appRoot,'node_modules/tsx/dist/loader.mjs'),path.join(appRoot,'server.ts')],{cwd:workspace,env,stdio:['ignore','pipe','pipe']});
  let log='';child.stdout.on('data',v=>{log+=v;});child.stderr.on('data',v=>{log+=v;});
- try{let ready=false;for(let i=0;i<100;i++){await new Promise(r=>setTimeout(r,100));if(log.includes('Server running on port')){ready=true;break;}if(child.exitCode!==null)break;}if(!ready)throw Error('Private saved-reader server did not start: '+log.slice(-1000));await action('http://127.0.0.1:'+port);}finally{if(child.exitCode===null&&child.signalCode===null){const stopped=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await stopped;}}
+ try{let ready=false;for(let i=0;i<900;i++){await new Promise(r=>setTimeout(r,100));if(log.includes('Server running on port')){ready=true;break;}if(child.exitCode!==null)break;}if(!ready)throw Error('Private saved-reader server did not start: '+log.slice(-1000));await action('http://127.0.0.1:'+port);}finally{if(child.exitCode===null&&child.signalCode===null){const stopped=new Promise(r=>child.once('exit',r));child.kill('SIGTERM');await stopped;}}
 }
 /** Keep source collection and paid generation outcomes independent. Dependencies
  * are injectable for offline integration checks against the real workflow. */
