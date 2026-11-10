@@ -13,6 +13,9 @@ const INVESTING_OLEIN_URL = 'https://www.investing.com/commodities/rbd-palm-olei
 
 export interface PalmOilDataPoint {
   oleinPublisherQuoteDate?:string;
+  cpoSourceUrl?:string | null;
+  cpoPriceType?:string;
+  cpoContractMonth?:string | null;
   cpoMyr?: number;
   date: string;
   centsPerBushel: number; // MDEX FCPO in MYR/MT
@@ -204,6 +207,9 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
       return {
         date: pt.date,
         cpoMyr:pt.cpoMyr,
+        cpoSourceUrl:pt.cpoSourceUrl,
+        cpoPriceType:pt.cpoPriceType,
+        cpoContractMonth:pt.cpoContractMonth,
         centsPerBushel: pt.centsPerBushel,
         usdPerMT: cpoUsd,
         cpoUsd,

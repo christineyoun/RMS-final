@@ -24,8 +24,8 @@ try{
   const result=await runRefreshWorkflow(policy,{read:async()=>journal,save:async j=>{journal=structuredClone(j);}},{runner,priorNews:{},runAi:async(p,s,o)=>runScheduledAi(p,s,{...o,news:async()=>{await metered();return [];},analysis:async()=>{await metered();return body('new accepted');}}),publishOverview:async()=>{overview++;return {saved:true} as any;}});
   assert.equal(JSON.parse(fs.readFileSync('market.json','utf8')).price,freeSuccess?200:100);
   assert.equal(result?.sourceError,!freeSuccess);assert.equal(overview,1);
-  if(status===200)assert.notDeepEqual(readScheduledContent('analysis-wheat'),previous);
-  else {assert.deepEqual(readScheduledContent('analysis-wheat'),previous);assert(journal.phases['analysis-wheat'].status==='retained-previous');}
+  assert.deepEqual(readScheduledContent('analysis-wheat'),previous,'Legacy AI analysis must remain unchanged');
+  assert(Object.keys(journal.phases).every(key=>key.startsWith('news-')),'Only Market Intelligence news phases should run');
   if(status===429)assert(fs.readFileSync('.rms-stage3/paid-requests.jsonl','utf8').includes('RESOURCE_EXHAUSTED'));
  }
  // Whole AI subsystem failure (e.g. journal outage) cannot stop free publication.

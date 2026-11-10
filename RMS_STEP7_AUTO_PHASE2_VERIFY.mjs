@@ -1,0 +1,17 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';
+const root=process.cwd(),dir=import.meta.dirname;
+const checks=JSON.parse(fs.readFileSync(path.join(dir,'baseline-checks.json'),'utf8')).checks;
+const sha=file=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+for(const f of ['src/server/freeSourceRefresh.ts','src/server/marketIntelligenceService.ts','src/server/scheduledAi.ts','src/server/freeDailyJobs.ts'])assert.equal(sha(f),checks[f],'Existing source changed: '+f);
+const publication=fs.readFileSync(path.join(root,'scripts/cloud/publication.ts'),'utf8');
+const order=['run=await runner.check()','aiResult=await runAi','step7Result=await step7','await(options.publishOverview'];
+for(let i=0;i<order.length-1;i++)assert(publication.indexOf(order[i])>=0&&publication.indexOf(order[i])<publication.indexOf(order[i+1]),'Workflow order changed.');
+const hook=fs.readFileSync(path.join(root,'scripts/cloud/scheduledStep7.ts'),'utf8');
+const worker=fs.readFileSync(path.join(root,'scripts/cloud/step7ScheduledWorker.mjs'),'utf8');
+assert(hook.includes('invokeWorker(commodity,mode)'),'Expected scheduled call to actual worker missing');
+assert(worker.includes("from '../soybean-rebuild/research-pipeline-runner.mjs'"),'Worker does not invoke actual STEP runner');
+assert(worker.includes("mode:mode==='inspect'?'preview':'free'"),'Runner paid execution not blocked');
+assert(!hook.includes('--run-paid')&&!worker.includes('--run-paid'),'Unexpected direct paid CLI support');
+assert(hook.includes('if(isCloud())'),'Cloud Run safety disabled');
+console.log('PASS: existing source code and refresh order unchanged; real STEP runner wired; paid/Cloud Run off.');
+console.log('NEXT read-only probe: node --import tsx scripts/cloud/step7ScheduledProbe.mjs');

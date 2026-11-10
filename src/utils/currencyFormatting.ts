@@ -24,5 +24,5 @@ export function formatSignedCurrencyPerMt(value: number, currency: Currency): st
   const rounded = Number(formatted.replaceAll(',', ''));
   const sign = rounded > 0 ? '+' : rounded < 0 ? '−' : '';
   const symbol = currency === 'KRW' ? '₩' : currency === 'EUR' ? '€' : '$';
-  return sign + symbol + formatted.replace(/^[-−]/, '') + ' /MT';
+  return sign + symbol + formatted.replace(/^[-−]/, '') + '/MT';
 }

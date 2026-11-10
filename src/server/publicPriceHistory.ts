@@ -7,11 +7,16 @@ import { load } from 'cheerio';
 import {createHash} from 'node:crypto';
 import {selectPalmObservations,normalizedPalmPoint,refreshPalmDatedFx,type DatedPalmFx} from './palmPricePolicy.ts';
 import { observedPriceChanges } from '../utils/observedPriceChanges.ts';
+import {MPOC_CPO_URL,parseMpocCpoTable} from './mpocCpoParser.mjs';
 
 export const PRICE_SOURCES = {
-  cpo: 'https://www.investing.com/commodities/crude-palm-oil-historical-data',
-  // Published Kuala Lumpur FCPOc1 series, MYR. CME CPOc1 (USD) is a different contract.
+  // Current Malaysian FCPOc1 contract (MYR/MT) on Investing.com.
+  cpo: 'https://www.investing.com/commodities/palm-oil-historical-data',
   cpoFcpo: 'https://www.investing.com/commodities/palm-oil-historical-data',
+  // Historical manual imports used this misleading Indian MCX link. Preserve their
+  // ledger identity without treating that link as a verified Malaysian FCPO source.
+  cpoLegacyImport: 'https://www.investing.com/commodities/crude-palm-oil-historical-data',
+  mpocCpo: MPOC_CPO_URL,
   olein: 'https://www.investing.com/commodities/rbd-palm-olein-historical-data',
   tapioca: 'https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price',
 };
@@ -19,7 +24,7 @@ export type PublicPricePoint = {
   benchmark:'palm-cpo'|'palm-olein'|'tapioca-fob'; sourceUrl:string; date:string;
   value:number; unit:'MYR/MT'|'USD/MT'; usdPerMT?:number;
   provenance:'manual-import'|'source-verified'; domesticThb?:number;
-  publisherQuoteDate?:string;observationKind?:'publisher-close';
+  publisherQuoteDate?:string;observationKind?:'publisher-close'|'exchange-settlement';contractMonth?:string;
   conversion?:{rate:number;checkedAt:string;observationDate?:string;sourceUrl?:string};
 };
 export type PublicHistory = {version:1;points:PublicPricePoint[];datedFx?:Record<string,DatedPalmFx>;fxError?:string;quarantined?:Array<{point:PublicPricePoint;reason:string;evidenceUrl:string;checkedAt:string}>;revisions?:Array<{before:PublicPricePoint;after:PublicPricePoint;checkedAt:string}>;lastCheckedAt?:string;lastError?:string;sourceChecks?:Record<string,{checkedAt:string;lastSuccessAt?:string;error?:string;lastObservationDate?:string;observationCount?:number}>};
@@ -41,7 +46,14 @@ export function publisherDate(input:string):string|null {
 }
 export function validPublicPoint(p:PublicPricePoint,now=new Date()):boolean {
   const expected=p?.benchmark==='palm-cpo'?PRICE_SOURCES.cpo:p?.benchmark==='palm-olein'?PRICE_SOURCES.olein:p?.benchmark==='tapioca-fob'?PRICE_SOURCES.tapioca:'';
-  return !!expected && (p.sourceUrl===expected || p.benchmark==='palm-cpo'&&p.sourceUrl===PRICE_SOURCES.cpoFcpo) && publisherDate(p.date)===p.date && p.date<=now.toISOString().slice(0,10) &&
+  const cpoSourceValid=p.benchmark==='palm-cpo' && (
+    p.sourceUrl===PRICE_SOURCES.mpocCpo
+      ? p.provenance==='source-verified' && p.observationKind==='exchange-settlement' && /^20\d{2}-(?:0[1-9]|1[0-2])$/.test(p.contractMonth||'')
+      : p.sourceUrl===PRICE_SOURCES.cpoLegacyImport
+        ? p.provenance==='manual-import'
+        : p.sourceUrl===PRICE_SOURCES.cpoFcpo && p.observationKind!=='exchange-settlement'
+  );
+  return !!expected && (p.benchmark==='palm-cpo'?cpoSourceValid:p.sourceUrl===expected) && publisherDate(p.date)===p.date && p.date<=now.toISOString().slice(0,10) &&
     p.unit===(p.benchmark==='palm-cpo'?'MYR/MT':'USD/MT') && Number.isFinite(p.value)&&p.value>0 &&
     p.value<(p.benchmark==='palm-cpo'?20000:10000) && (p.usdPerMT===undefined||Number.isFinite(p.usdPerMT)&&p.usdPerMT>0);
 }
@@ -69,7 +81,7 @@ function seed(id:string):PublicPricePoint[]{
   const raw=JSON.parse(fs.readFileSync(file,'utf8'));const out:PublicPricePoint[]=[];
   if(id==='palm-oil')for(const p of raw.historicalSeries||[]){
     const native=Number(p.cpoMyr??p.centsPerBushel),usd=Number(p.cpoUsd??p.cpoUsdPerMt??p.usdPerMT),olein=Number(p.oleinUsd??p.oleinUsdPerMt);
-    if(native>0&&usd>0)out.push({benchmark:'palm-cpo',date:p.date,sourceUrl:PRICE_SOURCES.cpo,value:native,unit:'MYR/MT',usdPerMT:usd,provenance:'manual-import'});
+    if(native>0&&usd>0)out.push({benchmark:'palm-cpo',date:p.date,sourceUrl:PRICE_SOURCES.cpoLegacyImport,value:native,unit:'MYR/MT',usdPerMT:usd,provenance:'manual-import'});
     if(olein>0)out.push({benchmark:'palm-olein',date:p.date,sourceUrl:PRICE_SOURCES.olein,value:olein,unit:'USD/MT',usdPerMT:olein,provenance:'manual-import'});
   }else for(const p of raw.weeklyPrices||[])if(!p.isSynthetic)out.push({benchmark:'tapioca-fob',date:p.date,sourceUrl:PRICE_SOURCES.tapioca,value:p.price,unit:'USD/MT',usdPerMT:p.price,domesticThb:p.domesticThb,provenance:'manual-import'});
   return out.filter(p=>validPublicPoint(p));
@@ -87,6 +99,16 @@ export function savePublicHistory(id:'palm-oil'|'tapioca-starch',history:PublicH
   const temp=file+'.'+process.pid+'.tmp';fs.writeFileSync(temp,JSON.stringify(history,null,2));fs.renameSync(temp,file);
 }
 
+/** MPOC's Bursa settlement is a distinct, contract-tagged benchmark observation.
+ * Never relabel an exchange settlement as an Investing.com closing price. */
+export function parseMpocCpoHistory(html:string,now=new Date()):PublicPricePoint[]{
+  const parsed=parseMpocCpoTable(html,now);
+  return parsed.rows.map(({date,value})=>{
+    const point:PublicPricePoint={benchmark:'palm-cpo',sourceUrl:PRICE_SOURCES.mpocCpo,date,value,unit:'MYR/MT',provenance:'source-verified',observationKind:'exchange-settlement',contractMonth:parsed.contractMonth};
+    if(!validPublicPoint(point,now))throw Error('MPOC price failed native instrument/date validation');
+    return point;
+  });
+}
 /** Only table rows carrying their own publication date and close/price column. */
 export function parsePalmHistory(html:string,benchmark:'palm-cpo'|'palm-olein',now=new Date(),requireHistoricalTable=false):PublicPricePoint[]{
   const $=load(html);const points:PublicPricePoint[]=[];
@@ -114,9 +136,8 @@ export function validatePalmPublisher(html:string,benchmark:'palm-cpo'|'palm-ole
   const $=load(html);const heading=$('h1').text().replace(/\s+/g,' ').trim();
   const text=$('body').text().replace(/\s+/g,' ');
   if(benchmark==='palm-cpo') {
-    if(sourceUrl===PRICE_SOURCES.cpoFcpo) {
-      if(!/Palm Oil\s*\(FCPOc1\)/i.test(heading)||!/Currency in\s*MYR/i.test(text))throw Error('Benchmark mismatch: expected Kuala Lumpur FCPOc1 in MYR');
-    }else if(!/crude palm oil/i.test(heading)||!/Currency in\s*MYR/i.test(text))throw Error('Benchmark mismatch: expected CPO futures in MYR');
+    if(sourceUrl!==PRICE_SOURCES.cpoFcpo||!/Palm Oil\s*\(FCPOc1\)/i.test(heading)||!/Currency in\s*MYR/i.test(text))
+      throw Error('Benchmark mismatch: expected Investing.com Kuala Lumpur FCPOc1 in MYR');
   }else if(!/RBD Palm Olein\s*\(FPOLc1\)/i.test(heading)||!/Currency in\s*USD/i.test(text))throw Error('Benchmark mismatch: expected Bursa FPOLc1 RBD Palm Olein in USD');
 }
 export function appendMatchingPalmRows(history:PublicHistory,incoming:PublicPricePoint[],sourceUrl:string):PublicHistory {
@@ -160,7 +181,8 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
   const pending=inFlight.get(id);if(pending)return pending;
   const job=(async()=>{
     let history=loadPublicHistory(id);const issues:string[]=[];const checkedAt=new Date().toISOString();
-    const sources=id==='palm-oil'?[PRICE_SOURCES.cpoFcpo,PRICE_SOURCES.olein]:[PRICE_SOURCES.tapioca];
+    // MPOC Bursa-settlement CPO replaces the blocked Investing.com FCPO request; Olein is unchanged.
+    const sources=id==='palm-oil'?[PRICE_SOURCES.mpocCpo,PRICE_SOURCES.olein]:[PRICE_SOURCES.tapioca];
     const year=new Date().getUTCFullYear();
     const targets=sources.flatMap(sourceUrl=>sourceUrl===PRICE_SOURCES.tapioca?(new Date().getUTCMonth()===0?[year-1,year]:[year]).map(y=>({sourceUrl,url:sourceUrl+'/'+y})):[{sourceUrl,url:sourceUrl}]);
     for(const {sourceUrl,url} of targets){
@@ -168,8 +190,8 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
         const r=await fetch(url,{headers:{Accept:'text/html','User-Agent':'RMS-Procurement/1.0'},signal:AbortSignal.timeout(10000)});
         if(!r.ok)throw Error('HTTP '+r.status); // Never circumvent a blocked source.
         const html=await r.text();
-        if(sourceUrl!==PRICE_SOURCES.tapioca)validatePalmPublisher(html,sourceUrl===PRICE_SOURCES.olein?'palm-olein':'palm-cpo',sourceUrl);
-        let incoming=sourceUrl===PRICE_SOURCES.tapioca?parseTtsaHistory(html):parsePalmHistory(html,sourceUrl===PRICE_SOURCES.olein?'palm-olein':'palm-cpo',new Date(),true);
+        if(sourceUrl!==PRICE_SOURCES.tapioca&&sourceUrl!==PRICE_SOURCES.mpocCpo)validatePalmPublisher(html,sourceUrl===PRICE_SOURCES.olein?'palm-olein':'palm-cpo',sourceUrl);
+        let incoming=sourceUrl===PRICE_SOURCES.tapioca?parseTtsaHistory(html):sourceUrl===PRICE_SOURCES.mpocCpo?parseMpocCpoHistory(html):parsePalmHistory(html,sourceUrl===PRICE_SOURCES.olein?'palm-olein':'palm-cpo',new Date(),true);
         if(!incoming.length)throw Error('No dated price rows in accessible source');
         if(id==='palm-oil'){
           const digest=createHash('sha256').update(html).digest('hex');
@@ -180,7 +202,7 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
           const tableHtml=page('table').filter((_,t)=>/Date/.test(page(t).find('thead').text())&&/Price/.test(page(t).find('thead').text())).first().toString();
           if(!fs.existsSync(receipt))fs.writeFileSync(receipt,JSON.stringify({sourceUrl,checkedAt,htmlSha256:digest,heading:page('h1').text(),historicalTableHtml:tableHtml,observations:incoming},null,2),{flag:'wx'});
         }
-        if(incoming[0]?.benchmark==='palm-cpo') {
+        if(incoming[0]?.benchmark==='palm-cpo'&&sourceUrl!==PRICE_SOURCES.mpocCpo) {
           try{incoming=await datedCpoConversion(history,incoming,sourceUrl,checkedAt);}
           catch(error){issues.push(sourceUrl+': '+String((error as Error).message));} // Native observations still persist; never use today's FX for older prices.
         }
@@ -196,19 +218,24 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
 }
 export function publicBenchmarkMetrics(history:PublicHistory,benchmark:PublicPricePoint['benchmark']){
   const points=selectPalmObservations(history,benchmark).map(p=>normalizedPalmPoint(p,history));const latest=points.at(-1);
-  return {latest,moves:observedPriceChanges(points.map(p=>({date:p.date,usdPerMT:p.usdPerMT??(p.unit==='USD/MT'?p.value:NaN)})))};
+  // The chart can connect historical closes to new settlements; comparisons may
+  // only use the same MPOC contract month when a settlement is the latest point.
+  const comparable=latest?.observationKind==='exchange-settlement'
+    ?points.filter(p=>p.sourceUrl===latest.sourceUrl&&p.contractMonth===latest.contractMonth)
+    :points;
+  return {latest,moves:observedPriceChanges(comparable.map(p=>({date:p.date,usdPerMT:p.usdPerMT??(p.unit==='USD/MT'?p.value:NaN)})))};
 }
 export function palmHistoryPayload(history=loadPublicHistory('palm-oil')):any {
   const rows=new Map<string,any>();
   for(const p of ['palm-cpo','palm-olein'].flatMap(b=>selectPalmObservations(history,b as any)).map(p=>normalizedPalmPoint(p,history))){const row=rows.get(p.date)||{date:p.date};
-    if(p.benchmark==='palm-cpo'){row.cpoMyr=p.value;row.centsPerBushel=p.value;if(p.usdPerMT){row.cpoUsd=p.usdPerMT;row.usdPerMT=p.usdPerMT;}row.cpoSourceUrl=p.sourceUrl;row.cpoFxStatus=p.fxStatus;row.cpoFxRateDate='fxRateDate' in p?p.fxRateDate:undefined;}
+    if(p.benchmark==='palm-cpo'){row.cpoMyr=p.value;row.centsPerBushel=p.value;if(p.usdPerMT){row.cpoUsd=p.usdPerMT;row.usdPerMT=p.usdPerMT;}row.cpoSourceUrl=p.provenance==='source-verified'?p.sourceUrl:null;row.cpoPriceType=p.observationKind||'historical-import';row.cpoContractMonth=p.contractMonth||null;row.cpoFxStatus=p.fxStatus;row.cpoFxRateDate='fxRateDate' in p?p.fxRateDate:undefined;}
     if(p.benchmark==='palm-olein'){row.oleinUsd=p.value;row.oleinUsdPerMt=p.value;row.oleinSourceUrl=p.sourceUrl;row.oleinPublisherQuoteDate=p.publisherQuoteDate;}
     rows.set(p.date,row);
   }
   const cpo=publicBenchmarkMetrics(history,'palm-cpo'),olein=publicBenchmarkMetrics(history,'palm-olein');
   return {priceMyr:cpo.latest?.value??null,cpoUsdMt:cpo.latest?.usdPerMT??null,oleinUsd:olein.latest?.value??null,
     cpoObservationDate:cpo.latest?.date,oleinObservationDate:olein.latest?.date,updatedAt:history.lastCheckedAt||'',source:'CPO · RBD Palm Olein',
-    cpoSourceUrl:cpo.latest?.sourceUrl||PRICE_SOURCES.cpo,oleinSourceUrl:PRICE_SOURCES.olein,historicalSeries:[...rows.values()].sort((a,b)=>a.date.localeCompare(b.date)),
+    cpoSourceUrl:cpo.latest?.sourceUrl||PRICE_SOURCES.cpo,cpoPriceType:cpo.latest?.observationKind||'historical-import',cpoContractMonth:cpo.latest?.contractMonth||null,oleinSourceUrl:PRICE_SOURCES.olein,historicalSeries:[...rows.values()].sort((a,b)=>a.date.localeCompare(b.date)),
     fxPolicy:'CPO: observation-date USD/MYR or preceding published business day (maximum 7 days); original imports preserved. Display currencies share current USD FX.',
-    diagnostics:{lastError:history.lastError,sourceChecks:history.sourceChecks,fxError:history.fxError,estimatedFxObservations:selectPalmObservations(history,'palm-cpo').map(p=>normalizedPalmPoint(p,history)).filter(p=>p.fxStatus==='legacy-fixed-estimate').length}};
+    diagnostics:{lastError:history.lastError,sourceChecks:history.sourceChecks,cpoLatestProvenance:cpo.latest?.provenance,oleinLatestProvenance:olein.latest?.provenance,fxError:history.fxError,estimatedFxObservations:selectPalmObservations(history,'palm-cpo').map(p=>normalizedPalmPoint(p,history)).filter(p=>p.fxStatus==='legacy-fixed-estimate').length}};
 }

@@ -121,3 +121,15 @@ a[href].rms-source[data-market-source]:focus-visible {
   min-height: 2.6em; display: flex; align-items: center; justify-content: center;
   white-space: normal;
 }
+
+/* RMS_CLICKABLE_CARD_HOVER_V1 */
+/* Highlight destination labels when the WHOLE clickable card is hovered/focused.
+   Applies to both Overview and commodity pages, including MI source links.
+   Intentionally does not affect ordinary non-clickable containers. */
+:where(.cursor-pointer, .commodity-card, a.group[href], a[data-overview-issue]):is(:hover, :focus-visible, :focus-within)
+  :is(.rms-source, [data-market-source], [data-rms-destination], .rms-card-action, a[target="_blank"][href]) {
+  color: #DF0029 !important;
+  text-decoration-line: underline !important;
+  text-decoration-color: currentColor !important;
+  text-underline-offset: 2px;
+}

@@ -21,3 +21,10 @@ dist/
 
 # Private one-shot local publications, paid accounting and source receipts
 .rms-local-staging/
+
+/.rms-*/
+
+# Private historical research fixtures and local repair utility
+/scripts/step7-integration/risk-only-repair.mjs
+/src/server/__tests__/fixtures/soybean-evidence-source-v1.json
+/src/server/__tests__/fixtures/soybean-oil-evidence-source-v1.json

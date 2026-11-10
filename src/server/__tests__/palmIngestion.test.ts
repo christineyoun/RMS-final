@@ -6,6 +6,7 @@ import {PRICE_SOURCES,loadPublicHistory,savePublicHistory,refreshPublicHistory,v
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'rms-palm-ingestion-'));process.env.RMS_HISTORY_ROOT=temp;
 const original=globalThis.fetch;
 const html=(name:string,unit:string,price:number)=>`<html><body><h1>${name}</h1>Currency in ${unit}<table><thead><tr><th>Date</th><th>Price</th><th>Open</th><th>High</th><th>Low</th></tr></thead><tbody><tr><td>Oct 19, 2026</td><td>${price}</td></tr></tbody></table></body></html>`;
+const mpoc=(price:number)=>`<html><body><p>Palm OilPrice Today (${ 'Jan, 27 Contract' })</p><h1>Daily Palm Oil Prices</h1><h2>CPO Prices</h2><table><thead><tr><th>Pricing Date</th><th>Settlement Price RM</th></tr></thead><tbody><tr><td>19 Oct 26</td><td>${price}</td></tr></tbody></table><p>Courtesy of Bursa Malaysia Berhad</p></body></html>`;
 try {
   const saved=loadPublicHistory('palm-oil');const originalCpo=saved.points.filter(p=>p.benchmark==='palm-cpo');
   assert.equal(originalCpo.length,195);
@@ -17,9 +18,9 @@ try {
   assert.deepEqual(appended.points.filter(p=>p.benchmark==='palm-cpo'&&p.date<='2026-10-08'),originalCpo,'manual CPO history stays intact');
   assert.equal(appendMatchingPalmRows(appended,rows,PRICE_SOURCES.cpoFcpo).points.length,appended.points.length);
   savePublicHistory('palm-oil',saved);
-  globalThis.fetch=async(url:any)=>String(url).startsWith('https://api.frankfurter.dev/')?Response.json({base:'USD',rates:{'2026-10-19':{MYR:4.0825}}}):String(url)===PRICE_SOURCES.cpoFcpo?new Response(html('Palm Oil (FCPOc1)','MYR',4797)):new Response('',{status:403});
+  globalThis.fetch=async(url:any)=>String(url).startsWith('https://api.frankfurter.dev/')?Response.json({base:'USD',rates:{'2026-10-19':{MYR:4.0825}}}):String(url)===PRICE_SOURCES.mpocCpo?new Response(mpoc(4797)):new Response('',{status:403});
   const onlyCpo=await refreshPublicHistory('palm-oil',4.1);const cp=palmHistoryPayload(onlyCpo);
-  assert.equal(cp.cpoObservationDate,'2026-10-19');assert.equal(cp.priceMyr,4797);assert.equal(cp.oleinObservationDate,'2026-10-08');
+  assert.equal(cp.cpoObservationDate,'2026-10-19');assert.equal(cp.priceMyr,4797);assert.equal(cp.cpoSourceUrl,PRICE_SOURCES.mpocCpo);assert.equal(cp.cpoPriceType,'exchange-settlement');assert.equal(cp.oleinObservationDate,'2026-10-08');
   assert.equal(cp.cpoUsdMt,1175.02,'conversion uses publisher-date FX, not the supplied current FX');
   assert.equal(cp.historicalSeries.at(-1).oleinUsd,undefined,'missing Olein is not copied from CPO');
   const savedCpo=onlyCpo.points.filter(p=>p.benchmark==='palm-cpo');
@@ -31,5 +32,5 @@ try {
   const h={version:1 as const,points:[nativeOnly]};
   const enriched=appendMatchingPalmRows(h,[{...nativeOnly,usdPerMT:1175.02}],PRICE_SOURCES.cpoFcpo);
   assert.equal(enriched.points.length,1);assert.equal(enriched.points[0].usdPerMT,1175.02,'a native-only row can receive verified FX later without duplication');
-  console.log('PASS: strict FCPOc1/MYR identity; no CME/USD substitution; original history retained; independent partial updates; no copied fields; no duplicate/re-dated points.');
+  console.log('PASS: separate MPOC Bursa settlement ingestion, strict FCPOc1/MYR identity; no CME/USD substitution; original history retained; independent partial updates; no copied fields; no duplicate/re-dated points.');
 }finally{globalThis.fetch=original;delete process.env.RMS_HISTORY_ROOT;fs.rmSync(temp,{recursive:true,force:true});}

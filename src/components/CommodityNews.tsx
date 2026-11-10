@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Newspaper } from 'lucide-react';
 import { isInvalidOrSearchUrl } from '../utils/portalUrls';
 import { assessNewsSummary } from '../utils/newsSummaryQuality';
+import {marketNewsCardMetadata} from '../utils/marketNewsPresentation';
 
 export interface NewsItem {
   id: string;
@@ -111,13 +112,14 @@ const normalizeTitleKey = (title?: string): string => {
 export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean }> = ({ commodityId, isSyncing }) => {
   const [articles, setArticles] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [staleNews,setStaleNews]=useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchMarketIntelligence = async () => {
       setIsLoading(true);
-      if (isMounted) setArticles([]);
+      if (isMounted) {setArticles([]);setStaleNews(false);}
 
       try {
         // Never bypass the server's daily news cache during normal page navigation.
@@ -151,6 +153,12 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 !isGoogleNewsLabel(savedSourceName) &&
                 isVerifiableOriginalUrl(savedOriginalUrl);
 
+              const metadata=marketNewsCardMetadata({
+                title:String(art.title ?? art.title_kr ?? ''),
+                summary:String(art.summary ?? art.summary_kr ?? ''),
+                category:art.category,
+                affectedRegion:art.affectedRegion ?? art.affected_region
+              });
               return {
                 id: `mi-${commodityId}-${idx}`,
                 title: String(art.title ?? art.title_kr ?? '').trim(),
@@ -160,8 +168,8 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 originalUrl: isVerified ? savedOriginalUrl : '',
                 retrievedAt: savedRetrievedAt,
                 summary: String(art.summary ?? art.summary_kr ?? '').trim(),
-                category: art.category,
-                affectedRegion: art.affectedRegion ?? art.affected_region,
+                category: metadata.category,
+                affectedRegion: metadata.affectedRegion,
                 unavailable: !isVerified,
                 linkStatus: art.linkStatus,
               };
@@ -182,7 +190,16 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
             })
             .slice(0, 4);
 
-          if (isMounted) setArticles(mapped);
+          if(isMounted){
+            setArticles(mapped);
+            const recent=json.articles.some((a:any)=>{
+              const date=Date.parse(String(a.publishedAt||''));
+              return Number.isFinite(date)&&date<=Date.now()&&
+                Date.now()-date<=30*86400000;
+            });
+            setStaleNews(mapped.length>0&&
+              (!recent||String(json.sourceStatus||'').includes('stale')));
+          }
         }
       } catch (err) {
         console.warn('[CommodityNews] Live market intelligence fetch notice:', err);
@@ -213,6 +230,11 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
         )}
       </div>
 
+      {staleNews && (
+        <p className="mb-3 text-xs text-slate-600">
+          최근 30일 내 검증된 기사가 없어 이전 기사를 참고용으로 표시합니다.
+        </p>
+      )}
       {articles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {articles.map((item) => {

@@ -10,6 +10,7 @@ import type { RetrievedSourceMetadata } from './marketIntelligenceService.ts';
 
 type Source={url:string;host:string;publisher:string;kind:'rss'|'index'|'outlook';sourceType:'news'|'official'};
 export const SOYBEAN_PUBLIC_SOURCES:Source[]=[
+
   {url:'https://commodity-board.com/feed/',host:'commodity-board.com',publisher:'Commodity Board',kind:'rss',sourceType:'news'},
   {url:'https://www.world-grain.com/rss/articles',host:'world-grain.com',publisher:'World Grain',kind:'rss',sourceType:'news'},
   {url:'https://www.graincentral.com/markets/feed/',host:'graincentral.com',publisher:'Grain Central',kind:'rss',sourceType:'news'},
@@ -20,7 +21,10 @@ export const SOYBEAN_PUBLIC_SOURCES:Source[]=[
   {url:'https://commodity-board.com/category/soybeans-market-news-prices-global-supply-demand-outlook/',host:'commodity-board.com',publisher:'Commodity Board',kind:'index',sourceType:'news'},
   {url:'https://www.ers.usda.gov/topics/crops/soybeans-and-oil-crops/market-outlook',host:'ers.usda.gov',publisher:'USDA ERS',kind:'outlook',sourceType:'official'},
 ];
-const hosts=new Set(SOYBEAN_PUBLIC_SOURCES.map(s=>s.host));
+// RMS_MI_COVERAGE_V2: support vetted external original-publisher discoveries.
+const hosts=new Set([...SOYBEAN_PUBLIC_SOURCES.map(s=>s.host),
+  'reuters.com','foodbusinessnews.net','agriculture.com','farmprogress.com',
+  'dtnpf.com','agricensus.com','ukragroconsult.com']);
 const strip=(s:unknown)=>String(s??'').replace(/\s+/g,' ').trim();
 const normHost=(s:string)=>s.toLowerCase().replace(/^www\./,'');
 const soybean=/(?:\bsoybeans?\b|\bsoyabeans?\b|\bsoya\s*beans?\b|\bsoya\b|大豆|대두)/i;
@@ -132,6 +136,84 @@ export function parseSoybeanOutlook(html:string,src:Source,retrievedAt:string):R
   const u=validUrl(src.url,src.host);if(!u)return [];
   return [candidate(src,`soy-ers-outlook-${day}`,h1,u.href,day,retrievedAt)];
 }
+/** RMS_MI_SOYBEAN_NASS_V12: independent, monthly USDA NASS original TXT release. */
+const nassIndex='https://esmis.nal.usda.gov/publication/fats-and-oils-oilseed-crushings-production-consumption-and-stocks';
+const nassTitle='Fats and Oils: Oilseed Crushings, Production, Consumption and Stocks';
+/** RMS_MI_NASS_CIVIL_DATE_V12B: preserve USDA dates regardless of local timezone. */
+function nassCivilDate(raw:string):string {
+  const m=raw.trim().match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(20\d{2})$/i);
+  if(!m)return '';
+
+  const months='jan feb mar apr may jun jul aug sep oct nov dec'.split(' ');
+  const year=Number(m[3]);
+  const month=months.indexOf(m[1].slice(0,3).toLowerCase());
+  const day=Number(m[2]);
+
+  if(month<0)return '';
+
+  const date=new Date(Date.UTC(year,month,day));
+  if(date.getUTCFullYear()!==year ||
+     date.getUTCMonth()!==month ||
+     date.getUTCDate()!==day)return '';
+
+  return date.toISOString().slice(0,10);
+}
+
+function nassReportUrl(raw:string):URL|null {
+ try {
+  const u=new URL(raw);
+  if(u.protocol!=='https:'||u.hostname!=='esmis.nal.usda.gov'||u.username||u.password||u.port||u.search||u.hash||
+     !/^\/sites\/default\/release-files\/\d{4,10}\/cafo\d{4}\.txt$/.test(u.pathname))return null;
+  return u;
+ }catch{return null;}
+}
+async function discoverNassSoybeanReport(retrievedAt:string):Promise<{candidates:RetrievedSourceMetadata[];error?:string}>{
+ try {
+  const r=await fetch(nassIndex,{redirect:'error',signal:AbortSignal.timeout(9000),headers:{Accept:'text/html'}});
+  if(!r.ok||!/html/i.test(r.headers.get('content-type')||''))throw Error('USDA index HTTP '+r.status);
+  const html=await r.text();if(html.length>1_000_000)throw Error('USDA index too large');
+  const $=load(html),options:RetrievedSourceMetadata[]=[];
+  $('a[href]').each((i,el)=>{
+   const label=strip($(el).text());
+   const match=label.match(/^([A-Za-z]{3}\s+\d{1,2}\s+20\d{2})\s*[-–]\s*txt$/i);
+   if(!match)return;
+   let raw:string;try{raw=new URL($(el).attr('href')||'',nassIndex).href;}catch{return;}
+   const url=nassReportUrl(raw),day=nassCivilDate(match[1]);
+   if(!url||!inWindow(day,Date.parse(retrievedAt)))return;
+   options.push({rawId:'soy-nass-'+day,rawTitle:nassTitle,rawSnippet:'',
+    sourceName:'USDA NASS',sourceType:'official',publishedAt:day,originalUrl:url.href,
+    retrievedAt,category:'수급 전망',affectedRegion:'미국'});
+  });
+  options.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
+  return {candidates:options.slice(0,1)};
+ }catch(e){return {candidates:[],error:String((e as Error).message||e)};}
+}
+async function verifyNassSoybeanOriginal(c:RetrievedSourceMetadata):Promise<{allowed:boolean;reason:string;verified?:RetrievedSourceMetadata}>{
+ const url=nassReportUrl(c.originalUrl);if(!url)return {allowed:false,reason:'nass-url-invalid'};
+ try {
+  const r=await fetch(url.href,{redirect:'error',signal:AbortSignal.timeout(9000),headers:{Accept:'text/plain'}});
+  if(!r.ok||!/text\/plain/i.test(r.headers.get('content-type')||''))return {allowed:false,reason:'nass-text-http-'+r.status};
+  const raw=await r.text();if(raw.length>160_000) return {allowed:false,reason:'nass-report-too-large'};
+  const head=raw.slice(0,2500).replace(/\s+/g,' ');
+  if(!/Fats and Oils: Oilseed Crushings/i.test(head)||
+     !/National Agricultural Statistics Service/i.test(head)||
+     !/United States Department of Agriculture/i.test(head))return {allowed:false,reason:'nass-publisher-unverified'};
+  const release=head.match(/\bReleased\s+([A-Za-z]+\s+\d{1,2},?\s+20\d{2})\b/i);
+  const day=nassCivilDate(release?.[1]||'');
+  if(!inWindow(day)||day!==c.publishedAt)return {allowed:false,reason:'nass-publication-date-mismatch'};
+  const flattened=raw.replace(/\s+/g,' ');
+  const start=flattened.search(/\bSoybeans crushed for crude oil\b/i);
+  const end=start>=0?flattened.indexOf('Canola seeds crushed for crude oil',start):-1;
+  if(start<0||end<=start||end-start>2500)return {allowed:false,reason:'nass-soybean-evidence-missing'};
+  const excerpt=flattened.slice(start,end).trim();
+  if(!/million bushels/i.test(excerpt)||!/compared with/i.test(excerpt)||!/20\d{2}/.test(excerpt))
+   return {allowed:false,reason:'nass-numbers-unverified'};
+  return {allowed:true,reason:'verified',verified:{...c,rawTitle:nassTitle,
+   rawSnippet:excerpt,sourceName:'USDA NASS',sourceType:'official',publishedAt:day,
+   originalUrl:url.href,unavailable:false}};
+ }catch(e){return {allowed:false,reason:'nass-fetch:'+String((e as Error).message||e).slice(0,80)};}
+}
+
 export async function discoverSoybeanFreeSources(retrievedAt=new Date().toISOString()){
   const results=await Promise.all(SOYBEAN_PUBLIC_SOURCES.map(async src=>{
     try{
@@ -142,8 +224,9 @@ export async function discoverSoybeanFreeSources(retrievedAt=new Date().toISOStr
       return {src,items,okay:true,error:''};
     }catch(e){return {src,items:[] as RetrievedSourceMetadata[],okay:false,error:String((e as Error).message||e)};}
   }));
+  const nass=await discoverNassSoybeanReport(retrievedAt);
   const seen=new Set<string>(),counts=new Map<string,number>(),candidates:RetrievedSourceMetadata[]=[];
-  const raw=results.flatMap(r=>r.items).sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
+  const raw=[...results.flatMap(r=>r.items),...nass.candidates].sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
   for(const c of raw){
     const host=normHost(new URL(c.originalUrl).hostname);
     const k=c.originalUrl.toLowerCase().replace(/\/+$/,'');
@@ -151,11 +234,12 @@ export async function discoverSoybeanFreeSources(retrievedAt=new Date().toISOStr
     seen.add(k);counts.set(host,(counts.get(host)||0)+1);candidates.push(c);
   }
   candidates.sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt));
-  return {candidates:candidates.slice(0,35),diagnostics:{sourcesTried:results.length,sourcesRead:results.filter(r=>r.okay).length,
-    discovered:candidates.length,sourceResults:results.map(r=>({publisher:r.src.publisher,kind:r.src.kind,url:r.src.url,
+  return {candidates:candidates.slice(0,35),diagnostics:{sourcesTried:results.length+1,sourcesRead:results.filter(r=>r.okay).length+Number(!nass.error),
+    discovered:candidates.length,sourceResults:[...results.map(r=>({publisher:r.src.publisher,kind:r.src.kind,url:r.src.url,
       discovered:r.items.length,okay:r.okay,error:r.error||undefined})),
+      {publisher:'USDA NASS',kind:'official-txt',url:nassIndex,discovered:nass.candidates.length,okay:!nass.error,error:nass.error}],
     candidatesByPublisher:Object.fromEntries([...new Set(candidates.map(c=>c.sourceName))].map(k=>[k,candidates.filter(c=>c.sourceName===k).length])),
-    errors:results.filter(r=>!r.okay).map(r=>`${r.src.publisher}: ${r.error}`)}};
+    errors:[...results.filter(r=>!r.okay).map(r=>`${r.src.publisher}: ${r.error}`),...(nass.error?[`USDA NASS: ${nass.error}`]:[])]} };
 }
 function articleJsonLd($:ReturnType<typeof load>):{headline:string;date:string;body:string}[]{
   const out:{headline:string;date:string;body:string}[]=[];
@@ -208,6 +292,7 @@ function extractOriginalEvidence(html:string,$:ReturnType<typeof load>):{excerpt
   return best;
 }
 export async function verifySoybeanOriginal(candidate:RetrievedSourceMetadata):Promise<{allowed:boolean;reason:string;verified?:RetrievedSourceMetadata}>{
+  if(nassReportUrl(candidate.originalUrl))return verifyNassSoybeanOriginal(candidate);
   const url=validUrl(candidate.originalUrl);if(!url)return {allowed:false,reason:'unsafe-or-nonspecific-url'};
   try{
     const host=normHost(url.hostname),res=await fetchSamePublisher(url.href,host,'text/html');
@@ -234,7 +319,7 @@ export async function verifySoybeanOriginal(candidate:RetrievedSourceMetadata):P
       return {allowed:false,reason:evidence.reason};
     if(!soybean.test(evidence.excerpt)||!market.test(evidence.excerpt))return {allowed:false,reason:'soybean-facts-missing'};
     return {allowed:true,reason:'verified',verified:{...candidate,rawTitle:strip(title||og),rawSnippet:evidence.excerpt,publishedAt:day,
-      originalUrl:url.href,sourceName:SOYBEAN_PUBLIC_SOURCES.find(x=>x.host===host)!.publisher,
+      originalUrl:url.href,sourceName:SOYBEAN_PUBLIC_SOURCES.find(x=>x.host===host)?.publisher || host,
       sourceType:host==='ers.usda.gov'?'official':'news',unavailable:false}};
   }catch(e){return {allowed:false,reason:`publisher-fetch:${String((e as Error).message||e).slice(0,80)}`};}
 }

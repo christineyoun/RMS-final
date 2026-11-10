@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "modified": {
+    "scripts/cloud/scheduledStep7.ts": {
+      "oldSha256": "3e1a6a09db2efc7ea3b1d5d19611725821c887eab03dde99a02e924310e83078",
+      "newSha256": "35119d32814cd4e354a656cdc9dfbff3a7a890289881ed23a53151921d741108"
+    },
+    "scripts/cloud/step7PaidLocalWorker.mjs": {
+      "oldSha256": "8444cceb30cbed41e2dfaf31ea3bdc3f054490b3eb35480afe852cfcca66ab89",
+      "newSha256": "613a3f61084d4180d56b1c42c50b6c42f92407a3696b79ee03f8883d33eda478"
+    },
+    "scripts/cloud/publication.ts": {
+      "oldSha256": "872a583ef138ec67d2030fda2ee0f1c09cb6e495c5703a9dc12fecdcf60eb290",
+      "newSha256": "5d8fc020708cc7875d747498e35683d21486b7c2b558a958c17302c0c05c0801"
+    },
+    "scripts/soybean-rebuild/research-verified-runner.mjs": {
+      "oldSha256": "d2235541b8fb9b21a9a0d9c26f91cc36c7f79192806e0ffaa7fa0e1dcdb6df1b",
+      "newSha256": "4d7758ff7c38c3f4b0905cdc042e48557a204e6bb0396b81c20087578e2342b0"
+    },
+    "scripts/soybean-rebuild/research-pipeline-runner.mjs": {
+      "oldSha256": "709baa0fce25df75f2062817faee44c8b65ee25311b9605000e37a657eccabf2",
+      "newSha256": "7e937dc0a51d872fb73d6f7e75d7d556b7401780f37ccbddb3dd66bf76b078d6"
+    },
+    "scripts/soybean-rebuild/step7-fact-review.ts": {
+      "oldSha256": "c19e713cf42fc498de4690f3b823c409b5ad7bf1f7872d58680f06a5be0c903f",
+      "newSha256": "d3c3b3bbc7a11fd5ecb1e901e8f4d21fdefc1c7047af5d61712bd6299d60b23f"
+    },
+    "scripts/soybean-rebuild/step7-fact-to-rms.ts": {
+      "oldSha256": "12db834352bd9212e878b2b08bc4f800610ef4fa1cfbf32dac76f8aa7a653378",
+      "newSha256": "c44fcaf5b7dff9b6c16e23c28c791534c00ffc9be0c79ecbe42d6ae44d7f7d40"
+    },
+    "src/server/stage3DailyUpdates.ts": {
+      "oldSha256": "e29d0725d0435819243802d1e555047069a40fef113e36d5d8a80b804456933c",
+      "newSha256": "56570f0d6841e9a840ba278598b16a2bb8ab177efff9675aae7d5c8786c9ecc4"
+    },
+    "src/server/cloudPublication.ts": {
+      "oldSha256": "e8c2b106ba3921538b49b90a5521910d11640f9e5eec29e83a05b579bcf70cdb",
+      "newSha256": "91b82211e82f23e2e168960c53305665f36538310dc99aa1606cd618ec4760ec"
+    }
+  },
+  "added": {
+    "scripts/cloud/step7CloudPromotion.ts": {
+      "newSha256": "a6c78171638f4834fc4efc27a210921370f572ce796b8d50185b6f13a557b35c"
+    },
+    "scripts/cloud/step7CloudCheckpoint.ts": {
+      "newSha256": "158c16d792e8bbc27a86ba1456154038b5482939f1799feea51367652d92dcb4"
+    },
+    "scripts/cloud/step7CloudPromotion.test.mjs": {
+      "newSha256": "64f57395dba32ee2b9e97252624f2e48a1910938d5559e14dfa048c1ed5743d9"
+    },
+    "src/server/step7CloudCard.ts": {
+      "newSha256": "24b3ab13ba9b2d78f99b302f683901f7ac40f424e9fb5253ac15c5b244ef0a1d"
+    }
+  },
+  "protected": {
+    "src/server/freeSourceRefresh.ts": "4e56b153846563ba3c3d1beb16f30e77f902626ce94d00401e6eb1f7f4f4db09",
+    "src/server/marketIntelligenceService.ts": "11e3bb9087c61dccda468f1cffcf28cb52432669f1a8056ceb3c990b619d6f29",
+    "src/server/scheduledAi.ts": "826536746072411b25ce6e2892313b66ac34dfa5e557b6070279710bf43c22f5",
+    "src/server/freeDailyJobs.ts": "11b3be43ff624109d02d5eba22308684233a714eb4eed1770ba69337929d5c3f",
+    "src/server/step7LocalPreview.ts": "d6552b294ac7c9f96f5fef8cd5342f0c14f42d53612ccf61be057b2dd47c4a27",
+    "src/components/CommodityDetail.tsx": "682e0620df89725bef4e82fdd74d56d7dabf2a247a0c0535830ebbce1fc12a48"
+  }
+}

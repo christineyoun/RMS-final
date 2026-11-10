@@ -1,4 +1,4 @@
-import {formalAiText} from '../utils/aiReportPresentation';
+import {formalAiText,aiEvidenceDateLabel} from '../utils/aiReportPresentation';
 import {getRecommendationColor} from '../utils/recommendationPresentation';
 export {getRecommendationColor} from '../utils/recommendationPresentation';
 import {SourceAttribution} from './SourceAttribution';
@@ -14,6 +14,7 @@ export interface AiRecommendationProps {
   confidenceScore?: number; // retained for compatibility; not shown to users
   recommendedCoverage?: string;
   executiveSummary?: string;
+  purchaseActions?: string[];
   bullishFactors?: string[];
   bearishFactors?: string[];
   watchItems?: string[];
@@ -34,8 +35,9 @@ export interface AiRecommendationProps {
 export default function AiRecommendation({
   commodityId,
   currency,
-  recommendedCoverage = '자료 확인 후 구매 검토',
+  recommendedCoverage = '판정 보류',
   executiveSummary,
+  purchaseActions = [],
   bullishFactors = [],
   bearishFactors = [],
   watchItems = [],
@@ -55,7 +57,10 @@ export default function AiRecommendation({
   researchSources=editorial.sources;
   recommendedCoverage=formalAiText(recommendedCoverage);
   executiveSummary=executiveSummary&&formalAiText(executiveSummary);
-  bullishFactors=bullishFactors.map(formalAiText);bearishFactors=bearishFactors.map(formalAiText);watchItems=watchItems.map(formalAiText);
+  bullishFactors=bullishFactors.map(formalAiText);
+  bearishFactors=bearishFactors.map(formalAiText);
+  watchItems=watchItems.map(formalAiText);
+  const evidenceDates=aiEvidenceDateLabel(researchGeneratedAt,researchEvidenceDates);
 
   // Preserve distinct exact URLs, including query-specific publications. A
   // publisher label is presentation only; no source records are rewritten.
@@ -142,11 +147,19 @@ export default function AiRecommendation({
             {recommendedCoverage}
           </span>
         </div>
+
+        {evidenceDates&&<div data-ai-evidence-dates className="text-[10px] text-slate-500 mb-3">{evidenceDates}</div>}
         {/* AI Summary Text Box */}
         <div className="bg-slate-50/80 border border-slate-100 rounded-lg p-4 mb-4">
           <p className="text-[13px] text-slate-700 leading-relaxed font-sans whitespace-pre-line">
             {executiveSummary || defaultSummary}
           </p>
+
+          {purchaseActions.length > 0 && (
+            <p className="mt-4 text-[13px] text-slate-700 leading-relaxed font-sans whitespace-pre-line">
+              {formalAiText(purchaseActions.join(' '))}
+            </p>
+          )}
         </div>
 
         {/* 3-Column Factors Grid */}

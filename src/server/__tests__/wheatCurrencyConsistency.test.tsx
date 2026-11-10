@@ -32,7 +32,7 @@ try{
    assert.equal(card.length,1);assert(card.text().includes(amount(metric.latestPriceMt)+'/MT'));
    assert(card.text().includes(amount(Math.abs(metric.wowChangeMt))),'weekly amount uses canonical FX');
    assert(card.text().includes(amount(Math.abs(metric.momChangeMt))),'monthly amount uses canonical FX');
-   assert.equal($(`[data-chart-endpoint-label="${kind}"]`).text(),kind.toUpperCase()+' '+amount(metric.latestPriceMt));
+   assert.equal($(`[data-chart-endpoint-label="${kind}"]`).text(),kind.toUpperCase()+' '+amount(metric.latestPriceMt)+'/MT');
    assert($.text().includes('현: '+amount(metric.latestPriceMt)),'52-week current matches the same observation');
   }
   assert($('#scm-weekly-change-card').text().includes(amount(Math.abs(wheat.metrics.srw.wowChangeMt))));

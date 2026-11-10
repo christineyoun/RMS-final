@@ -1,0 +1,13 @@
+{
+  "inputs": {
+    "scripts/cloud/scheduledStep7.ts": "fdba5852f89d461e4a05e05c1aaaaf12d5156cc3789dc5859c67a11a7284b0e7",
+    "scripts/soybean-rebuild/research-pipeline-runner.mjs": "0cca95655846759e40f9db9eef187f5a8f7a568b300b9bd6df2fdf020f856b71",
+    "scripts/soybean-rebuild/commodity-config.ts": "7254afed30688c0d3ec8da087055c940eb4e829936b2545abfeaf49bbeb8cbc8"
+  },
+  "protected": {
+    "src/server/freeSourceRefresh.ts": "4e56b153846563ba3c3d1beb16f30e77f902626ce94d00401e6eb1f7f4f4db09",
+    "src/server/marketIntelligenceService.ts": "11e3bb9087c61dccda468f1cffcf28cb52432669f1a8056ceb3c990b619d6f29",
+    "src/server/scheduledAi.ts": "826536746072411b25ce6e2892313b66ac34dfa5e557b6070279710bf43c22f5",
+    "src/server/freeDailyJobs.ts": "11b3be43ff624109d02d5eba22308684233a714eb4eed1770ba69337929d5c3f"
+  }
+}

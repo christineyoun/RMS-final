@@ -14,7 +14,6 @@ import {ChartEndpointLabels} from './ChartEndpointLabels';
 import { observedPriceChanges } from '../utils/observedPriceChanges';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import type {ProcurementRisk} from '../utils/procurementRisk';
-import {procurementRiskDisplayText} from '../utils/procurementRiskPresentation';
 import { Globe } from 'lucide-react';
 import { Commodity, Currency, UsWheatPriceHistoryResponse, UsWheatHistoryDataPoint, UsWheatClassMetric, AmisWheatResponse, CornProcurementAnalysisData, SoybeanProcurementAnalysisData, SoybeanOilProcurementAnalysisData } from '../types';
 import { formatPrice, calculateDynamicMetrics } from '../utils/commodityPriceMetrics';
@@ -140,9 +139,9 @@ export interface OriginItem {
 
 /** No sample origin numbers; all origins come from the verified saved source. */
 export const EXTERNAL_CHART_URLS: Record<string, string> = {
-  'palm-oil': 'https://www.investing.com/commodities/palm-oil',
-  'palmoil': 'https://www.investing.com/commodities/palm-oil',
-  'palm_oil': 'https://www.investing.com/commodities/palm-oil',
+  'palm-oil': 'https://www.mpoc.org.my/market-insight/daily-palm-oil-prices/',
+  'palmoil': 'https://www.mpoc.org.my/market-insight/daily-palm-oil-prices/',
+  'palm_oil': 'https://www.mpoc.org.my/market-insight/daily-palm-oil-prices/',
   'wheat': 'https://uswheat.org/market-information/price-report/',
   'corn': 'https://finance.yahoo.com/quote/ZC=F/',
   'soybean': 'https://finance.yahoo.com/quote/ZS=F/',
@@ -157,9 +156,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   'corn': 'CBOT (CC1)',
   'soybean': 'CBOT (ZS)',
   'soybean-oil': 'CBOT (ZL)',
-  'palm-oil': 'Bursa Malaysia FCPO · Investing.com',
-  'palmoil': 'Bursa Malaysia FCPO · Investing.com',
-  'palm_oil': 'Bursa Malaysia FCPO · Investing.com',
+  'palm-oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Olein',
+  'palmoil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Olein',
+  'palm_oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Olein',
   'sugar': 'ICE (SB)',
   'potato-starch': 'Eurostat · 원료감자 생산 대리지표',
   'tapioca-starch': 'TTSA (TS)',
@@ -378,6 +377,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         spreadPrice,
         rawCpoMyr: rawMyr,
         rawOleinUsd: pointOleinUsd,
+        cpoSourceUrl: p.cpoSourceUrl ?? null,
+        cpoPriceType: p.cpoPriceType ?? 'historical-import',
+        cpoContractMonth: p.cpoContractMonth ?? null,
       };
     });
 
@@ -485,29 +487,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   // Soybean Oil SCM Procurement Analysis State (CBOT ZL=F, Physical FOB, Liquid Tanker Freight, USDA FAS PSD, AMIS)
   const soybeanOilAnalysis=commodity._soybeanOilPriceSnapshot?.procurementAnalysis||null;
 
-  // Same receipt-verified saved collections as Market Intelligence. No research
-  // or paid route; refresh notifications only reread the latest saved inputs.
-  const [savedRisk,setSavedRisk]=useState<{id:string;risk:ProcurementRisk}|null>(null);
-  const [riskLoadError,setRiskLoadError]=useState<{id:string;message:string}|null>(null);
-  useEffect(()=>{
-    const id=commodity.id.trim().toLowerCase().replace(/_/g,'-');
-    let disposed=false,active=false;const controller=new AbortController();
-    const update=async()=>{
-      if(disposed||active||document.visibilityState==='hidden')return;
-      active=true;
-      try{
-        const response=await fetch(`/api/market-intelligence?commodity=${id}`,{cache:'no-store',signal:controller.signal});
-        if(!response.ok)throw new Error(`위험 평가 API HTTP ${response.status}`);
-        const data=await response.json();
-        if(!data?.success||!data.procurementRisk)throw new Error('위험 평가 응답 누락 · 서버/API 연동 확인 필요');
-        if(data.procurementRisk.commodityId!==id)throw new Error('위험 평가 품목 연결 불일치');
-        if(!disposed){setSavedRisk({id:commodity.id,risk:data.procurementRisk});setRiskLoadError(null);}
-      }catch(error){if(!disposed){setSavedRisk(null);setRiskLoadError({id:commodity.id,message:error instanceof Error?error.message:'위험 평가 API 연결 실패'});}}finally{active=false;}
-    };
-    void update();const timer=window.setInterval(()=>void update(),60000);
-    window.addEventListener('focus',update);document.addEventListener('visibilitychange',update);
-    return()=>{disposed=true;controller.abort();clearInterval(timer);window.removeEventListener('focus',update);document.removeEventListener('visibilitychange',update);};
-  },[commodity.id,isSyncing]);
+  // Legacy rules-based SCM risk polling removed: STEP 7 provides the only risk
+  // level, wording and evidence shown in this card. Market Intelligence is unchanged.
 
   // Dynamic WASDE 6-Metric Telemetry Pipeline State
   const [wasdeTelemetry, setWasdeTelemetry] = useState<WasdeTelemetryData|null>(null);
@@ -521,6 +502,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     confidenceScore: number;
     deskRecommendation: string;
     executiveSummary: string;
+    purchaseActions?: string[];
     bullishFactors: string[];
     bearishFactors: string[];
     watchItems: string[];
@@ -592,9 +574,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
 
     fetchAiAnalysis();
-    const reload=()=>{void fetchAiAnalysis();};window.addEventListener('rms-evidence-updated',reload);
+
     return () => {
-      isMounted = false;window.removeEventListener('rms-evidence-updated',reload);
+      isMounted = false;
     };
   }, [selectedCommodity, isSyncing]);
 
@@ -684,17 +666,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     return () => { isMounted = false; };
   }, [isCorn, isSyncing]);
 
-  // Starches use their commodity-specific source paths, not an unsupported
-  // USDA world PSD request. Clear the previous commodity's balance on navigation.
+  // Universal USDA FAS PSD fetch logic for ALL commodities (Corn, Soybeans, Wheat, etc.)
   useEffect(() => {
     let isMounted = true;
-    if (commodity.id === 'potato-starch' || commodity.id === 'tapioca-starch') {
-      setUsdaData(null);
-      lastSuccessfulUsdaDataRef.current = null;
-      setIsUsdaLoading(false);
-      setIsUsdaFailed(false);
-      return () => { isMounted = false; };
-    }
     setIsUsdaLoading(true);
 
     const fetchUsdaPsd = async () => {
@@ -861,15 +835,110 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       return null;
     }
 
-    const cpoMoves=observedPriceChanges(pts.map((p:any)=>({date:p.date,usdPerMT:palmCpoUsdPerMt(p),isSynthetic:p.isSynthetic})));
+    // Keep the chart visually continuous, but do not calculate WoW/MoM across
+    // historical closes and MPOC settlements (or across MPOC contract rolls).
+    const latestCpo: ((typeof pts)[number] & {
+        cpoPriceType?: string;
+        cpoSourceUrl?: string | null;
+        cpoContractMonth?: string | null;
+      }) | undefined = [...pts].reverse().find((p:any)=>Number.isFinite(palmCpoUsdPerMt(p)));
+    const comparableCpo=latestCpo?.cpoPriceType==='exchange-settlement'
+      ?pts.filter((p:any)=>p.cpoPriceType==='exchange-settlement' && p.cpoSourceUrl===latestCpo.cpoSourceUrl && p.cpoContractMonth===latestCpo.cpoContractMonth)
+      :pts;
+    // Use independently comparable FCPO histories for monthly changes.
+    // Prefer MPOC same-contract settlements; otherwise use the saved
+    // Investing.com historical-close series while it remains recent.
+    const cpoBaseMoves=observedPriceChanges(comparableCpo.map((p:any)=>({
+      date:p.date,usdPerMT:palmCpoUsdPerMt(p),isSynthetic:p.isSynthetic
+    })));
+    const cpoMyrMom=observedPriceChanges(comparableCpo.map((p:any)=>({
+      date:p.date,usdPerMT:Number(p.cpoMyr),isSynthetic:p.isSynthetic
+    }))).mom;
+
+    const compatibleMom=(quote:any,converted:any)=>
+      quote.pct!==null && converted.pct!==null &&
+      quote.referenceDate===converted.referenceDate;
+
+    const primaryMom=compatibleMom(cpoMyrMom,cpoBaseMoves.mom)
+      ? {...cpoBaseMoves.mom,pct:cpoMyrMom.pct}
+      : cpoBaseMoves.mom;
+
+    // Historical imports are the existing saved Investing CPO closes.
+    // Their chart URLs are intentionally null, not missing observations.
+    // Keep saved historical CPO closes separate from MPOC settlements.
+    // Both supported Investing.com CPO URL forms belong to the same
+    // historical-close series, irrespective of import provenance.
+    const isInvestingCpoHistory=(url:unknown)=>
+      typeof url==='string' &&
+      /^https:\/\/(?:www\.)?investing\.com\/commodities\/(?:crude-)?palm-oil-historical-data(?:[/?#]|$)/i.test(url);
+
+    const historicalCloses=pts.filter((p:any)=>
+      !p.isSynthetic &&
+      Number.isFinite(p.cpoMyr) && p.cpoMyr>0 &&
+      ((p.cpoPriceType==='historical-import' && p.cpoSourceUrl==null) ||
+       ((p.cpoPriceType==='historical-import' || p.cpoPriceType==='publisher-close') &&
+        isInvestingCpoHistory(p.cpoSourceUrl)))
+    );
+
+    const historicalMyrMom=observedPriceChanges(historicalCloses.map((p:any)=>({
+      date:p.date,usdPerMT:Number(p.cpoMyr),isSynthetic:p.isSynthetic
+    }))).mom;
+    const historicalUsdMom=observedPriceChanges(historicalCloses.map((p:any)=>({
+      date:p.date,usdPerMT:palmCpoUsdPerMt(p),isSynthetic:p.isSynthetic
+    }))).mom;
+
+    const historicalDates=historicalCloses
+      .map((p:any)=>p.date)
+      .filter((date:string)=>
+        /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+        Number.isFinite(Date.parse(date+'T00:00:00Z'))
+      )
+      .sort();
+
+    const lastHistoricalDate=historicalDates[historicalDates.length-1];
+    const latestMpoDate=Date.parse((latestCpo?.date||'')+'T00:00:00Z');
+    const historicalDateMs=Date.parse((lastHistoricalDate||'')+'T00:00:00Z');
+    const fallbackAgeDays=(latestMpoDate-historicalDateMs)/86400000;
+
+    const usableFallback=
+      latestCpo?.cpoPriceType==='exchange-settlement' &&
+      primaryMom.pct===null &&
+      Number.isFinite(fallbackAgeDays) &&
+      fallbackAgeDays>=0 && fallbackAgeDays<=37 &&
+      compatibleMom(historicalMyrMom,historicalUsdMom);
+
+    const cpoMoves={
+      ...cpoBaseMoves,
+      mom:usableFallback
+        ? {...historicalUsdMom,pct:historicalMyrMom.pct}
+        : primaryMom
+    };
     const oleinMoves=observedPriceChanges(pts.map((p:any)=>({date:p.date,usdPerMT:p.oleinUsdPerMt ?? p.oleinUsd,isSynthetic:p.isSynthetic})));
     const cpoWowPct=cpoMoves.wow.pct, cpoMomPct=cpoMoves.mom.pct;
-    const cpoWowChangeMt=cpoMoves.wow.amountUsdMt ?? 0, cpoMomChangeMt=cpoMoves.mom.amountUsdMt ?? 0;
+    const cpoWowChangeMt=cpoMoves.wow.amountUsdMt ?? 0;
+
+    // Monthly percentage and absolute change must share the same MYR basis.
+    // Convert the MYR difference once, using the current display FX.
+    const selectedCpoMomMyr = usableFallback
+      ? historicalMyrMom
+      : compatibleMom(cpoMyrMom,cpoBaseMoves.mom)
+        ? cpoMyrMom
+        : null;
+
+    const cpoMomChangeMt = selectedCpoMomMyr?.amountUsdMt != null
+      ? Number.isFinite(liveUsdMyr) && liveUsdMyr > 0
+        ? selectedCpoMomMyr.amountUsdMt / liveUsdMyr
+        : null
+      : cpoMoves.mom.amountUsdMt;
     const oleinWowPct=oleinMoves.wow.pct, oleinMomPct=oleinMoves.mom.pct;
     const oleinWowChangeMt=oleinMoves.wow.amountUsdMt ?? 0, oleinMomChangeMt=oleinMoves.mom.amountUsdMt ?? 0;
 
     const cpoWowChangeConv = currency === 'KRW' ? Math.round(cpoWowChangeMt * exchangeRate) : Number((cpoWowChangeMt * exchangeRate).toFixed(2));
-    const cpoMomChangeConv = currency === 'KRW' ? Math.round(cpoMomChangeMt * exchangeRate) : Number((cpoMomChangeMt * exchangeRate).toFixed(2));
+    const cpoMomChangeConv = cpoMomChangeMt == null
+      ? null
+      : currency === 'KRW'
+        ? Math.round(cpoMomChangeMt * exchangeRate)
+        : Number((cpoMomChangeMt * exchangeRate).toFixed(2));
 
     const oleinWowChangeConv = currency === 'KRW' ? Math.round(oleinWowChangeMt * exchangeRate) : Number((oleinWowChangeMt * exchangeRate).toFixed(2));
     const oleinMomChangeConv = currency === 'KRW' ? Math.round(oleinMomChangeMt * exchangeRate) : Number((oleinMomChangeMt * exchangeRate).toFixed(2));
@@ -891,17 +960,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   }, [isPalmOil, fullYearHistoryData, historicalData, currency, exchangeRate, cpoPrice]);
 
   const amisData = amisResponse?.data;
-
-  const nonWheatRisk = useMemo(() => {
-    const rows = (commodity.originsLedger || []) as any[];
-    const high = rows.find((row) => row.riskLevel === 'High' || row.statusColor === 'red');
-    const medium = rows.find((row) => row.riskLevel === 'Medium' || row.statusColor === 'yellow');
-    const selected = high || medium || rows[0];
-    return {
-      level: high ? '경계' : medium ? '주의' : '안정',
-      summary: selected?.riskAssessment || '현재 확인된 주요 조달 리스크 없음',
-    } as { level: '안정' | '주의' | '경계'; summary: string };
-  }, [commodity.originsLedger]);
 
   const [livePotatoData, setLivePotatoData] = useState<any>({years:[]});
   useEffect(() => {
@@ -926,31 +984,26 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     return () => { isMounted = false;clearInterval(timer); };
   }, [isPotatoStarch, isSyncing]);
 
-  const currentRisk=savedRisk?.id===commodity.id?savedRisk.risk:null;
-  const riskError=riskLoadError?.id===commodity.id?riskLoadError.message:null;
-  const procurementRiskLevel=currentRisk?.level||(riskError?'연동 오류':'불러오는 중');
-  const procurementRiskSummary=currentRisk?procurementRiskDisplayText(currentRisk):(riskError?`${commodity.nameKo}: ${riskError}`:'저장된 품목별 위험 평가를 불러오는 중입니다.');
+  // SCM procurement risk is owned ONLY by STEP 7. Never take the legacy
+  // deterministic/USDA risk, even when it is a higher severity level.
+  const step7Risk=(aiInsight as any)?.rmsStep7Preview===true &&
+    (aiInsight as any)?.procurementRiskPreview?.commodityId===commodity.id &&
+    ['안정','주의','경계','판정 보류'].includes((aiInsight as any)?.procurementRiskPreview?.level)
+    ? (aiInsight as any).procurementRiskPreview as ProcurementRisk : null;
+  const procurementRiskLevel=step7Risk?.level||'갱신 대기';
+  const procurementRiskSummary=step7Risk?.summarySentenceKo||'STEP 7 AI 조달 리스크 분석 결과가 아직 없습니다.';
 
-  // One authoritative recommendation per page: the verified, source-grounded AI
-  // recommendation takes precedence once available. Deterministic procurement
-  // guidance is the fallback, never a competing second desk recommendation.
-  const editorialRecommendation=aiInsight ? rmsAiEditorial(commodity.id,aiInsight.generatedAt,aiInsight.sources||[],aiInsight).fields.deskRecommendation : undefined;
-  const activeDeskRecommendation =
-    editorialRecommendation ||
-    (isCorn && cornAnalysis?.deskRecommendation?.recommendation) ||
-    (isSoybean && soybeanAnalysis?.deskRecommendation?.recommendation) ||
-    (isSoybeanOil && (soybeanOilAnalysis?.deskRecommendation?.recommendation||'검증 자료 재확인 후 구매 판단')) ||
-    (!isWheat && !isCorn && !isSoybean && !isSoybeanOil && '현물 견적 비교 후 구매 검토') ||
-    (aiInsight as any)?.recommendation ||
-    (isWheat
-      ? (hrwData?.wowPct != null && hrwData.wowPct <= -1.5 ? '분할 구매 검토' : amisData?.macroRiskLevel === '경계' ? '일부 물량 선확보 검토' : '현 수준 관망')
-      : isCorn
-      ? '45~60일 분할 구매 권고'
-      : isSoybean
-      ? '45~60일 분할 구매 권고'
-      : isSoybeanOil
-      ? '검증 자료 재확인 후 구매 판단'
-      : commodity.recommendedCoverage || '현 수준 관망');
+  // One authoritative recommendation per page: only the accepted, sourced AI
+  // report may issue desk guidance. Never substitute commodity heuristics or
+  // static coverage suggestions when STEP 7 evidence is unavailable.
+  const hasApprovedDeskRecommendation = Boolean(
+    aiInsight && aiInsight.status !== 'rule-based' &&
+    aiInsight.deskRecommendation?.trim() &&
+    Array.isArray(aiInsight.sources) && aiInsight.sources.length > 0
+  );
+  const activeDeskRecommendation = hasApprovedDeskRecommendation && aiInsight
+    ? (rmsAiEditorial(commodity.id,aiInsight.generatedAt,aiInsight.sources||[],aiInsight).fields.deskRecommendation || aiInsight.deskRecommendation)
+    : '판정 보류';
 
   // A single verified pipeline owns each Origin Radar. Never fall back to
   // sample values in COMMODITY_ORIGINS_MAP or old Gemini-generated overlays.
@@ -1002,6 +1055,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     oleinPrice: number;
     yCpo: number;
     yOlein: number;
+    cpoSourceUrl: string | null;
+    cpoPriceType: string;
+    cpoContractMonth: string | null;
   } | null>(null);
 
   const exchange = getExchangeInfo(commodity.id);
@@ -1201,7 +1257,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     // Germany, France, Netherlands, Denmark
     // Display source-verified history only; retain manual imports unchanged internally.
-    const fullData = livePotatoData?.years ? livePotatoData.years.filter((y: any) => y.provenance === 'source-verified').map((y: any) => ({
+    const fullData: Array<{date: string; price: number; isEstimate: boolean}> = livePotatoData?.years ? livePotatoData.years.filter((y: any) => y.provenance === 'source-verified').map((y: any) => ({
       date: `${y.year} ${y.status === 'Actual' ? 'Actual' : 'Estimate'}`,
       price: y.productionMMT,
       isEstimate: y.status === 'Estimate'
@@ -1237,7 +1293,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const maxVal = Math.max(34,high+margin);
     const valRange = maxVal - minVal;
 
-    const chartPoints = rawData.map((pt, idx) => {
+    const chartPoints: ChartPoint[] = rawData.map((pt, idx) => {
       const x = N>1?Math.round((idx / (N - 1)) * width):width/2;
       const y = Math.round(height - padBottom - ((pt.price - minVal) / valRange) * usableHeight);
       return {
@@ -1682,6 +1738,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         oleinPrice: closest.oleinPrice,
         yCpo: closest.yCpo,
         yOlein: closest.yOlein,
+        cpoSourceUrl: closest.cpoSourceUrl,
+        cpoPriceType: closest.cpoPriceType,
+        cpoContractMonth: closest.cpoContractMonth,
       });
       return;
     }
@@ -1883,13 +1942,29 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     }
   };
 
+  // Palm Oil SCM summary and Price Trend Analysis share one
+  // authoritative calculated metrics object.
+  // Other commodities retain their existing KPI implementation.
+  const scmKpiMetrics = isPalmOil
+    ? {
+        wowPct: palmMetrics?.cpo.wowPct ?? null,
+        momPct: palmMetrics?.cpo.momPct ?? null,
+        wowAmount: palmMetrics?.cpo.wowPct == null
+          ? null
+          : (palmMetrics?.cpo.wowChangeConv ?? null),
+        momAmount: palmMetrics?.cpo.momPct == null
+          ? null
+          : (palmMetrics?.cpo.momChangeConv ?? null),
+      }
+    : dynamicKpiMetrics;
+
   const formatChartPrice = (val: number) => {
     if(!Number.isFinite(val))return '자료 미확보';
     const formatted = val.toLocaleString('en-US', {
       minimumFractionDigits: currency === 'KRW' ? 0 : 2,
       maximumFractionDigits: currency === 'KRW' ? 0 : 2,
     });
-    return `${prefixCurrency(formatted, currencySymbol)} ${currencyLabel}`;
+    return `${prefixCurrency(formatted, currencySymbol)}${currencyLabel}`;
   };
 
   return (
@@ -1976,7 +2051,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 기준 시세
               </span>
               {isPotatoStarch ? <PotatoBenchmarkValue currency={currency} quote={potatoExportQuote} fx={commodity._canonicalDisplayFx} /> : <>
-              <div className="flex items-baseline gap-1 min-w-0 flex-wrap sm:flex-nowrap">
+              <div className="flex items-baseline gap-0 min-w-0 flex-wrap sm:flex-nowrap">
                 <span className="text-lg sm:text-xl font-bold font-mono text-slate-900 whitespace-nowrap">
                   {benchmarkDisplay.value}
                 </span>
@@ -1999,19 +2074,19 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 {/* Left: WoW */}
                 <div className="border-r border-slate-200/80 pr-2">
                   <span className="text-[10px] font-medium text-slate-400 block font-sans">{isTapiocaStarch?'전월 (MoM)':'주간 (WoW)'}</span>
-                  {dynamicKpiMetrics?.wowPct != null ? (
+                  {scmKpiMetrics?.wowPct != null ? (
                     <>
                       <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
-                        dynamicKpiMetrics.wowPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                        scmKpiMetrics.wowPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
                       }`}>
                         <span className="material-symbols-outlined text-[14px]">
-                          {dynamicKpiMetrics.wowPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                          {scmKpiMetrics.wowPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
                         </span>
-                        <span>{commodityComparisonDisplay(commodity,isTapiocaStarch?'mom':'wow')}</span>
+                        <span>{isPalmOil ? ((scmKpiMetrics.wowPct >= 0 ? '+' : '') + scmKpiMetrics.wowPct.toFixed(2) + '%') : commodityComparisonDisplay(commodity,isTapiocaStarch?'mom':'wow')}</span>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
-                        {dynamicKpiMetrics.wowAmount != null
-                          ? `${dynamicKpiMetrics.wowAmount >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(dynamicKpiMetrics.wowAmount)), currencySymbol)}`
+                        {scmKpiMetrics.wowAmount != null
+                          ? `${scmKpiMetrics.wowAmount >= 0 ? '+' : '−'}${prefixCurrency((isPalmOil ? formatPalmPrice(Math.abs(scmKpiMetrics.wowAmount)) : formatConvertedPrice(Math.abs(scmKpiMetrics.wowAmount))), currencySymbol)}`
                           : '--'}
                       </span>
                     </>
@@ -2025,19 +2100,19 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 {/* Right: MoM */}
                 <div className="pl-1">
                   <span className="text-[10px] font-medium text-slate-400 block font-sans">{isTapiocaStarch?'전년 동기 (YoY)':'전월 (MoM)'}</span>
-                  {dynamicKpiMetrics?.momPct != null ? (
+                  {scmKpiMetrics?.momPct != null ? (
                     <>
                       <div className={`flex items-center gap-0.5 font-mono text-xs sm:text-sm font-bold mt-0.5 ${
-                        dynamicKpiMetrics.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                        scmKpiMetrics.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
                       }`}>
                         <span className="material-symbols-outlined text-[14px]">
-                          {dynamicKpiMetrics.momPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
+                          {scmKpiMetrics.momPct >= 0 ? 'arrow_upward' : 'arrow_downward'}
                         </span>
-                        <span>{commodityComparisonDisplay(commodity,isTapiocaStarch?'yoy':'mom')}</span>
+                        <span>{isPalmOil ? ((scmKpiMetrics.momPct >= 0 ? '+' : '') + scmKpiMetrics.momPct.toFixed(2) + '%') : commodityComparisonDisplay(commodity,isTapiocaStarch?'yoy':'mom')}</span>
                       </div>
                       <span className="text-[10px] font-mono text-slate-400 block mt-0.5 whitespace-nowrap">
-                        {dynamicKpiMetrics.momAmount != null
-                          ? `${dynamicKpiMetrics.momAmount >= 0 ? '+' : '−'}${prefixCurrency(formatConvertedPrice(Math.abs(dynamicKpiMetrics.momAmount)), currencySymbol)}`
+                        {scmKpiMetrics.momAmount != null
+                          ? `${scmKpiMetrics.momAmount >= 0 ? '+' : '−'}${prefixCurrency((isPalmOil ? formatPalmPrice(Math.abs(scmKpiMetrics.momAmount)) : formatConvertedPrice(Math.abs(scmKpiMetrics.momAmount))), currencySymbol)}`
                           : '--'}
                       </span>
                     </>
@@ -2054,9 +2129,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             {/* Card 3: Desk Recommendation */}
             <div id="scm-desk-recommendation-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1.5">데스크 권고</span>
-              <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
-                {activeDeskRecommendation}
-              </span>
+              {hasApprovedDeskRecommendation ? (
+                <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
+                  {activeDeskRecommendation}
+                </span>
+              ) : (
+                <span className="text-xs font-normal text-slate-500">판정 보류 · 검증된 STEP 7 분석 없음</span>
+              )}
             </div>
           </div>
 
@@ -2065,12 +2144,12 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             {/* Left Label & Badge Group */}
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-xs font-bold text-slate-800 whitespace-nowrap">조달 리스크</span>
-              <span aria-description={currentRisk ? currentRisk.criteria+' 미확인: '+currentRisk.unavailable : undefined} className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-md border leading-none tracking-tight whitespace-nowrap select-none ${
+              <span aria-description={step7Risk?.criteria} className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-md border leading-none tracking-tight whitespace-nowrap select-none ${
                 procurementRiskLevel === '경계'
                   ? 'rms-status-negative text-red-700 bg-red-50 border-red-200'
                   : procurementRiskLevel === '주의'
                   ? 'rms-status-warning text-[#EC870C] bg-[#fff7ed] border-[#fed7aa]'
-                  : !currentRisk || procurementRiskLevel === '판정 보류'
+                  : !step7Risk || procurementRiskLevel === '판정 보류'
                   ? 'bg-slate-100 text-slate-600 border-slate-300'
                   : 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
               }`}>
@@ -2079,7 +2158,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             </div>
 
             {/* Right Summary Sentence */}
-            <p aria-description={currentRisk?.evidence.map(e=>e.source+' · '+e.date+' · '+e.url).join('\n')} className="text-xs text-slate-700 font-medium font-sans leading-relaxed break-keep whitespace-normal min-w-0 flex-1 my-0">
+            <p aria-description={step7Risk?.evidence.map(e=>e.source+' · '+e.date+' · '+e.url).join('\n')} className="text-xs text-slate-700 font-medium font-sans leading-relaxed break-keep whitespace-normal min-w-0 flex-1 my-0">
               {procurementRiskSummary}
             </p>
           </div>
@@ -2123,7 +2202,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="rms-source flex items-center gap-1.5 text-xs text-gray-400 font-sans">
                   <span>출처:</span>
                   <a
-                    href="https://www.investing.com/commodities/palm-oil"
+                    href="https://www.mpoc.org.my/market-insight/daily-palm-oil-prices/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
@@ -2342,7 +2421,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div>
                   <div className="text-lg sm:text-xl font-bold font-mono text-slate-900">
                     {prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}
-                    <span className="text-xs font-semibold text-slate-500 ml-1">{currencyLabel}</span>
+                    <span className="text-xs font-semibold text-slate-500">{currencyLabel}</span>
                   </div>
                 </div>
 
@@ -2361,12 +2440,12 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <div className="flex items-center justify-end gap-1">
                     <span className="text-[10px] text-slate-400">MoM:</span>
                     <span className={`text-xs font-mono font-bold ${
-                      palmMetrics.cpo.momChangeConv >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
+                      palmMetrics.cpo.momPct != null && palmMetrics.cpo.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
                     }`}>
                       {palmMetrics.cpo.momPct === null ? '--' : `${palmMetrics.cpo.momPct >= 0 ? '+' : ''}${palmMetrics.cpo.momPct.toFixed(2)}%`}
                     </span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      {palmMetrics.cpo.momPct === null ? '' : `(${palmMetrics.cpo.momChangeConv >= 0 ? '+' : '−'}${prefixCurrency(formatPalmPrice(Math.abs(palmMetrics.cpo.momChangeConv)), currencySymbol)})`}
+                      {palmMetrics.cpo.momPct === null || palmMetrics.cpo.momChangeConv == null ? '' : `(${palmMetrics.cpo.momChangeConv >= 0 ? '+' : '−'}${prefixCurrency(formatPalmPrice(Math.abs(palmMetrics.cpo.momChangeConv)), currencySymbol)})`}
                     </span>
                   </div>
                 </div>
@@ -2390,7 +2469,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div>
                   <div className="text-lg sm:text-xl font-bold font-mono text-slate-900">
                     {prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}
-                    <span className="text-xs font-semibold text-slate-500 ml-1">{currencyLabel}</span>
+                    <span className="text-xs font-semibold text-slate-500">{currencyLabel}</span>
 
                   </div>
                 </div>
@@ -2441,9 +2520,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 </span>
               </div>
               <div className="grid grid-cols-3 w-full sm:max-w-md items-center">
-                <span className="text-left">최저: {prefixCurrency(formatConvertedPrice(wheatChartData.low), currencySymbol)}</span>
-                <span className="text-center">평균: {prefixCurrency(formatConvertedPrice(wheatChartData.avg), currencySymbol)}</span>
-                <span className="text-right">최고: {prefixCurrency(formatConvertedPrice(wheatChartData.high), currencySymbol)}</span>
+                <span className="text-left">최저: {prefixCurrency(formatConvertedPrice(wheatChartData.low), currencySymbol)}{currencyLabel}</span>
+                <span className="text-center">평균: {prefixCurrency(formatConvertedPrice(wheatChartData.avg), currencySymbol)}{currencyLabel}</span>
+                <span className="text-right">최고: {prefixCurrency(formatConvertedPrice(wheatChartData.high), currencySymbol)}{currencyLabel}</span>
               </div>
             </div>
 
@@ -2552,15 +2631,15 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     className={chartPresentation.axisLabel}
                     style={{ top: `${(tick.y / 150) * 100}%` }}
                   >
-                    {prefixCurrency(formatConvertedPrice(tick.value), currencySymbol)} {currencyLabel}
+                    {prefixCurrency(formatConvertedPrice(tick.value), currencySymbol)}{currencyLabel}
                   </span>
                 ))}
               </div>
 
               <ChartEndpointLabels labels={[
-                {id:'srw',text:`SRW ${prefixCurrency(formatConvertedPrice(wheatChartData.latestPoint.srwMt), currencySymbol)}`,color:'#DF0029',xPct:wheatChartData.latestPoint.x/5,yPct:wheatChartData.latestPoint.ySrw/1.5},
-                {id:'hrw',text:`HRW ${prefixCurrency(formatConvertedPrice(wheatChartData.latestPoint.hrwMt), currencySymbol)}`,color:'#EC870C',xPct:wheatChartData.latestPoint.x/5,yPct:wheatChartData.latestPoint.yHrw/1.5},
-                {id:'hrs',text:`HRS ${prefixCurrency(formatConvertedPrice(wheatChartData.latestPoint.hrsMt), currencySymbol)}`,color:'#2563EB',xPct:wheatChartData.latestPoint.x/5,yPct:wheatChartData.latestPoint.yHrs/1.5},
+                {id:'srw',text:`SRW ${prefixCurrency(formatConvertedPrice(wheatChartData.latestPoint.srwMt), currencySymbol)}${currencyLabel}`,color:'#DF0029',xPct:wheatChartData.latestPoint.x/5,yPct:wheatChartData.latestPoint.ySrw/1.5},
+                {id:'hrw',text:`HRW ${prefixCurrency(formatConvertedPrice(wheatChartData.latestPoint.hrwMt), currencySymbol)}${currencyLabel}`,color:'#EC870C',xPct:wheatChartData.latestPoint.x/5,yPct:wheatChartData.latestPoint.yHrw/1.5},
+                {id:'hrs',text:`HRS ${prefixCurrency(formatConvertedPrice(wheatChartData.latestPoint.hrsMt), currencySymbol)}${currencyLabel}`,color:'#2563EB',xPct:wheatChartData.latestPoint.x/5,yPct:wheatChartData.latestPoint.yHrs/1.5},
               ]}/>
 
               {/* X-Axis Active Date Badge (Bottom Border) */}
@@ -2578,7 +2657,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   }}
                 >
                   <span className="bg-[#0F172A] text-white font-mono text-[11px] px-2 py-0.5 rounded shadow-sm whitespace-nowrap block font-semibold">
-                    {wheatCrosshairState.reportDate}
+                    {wheatCrosshairState.reportDate.replace(/-/g, '.')}
                   </span>
                 </div>
               )}
@@ -2587,10 +2666,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               {wheatCrosshairState?.active && (
                 <ChartTooltip xPct={wheatCrosshairState.xPct}>
                   <div className="font-bold text-slate-800 border-b border-slate-100 pb-1 font-sans flex items-center justify-between gap-4">
-                    <span>{wheatCrosshairState.reportDate}</span>
-                    <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-normal tracking-tight font-sans">
-                      {formatContractMonth(wheatCrosshairState.contractMonth)}
-                    </span>
+                    <span>{wheatCrosshairState.reportDate.replace(/-/g, '.')}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">
+      {formatContractMonth(wheatCrosshairState.contractMonth)}
+    </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-[#DF0029]">
                     <span className="font-sans font-medium flex items-center gap-1">
@@ -2628,7 +2707,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#6b7280] font-mono gap-3 relative z-10 bg-[#fafbfc] w-full">
               <div className="flex items-center gap-3 shrink-0 flex-wrap">
                 <span className="flex items-center gap-1 font-semibold text-slate-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#DF0029]"></span> CPO (원유 팜유)
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#DF0029]"></span> FCPO (팜유 선물)
                 </span>
                 <span className="flex items-center gap-1 font-semibold text-slate-700">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span> RBD Olein (정제 올레인)
@@ -2638,9 +2717,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 </span>
               </div>
               <div className="grid grid-cols-3 w-full sm:max-w-md items-center">
-                <span className="text-left">최저: {prefixCurrency(formatPalmPrice(palmChartData.low), currencySymbol)}</span>
-                <span className="text-center">평균: {prefixCurrency(formatPalmPrice(palmChartData.avg), currencySymbol)}</span>
-                <span className="text-right">최고: {prefixCurrency(formatPalmPrice(palmChartData.high), currencySymbol)}</span>
+                <span className="text-left">최저: {prefixCurrency(formatPalmPrice(palmChartData.low), currencySymbol)}{currencyLabel}</span>
+                <span className="text-center">평균: {prefixCurrency(formatPalmPrice(palmChartData.avg), currencySymbol)}{currencyLabel}</span>
+                <span className="text-right">최고: {prefixCurrency(formatPalmPrice(palmChartData.high), currencySymbol)}{currencyLabel}</span>
               </div>
             </div>
 
@@ -2739,14 +2818,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     className="absolute right-0 text-[10px] text-slate-400 font-mono transform -translate-y-1/2 bg-transparent select-none whitespace-nowrap z-0"
                     style={{ top: `${(tick.y / 150) * 100}%` }}
                   >
-                    {prefixCurrency(formatPalmPrice(tick.value), currencySymbol)} {currencyLabel}
+                    {prefixCurrency(formatPalmPrice(tick.value), currencySymbol)}{currencyLabel}
                   </span>
                 ))}
               </div>
 
               <ChartEndpointLabels labels={[
-                ...(palmChartData.lastCpo?[{id:'cpo',text:`CPO ${prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}`,color:'#DF0029',xPct:palmChartData.lastCpo.x/5,yPct:palmChartData.lastCpo.yCpo/1.5}]:[]),
-                ...(palmChartData.lastOlein?[{id:'olein',text:`Olein ${prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}`,color:'#2563EB',xPct:palmChartData.lastOlein.x/5,yPct:palmChartData.lastOlein.yOlein/1.5}]:[]),
+                ...(palmChartData.lastCpo?[{id:'cpo',text:`FCPO ${prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}${currencyLabel}`,color:'#DF0029',xPct:palmChartData.lastCpo.x/5,yPct:palmChartData.lastCpo.yCpo/1.5}]:[]),
+                ...(palmChartData.lastOlein?[{id:'olein',text:`RBD Olein ${prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}${currencyLabel}`,color:'#2563EB',xPct:palmChartData.lastOlein.x/5,yPct:palmChartData.lastOlein.yOlein/1.5}]:[]),
               ]}/>
 
               {/* X-Axis Active Date Badge (Bottom Border) */}
@@ -2777,21 +2856,22 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 >
                   <div className="font-bold text-slate-800 border-b border-slate-100 pb-1 font-sans flex items-center justify-between gap-4">
                     <span>{palmCrosshairState.date}</span>
-                    <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-normal tracking-tight font-sans">
-                      FCPO / FPOL
-                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">
+      MDEX FCPO / RBD Olein BENCHMARK
+    </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-[#DF0029]">
                     <span className="font-sans font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> CPO:
+                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> FCPO:
                     </span>
-                    <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.cpoPrice), currencySymbol)} {currencyLabel}</span>
+                    <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.cpoPrice), currencySymbol)}{currencyLabel}</span>
                   </div>
+
                   <div className="flex items-center justify-between gap-4 text-[#2563EB]">
                     <span className="font-sans font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> Palm Olein:
+                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Olein:
                     </span>
-                    <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.oleinPrice), currencySymbol)} {currencyLabel}</span>
+                    <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.oleinPrice), currencySymbol)}{currencyLabel}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-slate-600 border-t border-slate-100 pt-1">
                     <span className="font-sans font-medium flex items-center gap-1">
@@ -2921,7 +3001,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     className="absolute right-0 text-[10px] text-slate-400 font-mono transform -translate-y-1/2 bg-transparent select-none whitespace-nowrap z-0"
                     style={{ top: `${(tick.y / 200) * 100}%` }}
                   >
-                    {isPotatoStarch ? `${tick.value.toFixed(1)} MMT` : `${prefixCurrency(Math.round(tick.value).toLocaleString('en-US'), currencySymbol)} ${currencyLabel}`}
+                    {isPotatoStarch ? `${tick.value.toFixed(1)} MMT` : `${prefixCurrency(Math.round(tick.value).toLocaleString('en-US'), currencySymbol)}${currencyLabel}`}
                   </span>
                 ))}
               </div>
@@ -2982,7 +3062,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <div className="font-bold text-slate-800 border-b border-slate-100 pb-1 font-sans flex items-center justify-between gap-4">
                     <span>{crosshairState.date}</span>
                     <span className="text-[10px] text-slate-500 font-mono">
-                      {isPotatoStarch ? 'EU Procurement Origins' : commodity.gradeEn}
+                      {isPotatoStarch ? 'EU Procurement Origins' : isSugar ? 'ICE: SB BENCHMARK' : commodity.gradeEn}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-[#DF0029]">
@@ -2994,7 +3074,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                       <span className="font-bold">
                         {isPotatoStarch
                           ? `${crosshairState.price.toFixed(2)} MMT`
-                          : `${prefixCurrency(formatConvertedPrice(crosshairState.price), currencySymbol)} ${currencyLabel}`}
+                          : `${prefixCurrency(formatConvertedPrice(crosshairState.price), currencySymbol)}${currencyLabel}`}
                       </span>
                     </div>
                   </div>
@@ -3035,9 +3115,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <div className="bg-[#DF0029] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats.srw.pct}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.srw.low), currencySymbol)}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.srw.current), currencySymbol)}</span>
-                    <span>고: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.srw.high), currencySymbol)}</span>
+                    <span>저: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.srw.low), currencySymbol)}{currencyLabel}</span>
+                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.srw.current), currencySymbol)}{currencyLabel}</span>
+                    <span>고: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.srw.high), currencySymbol)}{currencyLabel}</span>
                   </div>
                 </div>
 
@@ -3052,9 +3132,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <div className="bg-[#EC870C] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats.hrw.pct}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrw.low), currencySymbol)}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrw.current), currencySymbol)}</span>
-                    <span>고: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrw.high), currencySymbol)}</span>
+                    <span>저: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrw.low), currencySymbol)}{currencyLabel}</span>
+                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrw.current), currencySymbol)}{currencyLabel}</span>
+                    <span>고: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrw.high), currencySymbol)}{currencyLabel}</span>
                   </div>
                 </div>
 
@@ -3069,9 +3149,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <div className="bg-[#2563EB] h-full rounded-full transition-all duration-300" style={{ width: `${wheat52WeekStats.hrs.pct}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrs.low), currencySymbol)}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrs.current), currencySymbol)}</span>
-                    <span>고: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrs.high), currencySymbol)}</span>
+                    <span>저: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrs.low), currencySymbol)}{currencyLabel}</span>
+                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrs.current), currencySymbol)}{currencyLabel}</span>
+                    <span>고: {prefixCurrency(formatConvertedPrice(wheat52WeekStats.hrs.high), currencySymbol)}{currencyLabel}</span>
                   </div>
                 </div>
               </div>
@@ -3091,7 +3171,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-800 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> CPO (원유 팜유)
+                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> FCPO (팜유 선물)
                     </span>
                     <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.cpoPct}% 지점</span>
                   </div>
@@ -3099,9 +3179,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <div className="bg-[#DF0029] h-full rounded-full transition-all duration-500" style={{ width: `${palm52WeekStats.cpoPct}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoLow), currencySymbol)}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoCurrent), currencySymbol)}</span>
-                    <span>고: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoHigh), currencySymbol)}</span>
+                    <span>저: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoLow), currencySymbol)}{currencyLabel}</span>
+                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoCurrent), currencySymbol)}{currencyLabel}</span>
+                    <span>고: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoHigh), currencySymbol)}{currencyLabel}</span>
                   </div>
                 </div>
 
@@ -3117,9 +3197,9 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     <div className="bg-[#2563EB] h-full rounded-full transition-all duration-500" style={{ width: `${palm52WeekStats.oleinPct}%` }}></div>
                   </div>
                   <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinLow), currencySymbol)}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinCurrent), currencySymbol)}</span>
-                    <span>고: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinHigh), currencySymbol)}</span>
+                    <span>저: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinLow), currencySymbol)}{currencyLabel}</span>
+                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinCurrent), currencySymbol)}{currencyLabel}</span>
+                    <span>고: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinHigh), currencySymbol)}{currencyLabel}</span>
                   </div>
                 </div>
               </div>
@@ -3152,13 +3232,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         commodityId={commodity.id}
         currency={commodity.id === 'potato-starch' ? 'EUR' : currency}
         confidenceScore={aiInsight?.confidenceScore}
-        recommendedCoverage={aiInsight?.deskRecommendation || activeDeskRecommendation}
+        recommendedCoverage={hasApprovedDeskRecommendation ? activeDeskRecommendation : undefined}
         researchStatus={aiInsight?.status}
         researchSources={aiInsight?.sources}
         researchGeneratedAt={aiInsight?.generatedAt}
         researchEvidenceDates={aiInsight?.evidenceAudit?.facts?.map((f:any)=>f.observedAt)||[]}
         researchModel={aiInsight?.model}
         executiveSummary={aiInsight?.executiveSummary}
+        purchaseActions={aiInsight?.purchaseActions}
         bullishFactors={aiInsight?.bullishFactors}
         bearishFactors={aiInsight?.bearishFactors}
         watchItems={aiInsight?.watchItems}

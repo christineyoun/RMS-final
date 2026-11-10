@@ -1,4 +1,4 @@
-/** Estimated cost conversion only. Never an execution or prepaid-balance gate. */
+/** Dated FX safety factor for estimated MI spending reservations; actual provider invoices can differ. */
 import fs from 'node:fs';import path from 'node:path';
 import {parseDatedDisplayFx} from '../utils/soybeanPriceSnapshot.ts';
 export type KrwBudgetPolicy={fxFloorKrwPerUsd:number;fxSafetyMarginPct:number};
