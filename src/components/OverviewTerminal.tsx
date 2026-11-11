@@ -16,7 +16,31 @@ import { normalizeVerifiedOtherCommodityWasde } from '../lib/verifiedWorldWasde'
 import { normalizeVerifiedSoybeanOilWasde } from './CommodityWasdeCard';
 import type { WasdeRecord } from './WasdeTerminal';
 
+// UI-only: format the beginning of an observation date without altering API or cache values.
+const formatMacroFooterDate = (value: string): string =>
+  value.replace(/^(\d{4})-(\d{2})-(\d{2})(?=\s|$)/, '$1.$2.$3');
+
+// Use only the affected-region metadata retained from verified Market Intelligence articles.
+// Never infer a region from the title or summary when no region was supplied.
+const overviewIssueAffectedRegion = (issue: unknown): string => {
+  if (issue === null || typeof issue !== 'object') return '';
+  const fields = issue as Record<string, unknown>;
+  for (const candidate of [fields.affectedRegion, fields.affected_region]) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return '';
+};
+
 const GREEN_BADGE_STYLE = 'rms-status-positive bg-[#F0FDF4] border border-[#86EFAC] text-[#059669] font-bold px-2.5 py-1 rounded-md';
+
+// Display a date only when it is a valid, non-future source observation date.
+const macroObservationDate = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  const date = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return '';
+  const timestamp = Date.parse(date);
+  return Number.isFinite(timestamp) && timestamp <= Date.now() && new Date(timestamp).toISOString().slice(0, 10) === date ? date : '';
+};
 
 const DEFAULT_MACRO_FALLBACKS = {
   fx: {
@@ -33,11 +57,12 @@ const DEFAULT_MACRO_FALLBACKS = {
     change: '',
     status: '전일 비교 미제공',
     badgeType: 'amber' as const,
-    note: '최근 검증된 관측 기준'
+    note: '최근 검증된 관측 기준',
+    observedOn: ''
   },
   freight: {
     rate: '—',
-    secondary: 'SCFI Index',
+    secondary: 'KCCI Index',
     change: '',
     status: '관측 확인 필요',
     badgeType: 'amber' as const,
@@ -153,6 +178,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
     status: string;
     badgeType: 'red' | 'green' | 'amber' | 'orange';
     note: string;
+    observedOn: string;
   }>(DEFAULT_MACRO_FALLBACKS.oil);
 
   const [freightData, setFreightData] = useState<{
@@ -302,9 +328,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         const fx=macro?.fx;
         if(fx)setFxData({rate:'USD/KRW '+fx.usdKrw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),eurRate:'EUR/KRW '+fx.eurKrw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+(percent(fx.eurChange)?' · '+percent(fx.eurChange):''),change:percent(fx.usdChange),status:'기준환율',badgeType:'amber',note:fx.date+(fx.previousDate?' · 직전 저장 기준일 '+fx.previousDate+' 대비':'')});
         const oil=macro?.energy;
-        setOilData(oil?{rate:'$'+oil.brent.toFixed(2)+'/bbl',secondary:'',change:percent(oil.brentChange),...brentCostSignal(oil.brentChange),note:(oil.sessionDate||oil.observationDate.slice(0,10))+' · '+(oil.comparisonBasis==='provider-reported-quote-change'?'Yahoo 호가 표시 변동 · 공식 종가·정산가 대비 아님 · 변동액 $'+oil.quoteChangeAmount.toFixed(2)+' · 역산 기준가 $'+oil.quoteReferencePrice.toFixed(2)+' (기준 거래일·계약 월물 미확인)':'Yahoo 비교 기준 확인 필요')}:{...DEFAULT_MACRO_FALLBACKS.oil,badgeType:'amber'});
+        setOilData(oil?{rate:'$'+oil.brent.toFixed(2)+'/bbl',secondary:'',change:percent(oil.brentChange),...brentCostSignal(oil.brentChange),observedOn:macroObservationDate(oil.sessionDate)||macroObservationDate(oil.observationDate),note:(oil.sessionDate||oil.observationDate.slice(0,10))+' · '+(oil.comparisonBasis==='provider-reported-quote-change'?'Yahoo 호가 표시 변동 · 공식 종가·정산가 대비 아님 · 변동액 $'+oil.quoteChangeAmount.toFixed(2)+' · 역산 기준가 $'+oil.quoteReferencePrice.toFixed(2)+' (기준 거래일·계약 월물 미확인)':'Yahoo 비교 기준 확인 필요')}:{...DEFAULT_MACRO_FALLBACKS.oil,badgeType:'amber'});
         const freight=macro?.freight;
-        setFreightData(freight?{rate:'SCFI '+freight.scfi.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' pts',secondary:'',change:percent(freight.changePct),status:'주간 지표 확인',badgeType:'amber',note:freight.observationDate+' · 주간 발표'}:{rate:'—',secondary:'',change:'',status:macro?.scfiStatus==='permission-required'?'이용 권한 확인 필요':'발표 자료 미확보',badgeType:'amber',note:'주간 발표'});
+        setFreightData(freight?.indexIdentity==='KCCI'&&Number.isFinite(freight.kcci)?{rate:'KCCI '+freight.kcci.toLocaleString('en-US',{maximumFractionDigits:2})+' pts',secondary:'',change:percent(freight.changePct),status:'주간 지표 확인',badgeType:'amber',note:freight.observationDate+' 기준 · 전주 대비'}:{rate:'—',secondary:'',change:'',status:'KCCI 자료 미확보',badgeType:'amber',note:'KOBC 주간 발표'});
 
         // 4. Safeguard WASDE Telemetry State Setter
         if (data.wasde && typeof data.wasde === 'object') {
@@ -914,9 +940,9 @@ text-underline-offset: 2px;
               id="driver-fx"
               href="https://www.kebhana.com/cont/mall/mall15/mall1501/index.jsp"
               target="_blank" rel="noopener noreferrer"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
+              className="group min-h-[150px] print:min-h-0 px-4 pt-4 pb-3.5 print:p-2.5 flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
-              <div>
+              <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
@@ -932,16 +958,18 @@ text-underline-offset: 2px;
                     </span>
                   </div>
                 </div>
-                <div className="mt-2 print:mt-1 flex items-baseline justify-between">
-                  <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-fx-val" aria-label={fxData.rate}>
+                <div className="mt-1 print:mt-1 flex flex-1 items-center">
+                  <div className="w-full flex items-baseline justify-between gap-3">
+                    <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-fx-val" aria-label={fxData.rate}>
                     {fxData.rate.startsWith('USD/KRW ')?'₩'+fxData.rate.slice(8):fxData.rate}
                   </div>
                   <span className="font-mono text-xs text-slate-400 font-normal" aria-label={fxData.eurRate}>
                     {fxData.eurRate.startsWith('EUR/KRW ')?'EUR ₩'+fxData.eurRate.slice(8).split(' · ')[0]:fxData.eurRate}
                   </span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-end">
+              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-end">
                 
                 <span
                   className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
@@ -956,9 +984,9 @@ text-underline-offset: 2px;
               id="driver-energy"
               href="https://finance.yahoo.com/quote/BZ=F/"
               target="_blank" rel="noopener noreferrer"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
+              className="group min-h-[150px] print:min-h-0 px-4 pt-4 pb-3.5 print:p-2.5 flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
-              <div>
+              <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
@@ -974,54 +1002,64 @@ text-underline-offset: 2px;
                     </span>
                   </div>
                 </div>
-                <div className="mt-2 print:mt-1 flex items-baseline justify-between">
-                  <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-energy-val">
+                <div className="mt-1 print:mt-1 flex flex-1 items-center">
+                  <div className="w-full flex items-baseline justify-between gap-3">
+                    <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-energy-val">
                     {oilData?.rate || DEFAULT_MACRO_FALLBACKS.oil.rate}
                   </div>
                   <span className="font-mono text-xs text-slate-400 font-normal">
                     {oilData?.secondary || DEFAULT_MACRO_FALLBACKS.oil.secondary}
                   </span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-end">
+              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-between gap-2">
+                <span className="font-sans text-[11px] font-medium text-slate-400 tabular-nums">
+                  {oilData.observedOn ? formatMacroFooterDate(oilData.observedOn) + ' 기준' : ''}
+                </span>
                 <span
-                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer shrink-0"
                 >
                   실시간 시세 ↗
                 </span>
               </div>
             </a>
 
-            {/* Card 3: Freight (BDI / SCFI) */}
+            {/* Card 3: Freight (KOBC KCCI, preserved SCFI cache independent) */}
             <a
               id="driver-freight"
-              href="https://www.tradlinx.com/ko/freight-index"
+              href="https://kobc.or.kr/ebz/shippinginfo/kcci/gridList.do?mId=0304000000"
               target="_blank" rel="noopener noreferrer"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
+              className="group min-h-[150px] print:min-h-0 px-4 pt-4 pb-3.5 print:p-2.5 flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
-              <div>
+              <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
                       directions_boat
                     </span>
                     <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors truncate">
-                      해상운임 지수 (SCFI)
+                      해상운임 지수 (KCCI)
                     </span>
                   </div>
-
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`font-mono text-xs font-semibold ${freightData.change ? (freightData.change.startsWith('-') ? 'text-[#DF0029]' : 'text-[#059669]') : 'text-slate-500'}`}>
+                      {freightData.change}
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-2 print:mt-1 flex items-baseline justify-between">
-                  <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-freight-val">
+                <div className="mt-1 print:mt-1 flex flex-1 items-center">
+                  <div className="w-full flex items-baseline justify-between gap-3">
+                    <div className="font-mono text-xl print:text-base font-bold text-slate-900" id="driver-freight-val">
                     {freightData?.rate || DEFAULT_MACRO_FALLBACKS.freight.rate}
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-end">
-                <span
-                  className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
-                >
-                  트레드링스 시세 ↗
+              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-between gap-2">
+                <span className="font-sans text-[11px] font-medium text-slate-400 tabular-nums">{freightData?.note ? formatMacroFooterDate(freightData.note) : ''}</span>
+                <span className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer shrink-0">
+                  KOBC 공식 KCCI 지수 ↗
                 </span>
               </div>
             </a>
@@ -1031,9 +1069,9 @@ text-underline-offset: 2px;
               id="driver-policy"
               href={policyCardUrl}
               target="_blank" rel="noopener noreferrer"
-              className="group min-h-[130px] print:min-h-0 p-4 print:p-2.5 flex flex-col justify-between rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
+              className="group min-h-[150px] print:min-h-0 px-4 pt-4 pb-3.5 print:p-2.5 flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm hover:border-[#DF0029] hover:shadow-md transition-all cursor-pointer scroll-mt-24"
             >
-              <div>
+              <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
@@ -1045,7 +1083,7 @@ text-underline-offset: 2px;
                   </div>
 
                 </div>
-                <div className="mt-2 print:mt-1 flex flex-col gap-1">
+                <div className="mt-1 print:mt-1 flex flex-1 flex-col justify-center gap-2 print:gap-1">
                   <div className="text-sm print:text-xs font-bold text-slate-900 leading-tight" id="driver-policy-val">
                     {policyData.headline || DEFAULT_MACRO_FALLBACKS.policy.headline}
                   </div>
@@ -1054,10 +1092,10 @@ text-underline-offset: 2px;
                   </div>
                 </div>
               </div>
-              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 border-t border-[#f1f5f9] flex items-center justify-between">
+              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-between gap-2">
                 {policyData.status === '관련 공식 발표 확인되지 않음' ? (
-                  <span className="macro-market-status text-[11px] font-normal text-slate-600">{policyData.status === '관련 공식 발표 확인되지 않음' ? '신규 발표 없음' : policyData.status}</span>
-                ) : (<span className={'macro-market-status text-[11px] font-normal px-2 py-0.5 rounded border '+(policyData.badgeType==='green'?'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]':policyData.badgeType==='red'?'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]':'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]')}>
+                  <span className="macro-market-status font-sans text-[11px] font-medium text-slate-400 tabular-nums">{policyData.status === '관련 공식 발표 확인되지 않음' ? '신규 발표 없음' : policyData.status}</span>
+                ) : (<span className={'macro-market-status font-sans text-xs font-normal px-2 py-0.5 rounded border '+(policyData.badgeType==='green'?'bg-[#F0FDF4] border-[#86EFAC] text-[#059669]':policyData.badgeType==='red'?'bg-[#FFF1F2] border-[#FECDD3] text-[#DF0029]':'bg-[#fff7ed] border-[#fed7aa] text-[#EC870C]')}>
                   {policyData.status === '관련 공식 발표 확인되지 않음' ? '신규 발표 없음' : policyData.status}
                 </span>)}
                 {policyData.sourceUrl ? (<span
@@ -1076,10 +1114,12 @@ text-underline-offset: 2px;
             </a>
           </div>
 
-          {/* Footer Source */}
-          <div className="mt-auto pt-2 print:pt-1 flex justify-end text-xs text-gray-400">
-            <SourceAttribution className="justify-end text-right" entries={['ECB/Frankfurter','Yahoo Finance','SSE',policyData.sourceName||'—'].map(label=>({label}))}/>
-          </div>
+          {/* Match the shared source footer used by RMS AI and Market Intelligence. */}
+          <SourceAttribution
+            className="pt-2 justify-end text-right"
+            entries={['ECB/Frankfurter', 'Yahoo Finance', 'KOBC', '관세청', '미국 연방관보'].map(label => ({label}))}
+          />
+
         </section>
 
         {/* 2. AI Market Brief & Key Market Issues Split Grid */}
@@ -1127,8 +1167,14 @@ text-underline-offset: 2px;
                     data-overview-issue={issue.url}
                     className="group p-3 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded border border-blue-100">{issue.category||'시장 동향'}</span>
+                      {overviewIssueAffectedRegion(issue) && (
+                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                          <span className="material-symbols-outlined text-[11px] text-slate-400">location_on</span>
+                          <span>영향 지역: {overviewIssueAffectedRegion(issue)}</span>
+                        </span>
+                      )}
                     </div>
 
                     <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors leading-snug break-keep">

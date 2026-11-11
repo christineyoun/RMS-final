@@ -9,6 +9,7 @@ import {selectProcurementNews} from './newsProcurementSelection.ts';
 import {recentMarketArticles} from './newsFreshnessPolicy.ts';
 import {newsRetentionDays} from './newsRetentionPolicy.ts';
 import {chooseVerifiedNewsDisplay} from './newsDisplayPolicy.ts';
+import {withVerifiedAffectedRegion} from '../utils/verifiedAffectedRegion.ts';
 import {recoverVerifiedNewsCoverage} from './newsHistoryCoverage.ts';
 import {readVerifiedWheatNews} from './wheatSavedVerifiedNews.ts';
 import {readVerifiedCornNews} from './cornSavedVerifiedNews.ts';
@@ -211,7 +212,9 @@ function savedNewsResponse(id:string, verified:any[]) {
   // Shared all-eight-commodity display policy. Two recent reports are enough
   // to avoid backfilling a current news section with older context; never
   // invent stories to reach a quota. Previously accepted records stay saved.
-  const selected=selectProcurementNews(id,verified);
+  // Normalize only metadata backed by the accepted original-publisher receipt.
+  // The same MI API response powers commodity cards and Overview.
+  const selected=selectProcurementNews(id,verified.map(article=>withVerifiedAffectedRegion(article)));
   const {articles,sourceStatus}=chooseVerifiedNewsDisplay(selected);
   return {success:true,articles,sourceStatus,
     procurementRisk:assessProcurementRisk(id,articles,collectAnalysisEvidence(id).facts)};
@@ -528,7 +531,7 @@ export function createStage3Gateway() {
         const editorial=key==='analysis-potato-starch'?rmsAiEditorial('potato-starch',data.generatedAt,data.sources,data):null;
         return respond(res,200,{...cached.payload,data:{...data,...(editorial?.editorial?{...editorial.fields,sources:editorial.sources,presentationEditorial:{version:editorial.editorial,originalSnapshot:editorial.snapshot}}:{}),status:'cached'}});
       }
-      if(key==='macro-overview'){const data=readFreePublication()?.data,raw=data?.fx?.raw;if(raw)return respond(res,200,{...cached.payload,usdKrw:raw.rates.KRW,eurKrw:raw.rates.KRW/raw.rates.EUR,...(data.energy?.observationDate?{brent:data.energy.currentPrice}:{}),...(data.freight?.observationDate?{scfi:data.freight.scfiPoints}:{}),freeDataObservationDate:raw.date});}
+      if(key==='macro-overview'){const data=readFreePublication()?.data,raw=data?.fx?.raw;if(raw)return respond(res,200,{...cached.payload,usdKrw:raw.rates.KRW,eurKrw:raw.rates.KRW/raw.rates.EUR,...(data.energy?.observationDate?{brent:data.energy.currentPrice}:{}),...(data.kcci?.observationDate?{kcci:data.kcci.kcciPoints,kcciObservationDate:data.kcci.observationDate,freightBenchmark:'KCCI'}:{}),freeDataObservationDate:raw.date});}
       return respond(res,200,cached.payload);
     }
     if(key.startsWith('news-') && remainingIds.includes(key.slice(5)))

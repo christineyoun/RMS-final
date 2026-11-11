@@ -1,7 +1,7 @@
 import { getDailyPublicationIssue } from '../utils/dailyPublicationIssue';
 import { issuePdfFilename, stampPdfIssue } from '../utils/pdfPublication';
 import {commodityBenchmarkDisplay,commodityComparisonDisplay} from '../services/commodityQuoteSource';
-import {getRecommendationColor} from '../utils/recommendationPresentation';
+import {getRecommendationColor,getRiskBadgeColor} from '../utils/recommendationPresentation';
 import {ChartCanvas, ChartSummaryCard, ChartTooltip, ChartRedGradient, chartSmoothPath, chartValueBounds, chartButtonClass, chartPresentation} from './CommodityChartPresentation';
 import {PotatoProductionChart} from './PotatoProductionChart';
 import {PotatoPriceChangesDisplay} from './PotatoPriceChanges';
@@ -156,9 +156,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   'corn': 'CBOT (CC1)',
   'soybean': 'CBOT (ZS)',
   'soybean-oil': 'CBOT (ZL)',
-  'palm-oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Olein',
-  'palmoil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Olein',
-  'palm_oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Olein',
+  'palm-oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Palm Olein',
+  'palmoil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Palm Olein',
+  'palm_oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Palm Olein',
   'sugar': 'ICE (SB)',
   'potato-starch': 'Eurostat · 원료감자 생산 대리지표',
   'tapioca-starch': 'TTSA (TS)',
@@ -2012,13 +2012,13 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             <div>
               <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                 <span className="px-1.5 py-0.5 bg-[#DF0029] text-white text-[10px] font-bold rounded tracking-wide shrink-0">
-                  {commodity.category.toUpperCase() === 'GRAIN' ? 'GRAINS' : commodity.category.toUpperCase()}
+                  {isSugar ? 'SWEETENERS' : (commodity.category.toUpperCase() === 'GRAIN' ? 'GRAINS' : commodity.category.toUpperCase())}
                 </span>
                 <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-mono font-medium rounded border border-slate-200 shrink-0">
                   {isWheat
                     ? 'CBOT: SRW · KCBT: HRW · MIAX: HRS'
                     : isPalmOil
-                    ? 'Bursa FCPO · RBD Olein'
+                    ? 'Bursa FCPO · RBD Palm Olein'
                     : isCorn
                     ? 'CBOT: CC1'
                     : isSoybean
@@ -2130,7 +2130,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             <div id="scm-desk-recommendation-card" className="header-metric-card bg-slate-50/90 border border-slate-200/80 rounded-lg p-4 flex flex-col justify-center min-w-0 min-h-[105px]">
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block mb-1.5">데스크 권고</span>
               {hasApprovedDeskRecommendation ? (
-                <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation)}`}>
+                <span className={`inline-flex self-start items-center text-xs font-bold px-2.5 py-1 rounded-md transition-colors break-keep whitespace-normal ${getRecommendationColor(activeDeskRecommendation, procurementRiskLevel)}`}>
                   {activeDeskRecommendation}
                 </span>
               ) : (
@@ -2145,13 +2145,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-xs font-bold text-slate-800 whitespace-nowrap">조달 리스크</span>
               <span aria-description={step7Risk?.criteria} className={`inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-md border leading-none tracking-tight whitespace-nowrap select-none ${
-                procurementRiskLevel === '경계'
-                  ? 'rms-status-negative text-red-700 bg-red-50 border-red-200'
-                  : procurementRiskLevel === '주의'
-                  ? 'rms-status-warning text-[#EC870C] bg-[#fff7ed] border-[#fed7aa]'
-                  : !step7Risk || procurementRiskLevel === '판정 보류'
-                  ? 'bg-slate-100 text-slate-600 border-slate-300'
-                  : 'rms-status-positive bg-[#F0FDF4] border-[#86EFAC] text-[#059669]'
+                getRiskBadgeColor(procurementRiskLevel)
               }`}>
                 {procurementRiskLevel}
               </span>
@@ -2216,7 +2210,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     rel="noopener noreferrer"
                     className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#2563EB] transition-colors font-normal font-sans"
                   >
-                    RBD Olein ↗
+                    RBD Palm Olein ↗
                   </a>
                 </div>
               ) : isPotatoStarch ? (
@@ -2457,8 +2451,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0"></span>
-                  <span className="text-xs font-bold text-slate-900 font-mono">RBD Olein</span>
-                  <span className="text-[11px] text-slate-500">정제 올레인</span>
+                  <span className="text-xs font-bold text-slate-900 font-mono">RBD Palm Olein</span>
+                  <span className="text-[11px] text-slate-500">정제 팜올레인</span>
                 </div>
                 <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-normal tracking-tight">
                   Bursa Malaysia FPOL
@@ -2710,7 +2704,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <span className="w-2.5 h-2.5 rounded-full bg-[#DF0029]"></span> FCPO (팜유 선물)
                 </span>
                 <span className="flex items-center gap-1 font-semibold text-slate-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span> RBD Olein (정제 올레인)
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span> RBD Palm Olein (정제 팜올레인)
                 </span>
                 <span className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
                   {formattedSpread}
@@ -2825,7 +2819,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
               <ChartEndpointLabels labels={[
                 ...(palmChartData.lastCpo?[{id:'cpo',text:`FCPO ${prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}${currencyLabel}`,color:'#DF0029',xPct:palmChartData.lastCpo.x/5,yPct:palmChartData.lastCpo.yCpo/1.5}]:[]),
-                ...(palmChartData.lastOlein?[{id:'olein',text:`RBD Olein ${prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}${currencyLabel}`,color:'#2563EB',xPct:palmChartData.lastOlein.x/5,yPct:palmChartData.lastOlein.yOlein/1.5}]:[]),
+                ...(palmChartData.lastOlein?[{id:'olein',text:`RBD Palm Olein ${prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}${currencyLabel}`,color:'#2563EB',xPct:palmChartData.lastOlein.x/5,yPct:palmChartData.lastOlein.yOlein/1.5}]:[]),
               ]}/>
 
               {/* X-Axis Active Date Badge (Bottom Border) */}
@@ -2857,7 +2851,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   <div className="font-bold text-slate-800 border-b border-slate-100 pb-1 font-sans flex items-center justify-between gap-4">
                     <span>{palmCrosshairState.date}</span>
                     <span className="text-[10px] text-slate-500 font-mono">
-      MDEX FCPO / RBD Olein BENCHMARK
+      MDEX FCPO / RBD Palm Olein BENCHMARK
     </span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-[#DF0029]">
@@ -2869,7 +2863,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
                   <div className="flex items-center justify-between gap-4 text-[#2563EB]">
                     <span className="font-sans font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Olein:
+                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Palm Olein:
                     </span>
                     <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.oleinPrice), currencySymbol)}{currencyLabel}</span>
                   </div>
@@ -3171,7 +3165,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-800 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> FCPO (팜유 선물)
+                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> FCPO
                     </span>
                     <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.cpoPct}% 지점</span>
                   </div>
@@ -3189,7 +3183,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-800 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Olein (정제 올레인)
+                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Palm Olein
                     </span>
                     <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.oleinPct}% 지점</span>
                   </div>
@@ -3233,6 +3227,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         currency={commodity.id === 'potato-starch' ? 'EUR' : currency}
         confidenceScore={aiInsight?.confidenceScore}
         recommendedCoverage={hasApprovedDeskRecommendation ? activeDeskRecommendation : undefined}
+        procurementRiskLevel={procurementRiskLevel}
         researchStatus={aiInsight?.status}
         researchSources={aiInsight?.sources}
         researchGeneratedAt={aiInsight?.generatedAt}

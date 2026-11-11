@@ -13,6 +13,7 @@ export interface AiRecommendationProps {
   currency?: string;
   confidenceScore?: number; // retained for compatibility; not shown to users
   recommendedCoverage?: string;
+  procurementRiskLevel?: string | null;
   executiveSummary?: string;
   purchaseActions?: string[];
   bullishFactors?: string[];
@@ -36,6 +37,7 @@ export default function AiRecommendation({
   commodityId,
   currency,
   recommendedCoverage = '판정 보류',
+  procurementRiskLevel,
   executiveSummary,
   purchaseActions = [],
   bullishFactors = [],
@@ -143,7 +145,7 @@ export default function AiRecommendation({
         {/* Coverage Recommendation Badge */}
         <div className="flex items-center gap-2 mt-2 mb-4">
           <span className="text-xs font-semibold text-slate-500">데스크 권고:</span>
-          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getRecommendationColor(recommendedCoverage)}`}>
+          <span className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md transition-colors ${getRecommendationColor(recommendedCoverage, procurementRiskLevel)}`}>
             {recommendedCoverage}
           </span>
         </div>

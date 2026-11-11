@@ -6,6 +6,7 @@ import {ChartEndpointLabels} from './ChartEndpointLabels';
 import {potatoChartDisplay,potatoPointYoY,REGION_LABELS,type PotatoChartSnapshot,type PotatoChartPeriod,type PotatoChartRegion,type PotatoChartMode} from '../utils/potatoProductionChart';
 
 const COLORS:Record<PotatoChartRegion,string>={DE:'#DF0029',NL:'#EC870C',DK:'#2563EB',EU27_2020:'#64748b'};
+const POTATO_KOREAN_NAMES:Record<PotatoChartRegion,string>={DE:'독일',NL:'네덜란드',DK:'덴마크',EU27_2020:'EU27'}; // POTATO_BILINGUAL_COUNTRY_LABELS_20261111_V2
 // Bilingual labels are presentation-only; original Eurostat/JRC region IDs stay unchanged.
 const REGION_ENGLISH:Record<PotatoChartRegion,string>={DE:'Germany',NL:'Netherlands',DK:'Denmark',EU27_2020:'EU27'};
 export const potatoHoverTitle=(year:number,estimated:boolean)=>`${year}${estimated?' Estimate':''}`;
@@ -66,13 +67,13 @@ export function PotatoProductionChartView({snapshot,failed=false}:{snapshot:Pota
    {regions.map(region=>{
     const current=all.filter(p=>p.region===region).sort((a,b)=>a.year-b.year).at(-1),previous=current?all.find(p=>p.region===region&&p.year===current.year-1):undefined;
     const yoy=current?potatoPointYoY(current,all):null,delta=current&&previous&&yoy!==null?current.productionMMT-previous.productionMMT:null;
-    return <ChartSummaryCard key={region} data-summary={region} color={COLORS[region]} description={REGION_ENGLISH[region]} label={REGION_LABELS[region]} badge={current?current.year+' '+(current.status.includes('Estimate')?'추정':statusLabel(current.status)):'미확보'} value={current?current.productionMMT.toFixed(3):'—'} unit="MMT" metrics={<>
+    return <ChartSummaryCard key={region} data-summary={region} color={COLORS[region]} description={POTATO_KOREAN_NAMES[region]} label={REGION_LABELS[region]} badge={current?current.year+' '+(current.status.includes('Estimate')?'추정':statusLabel(current.status)):'미확보'} value={current?current.productionMMT.toFixed(3):'—'} unit="MMT" metrics={<>
       <div className="flex items-center justify-end gap-1"><span className="text-[10px] text-slate-400">YoY:</span><span className={'text-xs font-mono font-bold '+(yoy===null?'text-slate-400':yoy>=0?'text-[#059669]':'text-[#DF0029]')}>{signed(yoy)}</span><span className="text-[10px] font-mono text-slate-400">{delta===null?'':`(${delta<0?'−':'+'}${Math.abs(delta).toFixed(3)} MMT)`}</span></div>
     </>}/>;
    })}
   </div>
   <ChartCanvas data-potato-chart-canvas>
-   <div className={chartPresentation.legend}><div className={chartPresentation.legendItems}>{regions.map(region=><span key={region} data-legend={region} className={chartPresentation.legendLabel}><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:COLORS[region]}}/>{REGION_LABELS[region]}{' ('+REGION_ENGLISH[region]+')'}</span>)}</div></div>
+   <div className={chartPresentation.legend}><div className={chartPresentation.legendItems}>{regions.map(region=><span key={region} data-legend={region} className={chartPresentation.legendLabel}><span className="w-2.5 h-2.5 rounded-full" style={{backgroundColor:COLORS[region]}}/>{REGION_LABELS[region]} ({POTATO_KOREAN_NAMES[region]})</span>)}</div></div>
    {rows.length?<>
     <div data-potato-plot className={chartPresentation.plot}
      onMouseLeave={closeHover} onMouseMove={event=>{const rect=event.currentTarget.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width));setHover(Math.round(first+ratio*(last-first)));}}>

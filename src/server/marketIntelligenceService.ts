@@ -43,6 +43,7 @@ import {planNewsSummaryRepair} from './newsSummaryRepair.ts';
 import {NEWS_SUMMARY_EDITORIAL_GUIDANCE,summarizeNewsConsistency} from './newsSummaryConsistency.ts';
 import {planEvidenceBoundEditorialRevision,improvedEditorialRevision} from './newsSummaryEditorialRevision.ts';
 import {previouslyVerifiedEditorialSources} from './newsPreviouslyVerifiedEditorial.ts';
+import {withVerifiedAffectedRegion} from '../utils/verifiedAffectedRegion.ts';
 
 export type SourceType = 'news' | 'official' | 'company';
 
@@ -182,7 +183,8 @@ export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSo
    }
    if(verifiedOther){article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();}
    if(article.linkStatus==='verified')article.verifiedSourceEvidence={originalUrl:lockedMeta.originalUrl,publishedAt:lockedMeta.publishedAt,sourceHeadline:lockedMeta.rawTitle,excerpt:lockedMeta.rawSnippet,verifiedAt:new Date().toISOString()};
-   return [article];
+   // Shared approved-record metadata normalizer, never an independent region search.
+   return [withVerifiedAffectedRegion(article)];
  });
 
 

@@ -34,6 +34,8 @@ export async function loadOverviewIntelligence(fetcher:typeof fetch=fetch,signal
     articles:articles.filter((v:any)=>Date.now()-Date.parse(v.publishedAt)<=30*86400000)};
  }));
  const result=aggregateOverview(inputs);
+ // Region metadata is delivered by the original commodity MI API, not fetched
+ // or inferred independently by Overview. No duplicate network calls.
  try{const response=await fetcher('/api/overview/comparison',{signal,cache:'no-store'});if(response.ok){const comparison=await response.json();result.brief=result.brief.replace('[전일 대비 주요 변화] 전일 비교 데이터 없음','[전일 대비 주요 변화] '+comparison.message);}}
  catch{/* No comparison must never become an invented unchanged market. */}
  return result;

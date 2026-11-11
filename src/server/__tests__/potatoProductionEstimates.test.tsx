@@ -43,7 +43,7 @@ try{
  assert.equal($('path[stroke-dasharray="5 4"][data-from-year="2025"][data-to-year="2026"]').length,3);
  assert.equal($('path[data-to-year="2025"][stroke-dasharray]').length,0);
  assert.equal($('g[data-region="EU27_2020"]').length,0);
- assert(!$('button').text().includes('EU27'));assert.equal($('button').filter((_,e)=>/^(독일|네덜란드|덴마크)$/.test($(e).text())).length,0);
+ assert(!$('button').text().includes('EU27'));assert.equal($('button').filter((_,e)=>/^(Germany|Netherlands|Denmark|독일|네덜란드|덴마크)$/.test($(e).text())).length,0);
  assert.equal($('[data-summary]').filter((_,e)=>$(e).text().includes('2026 추정')).length,3);
  assert(!$.text().includes('동적 공통'));assert(!$.text().includes('수집 없음'));
  // A previous-year area is not an admissible replacement for missing 2026 area.

@@ -1,26 +1,26 @@
 {
   "commodity": "palm-oil",
   "commodityCode": "4243000",
-  "verifiedAt": "2026-11-09T00:01:04.202Z",
+  "verifiedAt": "2026-11-11T00:00:57.538Z",
   "data": {
     "commodityCode": "4243000",
     "marketYear": "2026",
-    "releaseMonth": "10",
+    "releaseMonth": "11",
     "source": "USDA FAS PSD Online",
     "production1000MT": 78921,
     "productionMMT": 78.9,
-    "domesticConsumption1000MT": 78059,
-    "domesticConsumptionMMT": 78.1,
-    "endingStocks1000MT": 13697,
-    "endingStocksMMT": 13.7,
-    "beginningStocks1000MT": 15179,
+    "domesticConsumption1000MT": 78011,
+    "domesticConsumptionMMT": 78,
+    "endingStocks1000MT": 13771,
+    "endingStocksMMT": 13.8,
+    "beginningStocks1000MT": 15205,
     "beginningStocksMMT": 15.2,
     "imports1000MT": 41403,
     "exports1000MT": 43747,
     "exportsMMT": 43.7,
-    "totalSupply1000MT": 135503,
-    "stocksToUseRatio": 17.5,
-    "stocksToUseRatioPct": 17.5,
+    "totalSupply1000MT": 135529,
+    "stocksToUseRatio": 17.7,
+    "stocksToUseRatioPct": 17.7,
     "areaHarvested1000HA": 27717,
     "yieldMTHA": 2.8474,
     "rawRecordsCount": 13,
@@ -30,7 +30,7 @@
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 4,
         "unitId": 4,
         "value": 27717
@@ -40,17 +40,17 @@
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 20,
         "unitId": 8,
-        "value": 15179
+        "value": 15205
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 28,
         "unitId": 8,
         "value": 78921
@@ -60,7 +60,7 @@
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 57,
         "unitId": 8,
         "value": 41403
@@ -70,17 +70,17 @@
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 86,
         "unitId": 8,
-        "value": 135503
+        "value": 135529
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 88,
         "unitId": 8,
         "value": 43747
@@ -90,67 +90,67 @@
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 140,
         "unitId": 8,
-        "value": 28190
+        "value": 28255
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 149,
         "unitId": 8,
-        "value": 49274
+        "value": 49141
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 161,
         "unitId": 8,
-        "value": 595
+        "value": 615
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 125,
         "unitId": 8,
-        "value": 78059
+        "value": 78011
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 176,
         "unitId": 8,
-        "value": 13697
+        "value": 13771
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 178,
         "unitId": 8,
-        "value": 135503
+        "value": 135529
       },
       {
         "commodityCode": "4243000",
         "countryCode": "00",
         "marketYear": "2026",
         "calendarYear": "2026",
-        "month": "10",
+        "month": "11",
         "attributeId": 184,
         "unitId": 26,
         "value": 2.8474

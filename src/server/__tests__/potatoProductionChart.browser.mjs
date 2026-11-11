@@ -13,7 +13,7 @@ try{
  try{
   check(document.querySelectorAll('g[data-region]').length===3,'three default countries');check(!document.querySelector('g[data-region="EU27_2020"]'),'EU initially hidden');
   check(document.querySelectorAll('[data-summary]').length===3,'three latest summaries');check(!document.querySelector('input[type=checkbox]')&&!document.querySelector('table'),'no checkboxes/table');
-  check(![...document.querySelectorAll('button')].some(b=>/EU27|^(독일|네덜란드|덴마크)$/.test(b.textContent)),'no country or EU filters');
+  check(![...document.querySelectorAll('button')].some(b=>/EU27|^(Germany|Netherlands|Denmark|독일|네덜란드|덴마크)$/.test(b.textContent)),'no country or EU filters');
   check(!!document.querySelector('path[stroke-dasharray="5 4"]'),'absolute estimates dashed');
   const button=click('변동률 비교(기준연도=100)');check(button.getAttribute('aria-pressed')==='true','indexed mode active');check(!!document.querySelector('[data-index-bases]'),'explicit country baseline years');check(!document.querySelector('path[stroke-dasharray="5 4"]'),'forecasts excluded from index');
   for(const region of ['DE','NL','DK']){const circles=[...document.querySelectorAll('g[data-region="'+region+'"] circle')];check(circles.length>0,'indexed series '+region);check(Number(circles[0].dataset.displayValue)===100,'first observed baseline '+region);for(const node of circles){const p=snapshot.points.find(p=>p.region===region&&p.year===Number(node.dataset.year));check(p&&(p.status==='Actual'||p.status==='Provisional'),'index from observations only');}check(document.querySelector('[data-index-bases]').textContent.includes(circles[0].dataset.year+'=100'),'baseline year visible');}

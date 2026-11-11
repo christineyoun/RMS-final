@@ -26,7 +26,7 @@ export async function savedFreeDataResponse(url:string,method='GET'):Promise<{st
  }
  if(u.pathname==='/api/rms/saved-market-data'||u.pathname==='/api/market-data/normalized'||u.pathname==='/api/pipeline/telemetry'){
   const macro=overviewMacroFromSaved(data),fx=data?.fx||retainedFx(),raw=fx?.raw,normalizedData:any={};if(raw){for(const [commodity,value]of [['USD/KRW',raw.rates.KRW],['EUR/KRW',raw.rates.KRW/raw.rates.EUR],['EUR/USD',1/raw.rates.EUR],['USD/MYR',raw.rates.MYR]])if(Number.isFinite(value))normalizedData[String(commodity)]={commodity,indicator:String(commodity),value,unit:'FX',date:raw.date,lastUpdated:fx.verifiedAt,source:'ECB/Frankfurter',sourceUrl:'https://api.frankfurter.dev'};}
-  return ok({sources:[],normalizedData,failedSourcesCount:publication?.status==='partial'?1:0,alerts:[],updatedAt:publication?.publishedAt||null,usdKrw:raw?.rates.KRW,eurKrw:raw?raw.rates.KRW/raw.rates.EUR:undefined,overviewMacro:macro,energy:{...macro.energy,scfi:macro.freight?.scfi??null,freightObservationDate:macro.freight?.observationDate??null},fxObservationDate:raw?.date});
+  return ok({sources:[],normalizedData,failedSourcesCount:publication?.status==='partial'?1:0,alerts:[],updatedAt:publication?.publishedAt||null,usdKrw:raw?.rates.KRW,eurKrw:raw?raw.rates.KRW/raw.rates.EUR:undefined,overviewMacro:macro,energy:{...macro.energy,scfi:macro.scfiReference?.scfi??null,freightObservationDate:macro.freight?.observationDate??null},fxObservationDate:raw?.date});
  }
  return null;
 }

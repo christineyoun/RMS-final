@@ -9,11 +9,11 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate }) => {
   const commoditiesList: Array<{ id: CommodityId; path: string; name: string }> = [
     { id: 'wheat', path: 'commodity-wheat', name: '소맥 (Wheat)' },
-    { id: 'corn', path: 'commodity-corn', name: '옥수수 (Corn - CBOT)' },
-    { id: 'soybean', path: 'commodity-soybean', name: '대두 (Soybean - CBOT)' },
+    { id: 'corn', path: 'commodity-corn', name: '옥수수 (Corn)' },
+    { id: 'soybean', path: 'commodity-soybean', name: '대두 (Soybean)' },
     { id: 'soybean-oil', path: 'commodity-soybean-oil', name: '대두유 (Soybean Oil)' },
     { id: 'palm-oil', path: 'commodity-palm-oil', name: '팜유 (Palm Oil)' },
-    { id: 'sugar', path: 'commodity-sugar', name: '원당 (Sugar - ICE #11)' },
+    { id: 'sugar', path: 'commodity-sugar', name: '원당 (Sugar)' },
     { id: 'potato-starch', path: 'commodity-potato-starch', name: '감자 전분 (Potato Starch)' },
     { id: 'tapioca-starch', path: 'commodity-tapioca-starch', name: '타피오카 전분 (Tapioca Starch)' }
   ];

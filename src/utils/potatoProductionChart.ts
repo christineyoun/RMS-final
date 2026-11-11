@@ -8,7 +8,7 @@ export type PotatoYieldForecast={region:PotatoChartRegion;year:number;yieldMTHA:
 export type PotatoOriginalPoint=Omit<PotatoChartPoint,'region'>&{region:'ORIGINS4';coverage:['DE','FR','NL','DK']};
 export type PotatoChartSnapshot={version:2;points:PotatoChartPoint[];originalSeries?:PotatoOriginalPoint[];areas:PotatoArea[];lastCheckedAt?:string;lastSuccessfulFetchAt?:string;lastError?:string;jrc?:{latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;documents?:{sourceUrl:string;sha256:string;text:string}[]};};
 export type PotatoChartPeriod=3|5|10|'all';
-export const REGION_LABELS:Record<PotatoChartRegion,string>={NL:'네덜란드',DK:'덴마크',DE:'독일',EU27_2020:'EU27'};
+export const REGION_LABELS:Record<PotatoChartRegion,string>={NL:'Netherlands',DK:'Denmark',DE:'Germany',EU27_2020:'EU27'};
 export function potatoChartYears(points:{year:number}[],period:PotatoChartPeriod):number[]{
  if(!points.length)return [];const latest=Math.max(...points.map(p=>p.year)),first=period==='all'?Math.min(...points.map(p=>p.year)):latest-period+1;
  return Array.from({length:latest-first+1},(_,i)=>first+i);

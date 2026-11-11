@@ -226,7 +226,7 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
       symbol: 'MYX-FCPO1! · RBD Palm Olein',
       timeframe,
       range: timeframe,
-      source: palmPayload.source || 'MDEX (FCPO) · RBD Olein (Investing.com)',
+      source: palmPayload.source || 'MDEX (FCPO) · RBD Palm Olein (Investing.com)',
       cpoSourceUrl: palmPayload.cpoSourceUrl || TRADINGVIEW_FCPO_URL,
       oleinSourceUrl: palmPayload.oleinSourceUrl || INVESTING_OLEIN_URL,
       updatedAt: palmPayload.updatedAt,
