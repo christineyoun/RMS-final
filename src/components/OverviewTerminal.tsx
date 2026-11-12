@@ -1168,7 +1168,7 @@ text-underline-offset: 2px;
                     className="group p-3 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded border border-blue-100">{issue.category||'시장 동향'}</span>
+                      <span className="-ml-1.5 inline-flex items-center whitespace-nowrap rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-semibold leading-tight text-blue-700">{issue.category||'시장 동향'}</span>
 
                     </div>
 

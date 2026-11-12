@@ -2,6 +2,7 @@ import React,{useLayoutEffect,useRef,useState} from 'react';
 import {layoutEndpointLabels} from '../utils/chartEndpointLabels';
 
 export type ChartEndpointLabel={id:string;text:string;color:string;xPct:number;yPct:number};
+/** RMS_UNIFIED_CHART_ENDPOINTS_20261112: one pixel-size badge and dot standard for all RMS chart endpoints. */
 const badgeClass='text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm';
 
 /** Original floating badge style, shared by the multi-series charts only. */
@@ -32,7 +33,7 @@ export function ChartEndpointLabels({labels}:{labels:ChartEndpointLabel[]}){
         const end=box.top+box.height<=y?box.top+box.height:box.top;
         return <g key={box.id}>
           <line data-chart-endpoint-connector={box.id} x1={x} y1={y} x2={x} y2={end} stroke={label.color} strokeWidth="1" strokeDasharray="2 2"/>
-          <circle data-chart-endpoint-dot={box.id} cx={x} cy={y} r="3.5" fill={label.color} stroke="#ffffff" strokeWidth="1.5"/>
+          <circle data-chart-endpoint-dot={box.id} cx={x} cy={y} r="4.5" fill={label.color} stroke="#ffffff" strokeWidth="2"/>
         </g>;})}
     </svg>
     {valid.map(label=>{const box=positioned.find(b=>b.id===label.id);return <span key={label.id} data-chart-endpoint-label={label.id}
