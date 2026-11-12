@@ -1169,12 +1169,7 @@ text-underline-offset: 2px;
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded border border-blue-100">{issue.category||'시장 동향'}</span>
-                      {overviewIssueAffectedRegion(issue) && (
-                        <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                          <span className="material-symbols-outlined text-[11px] text-slate-400">location_on</span>
-                          <span>영향 지역: {overviewIssueAffectedRegion(issue)}</span>
-                        </span>
-                      )}
+
                     </div>
 
                     <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#DF0029] transition-colors leading-snug break-keep">

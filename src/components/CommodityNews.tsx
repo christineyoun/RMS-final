@@ -253,7 +253,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 className="news-card-item group p-4 bg-white border border-slate-200 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between min-w-0 cursor-pointer no-underline text-inherit"
               >
                 <div>
-                  {/* Top Bar: Category (Left) & Explicit Affected Region Label (Right) */}
+                  {/* Top Bar: Category */}
                   <div className="flex items-center justify-between mb-2.5 gap-2">
                     <div>
                       {item.category && (
@@ -262,12 +262,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                         </span>
                       )}
                     </div>
-                    {item.affectedRegion && (
-                      <span className="text-[10px] text-slate-500 font-medium flex items-center gap-1 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                        <span className="material-symbols-outlined text-[11px] text-slate-400">location_on</span>
-                        <span>영향 지역: {item.affectedRegion}</span>
-                      </span>
-                    )}
+
                   </div>
 
                   {/* Title & Summary */}
