@@ -257,7 +257,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                   <div className="flex items-center justify-between mb-2.5 gap-2">
                     <div>
                       {item.category && (
-                        <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded border border-blue-100">
+                        <span className="-ml-1.5 inline-flex items-center whitespace-nowrap rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-semibold leading-tight text-blue-700">
                           {item.category}
                         </span>
                       )}
