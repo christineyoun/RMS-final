@@ -13,6 +13,7 @@
 export type VerifiedRegionArticle = {
   affectedRegion?: unknown;
   affected_region?: unknown;
+  sourceHeadline?: unknown;
   originalUrl?: unknown;
   publishedAt?: unknown;
   linkStatus?: unknown;
@@ -21,26 +22,31 @@ export type VerifiedRegionArticle = {
 };
 
 const names: ReadonlyArray<{label: string; forms: readonly RegExp[]}> = [
-  {label:'미국',forms:[/\bUnited States\b/gi,/\bU\.S\.(?=\W|$)/gi,/\bUSA\b/g,/미국/g]},
-  {label:'캐나다',forms:[/\bCanada\b/gi,/캐나다/g]},
-  {label:'멕시코',forms:[/\bMexico\b/gi,/멕시코/g]},
-  {label:'브라질',forms:[/\bBrazil\b/gi,/브라질/g]},
-  {label:'아르헨티나',forms:[/\bArgentina\b/gi,/아르헨티나/g]},
+  {label:'미국',forms:[/\bUnited States\b/gi,/\bU\.S\.(?=\W|$)/gi,/\bUSA\b/gi,/미국/g]},
+  {label:'캐나다',forms:[/\bCanada\b/gi,/\bCanadian\b/gi,/캐나다/g]},
+  {label:'멕시코',forms:[/\bMexico\b/gi,/\bMexican\b/gi,/멕시코/g]},
+  {label:'브라질',forms:[/\bBrazil\b/gi,/\bBrazilian\b/gi,/브라질/g]},
+  {label:'아르헨티나',forms:[/\bArgentina\b/gi,/\bArgentine\b/gi,/아르헨티나/g]},
   {label:'영국',forms:[/\bUnited Kingdom\b/gi,/\bBritain\b/gi,/\bBritish\b/gi,/영국/g]},
-  {label:'독일',forms:[/\bGermany\b/gi,/독일/g]},
-  {label:'프랑스',forms:[/\bFrance\b/gi,/프랑스/g]},
-  {label:'이탈리아',forms:[/\bItaly\b/gi,/이탈리아/g]},
-  {label:'스페인',forms:[/\bSpain\b/gi,/스페인/g]},
-  {label:'우크라이나',forms:[/\bUkraine\b/gi,/우크라이나/g]},
-  {label:'러시아',forms:[/\bRussia\b/gi,/러시아/g]},
-  {label:'중국',forms:[/\bChina\b/gi,/중국/g]},
-  {label:'인도',forms:[/\bIndia\b/gi,/인도(?!네시아)/g]},
-  {label:'인도네시아',forms:[/\bIndonesia\b/gi,/인도네시아/g]},
-  {label:'말레이시아',forms:[/\bMalaysia\b/gi,/말레이시아/g]},
-  {label:'태국',forms:[/\bThailand\b/gi,/태국/g]},
-  {label:'베트남',forms:[/\bVietnam\b/gi,/베트남/g]},
-  {label:'호주',forms:[/\bAustralia\b/gi,/호주/g]},
-  {label:'일본',forms:[/\bJapan\b/gi,/일본/g]},
+  {label:'네덜란드',forms:[/\bNetherlands\b/gi,/\bDutch\b/gi,/\bNederland\b/gi,/네덜란드/g]},
+  {label:'독일',forms:[/\bGermany\b/gi,/\bGerman\b/gi,/독일/g]},
+  {label:'벨기에',forms:[/\bBelgium\b/gi,/\bBelgian\b/gi,/벨기에/g]},
+  {label:'프랑스',forms:[/\bFrance\b/gi,/\bFrench\b/gi,/프랑스/g]},
+  {label:'이탈리아',forms:[/\bItaly\b/gi,/\bItalian\b/gi,/이탈리아/g]},
+  {label:'스페인',forms:[/\bSpain\b/gi,/\bSpanish\b/gi,/스페인/g]},
+  {label:'루마니아',forms:[/\bRomania\b/gi,/\bRomanian\b/gi,/루마니아/g]},
+  {label:'폴란드',forms:[/\bPoland\b/gi,/\bPolish\b/gi,/폴란드/g]},
+  {label:'우크라이나',forms:[/\bUkraine\b/gi,/\bUkrainian\b/gi,/우크라이나/g]},
+  {label:'러시아',forms:[/\bRussia\b/gi,/\bRussian\b/gi,/러시아/g]},
+  {label:'중국',forms:[/\bChina\b/gi,/\bChinese\b/gi,/중국/g]},
+  {label:'인도',forms:[/\bIndia\b/gi,/\bIndian\b/gi,/인도(?!네시아)/g]},
+  {label:'인도네시아',forms:[/\bIndonesia\b/gi,/\bIndonesian\b/gi,/인도네시아/g]},
+  {label:'말레이시아',forms:[/\bMalaysia\b/gi,/\bMalaysian\b/gi,/말레이시아/g]},
+  {label:'스리랑카',forms:[/\bSri Lanka\b/gi,/\bSri Lankan\b/gi,/스리랑카/g]},
+  {label:'태국',forms:[/\bThailand\b/gi,/\bThai\b/gi,/태국/g]},
+  {label:'베트남',forms:[/\bVietnam\b/gi,/\bVietnamese\b/gi,/베트남/g]},
+  {label:'호주',forms:[/\bAustralia\b/gi,/\bAustralian\b/gi,/호주/g]},
+  {label:'일본',forms:[/\bJapan\b/gi,/\bJapanese\b/gi,/일본/g]},
   {label:'한국',forms:[/\bSouth Korea\b/gi,/\bRepublic of Korea\b/gi,/대한민국|한국/g]}
 ];
 
@@ -75,10 +81,35 @@ export function verifiedAffectedRegion(article:VerifiedRegionArticle):string {
   if(excerpt.length<60)return '';
   // Bounded source text; no page fetch, no AI-generated summary inspection.
   const passage=excerpt.slice(0,5000);
-  const matches=names.map(({label,forms})=>({label,count:forms.reduce((sum,re)=>sum+[...passage.matchAll(re)].length,0)}))
-    .filter(entry=>entry.count>0);
-  if(matches.length!==1||matches[0].count<2)return '';
-  return matches[0].label;
+  const hits=(value:string,items:typeof names)=>items.map(({label,forms})=>({
+    label,count:forms.reduce((sum,re)=>sum+[...value.matchAll(re)].length,0)
+  })).filter(entry=>entry.count>0);
+  // The headline is original publisher metadata, not an AI-created Korean title.
+  // A headline's named location must also appear in the verified publisher excerpt.
+  const headline=text(r.sourceHeadline);
+  const articleHeadline=text((article as VerifiedRegionArticle & {sourceHeadline?:unknown}).sourceHeadline);
+  if(headline && articleHeadline && headline!==articleHeadline)return '';
+  const excerptCountries=hits(passage,names);
+  const headlineCountries=hits(headline,names);
+  if(headlineCountries.length>0){
+    if(headlineCountries.length>2)return '';
+    if(!headlineCountries.every(c=>excerptCountries.some(e=>e.label===c.label)))return '';
+    return headlineCountries.map(x=>x.label).join('·');
+  }
+  const scopes:typeof names=[
+    {label:'유럽',forms:[/\bEuropean Union\b/gi,/\bEurope\b/gi,/\bEuropean\b/gi,/\bEU(?:-\d+)?\b/gi,/유럽/g]},
+    {label:'흑해',forms:[/\bBlack Sea\b/gi,/흑해/g]},
+    {label:'동남아시아',forms:[/\bSoutheast Asia\b/gi,/\bSouth-East Asia\b/gi,/동남아시아/g]},
+    {label:'글로벌',forms:[/\bGlobal\b/gi,/\bWorldwide\b/gi,/\bWorld Market\b/gi,/전 세계/g]}
+  ];
+  const headlineScopes=hits(headline,scopes);
+  if(headlineScopes.length===1 && hits(passage,scopes).some(e=>e.label===headlineScopes[0].label)){
+    return headlineScopes[0].label;
+  }
+  // Without focused publisher headline evidence, allow only a single country
+  // mentioned independently at least twice. Never pick one of several countries.
+  if(excerptCountries.length===1 && excerptCountries[0].count>=2)return excerptCountries[0].label;
+  return '';
 }
 
 /** In-memory view only; retained approved publications are never rewritten. */
@@ -86,4 +117,13 @@ export function withVerifiedAffectedRegion<T extends VerifiedRegionArticle>(arti
   const region=verifiedAffectedRegion(article);
   if(!region || (text(article.affectedRegion)===region && text(article.affected_region)===region))return article;
   return {...article,affectedRegion:region,affected_region:region};
+}
+
+/** For a NEW accepted AI summary, upstream model/search geography is provisional.
+ * Do not persist it as approved. Only a matching independently verified original
+ * publisher receipt may supply location. Existing saved articles still use
+ * withVerifiedAffectedRegion and retain their original labels unchanged. */
+export function withFreshVerifiedAffectedRegion<T extends VerifiedRegionArticle>(article:T):T {
+  const candidate={...article,affectedRegion:'',affected_region:''} as T;
+  return withVerifiedAffectedRegion(candidate);
 }

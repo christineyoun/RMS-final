@@ -157,7 +157,8 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 title:String(art.title ?? art.title_kr ?? ''),
                 summary:String(art.summary ?? art.summary_kr ?? ''),
                 category:art.category,
-                affectedRegion:art.affectedRegion ?? art.affected_region
+                affectedRegion:art.affectedRegion ?? art.affected_region,
+                sourceEvidenceOnly:true
               });
               return {
                 id: `mi-${commodityId}-${idx}`,

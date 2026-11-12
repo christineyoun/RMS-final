@@ -74,7 +74,7 @@ const countryMentionsKo=(()=>{
  const us=result.get('미국'); if(us)add('United States','United States','미국');
  return [...result.values()].map(list=>list[0]);
 })();
-const escaped=(value:string)=>value.replace(/[\x5c^$.*+?()[\]{}|]/g,'\\const categoryRules:ReadonlyArray<[string,RegExp]>=');
+const escaped=(value:string)=>value.replace(/[\\^$.*+?()[\]{}|]/g,'\\$&');
 function explicitlyNamedCountries(text:string):string[]{
  const spans:{start:number;end:number;korean:string}[]=[];
  for(const {english,korean} of countryMentionsKo){
@@ -129,12 +129,12 @@ const categoryRules:ReadonlyArray<[string,RegExp]>=[
  ['수급 전망',/(?:수급|공급|재고|생산|작황|수확|수요|shortage|stocks?|supply|demand|harvest)/i],
  ['정책 동향',/(?:관세|무역 정책|수출세|quota|tariff|policy)/i],
 ];
-export function marketNewsCardMetadata(a:{title?:string;summary?:string;category?:string;affectedRegion?:string}):{category:string;affectedRegion:string}{
+export function marketNewsCardMetadata(a:{title?:string;summary?:string;category?:string;affectedRegion?:string;sourceEvidenceOnly?:boolean}):{category:string;affectedRegion:string}{
  const text=String(a.title||'')+' '+String(a.summary||'');
  const category=String(a.category||'').trim()||categoryRules.find(([,r])=>r.test(text))?.[0]||'시장 동향';
  const saved=String(a.affectedRegion||'').trim();
  const affectedRegion=hasUsefulRegion(saved)
   ? koreanAffectedRegionLabel(saved)
-  : inferredAffectedRegion(a.title||'',a.summary||'');
+  : a.sourceEvidenceOnly ? '미확인' : inferredAffectedRegion(a.title||'',a.summary||'');
  return {category,affectedRegion};
 }

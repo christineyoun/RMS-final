@@ -18,9 +18,15 @@ test('evidence-stage source pool does not drop older candidate when two are rece
  const articles=['2026-10-20','2026-11-04','2026-11-03','2026-10-25'].map((publishedAt,i)=>({publishedAt,sourceName:'Publisher '+i,originalUrl:'https://test.invalid/'+i}));
  assert.deepEqual(focusOnFreshVerifiedNews(articles,now).map(a=>a.originalUrl),[articles[1].originalUrl,articles[2].originalUrl,articles[0].originalUrl,articles[3].originalUrl]);
 });
-test('news labels always present; source metadata authoritative',()=>{
- const a=marketNewsCardMetadata({title:'태국 타피오카 가격 하락',summary:'베트남 생산량이 감소했습니다.'});
- assert.equal(a.affectedRegion,'태국·베트남');assert(a.category);
- assert.deepEqual(marketNewsCardMetadata({title:'China palm oil stocks',summary:'가격 하락',category:'공급 전망',affectedRegion:'동아시아'}),{category:'공급 전망',affectedRegion:'동아시아'});
- assert.equal(marketNewsCardMetadata({title:'옥수수 가격',summary:'옥수수 가격 변동'}).affectedRegion,'미확인');
+test('news labels always present; verified source metadata authoritative',()=>{
+ const article={title:'태국 타피오카 가격 하락',summary:'베트남 생산량이 감소했습니다.'};
+ const verified=marketNewsCardMetadata({...article,sourceEvidenceOnly:true});
+ assert.equal(verified.affectedRegion,'미확인', 'Verified MI cannot invent a region from an AI-generated title or summary');
+ assert(verified.category);
+ assert.equal(marketNewsCardMetadata({...article,affectedRegion:'태국·베트남',sourceEvidenceOnly:true}).affectedRegion,'태국·베트남','Previously approved multi-region metadata is preserved');
+ assert.deepEqual(marketNewsCardMetadata({title:'China palm oil stocks',summary:'가격 하락',category:'공급 전망',affectedRegion:'동아시아',sourceEvidenceOnly:true}),{category:'공급 전망',affectedRegion:'동아시아'});
+ assert.equal(marketNewsCardMetadata({title:'옥수수 가격',summary:'옥수수 가격 변동',sourceEvidenceOnly:true}).affectedRegion,'미확인');
+ // Preserve the separate legacy presentational helper contract. A title country
+ // has priority over a different background country mentioned only in a summary.
+ assert.equal(marketNewsCardMetadata(article).affectedRegion,'태국');
 });

@@ -43,7 +43,7 @@ import {planNewsSummaryRepair} from './newsSummaryRepair.ts';
 import {NEWS_SUMMARY_EDITORIAL_GUIDANCE,summarizeNewsConsistency} from './newsSummaryConsistency.ts';
 import {planEvidenceBoundEditorialRevision,improvedEditorialRevision} from './newsSummaryEditorialRevision.ts';
 import {previouslyVerifiedEditorialSources} from './newsPreviouslyVerifiedEditorial.ts';
-import {withVerifiedAffectedRegion} from '../utils/verifiedAffectedRegion.ts';
+import {withFreshVerifiedAffectedRegion} from '../utils/verifiedAffectedRegion.ts';
 
 export type SourceType = 'news' | 'official' | 'company';
 
@@ -114,7 +114,10 @@ export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSo
  const groundedArticles: MarketArticle[] = verifiedLocked.flatMap((lockedMeta) => {
    const sumItem = sumMap.get(lockedMeta.rawId);
    if(!hasMarketArticleBody(lockedMeta.rawSnippet,lockedMeta.rawTitle)){summaryRejections.push({url:lockedMeta.originalUrl,reason:'article-body-unavailable'});return [];}
-   if(options.requireEvidenceIds||sumItem?.evidenceIds!==undefined){
+   // An omitted response item has no evidence IDs to validate. Record the
+   // actual model-output failure, not an incorrectly inferred evidence mismatch.
+   if(!sumItem){summaryRejections.push({url:lockedMeta.originalUrl,reason:'missing-model-output'});return [];}
+   if(options.requireEvidenceIds||sumItem.evidenceIds!==undefined){
     const bindingIssue=newsSourceBindingIssue(lockedMeta,sumItem?.evidenceIds,`${sumItem?.title||''} ${sumItem?.summary||''}`,sumItem?.evidenceQuote||undefined);
     if(bindingIssue){summaryRejections.push({url:lockedMeta.originalUrl,reason:bindingIssue});return [];}
    }
@@ -172,7 +175,7 @@ export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSo
      article.linkCheckedAt = new Date().toISOString();
    }
    if(key==='soybean') {
-     article.category='수급 전망'; article.affectedRegion='글로벌';article.affected_region='글로벌';
+     article.category='수급 전망';
      article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();
    }
    if(key==='corn') {
@@ -183,8 +186,9 @@ export function evaluateSavedNewsSummaries(key:string,verifiedLocked:RetrievedSo
    }
    if(verifiedOther){article.linkStatus='verified';article.linkCheckedAt=new Date().toISOString();}
    if(article.linkStatus==='verified')article.verifiedSourceEvidence={originalUrl:lockedMeta.originalUrl,publishedAt:lockedMeta.publishedAt,sourceHeadline:lockedMeta.rawTitle,excerpt:lockedMeta.rawSnippet,verifiedAt:new Date().toISOString()};
-   // Shared approved-record metadata normalizer, never an independent region search.
-   return [withVerifiedAffectedRegion(article)];
+   // New editorial output: discard unverified search/model region hints and
+   // derive geography only from this article's matching publisher receipt.
+   return [withFreshVerifiedAffectedRegion(article)];
  });
 
 

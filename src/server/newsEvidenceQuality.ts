@@ -138,7 +138,9 @@ function normalizeScale(n:number,scale:string|undefined):number {
 }
 function unitOf(text:string):string {
   // Read the attached unit, never a different quantity later in the sentence.
-  const s=text.trimStart();
+  // A hyphen joins numeric reporting periods such as 5-year to their unit.
+  const s=text.trimStart().replace(/^[-‐‑–—]\s*/, '');
+  if(/^(?:년(?:간|치)?|years?\b)/i.test(s))return 'year';
   if(/^(?:%|퍼센트|percent\b|per cent\b)/i.test(s))return 'percent';
   if(/^(?:부셸|bushels?\b|bu\b)/i.test(s))return 'bushel';
   if(/^(?:센트|(?:US\s*)?cents?\b|(?:US\s*)?¢)/i.test(s))return 'cent';
@@ -184,12 +186,27 @@ export function extractNewsQuantities(text:string):NewsQuantity[] {
     rangeUnits.set(second,context);
   }
 
+  // English publishers often spell a reporting interval out (e.g. a
+  // five-year average); Korean summaries use numerals (5년). Match only
+  // explicitly attached time units. These are language rules, not market data.
+  const englishYearWords:Record<string,number>={one:1,two:2,three:3,four:4,five:5,
+    six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,
+    fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20};
+  for(const m of value.matchAll(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)[\s‐‑–—-]+years?\b/gi)){
+    out.push({n:englishYearWords[m[1].toLowerCase()],unit:'year',original:m[0]});
+  }
+
   let skipUntil=0;
   for(const match of value.matchAll(numberPattern)) {
     const start=match.index||0,end=start+match[0].length;
     if(start<skipUntil)continue;
     if(dates.some(([a,b])=>start>=a&&start<b))continue;
-    const raw=Number(match[1].replace(/,/g,''));
+    // A single decimal comma with one or two fractional digits is a
+    // European decimal (4,75); groups of three remain thousands (5,000).
+    // Ambiguous comma groups are not reinterpreted as market prices.
+    const token=match[1];
+    const raw=Number(/^\d{1,3},\d{1,2}$/.test(token)
+      ? token.replace(',', '.') : token.replace(/,/g,''));
     if(!Number.isFinite(raw))continue;
     // Years and crop-year notation are not unsupported market-price claims.
     if(raw>=1900&&raw<=2100&&match[1].length===4&&!match[2])continue;

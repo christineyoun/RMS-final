@@ -11,6 +11,7 @@ export type RepairInput = {
 };
 export type RepairRejection = {url:string;reason:string};
 const repairable = (reason:string) =>
+  reason === 'missing-model-output' ||
   reason === 'missing-or-invalid-korean-summary' ||
   reason === 'invalid-or-missing-news-evidence-ids' ||
   reason === 'empty-evidence-quote' ||

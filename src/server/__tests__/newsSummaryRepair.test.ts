@@ -8,7 +8,7 @@ const inputs=Array.from({length:6},(_,i)=>candidate(i));
 test('retries only verified originals omitted from a batch or with invalid evidence binding',()=>{
   const accepted=[{originalUrl:inputs[0].originalUrl}];
   const rejections=[
-    {url:inputs[1].originalUrl,reason:'invalid-or-missing-news-evidence-ids'},
+    {url:inputs[1].originalUrl,reason:'missing-model-output'},
     {url:inputs[2].originalUrl,reason:'missing-or-invalid-korean-summary'},
     {url:inputs[3].originalUrl,reason:'no-specific-market-development'},
     {url:inputs[4].originalUrl,reason:'article-body-unavailable'},
