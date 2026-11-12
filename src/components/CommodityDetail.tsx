@@ -156,9 +156,9 @@ export const SOURCE_LABELS: Record<string, string> = {
   'corn': 'CBOT (CC1)',
   'soybean': 'CBOT (ZS)',
   'soybean-oil': 'CBOT (ZL)',
-  'palm-oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Palm Olein',
-  'palmoil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Palm Olein',
-  'palm_oil': 'MPOC · Bursa Malaysia FCPO / Investing.com RBD Palm Olein',
+  'palm-oil': 'MPOC · Bursa Malaysia FCPO',
+  'palmoil': 'MPOC · Bursa Malaysia FCPO',
+  'palm_oil': 'MPOC · Bursa Malaysia FCPO',
   'sugar': 'ICE (SB)',
   'potato-starch': 'Eurostat · 원료감자 생산 대리지표',
   'tapioca-starch': 'TTSA (TS)',
@@ -267,6 +267,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const isCorn = commodity.id === 'corn';
   const isSoybean = commodity.id === 'soybean';
   const isSoybeanOil = commodity.id === 'soybean-oil';
+  // RMS_PALM_FCPO_ONLY_UI_20261112: hide RBD Palm Olein presentation; keep its data and pipeline.
+  const DISPLAY_PALM_OLEIN_IN_UI = false;
   const isPalmOil = commodity.id === 'palm-oil' || commodity.id === 'palmoil' || commodity.id === 'palm_oil';
   const isSugar = commodity.id === 'sugar';
   const isPotatoStarch = commodity.id === 'potato-starch';
@@ -349,7 +351,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const rawSourceSeries = filterSeriesByTimeframe(fullCombinedSeries, activeTimeframe);
 
-    const pointsData = rawSourceSeries.map((p) => {
+    const visiblePalmRows = DISPLAY_PALM_OLEIN_IN_UI ? rawSourceSeries : rawSourceSeries.filter((p:any) => Number.isFinite(p.cpoUsd ?? p.usdPerMT));
+    const pointsData = visiblePalmRows.map((p) => {
       // 1. Read raw FCPO MYR settlement price (checking all JSON keys)
       const rawMyr = p.cpoMyr ?? p.centsPerBushel ?? p.priceMyr;
 
@@ -383,7 +386,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       };
     });
 
-    const allPrices = pointsData.flatMap(d => [d.cpoPrice, d.oleinPrice]).filter(Number.isFinite);
+    const allPrices = pointsData.flatMap(d => DISPLAY_PALM_OLEIN_IN_UI ? [d.cpoPrice, d.oleinPrice] : [d.cpoPrice]).filter(Number.isFinite);
     if(!allPrices.length)return null;
     const minPrice = Math.min(...allPrices);
     const maxPrice = Math.max(...allPrices);
@@ -394,7 +397,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const valRange = maxVal - minVal || 1;
 
     const width = 500;
-    const height = 150;
+    // RMS_PALM_SINGLE_CHART_PARITY_20261112: same 500x200 plot geometry as soybean.
+    const height = 200;
     const padTop = 15;
     const padBottom = 15;
     const usableHeight = height - padTop - padBottom;
@@ -421,7 +425,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     const cpoLinePath = buildSplinePath(coords.filter(c=>Number.isFinite(c.yCpo)).map(c => ({ x: c.x, y: c.yCpo })));
     const oleinLinePath = buildSplinePath(coords.filter(c=>Number.isFinite(c.yOlein)).map(c => ({ x: c.x, y: c.yOlein })));
     const cpoCoords=coords.filter(c=>Number.isFinite(c.yCpo));
-    const cpoAreaPath = cpoLinePath ? `${cpoLinePath} L ${cpoCoords.at(-1)?.x??0},150 L ${cpoCoords[0]?.x??0},150 Z` : '';
+    const cpoAreaPath = cpoLinePath ? `${cpoLinePath} L ${cpoCoords.at(-1)?.x??0},${height} L ${cpoCoords[0]?.x??0},${height} Z` : '';
 
     const formatDateFromTs = (ts: number): string => {
       const d = new Date(ts);
@@ -1649,10 +1653,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     if(!isPalmOil)return null;
     const rows=fullYearHistoryData?.data?.length?fullYearHistoryData.data:palmObservedSeries;
     const cpo=palmClosingRange(rows,'cpo'),olein=palmClosingRange(rows,'olein');
-    if(!cpo||!olein)return null;
+    if(!cpo || (DISPLAY_PALM_OLEIN_IN_UI && !olein))return null;
     const convert=(value:number)=>currency==='KRW'?Math.round(value*palmDisplayRate):Number((value*palmDisplayRate).toFixed(2));
     return {cpoCurrent:convert(cpo.current),cpoLow:convert(cpo.low),cpoHigh:convert(cpo.high),cpoPct:cpo.pct,
-      oleinCurrent:convert(olein.current),oleinLow:convert(olein.low),oleinHigh:convert(olein.high),oleinPct:olein.pct};
+      oleinCurrent:olein?convert(olein.current):NaN,oleinLow:olein?convert(olein.low):NaN,oleinHigh:olein?convert(olein.high):NaN,oleinPct:olein?.pct??NaN};
   }, [isPalmOil,fullYearHistoryData,palmObservedSeries,currency,palmDisplayRate]);
 
   const wheat52WeekStats = useMemo(() => {
@@ -2018,7 +2022,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   {isWheat
                     ? 'CBOT: SRW · KCBT: HRW · MIAX: HRS'
                     : isPalmOil
-                    ? 'Bursa FCPO · RBD Palm Olein'
+                    ? (DISPLAY_PALM_OLEIN_IN_UI ? 'Bursa FCPO · RBD Palm Olein' : 'Bursa FCPO')
                     : isCorn
                     ? 'CBOT: CC1'
                     : isSoybean
@@ -2203,6 +2207,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   >
                     Bursa FCPO ↗
                   </a>
+                  {DISPLAY_PALM_OLEIN_IN_UI && (<>
                   <span>·</span>
                   <a
                     href="https://www.investing.com/commodities/rbd-palm-olein"
@@ -2211,7 +2216,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#2563EB] transition-colors font-normal font-sans"
                   >
                     RBD Palm Olein ↗
-                  </a>
+                  </a></>)}
                 </div>
               ) : isPotatoStarch ? (
                 <span className="rms-source inline-flex items-baseline gap-1">출처: <a
@@ -2396,8 +2401,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         )}
 
         {/* Metric Area: Palm Oil Dual Cards (CPO & Palm Olein) */}
-        {isPalmOil && palmMetrics && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {isPalmOil && DISPLAY_PALM_OLEIN_IN_UI && palmMetrics && (
+          <div className={DISPLAY_PALM_OLEIN_IN_UI ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
             {/* Card 1: CPO (Raw Palm Oil) */}
             <div className="bg-[#fafbfc] border border-[#e5e7eb] rounded-lg p-3.5 space-y-2">
               <div className="flex items-center justify-between">
@@ -2447,7 +2452,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             </div>
 
             {/* Card 2: RBD Olein (Refined Olein) */}
-            <div className="bg-[#fafbfc] border border-[#e5e7eb] rounded-lg p-3.5 space-y-2">
+            {DISPLAY_PALM_OLEIN_IN_UI && (
+<div className="bg-[#fafbfc] border border-[#e5e7eb] rounded-lg p-3.5 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0"></span>
@@ -2494,6 +2500,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 </div>
               </div>
             </div>
+)}
           </div>
         )}
 
@@ -2697,194 +2704,82 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           </ChartCanvas>
         ) : isPalmOil && palmChartData ? (
           <div className="h-68 sm:h-76 w-full bg-[#fafbfc] border border-[#f3f4f6] rounded-lg p-4 flex flex-col justify-between relative overflow-visible select-none">
-            {/* Top Legend and Range Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#6b7280] font-mono gap-3 relative z-10 bg-[#fafbfc] w-full">
-              <div className="flex items-center gap-3 shrink-0 flex-wrap">
-                <span className="flex items-center gap-1 font-semibold text-slate-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#DF0029]"></span> FCPO (팜유 선물)
-                </span>
-                <span className="flex items-center gap-1 font-semibold text-slate-700">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span> RBD Palm Olein (정제 팜올레인)
-                </span>
-                <span className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-mono">
-                  {formattedSpread}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 w-full sm:max-w-md items-center">
-                <span className="text-left">최저: {prefixCurrency(formatPalmPrice(palmChartData.low), currencySymbol)}{currencyLabel}</span>
-                <span className="text-center">평균: {prefixCurrency(formatPalmPrice(palmChartData.avg), currencySymbol)}{currencyLabel}</span>
-                <span className="text-right">최고: {prefixCurrency(formatPalmPrice(palmChartData.high), currencySymbol)}{currencyLabel}</span>
-              </div>
+            {/* Same minimum / average / maximum row as the single-commodity charts. */}
+            <div className="grid grid-cols-3 w-full items-center text-xs text-[#6b7280] font-mono relative z-10 bg-[#fafbfc]">
+              <span className="text-left">최저: {formatChartPrice(palmChartData.low)}</span>
+              <span className="text-center">평균: {formatChartPrice(palmChartData.avg)}</span>
+              <span className="text-right">최고: {formatChartPrice(palmChartData.high)}</span>
             </div>
 
-            <div
-              className="relative h-48 sm:h-52 w-full flex items-center justify-center my-2 cursor-crosshair group"
-              onMouseMove={handleChartMouseMove}
-              onMouseLeave={handleChartMouseLeave}
-            >
-              <svg className="w-full h-full overflow-visible" fill="none" preserveAspectRatio="none" viewBox="0 0 500 150">
+            <div className="relative h-48 sm:h-52 w-full flex items-center justify-center my-2 cursor-crosshair group" onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
+              <svg className="w-full h-full text-[#DF0029] overflow-visible" fill="none" preserveAspectRatio="none" viewBox="0 0 500 200">
                 <defs>
-                  <linearGradient id="grad-palm-cpo" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#DF0029" stopOpacity="0.15" />
+                  <linearGradient id="grad-palm-fcpo-single" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#DF0029" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="#DF0029" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-
-                {/* Horizontal clean gridlines */}
                 {palmChartData.ticks.map((tick, idx) => (
-                  <line
-                    key={`palm-grid-${idx}`}
-                    x1={0}
-                    y1={tick.y}
-                    x2={500}
-                    y2={tick.y}
-                    stroke="#F1F5F9"
-                    strokeWidth={1}
-                  />
+                  <line key={`palm-grid-${idx}`} x1={0} y1={tick.y} x2={500} y2={tick.y} stroke="#F1F5F9" strokeWidth={1} />
                 ))}
-
-                {/* Subtle Area Fill under CPO */}
-                <path
-                  d={palmChartData.cpoAreaPath}
-                  fill="url(#grad-palm-cpo)"
-                />
-
-                {/* 1. CPO Line (Bursa Malaysia FCPO) */}
-                <path
-                  d={palmChartData.cpoLinePath}
-                  stroke="#DF0029"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-
-                {/* 2. Palm Olein Line */}
-                <path
-                  d={palmChartData.oleinLinePath}
-                  stroke="#2563EB"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Hover Snap Indicator */}
+                <path d={palmChartData.cpoAreaPath} fill="url(#grad-palm-fcpo-single)" />
+                <path d={palmChartData.cpoLinePath} stroke="#DF0029" strokeWidth="2.5" strokeLinecap="round" />
                 {palmCrosshairState?.active && (
                   <g>
-                    {/* Vertical Guide Line */}
-                    <line
-                      x1={palmCrosshairState.snappedX}
-                      y1={0}
-                      x2={palmCrosshairState.snappedX}
-                      y2={150}
-                      stroke="#94a3b8"
-                      strokeWidth="1"
-                      strokeDasharray="3 3"
-                    />
-
-                    {/* CPO Dot */}
-                    {Number.isFinite(palmCrosshairState.yCpo) && <circle
-                      cx={palmCrosshairState.snappedX}
-                      cy={palmCrosshairState.yCpo}
-                      r="4.5"
-                      fill="#DF0029"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />}
-                    {/* Olein Dot */}
-                    {Number.isFinite(palmCrosshairState.yOlein) && <circle
-                      cx={palmCrosshairState.snappedX}
-                      cy={palmCrosshairState.yOlein}
-                      r="4.5"
-                      fill="#2563EB"
-                      stroke="#ffffff"
-                      strokeWidth="2"
-                    />}
+                    <line x1={palmCrosshairState.snappedX} y1={0} x2={palmCrosshairState.snappedX} y2={200}
+                      stroke="#94a3b8" strokeWidth="1" strokeDasharray="3 3" />
+                    {Number.isFinite(palmCrosshairState.yCpo) && (
+                      <circle cx={palmCrosshairState.snappedX} cy={palmCrosshairState.yCpo} r="4.5"
+                        fill="#DF0829" stroke="#ffffff" strokeWidth="2" />
+                    )}
                   </g>
                 )}
-                {[{point:palmChartData.lastCpo,color:'#DF0029'},{point:palmChartData.lastOlein,color:'#2563EB'}].map(({point,color},idx)=>point&&<circle key={idx} cx={point.x} cy={idx===0?point.yCpo:point.yOlein} r="3.5" fill={color} stroke="#ffffff" strokeWidth="1.5"/>)}
-
+                {/* RMS_UNIFIED_CHART_ENDPOINTS_20261112: final FCPO endpoint is drawn in the common CSS-pixel overlay below. */}
               </svg>
 
-              {/* Stacked Right Y-Axis Numeric Tick Labels */}
               <div className="absolute right-1 top-0 bottom-0 w-20 pointer-events-none z-0">
-                {palmChartData.ticks.map((tick, idx) => (
-                  <span
-                    data-chart-axis-label
-                    key={`palm-tick-label-${idx}`}
-                    className="absolute right-0 text-[10px] text-slate-400 font-mono transform -translate-y-1/2 bg-transparent select-none whitespace-nowrap z-0"
-                    style={{ top: `${(tick.y / 150) * 100}%` }}
-                  >
-                    {prefixCurrency(formatPalmPrice(tick.value), currencySymbol)}{currencyLabel}
+                {palmChartData.ticks.map((tick,idx) => (
+                  <span key={`palm-tick-${idx}`} className="absolute right-0 text-[10px] text-slate-400 font-mono transform -translate-y-1/2 bg-transparent select-none whitespace-nowrap z-0"
+                    style={{top:`${(tick.y/200)*100}%`}}>
+                    {prefixCurrency(Math.round(tick.value).toLocaleString('en-US'),currencySymbol)}{currencyLabel}
                   </span>
                 ))}
               </div>
 
-              <ChartEndpointLabels labels={[
-                ...(palmChartData.lastCpo?[{id:'cpo',text:`FCPO ${prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}${currencyLabel}`,color:'#DF0029',xPct:palmChartData.lastCpo.x/5,yPct:palmChartData.lastCpo.yCpo/1.5}]:[]),
-                ...(palmChartData.lastOlein?[{id:'olein',text:`RBD Palm Olein ${prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}${currencyLabel}`,color:'#2563EB',xPct:palmChartData.lastOlein.x/5,yPct:palmChartData.lastOlein.yOlein/1.5}]:[]),
-              ]}/>
+              {/* RMS_UNIFIED_CHART_ENDPOINTS_20261112: exactly the same renderer as wheat, potato and other single charts. */}
+              {palmChartData.lastCpo && (
+                <ChartEndpointLabels labels={[{
+                  id:'fcpo', text:formatChartPrice(palmChartData.lastCpo.cpoPrice),
+                  color:'#DF0829', xPct:palmChartData.lastCpo.x/5,
+                  yPct:palmChartData.lastCpo.yCpo/2,
+                }]}/>
+              )}
 
-              {/* X-Axis Active Date Badge (Bottom Border) */}
               {palmCrosshairState?.active && (
-                <div
-                  className="absolute bottom-0 pointer-events-none z-20"
-                  style={{
-                    left: `${palmCrosshairState.xPct}%`,
-                    transform:
-                      palmCrosshairState.xPct <= 5
-                        ? 'translate(0, 0)'
-                        : palmCrosshairState.xPct >= 95
-                        ? 'translate(-100%, 0)'
-                        : 'translate(-50%, 0)',
-                  }}
-                >
+                <div className="absolute bottom-0 pointer-events-none z-20"
+                  style={{left:`${palmCrosshairState.xPct}%`,transform:palmCrosshairState.xPct<=5?'translate(0, 0)':palmCrosshairState.xPct>=95?'translate(-100%, 0)':'translate(-50%, 0)'}}>
                   <span className="bg-[#0F172A] text-white font-mono text-[11px] px-2 py-0.5 rounded shadow-sm whitespace-nowrap block font-semibold">
                     {palmCrosshairState.date}
                   </span>
                 </div>
               )}
-
-              {/* Floating Multi-Class Hover Tooltip Card */}
               {palmCrosshairState?.active && (
-                <div
-                  className="absolute top-2 pointer-events-none z-30 bg-white/95 backdrop-blur-xs border border-slate-200 shadow-md rounded p-2.5 text-xs font-mono space-y-1"
-                  style={{ left: palmCrosshairState.xPct > 55 ? '12px' : 'auto', right: palmCrosshairState.xPct > 55 ? 'auto' : '12px' }}
-                >
+                <ChartTooltip xPct={palmCrosshairState.xPct}>
                   <div className="font-bold text-slate-800 border-b border-slate-100 pb-1 font-sans flex items-center justify-between gap-4">
                     <span>{palmCrosshairState.date}</span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-      MDEX FCPO / RBD Palm Olein BENCHMARK
-    </span>
+                    <span className="text-[10px] text-slate-500 font-mono">Bursa FCPO BENCHMARK</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 text-[#DF0029]">
-                    <span className="font-sans font-medium flex items-center gap-1">
+                    <span className="font-sans font-medium flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> FCPO:
                     </span>
-                    <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.cpoPrice), currencySymbol)}{currencyLabel}</span>
+                    <span className="font-bold">{formatChartPrice(palmCrosshairState.cpoPrice)}</span>
                   </div>
-
-                  <div className="flex items-center justify-between gap-4 text-[#2563EB]">
-                    <span className="font-sans font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Palm Olein:
-                    </span>
-                    <span className="font-bold">{prefixCurrency(formatPalmPrice(palmCrosshairState.oleinPrice), currencySymbol)}{currencyLabel}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-4 text-slate-600 border-t border-slate-100 pt-1">
-                    <span className="font-sans font-medium flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-slate-400"></span> 벤치마크 스프레드:
-                    </span>
-                    <span className="font-bold font-mono">
-                      {formatSignedCurrencyPerMt(palmCrosshairState.oleinPrice - palmCrosshairState.cpoPrice, currency)}
-                    </span>
-                  </div>
-                </div>
+                </ChartTooltip>
               )}
             </div>
-
-            {/* X-Axis Report Dates */}
             <div className="flex items-center justify-between text-[11px] text-[#9ca3af] font-mono border-t border-[#e5e7eb] pt-2">
-              <span>{palmChartData.axisLabels[0]}</span>
-              <span>{palmChartData.axisLabels[1]}</span>
-              <span>{palmChartData.axisLabels[2]}</span>
-              <span>{palmChartData.axisLabels[3]}</span>
+              {palmChartData.axisLabels.map((label,index)=><span key={index}>{label}</span>)}
             </div>
           </div>
         ) : isPalmOil ? (
@@ -2963,28 +2858,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   </g>
                 )}
 
-                {/* Connection line & point dot at the far right endpoint for live price badge */}
-                {!isPotatoStarch && livePoint && (
-                  <g>
-                    <circle
-                      cx={500}
-                      cy={liveY}
-                      r="3.5"
-                      fill="#DF0829"
-                      stroke="#ffffff"
-                      strokeWidth="1.5"
-                    />
-                    <line
-                      x1={500}
-                      y1={liveY}
-                      x2={500}
-                      y2={Math.max(0, liveY - 16)}
-                      stroke="#DF0829"
-                      strokeWidth="1"
-                      strokeDasharray="2 2"
-                    />
-                  </g>
-                )}
+                {/* RMS_UNIFIED_CHART_ENDPOINTS_20261112: final market-price marker uses the common overlay, not a stretched SVG circle. */}
               </svg>
 
               {/* Stacked Right Y-Axis Numeric Tick Labels */}
@@ -3000,31 +2874,12 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                 ))}
               </div>
 
-              {/* Permanent Fixed Live Price Badge or Latest Production */}
-              {!isPotatoStarch && latestLivePrice !== null && livePoint ? (
-                <div
-                  className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
-                  style={{
-                    top: `${(liveY / 200) * 100}%`,
-                    transform: 'translateY(-170%)'
-                  }}
-                >
-                  <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
-                    {formatChartPrice(latestLivePrice)}
-                  </span>
-                </div>
-              ) : (
-                <div
-                  className="absolute right-0 pointer-events-none z-10 transition-all duration-200"
-                  style={{
-                    top: `${isPotatoStarch ? chartData.points[chartData.points.length - 1]?.y / 200 * 100 : ((34.0 - 27.60) / (34.0 - 25.0)) * 100}%`,
-                    transform: 'translateY(-170%)'
-                  }}
-                >
-                  <span className="bg-[#DF0829] text-white px-2 py-0.5 rounded text-[11px] font-mono font-bold shadow-sm whitespace-nowrap block">
-                    {isPotatoStarch ? chartData.points[chartData.points.length - 1]?.price.toFixed(2) : '27.60'} MMT
-                  </span>
-                </div>
+              {/* RMS_UNIFIED_CHART_ENDPOINTS_20261112: common labels, dots, and dashed connectors for every single-series price chart. */}
+              {!isPotatoStarch && latestLivePrice !== null && livePoint && (
+                <ChartEndpointLabels labels={[{
+                  id:commodity.id+'-price', text:formatChartPrice(latestLivePrice),
+                  color:'#DF0829', xPct:100, yPct:liveY/2,
+                }]}/>
               )}
 
               {/* X-Axis Active Badge */}
@@ -3153,50 +3008,24 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           ) : isWheat ? (
             <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] text-xs text-slate-500">52주 가격 자료를 불러오는 중입니다.</div>
           ) : isPalmOil && palm52WeekStats ? (
-            <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-3">
+            <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-2">
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="text-[#6b7280]">52주 가격 밴드 및 위치 분석 (52-Week Range Percentile)</span>
-                <span className="font-mono text-[#111827]">
-                  범위 내 {palm52WeekStats.cpoPct}% 지점
-                </span>
+                <span className="font-mono text-[#111827]">범위 내 {palm52WeekStats.cpoPct}% 지점</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                {/* 1. CPO Bar (Red) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#DF0029]"></span> FCPO
-                    </span>
-                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.cpoPct}% 지점</span>
-                  </div>
-                  <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#DF0029] h-full rounded-full transition-all duration-500" style={{ width: `${palm52WeekStats.cpoPct}%` }}></div>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoLow), currencySymbol)}{currencyLabel}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoCurrent), currencySymbol)}{currencyLabel}</span>
-                    <span>고: {prefixCurrency(formatPalmPrice(palm52WeekStats.cpoHigh), currencySymbol)}{currencyLabel}</span>
-                  </div>
-                </div>
-
-                {/* 2. RBD Olein Bar (Blue) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-800 flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span> RBD Palm Olein
-                    </span>
-                    <span className="font-mono text-slate-600 text-[11px]">범위 내 {palm52WeekStats.oleinPct}% 지점</span>
-                  </div>
-                  <div className="w-full bg-[#e5e7eb] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#2563EB] h-full rounded-full transition-all duration-500" style={{ width: `${palm52WeekStats.oleinPct}%` }}></div>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
-                    <span>저: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinLow), currencySymbol)}{currencyLabel}</span>
-                    <span className="font-bold text-slate-800">현: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinCurrent), currencySymbol)}{currencyLabel}</span>
-                    <span>고: {prefixCurrency(formatPalmPrice(palm52WeekStats.oleinHigh), currencySymbol)}{currencyLabel}</span>
-                  </div>
-                </div>
+              <div className="w-full bg-[#e5e7eb] h-2.5 rounded-full overflow-hidden flex">
+                <div className="bg-[#DF0029] h-full rounded-full transition-all duration-500"
+                  style={{width:`${palm52WeekStats.cpoPct}%`}}></div>
               </div>
+              <div className="flex items-center justify-between text-xs font-mono text-[#6b7280]">
+                <span>52주 저점: {formatChartPrice(palm52WeekStats.cpoLow)}</span>
+                <span className="font-bold text-[#111827]">현재: {formatChartPrice(palm52WeekStats.cpoCurrent)}</span>
+                <span>52주 고점: {formatChartPrice(palm52WeekStats.cpoHigh)}</span>
+              </div>
+            </div>
+          ) : isPalmOil ? (
+            <div role="status" className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] text-xs text-slate-500">
+              FCPO 52주 가격 자료를 확인 중입니다.
             </div>
           ) : (
             <div className="p-4 bg-[#f9fafb] rounded-lg border border-[#e5e7eb] space-y-2">
