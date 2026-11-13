@@ -1,6 +1,8 @@
 /** Pure STEP 7 -> existing RMS AI card adapter. Common for all eight commodities. */
 import {auditFinalResult, type FinalResult, type EvidenceSource} from './step7-core.ts';
 import {assessStep7AiRisk,type PreviewAiRisk} from './step7-ai-risk.ts';
+import {bindOverviewTakeaway} from './step7-overview-takeaway.ts';
+import type {PublishedOverviewTakeaway} from '../../src/utils/overviewTakeaway.ts';
 
 export const COMMODITY_IDS = ['wheat','corn','soybean','soybean-oil','palm-oil','sugar','potato-starch','tapioca-starch'] as const;
 export type RmsCardData = {
@@ -10,9 +12,11 @@ export type RmsCardData = {
   /** Read-only, unapproved stand-alone test. Never use as a publication receipt. */
   rmsStep7Preview:true;
   procurementRiskPreview?:PreviewAiRisk;
+  overviewTakeaway?:PublishedOverviewTakeaway;
 };
 export type Step7Saved = {
   stage:string;status:string;commodity:string;recordedAt:string;model?:string;
+  overviewTakeawayReviewed?:boolean;
   result?:FinalResult|null;audit?:{invalidSourceIds?:string[];tooLongFactors?:string[];headlineTooLong?:boolean};
 };
 export function safePublisherOriginal(raw:string|null|undefined):raw is string {
@@ -59,6 +63,8 @@ export function adaptStep7ToRms(saved:Step7Saved,sources:EvidenceSource[]):{data
   if(!unique.size)throw Error('No cited publisher original URL available for RMS footer');
   const generated=new Date(saved.recordedAt);
   if(!Number.isFinite(generated.getTime()))throw Error('Invalid STEP7 generation timestamp');
+  const overviewTakeaway=saved.overviewTakeawayReviewed===true
+    ? bindOverviewTakeaway(r.overviewTakeaway,cited):undefined;
   const warnings=advisoryWarnings(r);
   if(riskEvaluation.warning)warnings.push(riskEvaluation.warning);
   return {data:{deskRecommendation:r.headline.trim(),
@@ -68,6 +74,7 @@ export function adaptStep7ToRms(saved:Step7Saved,sources:EvidenceSource[]):{data
     watchItems:r.monitoringFactors.map(x=>x.text.trim()),
     sources:[...unique.values()],generatedAt:generated.toISOString(),
     status:'cached',model:saved.model||'gemini',rmsStep7Preview:true,
-    ...(procurementRiskPreview?{procurementRiskPreview}:{})},
+    ...(procurementRiskPreview?{procurementRiskPreview}:{}),
+    ...(overviewTakeaway?{overviewTakeaway:{...overviewTakeaway,commodityId:saved.commodity,generatedAt:generated.toISOString()}}:{})},
     warnings,references:[...ids]};
 }

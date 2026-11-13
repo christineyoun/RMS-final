@@ -31,7 +31,11 @@ if(critical.length){
  console.warn('[STEP 7-2] Existing local card retained; no fabricated source IDs or broken JSON published.');
  process.exit(0);
 }
-const validated={...original,status:'report-created',result:review.result,audit,recordedAt:original.recordedAt};
+const overviewTakeawayReviewed=review.reviewComplete===true&&review.review?.overviewTakeawayStatus==='supported'&&
+ JSON.stringify(original.result?.overviewTakeaway)===JSON.stringify(review.result.overviewTakeaway)&&
+ ['headline','marketOutlook','bullishFactors','bearishFactors'].every(field=>
+   JSON.stringify(original.result?.[field])===JSON.stringify(review.result[field]));
+const validated={...original,status:'report-created',result:review.result,audit,recordedAt:original.recordedAt,overviewTakeawayReviewed};
 const transformed=adaptStep7ToRms(validated,evidence.sources);
 const receipt={stage:'step7-local-ui-preview',approvedForPublication:false,
  sourceResultFile:review.sourceFile,verifiedResultFile:reviewName,originalSha256:review.originalSha256,

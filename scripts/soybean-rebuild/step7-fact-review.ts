@@ -56,7 +56,13 @@ if(latest&&!retryIncomplete){
  try {
    if(!process.env.GEMINI_API_KEY){const dotenv=await import('dotenv');dotenv.default.config();}
    const key=process.env.GEMINI_API_KEY?.trim();if(!key)throw Error('GEMINI_API_KEY missing');
-   const prompt=factReviewPrompt(commodity,original.result,evidence.sources);
+   let prompt=factReviewPrompt(commodity,original.result,evidence.sources);
+   let takeawayOmittedFromPrompt=false;
+   if(prompt.length>185000&&original.result.overviewTakeaway){
+     const {overviewTakeaway: _optional,...report}=original.result;
+     prompt=factReviewPrompt(commodity,report,evidence.sources);
+     takeawayOmittedFromPrompt=true;
+   }
    if(prompt.length>185000)throw Error('Evidence prompt too long; no Gemini call made');
    const marker=path.join(dir,`step7-fact-attempt-${digest.slice(0,20)}${retryIncomplete?'-retry-v1':''}.json`);
    // Create only once: a prior failed request is NEVER silently billed again.
@@ -66,6 +72,7 @@ if(latest&&!retryIncomplete){
    const response=await new GoogleGenAI({apiKey:key}).models.generateContent({model:reviewModel,contents:prompt,config:{responseMimeType:'application/json',maxOutputTokens:16000,temperature:0.1}});
    rawText=typeof response.text==='string'?response.text:'';
    review=parseReview(rawText);usageMetadata=response.usageMetadata||null;
+   if(takeawayOmittedFromPrompt&&review)delete review.overviewTakeawayStatus;
    reviewDiagnostics={finishReason:response.candidates?.[0]?.finishReason||null,
      rawTextLength:rawText.length,parseStatus:review?'checked':'invalid-or-incomplete-json'};
    if(!review)console.warn('[STEP 7-1] Gemini response not parseable:',JSON.stringify(reviewDiagnostics));
