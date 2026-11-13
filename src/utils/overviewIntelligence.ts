@@ -1,17 +1,16 @@
 /** Deterministic excerpts of effective published fields; no independent market forecast. */
-import {decisionBrief} from './overviewDecisionBrief';
+import {decisionBrief,firstOverviewSentence} from './overviewDecisionBrief';
 import {rankOverviewIssues} from './overviewIssueRanking';
 import {rmsAiEditorial} from './rmsAiEditorial';
 import {marketIntelligenceSourceLabel} from '../components/CommodityNews';
 export const OVERVIEW_COMMODITIES=[['wheat','밀','grains'],['corn','옥수수','grains'],['soybean','대두','grains'],['soybean-oil','대두유','oils'],['palm-oil','팜유','oils'],['sugar','원당','sweeteners'],['potato-starch','감자전분','starches'],['tapioca-starch','타피오카전분','starches']] as const;
 export type SavedOverviewInput={id:string;analysis:any|null;articles:any[]};
-const sentences=(text:string)=>String(text||'').split(/(?<=다\.)\s+|\n+/u).map(t=>t.trim()).filter(Boolean);
 const group=(id:string)=>OVERVIEW_COMMODITIES.find(c=>c[0]===id)?.[2]||id;
 const label=(id:string)=>OVERVIEW_COMMODITIES.find(c=>c[0]===id)?.[1]||id;
 export function aggregateOverview(inputs:SavedOverviewInput[],now=Date.now()){
  const analyses=inputs.flatMap(({id,analysis})=>{if(!analysis?.generatedAt||!analysis.executiveSummary||!analysis.deskRecommendation)return[];const p=rmsAiEditorial(id,analysis.generatedAt,analysis.sources||[],analysis);return[{id,...analysis,...p.fields,sources:p.sources}];});
  const fragments:any[]=[];
- const opening=(a:any)=>sentences(a.executiveSummary)[0]||'';
+ const opening=(a:any)=>firstOverviewSentence(a.executiveSummary);
  // Supply burdens and constrained supply are kept separate; one sentence cannot
  // become a forecast for another crop. Sector/stance diversity precedes repeats.
  const score=(a:any)=>Number(/우선 확보|먼저 확보/.test(a.deskRecommendation))*4+Number(/장기 선구매 유보/.test(a.deskRecommendation))*3+Number(/관망|대기|유보/.test(a.deskRecommendation))*2+Number(/확보 전환/.test(a.deskRecommendation))*2;
