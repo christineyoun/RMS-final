@@ -1,3 +1,4 @@
+import { SourceLinkArrow, resolveSourceLinkArrowColorsForPdf } from './SourceLinkArrow';
 import { getDailyPublicationIssue } from '../utils/dailyPublicationIssue';
 import { issuePdfFilename, stampPdfIssue } from '../utils/pdfPublication';
 import {commodityBenchmarkDisplay,commodityComparisonDisplay} from '../services/commodityQuoteSource';
@@ -1862,6 +1863,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           if (p2) p2.style.setProperty('display', 'none', 'important');
 
           const el = clonedDoc.getElementById('commodity-pdf-page-1') as HTMLElement | null;
+          if (el) resolveSourceLinkArrowColorsForPdf(el);
           if (el) {
             el.style.width = '1200px';
             el.style.minWidth = '1200px';
@@ -1913,6 +1915,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           if (p1) p1.style.setProperty('display', 'none', 'important');
 
           const el = clonedDoc.getElementById('commodity-pdf-page-2') as HTMLElement | null;
+          if (el) resolveSourceLinkArrowColorsForPdf(el);
           if (el) {
             el.style.width = '1200px';
             el.style.minWidth = '1200px';
@@ -2181,7 +2184,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   rel="noopener noreferrer"
                   className="text-xs whitespace-nowrap text-gray-400 hover:text-[#DF0029] hover:underline transition-colors font-normal font-sans"
                 >
-                  U.S. Wheat Associates ↗
+                  U.S. Wheat Associates{'\u00a0'}<SourceLinkArrow />
                 </a></span>
               )}
             </div>
@@ -2205,7 +2208,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     rel="noopener noreferrer"
                     className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
                   >
-                    Bursa FCPO ↗
+                    Bursa FCPO{'\u00a0'}<SourceLinkArrow />
                   </a>
                   {DISPLAY_PALM_OLEIN_IN_UI && (<>
                   <span>·</span>
@@ -2215,7 +2218,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     rel="noopener noreferrer"
                     className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#2563EB] transition-colors font-normal font-sans"
                   >
-                    RBD Palm Olein ↗
+                    RBD Palm Olein{'\u00a0'}<SourceLinkArrow />
                   </a></>)}
                 </div>
               ) : isPotatoStarch ? (
@@ -2225,7 +2228,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   rel="noopener noreferrer"
                   className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
                 >
-                  Eurostat · 전체 감자 수확량 (전분 가격 아님) ↗
+                  Eurostat · 전체 감자 수확량 (전분 가격 아님){'\u00a0'}<SourceLinkArrow />
                 </a></span>
               ) : (
                 <span className="rms-source inline-flex items-baseline gap-1">출처: <a
@@ -2234,7 +2237,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   rel="noopener noreferrer"
                   className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#DF0029] transition-colors font-normal font-sans"
                 >
-                  {exchange.name} ↗
+                  {exchange.name}{'\u00a0'}<SourceLinkArrow />
                 </a></span>
               )}
             </div>

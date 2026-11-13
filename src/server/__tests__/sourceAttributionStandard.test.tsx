@@ -10,7 +10,8 @@ const html=renderToStaticMarkup(createElement(SourceAttribution,{entries:[
  {label:'Open-Meteo'},
 ]}));
 assert.equal((html.match(/<a /g)||[]).length,2,'distinct publications remain, exact duplicate URL omitted');
-assert.equal((html.match(/↗/g)||[]).length,2,'only actual links receive an arrow');
+assert.equal((html.match(/data-rms-source-link-arrow/g)||[]).length,2,'only actual links receive an SVG arrow');
+assert(!html.includes('\u2197'), 'No font-dependent arrow glyphs');
 assert(html.includes('<span>Open-Meteo</span>'));
 assert(html.includes('rms-source-entry"><span>출처: </span><a'));
 assert(!html.includes('title='));
