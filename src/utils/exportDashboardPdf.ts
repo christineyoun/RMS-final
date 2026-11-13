@@ -33,16 +33,94 @@ const inlineStylesForClone = (clonedDoc: Document) => {
 
 export const sanitizeOklchColorsForCanvas = (_clonedDoc: Document): void => {};
 
-export const exportCategoryFilteredPdf = async (category: string = 'all'): Promise<void> => {
-  const page1El = document.querySelector('.overview-page-1') as HTMLElement | null;
-  const page2El = document.querySelector('.overview-page-2') as HTMLElement | null;
+// Preserve the existing A4 body margins. The issue baseline is at 292 mm.
+const OVERVIEW_PDF_MARGIN_MM = 10;
 
+export function fitOverviewPdfPage(canvasWidth: number, canvasHeight: number, pageWidth: number, pageHeight: number) {
+  const margin = OVERVIEW_PDF_MARGIN_MM;
+  const scale = Math.min((pageWidth - 2 * margin) / canvasWidth, (pageHeight - 2 * margin) / canvasHeight);
+  const width = canvasWidth * scale;
+  return { x: (pageWidth - width) / 2, y: margin, width, height: canvasHeight * scale };
+}
+
+// html2canvas approximates text baselines. Paint just the overview pill labels
+// with their actual font metrics so the ink (and any arrow) is centered.
+export function centerOverviewPdfPills(root: HTMLElement) {
+  const doc = root.ownerDocument;
+  const view = doc.defaultView;
+  if (!view) return;
+
+  // Use the existing overview markup. The local and deployed versions may
+  // use different padding or alignment classes on these same pills.
+  root.querySelectorAll<HTMLElement>('span[class*="rounded"][class*="px-"]').forEach(pill => {
+    const pillStyle = view.getComputedStyle(pill);
+    if (pillStyle.backgroundColor === 'transparent' || pillStyle.backgroundColor === 'rgba(0, 0, 0, 0)') return;
+    const bounds = pill.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+
+    const canvas = doc.createElement('canvas');
+    canvas.width = Math.ceil(bounds.width * 2);
+    canvas.height = Math.ceil(bounds.height * 2);
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    context.scale(canvas.width / bounds.width, canvas.height / bounds.height);
+
+    const gap = parseFloat(pillStyle.columnGap) || 0;
+    const runs = Array.from(pill.childNodes).flatMap(node => {
+      const text = node.textContent?.trim();
+      if (!text) return [];
+      const style = node.nodeType === 1 ? view.getComputedStyle(node as Element) : pillStyle;
+      const font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+      context.font = font;
+      const metrics = context.measureText(text);
+      return [{ text, font, color: style.color, metrics }];
+    });
+    if (!runs.length) return;
+
+    let advance = 0;
+    let left = Infinity;
+    let right = -Infinity;
+    const positioned = runs.map(run => {
+      const x = advance;
+      left = Math.min(left, x - run.metrics.actualBoundingBoxLeft);
+      right = Math.max(right, x + run.metrics.actualBoundingBoxRight);
+      advance += run.metrics.width + gap;
+      return { ...run, x };
+    });
+    if (!Number.isFinite(left) || !Number.isFinite(right) || right <= left) return;
+
+    for (const { text, font, color, metrics, x } of positioned) {
+      context.font = font;
+      context.fillStyle = color;
+      context.fillText(text, x + (bounds.width - left - right) / 2,
+        (bounds.height + metrics.actualBoundingBoxAscent - metrics.actualBoundingBoxDescent) / 2);
+    }
+
+    // html2canvas draws this canvas directly, keeping the measured baseline.
+    // Preserve the original nodes in flow so pill sizing does not change.
+    canvas.setAttribute('aria-hidden', 'true');
+    canvas.style.cssText = 'position:absolute;max-width:none;pointer-events:none;';
+    if (pillStyle.position === 'static') pill.style.position = 'relative';
+    // Positioned children start at the padding edge, not the border edge.
+    canvas.style.top = '-' + pillStyle.borderTopWidth;
+    canvas.style.left = '-' + pillStyle.borderLeftWidth;
+    canvas.style.width = bounds.width + 'px';
+    canvas.style.height = bounds.height + 'px';
+    pill.style.setProperty('color', 'transparent', 'important');
+    for (const child of Array.from(pill.children)) {
+      (child as HTMLElement).style.setProperty('visibility', 'hidden', 'important');
+    }
+    pill.appendChild(canvas);
+  });
+}
+
+export const exportCategoryFilteredPdf = async (category: string = 'all'): Promise<void> => {
+  const page1El = document.querySelector<HTMLElement>('.overview-page-1');
+  const page2El = document.querySelector<HTMLElement>('.overview-page-2');
   if (!page1El || !page2El) return;
   const issue = await getDailyPublicationIssue();
 
-  if (document.fonts && document.fonts.ready) {
-    await document.fonts.ready;
-  }
+  if (document.fonts?.ready) await document.fonts.ready;
   await new Promise((resolve) => setTimeout(resolve, 200));
 
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
@@ -50,90 +128,48 @@ export const exportCategoryFilteredPdf = async (category: string = 'all'): Promi
     import('jspdf'),
   ]);
 
-  const pdf = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-  });
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const pages = [page1El, page2El];
 
-  const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-  const marginX = 10;
-  const marginY = 10;
-  const contentWidth = pageWidth - marginX * 2; // 190mm
+  for (const [index, page] of pages.entries()) {
+    const canvas = await html2canvas(page, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#f8fafc',
+      width: 1200,
+      windowWidth: 1200,
+      onclone: async (clonedDoc, clonedPage) => {
+        inlineStylesForClone(clonedDoc);
+        clonedDoc.querySelector<HTMLElement>(`.overview-page-${index === 0 ? 2 : 1}`)
+          ?.style.setProperty('display', 'none', 'important');
 
-  const canvasOpts = {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#f8fafc',
-    width: 1200,
-    windowWidth: 1200,
-  };
+        clonedPage.style.width = '1200px';
+        clonedPage.style.minWidth = '1200px';
+        clonedPage.style.padding = '20px';
+        clonedPage.style.backgroundColor = '#f8fafc';
+        clonedPage.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
 
-  // --- CANVAS 1 (Page 1) ---
-  const canvas1 = await html2canvas(page1El, {
-    ...canvasOpts,
-    onclone: (clonedDoc) => {
-      inlineStylesForClone(clonedDoc);
+        clonedDoc.querySelectorAll<HTMLElement>('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside')
+          .forEach(node => node.style.setProperty('display', 'none', 'important'));
+        if (clonedDoc.fonts?.ready) await clonedDoc.fonts.ready;
+        centerOverviewPdfPills(clonedPage);
+      },
+    });
 
-      const p2 = clonedDoc.querySelector('.overview-page-2') as HTMLElement | null;
-      if (p2) p2.style.setProperty('display', 'none', 'important');
-
-      const el = clonedDoc.querySelector('.overview-page-1') as HTMLElement | null;
-      if (el) {
-        el.style.width = '1200px';
-        el.style.minWidth = '1200px';
-        el.style.padding = '20px';
-        el.style.backgroundColor = '#f8fafc';
-        el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
-      }
-
-      clonedDoc.querySelectorAll('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside').forEach((node) => {
-        (node as HTMLElement).style.setProperty('display', 'none', 'important');
-      });
-    },
-  });
-
-  const imgData1 = canvas1.toDataURL('image/png');
-  const imgHeight1 = (canvas1.height * contentWidth) / canvas1.width;
-  pdf.addImage(imgData1, 'PNG', marginX, marginY, contentWidth, imgHeight1, undefined, 'FAST');
-
-  // --- CANVAS 2 (Page 2) ---
-  const canvas2 = await html2canvas(page2El, {
-    ...canvasOpts,
-    onclone: (clonedDoc) => {
-      inlineStylesForClone(clonedDoc);
-
-      const p1 = clonedDoc.querySelector('.overview-page-1') as HTMLElement | null;
-      if (p1) p1.style.setProperty('display', 'none', 'important');
-
-      const el = clonedDoc.querySelector('.overview-page-2') as HTMLElement | null;
-      if (el) {
-        el.style.width = '1200px';
-        el.style.minWidth = '1200px';
-        el.style.padding = '20px';
-        el.style.backgroundColor = '#f8fafc';
-        el.style.fontFamily = "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif";
-      }
-
-      clonedDoc.querySelectorAll('.pdf-hide, .print-hide, .export-report-btn, .export-btn-wrapper, button, header, aside').forEach((node) => {
-        (node as HTMLElement).style.setProperty('display', 'none', 'important');
-      });
-    },
-  });
-
-  const imgData2 = canvas2.toDataURL('image/png');
-  const imgHeight2 = (canvas2.height * contentWidth) / canvas2.width;
-  pdf.addPage();
-  pdf.addImage(imgData2, 'PNG', marginX, marginY, contentWidth, imgHeight2, undefined, 'FAST');
+    if (index > 0) pdf.addPage();
+    const { x, y, width, height } = fitOverviewPdfPage(canvas.width, canvas.height, pageWidth, pageHeight);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, width, height, undefined, 'FAST');
+  }
 
   stampPdfIssue(pdf, issue);
   const filename = getCategoryReportPdfFilename(category, issue);
   try {
     pdf.save(filename);
   } catch {
-    const blobUrl = pdf.output('bloburl');
-    window.open(blobUrl, '_blank');
+    window.open(pdf.output('bloburl'), '_blank');
   }
 };
 
