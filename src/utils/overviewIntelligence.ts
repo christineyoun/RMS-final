@@ -8,7 +8,7 @@ export type SavedOverviewInput={id:string;analysis:any|null;articles:any[]};
 const group=(id:string)=>OVERVIEW_COMMODITIES.find(c=>c[0]===id)?.[2]||id;
 const label=(id:string)=>OVERVIEW_COMMODITIES.find(c=>c[0]===id)?.[1]||id;
 export function aggregateOverview(inputs:SavedOverviewInput[],now=Date.now()){
- const analyses=inputs.flatMap(({id,analysis})=>{if(!analysis?.generatedAt||!analysis.executiveSummary||!analysis.deskRecommendation)return[];const p=rmsAiEditorial(id,analysis.generatedAt,analysis.sources||[],analysis);return[{id,...analysis,...p.fields,sources:p.sources}];});
+ const analyses=inputs.flatMap(({id,analysis})=>{if(!analysis?.generatedAt||!analysis.executiveSummary||!analysis.deskRecommendation)return[];const p=rmsAiEditorial(id,analysis.generatedAt,analysis.sources||[],analysis);return[{...analysis,...p.fields,id,sources:p.sources,...(p.editorial?{overviewTakeaway:undefined}:{})}];});
  const fragments:any[]=[];
  const opening=(a:any)=>firstOverviewSentence(a.executiveSummary);
  // Supply burdens and constrained supply are kept separate; one sentence cannot

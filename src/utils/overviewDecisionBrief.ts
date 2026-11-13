@@ -1,5 +1,7 @@
 /** Deterministic, source-exact excerpts from already approved STEP7 reports.
  * Overview does not run Gemini, infer market changes or invent procurement advice. */
+import {readPublishedOverviewTakeaway} from './overviewTakeaway';
+
 export const BRIEF_SECTIONS=['오늘의 시장 판단','전일 대비 주요 변화','구매 기회','공급 위험','다음 판단을 바꿀 변수'];
 type Fragment={commodity:string;field:string;excerpt:string;generatedAt:string};
 type Input={id:string;generatedAt:string;name?:string;group?:string;[key:string]:any};
@@ -53,7 +55,11 @@ export function decisionBrief(analyses:Input[]){
  const riskSelection=balanced(risk,3);
  const watch=balanced(available('watchItems'),3);
  const sections=[
-   market.map(a=>source(a,'executiveSummary',firstOverviewSentence(a.executiveSummary))),
+   market.map(a=>{
+     const takeaway=readPublishedOverviewTakeaway(a);
+     return takeaway ? source(a,'overviewTakeaway.text',takeaway)
+       : source(a,'executiveSummary',firstOverviewSentence(a.executiveSummary));
+   }),
    ['전일 비교 데이터 없음'],
    procurement.map(a=>source(a,'deskRecommendation',firstOverviewSentence(a.deskRecommendation))),
    riskSelection.map(a=>source(a,'procurementRiskPreview.summarySentenceKo',a.procurementRiskPreview.summarySentenceKo.trim())),
