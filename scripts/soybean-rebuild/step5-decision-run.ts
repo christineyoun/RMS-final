@@ -4,7 +4,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 import {GoogleGenAI} from '@google/genai';
 import {loadDecisionContext} from './step5-decision-local.ts';
-import {parseDecisionResponse,auditDecisionReferences,renderDecisionReport} from './step5-decision-core.ts';
+import {parseDecisionResponse,auditDecisionReferences,renderDecisionReport,STEP5_DECISION_RESPONSE_JSON_SCHEMA} from './step5-decision-core.ts';
 
 const c=loadDecisionContext(); // fail before API usage
 const priorRuns=fs.readdirSync(c.dir).filter(f=>/^step5-round1-decision-.*\.json$/.test(f));
@@ -21,7 +21,8 @@ const ai=new GoogleGenAI({apiKey:key});
 let response:any;
 try{
   response=await ai.models.generateContent({model,contents:c.prompt,config:{
-    responseMimeType:'application/json',maxOutputTokens:6200,temperature:0.25,
+    responseMimeType:'application/json',responseJsonSchema:STEP5_DECISION_RESPONSE_JSON_SCHEMA,
+    maxOutputTokens:6200,temperature:0.25,
   }});
 }catch(e){
   const error=e instanceof Error ? e : new Error(String(e));
@@ -48,10 +49,12 @@ if(response){
     audit?.invalidIds.length?'decision-references-need-review':
     decision.decision==='search'&&!decision.remainingGaps.length?'search-plan-needs-review':'decision-recorded';
   const usage=response.usageMetadata||null;
+  const finish=response.candidates?.[0]?.finishReason;
+  const modelFinishReason=typeof finish==='string'&&/^(?:STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER)$/.test(finish)?finish:null;
   const save={stage:'round1-evidence-sufficiency-decision',recordedAt:new Date().toISOString(),
     commodity:c.input.commodity,model,status,
     inputFiles:{step4:c.prior,step5Graded:c.graded},counts:c.input.counts,
-    decision,referenceAudit:audit,rawText,usageMetadata:usage,
+    decision,referenceAudit:audit,rawText,usageMetadata:usage,modelFinishReason,
     protected:{oldSourcesPreserved:true,allPreviousExcerptsPreserved:true,allNewExcerptsPreserved:true,
       googleSearchDisabled:true,round2SearchExecuted:false,marketOutlookGenerated:false,
       oldFilesOverwritten:false,rmsAndCloudRunUntouched:true}};
@@ -62,6 +65,7 @@ if(response){
   fs.writeFileSync(mdFile,renderDecisionReport(c.input,model,decision,audit,status,usage||undefined),
     {encoding:'utf8',flag:'wx',mode:0o600});
   console.log('[STEP5 DECISION] Status:',status);
+  console.log('[STEP5 DECISION] Finish reason:',modelFinishReason||'not-recorded');
   console.log('[STEP5 DECISION] Recommendation:',decision?.decision||'none — model output invalid');
   console.log('[STEP5 DECISION] Remaining material gaps:',decision?.remainingGaps.length??'unknown');
   console.log('[STEP5 DECISION] Old/new candidates preserved:',c.input.counts.oldExcerpts,c.input.counts.newExcerpts);
