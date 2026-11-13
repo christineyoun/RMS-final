@@ -25,9 +25,12 @@ for(const id of ['wheat','corn','soybean','soybean-oil','palm-oil','sugar','pota
  for(const removed of ['RMS 구매 조건','Gemini AI','저장 분석','자료 확인:',RMS_PROCUREMENT_CONDITION])assert(!text.includes(removed),id+': '+removed);
  for(const kept of [body.deskRecommendation,body.executiveSummary,...body.bullishFactors,...body.bearishFactors,...body.watchItems,'RMS AI 시장 전망'])assert(text.includes(kept));
  const a=$('[data-rms-ai-sources] a');assert.equal(a.length,6);assert.deepEqual(a.map((_,n)=>$(n).attr('href')).get(),links.map(s=>s.url));
- assert.equal(a.filter((_,n)=>$(n).text().trim()==='DTN\u00a0↗').length,2);
+ assert.equal(a.filter((_,n)=>$(n).text().trim()==='DTN' && $(n).find('svg[data-rms-source-link-arrow]').length===1).length,2);
+ assert(!text.includes('\u2197'));
  for(let i=0;i<links.length;i++){assert.equal(a.eq(i).attr('title'),undefined,'No native hover bubble');assert(a.eq(i).attr('aria-description')?.includes(links[i].title));assert(a.eq(i).attr('aria-description')?.includes(links[i].url));assert(!a.eq(i).attr('class')?.includes('truncate'));}
- assert($('[data-rms-ai-sources]').text().includes(' · '));assert(!$('[data-rms-procurement-condition]').length);
+ const separators = $('[data-rms-ai-sources] .rms-source-entry > span[aria-hidden="true"]')
+  .toArray().map(n => $(n).text().trim());
+ assert.deepEqual(separators, Array(links.length - 1).fill('·'));assert(!$('[data-rms-procurement-condition]').length);
 }
 for(const id of ['wheat','corn','soybean','tapioca-starch']){
  const d=JSON.parse(fs.readFileSync('.rms-stage3/snapshots/analysis-'+id+'.json','utf8')).payload.data;

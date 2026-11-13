@@ -1,3 +1,4 @@
+import { resolveSourceLinkArrowColorsForPdf } from '../components/SourceLinkArrow';
 import { getDailyPublicationIssue } from './dailyPublicationIssue';
 import { issuePdfFilename, stampPdfIssue } from './pdfPublication';
 
@@ -143,6 +144,7 @@ export const exportCategoryFilteredPdf = async (category: string = 'all'): Promi
       windowWidth: 1200,
       onclone: async (clonedDoc, clonedPage) => {
         inlineStylesForClone(clonedDoc);
+        resolveSourceLinkArrowColorsForPdf(clonedPage);
         clonedDoc.querySelector<HTMLElement>(`.overview-page-${index === 0 ? 2 : 1}`)
           ?.style.setProperty('display', 'none', 'important');
 

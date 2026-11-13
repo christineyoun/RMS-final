@@ -1,3 +1,4 @@
+import { SourceLinkArrow } from './SourceLinkArrow';
 import {commodityBenchmarkDisplay,commodityComparisonDisplay,commodityComparisonValue} from '../services/commodityQuoteSource';
 import {SourceAttribution} from './SourceAttribution';
 import {brentCostSignal} from '../utils/overviewMacroPresentation';
@@ -974,7 +975,7 @@ text-underline-offset: 2px;
                 <span
                   className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
-                  하나은행 실시간 시세 ↗
+                  하나은행 실시간 시세{'\u00a0'}<SourceLinkArrow />
                 </span>
               </div>
             </a>
@@ -1020,7 +1021,7 @@ text-underline-offset: 2px;
                 <span
                   className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer shrink-0"
                 >
-                  실시간 시세 ↗
+                  실시간 시세{'\u00a0'}<SourceLinkArrow />
                 </span>
               </div>
             </a>
@@ -1059,7 +1060,7 @@ text-underline-offset: 2px;
               <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-between gap-2">
                 <span className="font-sans text-[11px] font-medium text-slate-400 tabular-nums">{freightData?.note ? formatMacroFooterDate(freightData.note) : ''}</span>
                 <span className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer shrink-0">
-                  KOBC 공식 KCCI 지수 ↗
+                  KOBC 공식 KCCI 지수{'\u00a0'}<SourceLinkArrow />
                 </span>
               </div>
             </a>
@@ -1101,13 +1102,13 @@ text-underline-offset: 2px;
                 {policyData.sourceUrl ? (<span
                   className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline underline-offset-2 font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer"
                 >
-                  {policyData.sourceName ? policyData.sourceName+' ↗' : '원문 보기 ↗'}
+                  {policyData.sourceName || '원문 보기'}{'\u00a0'}<SourceLinkArrow />
                 </span>) : (
                   <span className={policyData.status === '관련 공식 발표 확인되지 않음'
     ? 'rms-source text-xs text-slate-600 font-semibold group-hover:text-[#DF0029] group-hover:underline underline-offset-2 transition-colors'
     : 'rms-source text-xs text-slate-500 font-normal'}>
                     {policyData.status === '관련 공식 발표 확인되지 않음' ?
-                      '모니터링 출처: ' + (policyData.sourceName || '공식 출처') + ' ↗' : '공식 출처 확인 불가'}
+                      <>모니터링 출처: {policyData.sourceName || '공식 출처'}{'\u00a0'}<SourceLinkArrow /></> : '공식 출처 확인 불가'}
                   </span>
                 )}
               </div>
@@ -1191,7 +1192,7 @@ text-underline-offset: 2px;
                         </span>
                       </div>
                       {!isInvalidOrSearchUrl(issue.url) ? (
-                        <span data-market-source className="rms-source font-sans group-hover:underline transition-colors">{issue.source}{'\u00a0'}↗</span>
+                        <span data-market-source className="rms-source font-sans group-hover:underline transition-colors">{issue.source}{'\u00a0'}<SourceLinkArrow /></span>
                       ) : (
                         <span data-market-source className="rms-source font-sans">{issue.source}</span>
                       )}

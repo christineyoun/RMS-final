@@ -1,3 +1,4 @@
+import { SourceLinkArrow } from './SourceLinkArrow';
 import React, { useState, useEffect } from 'react';
 import { Newspaper } from 'lucide-react';
 import { isInvalidOrSearchUrl } from '../utils/portalUrls';
@@ -281,7 +282,7 @@ export const CommodityNews: React.FC<{ commodityId: string; isSyncing?: boolean 
                 <div className="pt-2.5 border-t border-slate-100 flex flex-wrap gap-2 items-center justify-between text-xs text-slate-400">
                   <span className="text-[11px] font-medium text-slate-400">{formatPublicationDate(item.publishedAt)}</span>
                   <span className="rms-source" data-market-source>
-                    {marketIntelligenceSourceLabel(item.sourceName, item.originalUrl)}{targetUrl ? '\u00a0↗' : ''}
+                    {marketIntelligenceSourceLabel(item.sourceName, item.originalUrl)}{targetUrl ? <>{'\u00a0'}<SourceLinkArrow /></> : null}
                   </span>
                 </div>
               </a>
