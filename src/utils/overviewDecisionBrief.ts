@@ -3,7 +3,16 @@
 export const BRIEF_SECTIONS=['오늘의 시장 판단','전일 대비 주요 변화','구매 기회','공급 위험','다음 판단을 바꿀 변수'];
 type Fragment={commodity:string;field:string;excerpt:string;generatedAt:string};
 type Input={id:string;generatedAt:string;name?:string;group?:string;[key:string]:any};
-const firstSentence=(value:unknown)=>String(value||'').split(/(?<=다\.)\s+|\n+/u).map(v=>v.trim()).find(Boolean)||'';
+// STEP7 source IDs can sit immediately before or after the sentence period.
+const sourceId = String.raw`G\d+(?:-E\d+)?`;
+const citations = String.raw`(?:[ \t]*\([ \t]*${sourceId}(?:[ \t]*[,;][ \t]*${sourceId})*[ \t]*\))*`;
+const sentenceEnd = new RegExp(String.raw`다${citations}\.${citations}(?=\s|$)`, 'u');
+
+export function firstOverviewSentence(value: unknown): string {
+ const line = String(value || '').trim().split(/\r?\n/u, 1)[0].trim();
+ const end = sentenceEnd.exec(line);
+ return end ? line.slice(0, end.index + end[0].length) : line;
+}
 const known=(a:Input)=>a?.id&&a?.generatedAt&&Number.isFinite(Date.parse(a.generatedAt));
 const group=(a:Input)=>String(a.group||a.id);
 const display=(a:Input)=>String(a.name||a.id);
@@ -22,7 +31,7 @@ export function decisionBrief(analyses:Input[]){
  };
  const available=(field:string)=>ranked.filter(a=>{
    const values=Array.isArray(a[field])?a[field]:[a[field]];
-   return values.some(v=>firstSentence(v));
+   return values.some(v=>firstOverviewSentence(v));
  });
  const market=balanced(available('executiveSummary'),4);
  const marketIds=new Set(market.map(a=>a.id));
@@ -44,11 +53,11 @@ export function decisionBrief(analyses:Input[]){
  const riskSelection=balanced(risk,3);
  const watch=balanced(available('watchItems'),3);
  const sections=[
-   market.map(a=>source(a,'executiveSummary',firstSentence(a.executiveSummary))),
+   market.map(a=>source(a,'executiveSummary',firstOverviewSentence(a.executiveSummary))),
    ['전일 비교 데이터 없음'],
-   procurement.map(a=>source(a,'deskRecommendation',firstSentence(a.deskRecommendation))),
+   procurement.map(a=>source(a,'deskRecommendation',firstOverviewSentence(a.deskRecommendation))),
    riskSelection.map(a=>source(a,'procurementRiskPreview.summarySentenceKo',a.procurementRiskPreview.summarySentenceKo.trim())),
-   watch.map(a=>source(a,'watchItems',(Array.isArray(a.watchItems)?a.watchItems:[]).map(firstSentence).find(Boolean)||''))
+   watch.map(a=>source(a,'watchItems',(Array.isArray(a.watchItems)?a.watchItems:[]).map(firstOverviewSentence).find(Boolean)||''))
  ];
  const text=BRIEF_SECTIONS.map((heading,i)=>`[${heading}] ${sections[i].length?sections[i].join('\n'):'공개된 근거에서 선정할 항목 없음'}`).join('\n\n');
  return {text,fragments};
