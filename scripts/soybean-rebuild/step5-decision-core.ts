@@ -133,6 +133,26 @@ export function normalizeCaution(value:unknown):string|null{
   return pieces.join('; ');
 }
 
+/** Strict provider-side shape for the existing STEP5 decision parser.
+ * The parser and reference audit remain authoritative; a schema-shaped reply
+ * does not automatically authorize STEP6 search or a source claim. */
+export const STEP5_DECISION_RESPONSE_JSON_SCHEMA = {
+  type:'object',
+  properties:{
+    decision:{type:'string',enum:['search','stop','uncertain']},
+    reason:{type:'string'},
+    covered:{type:'array',maxItems:5,items:{type:'object',properties:{
+      topic:{type:'string'},assessment:{type:'string'},
+      sourceIds:{type:'array',items:{type:'string'}},
+    },required:['topic','assessment','sourceIds']}},
+    remainingGaps:{type:'array',maxItems:3,items:{type:'object',properties:{
+      topic:{type:'string'},whyImportant:{type:'string'},searchQuestion:{type:'string'},
+    },required:['topic','whyImportant','searchQuestion']}},
+    cautions:{type:'array',maxItems:3,items:{type:'string'}},
+  },
+  required:['decision','reason','covered','remainingGaps','cautions'],
+} as const;
+
 export function parseDecisionResponse(text:string):Decision|null{
   const raw=text.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
   let obj:any;

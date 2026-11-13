@@ -9,7 +9,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 import {GoogleGenAI} from '@google/genai';
 import type {ReviewItem,ReviewSource} from './step3-evidence.ts';
-import {buildPrompt,integrate,parseJsonReply,toMarkdown} from './step4-pipeline.ts';
+import {buildPrompt,integrate,parseJsonReply,toMarkdown,STEP4_OUTPUT_TOKEN_BUDGET} from './step4-pipeline.ts';
 import {commodityFromArgv,resultFolder,assertSnapshotCommodity} from './commodity-config.ts';
 
 dotenv.config();
@@ -51,28 +51,31 @@ console.log('[STEP 4] Existing A/B/source records are read-only.');
 console.log(`[STEP 4] STEP3: ${step3Name}; evidence candidates: ${candidateCount}; A/B/EXCLUDED: ${step3.items.filter(x=>x.grade==='A').length}/${step3.items.filter(x=>x.grade==='B').length}/${step3.items.filter(x=>x.grade==='EXCLUDED').length}`);
 console.log('[STEP 4] Gemini model:',model);
 console.log('[STEP 4] ONE Gemini analysis call (potentially paid). Google Search DISABLED.');
-let rawText='';let usage:unknown=null;let errorMessage:string|null=null;
+let rawText='';let usage:unknown=null;let errorMessage:string|null=null;let modelFinishReason:string|null=null;
 try {
   const ai=new GoogleGenAI({apiKey});
   const response=await ai.models.generateContent({
     model,contents:prompt,
-    config:{responseMimeType:'application/json',temperature:0.2,maxOutputTokens:8192},
+    config:{responseMimeType:'application/json',temperature:0.2,maxOutputTokens:STEP4_OUTPUT_TOKEN_BUDGET},
   });
   rawText=typeof response.text==='string'?response.text:'';
   usage=response.usageMetadata||null;
+  const finish=response.candidates?.[0]?.finishReason;
+  modelFinishReason=typeof finish==='string'&&/^(?:STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER)$/.test(finish)?finish:null;
 }catch(e){errorMessage=e instanceof Error?e.message:String(e);}
 const parsed=errorMessage?null:parseJsonReply(rawText);
 const merged=integrate(step3.items,parsed||{candidateReviews:[],findings:[],researchGaps:[],coverage:''},commodity);
 const status=errorMessage?'api-call-failed':parsed?'review-generated':'model-json-invalid';
 const note=errorMessage?`Gemini 호출 오류: ${errorMessage}`:parsed?'원문 후보는 삭제되지 않습니다. Gemini가 분류하지 않은 후보도 미검토로 보관합니다.':'응답 JSON을 해석하지 못했으므로 모델 분석 없이 모든 원문 후보를 보관했습니다. 원문 응답 텍스트는 JSON에 보관했습니다.';
 const result={recordedAt:new Date().toISOString(),commodity,stage:'gemini-evidence-review-only',
-  status,model,step3File:step3Name,step2File:step2Name,usageMetadata:usage,error:errorMessage,
+  status,model,step3File:step3Name,step2File:step2Name,usageMetadata:usage,modelFinishReason,error:errorMessage,
   rawModelResponse:rawText,analysis:merged,
   constraints:{googleSearch:false,additionalModelCalls:0,originalFilesRewritten:false,rmsModified:false,publication:false,
     warning:'Confirmed means Gemini judged the *provided* original text sufficiently explicit, not independent data cross-validation.'}};
 fs.writeFileSync(outJson,JSON.stringify(result,null,2),{mode:0o600});
 fs.writeFileSync(outMd,toMarkdown(merged,{model,step3File:step3Name,apiStatus:status,notes:note,commodity}),{mode:0o600});
 console.log('[STEP 4] Status:',status);
+console.log('[STEP 4] Finish reason:',modelFinishReason||'not-recorded');
 console.log('[STEP 4] Preserved original candidates:',merged.audit.candidateCount);
 console.log('[STEP 4] Reviewed candidates:',merged.audit.modelReviewedCount);
 console.log('[STEP 4] Unreviewed but kept:',merged.audit.autoPreservedUnreviewed);

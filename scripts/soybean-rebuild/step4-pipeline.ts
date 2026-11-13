@@ -159,6 +159,9 @@ export function integrate(items:ReviewItem[],raw:RawAssessment,commodity:Commodi
       statusCounts,policy:'Do not delete originals. Source-level A/B remains unchanged; uncertain findings are retained but flagged, not silently discarded.'}};
 }
 
+/** Bounded output room for evidence reviews. Applies uniformly to all commodities. */
+export const STEP4_OUTPUT_TOKEN_BUDGET = 12_288;
+
 export function parseJsonReply(text:string):RawAssessment|null {
   const stripped=text.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
   const begin=stripped.indexOf('{'),end=stripped.lastIndexOf('}');

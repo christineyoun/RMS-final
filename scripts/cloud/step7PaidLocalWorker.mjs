@@ -66,7 +66,20 @@ if(validatedLocalCard(dir,commodity)){
  report('stop','new-reviewed-card-missing-ai-risk','risk-field-missing');process.exit(0);
 }
 let stage='unverified-or-incomplete';
-try{const current=inspect(root,commodity);stage=current.stage||current.action;}catch{}
+try {
+  const current=inspect(root,commodity);
+  if(typeof current.stage==='string'&&current.stage!=='stop')stage=current.stage;
+  else {
+    // When inspect() stops on a saved invalid artifact, `action` is merely
+    // `stop`. Report the LAST RECORDED checkpoint instead of pretending it is
+    // the failed request. The artifact's status remains the authority.
+    const allowed=new Set(['step1','step2','step3','step4','step5search','step5graded',
+      'step5decision','step6search','step6graded','step7']);
+    const progress=Array.isArray(current.progress)?current.progress:[];
+    const last=progress.map(x=>typeof x==='string'?x.split(':',1)[0]:'').filter(x=>allowed.has(x)).at(-1);
+    if(last)stage='last-recorded:'+last;
+  }
+}catch{}
 // Allowlisted error categories only; no user or provider text leaks to logs.
 const outcome=childOut+'\n'+childErr;
 let failureCode='unclassified-incomplete';
