@@ -6,7 +6,7 @@ export type PotatoChartPoint={region:PotatoChartRegion;year:number;productionMMT
 export type PotatoArea={region:PotatoChartRegion;year:number;area1000HA:number;sourceUrl:string;publishedAt:string;verifiedAt:string;crop:'R1000';flags:string};
 export type PotatoYieldForecast={region:PotatoChartRegion;year:number;yieldMTHA:number;crop:'R1000';sourceUrl:string;publishedAt:string;verifiedAt:string;definitionEvidence:string};
 export type PotatoOriginalPoint=Omit<PotatoChartPoint,'region'>&{region:'ORIGINS4';coverage:['DE','FR','NL','DK']};
-export type PotatoChartSnapshot={version:2;points:PotatoChartPoint[];originalSeries?:PotatoOriginalPoint[];areas:PotatoArea[];lastCheckedAt?:string;lastSuccessfulFetchAt?:string;lastError?:string;jrc?:{latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;documents?:{sourceUrl:string;sha256:string;text:string}[]};};
+export type PotatoChartSnapshot={version:2;points:PotatoChartPoint[];originalSeries?:PotatoOriginalPoint[];areas:PotatoArea[];lastCheckedAt?:string;lastSuccessfulFetchAt?:string;lastError?:string;jrc?:{latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;candidateUrl?:string;forecasts?:PotatoYieldForecast[];pdfSha256?:string;documents?:{sourceUrl:string;sha256:string;text:string}[]};};
 export type PotatoChartPeriod=3|5|10|'all';
 export const REGION_LABELS:Record<PotatoChartRegion,string>={NL:'Netherlands',DK:'Denmark',DE:'Germany',EU27_2020:'EU27'};
 export function potatoChartYears(points:{year:number}[],period:PotatoChartPeriod):number[]{

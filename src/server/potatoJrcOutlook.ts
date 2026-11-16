@@ -62,7 +62,7 @@ export async function fetchLatestJrcPotatoOutlook(options:{fetcher?:typeof fetch
 // Graph-only absolute yield table extraction; existing SCM outlook API above is unchanged.
 import {PDFParse} from 'pdf-parse';
 import type {PotatoYieldForecast} from '../utils/potatoProductionChart.ts';
-export type PotatoChartJrcPacket={forecasts:PotatoYieldForecast[];latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;documents?:{sourceUrl:string;sha256:string;text:string}[]};
+export type PotatoChartJrcPacket={forecasts:PotatoYieldForecast[];latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;candidateUrl?:string;documents?:{sourceUrl:string;sha256:string;text:string}[]};
 /** Reuse the same verified JRC publication as RMS, without collecting on views.
  * Parse the hash-verified original PDF, rather than treating yield as production. */
 export async function readRetainedPotatoChartYields(root=process.cwd(),now=new Date()):Promise<PotatoChartJrcPacket>{
@@ -78,12 +78,14 @@ export async function readRetainedPotatoChartYields(root=process.cwd(),now=new D
  return {forecasts:forecasts.map(f=>({...f,verifiedAt:metadata.verifiedAt})),latestReportDate:source.publishedAt,latestReportUrl:source.url,checkedAt:now.toISOString(),message:'Retained original JRC yield table verified',documents:[{sourceUrl:source.url,sha256:source.sha256,text}]};
 }
 /** Match the potato table, explicit R1000 crop-definition concordance and the latest-forecast column. */
+function jrcPdfIssueDate(text:string):string|undefined{
+ const date=text.match(/JRC MARS Bulletin[^\n]*[–-]\s*(\d{1,2}\s+[A-Za-z]+\s+20\d{2})/i)?.[1];
+ if(date&&Number.isFinite(Date.parse(date+' UTC')))return new Date(date+' UTC').toISOString().slice(0,10);
+}
 export function parseJrcPotatoYieldTable(text:string,sourceUrl:string,publishedAt:string,now=new Date()):PotatoYieldForecast[]{
  if(!/^https:\/\/publications\.jrc\.ec\.europa\.eu\/repository\/bitstream\//.test(sourceUrl)||!Number.isFinite(Date.parse(publishedAt))||Date.parse(publishedAt)>+now)return [];
  const normalized=text.replace(/\b([A-Z])\s+(?=[a-z])/g,'$1').replace(/inc\s+luding/g,'including').replace(/s\s+eed/g,'seed').replace(/R\s+1000/g,'R1000');
- if(!/Potatoes\s+Potatoes\s*\(including seed potatoes\s*\)\s+R1000/i.test(normalized))return [];
- const date=normalized.match(/JRC MARS Bulletin[^\n]*[–-]\s*(\d{1,2}\s+[A-Za-z]+\s+20\d{2})/i)?.[1];
- if(!date||!Number.isFinite(Date.parse(date+' UTC'))||new Date(date+' UTC').toISOString().slice(0,10)!==publishedAt)return [];
+ if(!/Potatoes\s+Potatoes\s*\(including seed potatoes\s*\)\s+R1000/i.test(normalized)||jrcPdfIssueDate(normalized)!==publishedAt)return [];
  const results:PotatoYieldForecast[]=[];
  for(const match of normalized.matchAll(/^\s*Potatoes\s*$/gm)){
   const start=match.index!,tail=normalized.slice(start,start+220);
@@ -105,22 +107,65 @@ export function parseJrcPotatoYieldTable(text:string,sourceUrl:string,publishedA
  }
  return results.filter(p=>results.filter(q=>q.region===p.region&&q.year===p.year).length===1);
 }
-export async function fetchLatestPotatoChartYields(options:{fetcher?:typeof fetch;now?:Date}={}):Promise<PotatoChartJrcPacket>{
- const now=options.now||new Date(),fetcher=options.fetcher||fetch,discovery=await fetchLatestJrcPotatoOutlook({fetcher,now});
- const packet:PotatoChartJrcPacket={forecasts:[],latestReportDate:discovery.latestReportDate,latestReportUrl:discovery.latestReportUrl,checkedAt:now.toISOString(),message:'검증 가능한 절대 단수 전망 미확보 · 평균 대비 변화율로 생산량 추정하지 않음'};
- if(!discovery.outlook)return packet;
- const $=load(discovery.outlook.rawHtml),handles=new Set<string>();
- $('main a[href]').each((_i,a)=>{try{const u=new URL($(a).attr('href')!,discovery.latestReportUrl);if(u.protocol==='https:'&&u.hostname==='publications.jrc.ec.europa.eu'&&/^\/repository\/handle\/JRC\d+$/.test(u.pathname))handles.add(u.href);}catch{}});
- const trusted=(url:string)=>{try{const u=new URL(url);return u.protocol==='https:'&&u.hostname==='publications.jrc.ec.europa.eu'&&!u.username&&!u.password&&!u.port;}catch{return false;}};
- for(const handle of [...handles].slice(0,2)){
-  const page=await fetcher(handle,{redirect:'error',signal:AbortSignal.timeout(15000)});if(!page.ok)throw Error('JRC publication unavailable');
-  const html=await page.text();if(html.length>3_000_000)throw Error('JRC publication too large');const meta=load(html),pdf=meta('meta[name="citation_pdf_url"]').attr('content');
-  if(!pdf||!trusted(pdf)||!/^\/repository\/bitstream\//.test(new URL(pdf).pathname))continue;
-  const response=await fetcher(pdf,{redirect:'error',signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error('JRC PDF unavailable');
-  const bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>50_000_000||Buffer.from(bytes.slice(0,5)).toString()!=='%PDF-')throw Error('Invalid JRC PDF: '+bytes.length+' bytes');
-  const parser=new PDFParse({data:bytes.slice()});let text:string;try{text=(await parser.getText()).text;}finally{await parser.destroy();}
-  const forecasts=parseJrcPotatoYieldTable(text,pdf,discovery.latestReportDate,now);
-  if(forecasts.length){packet.forecasts=forecasts;packet.documents=[{sourceUrl:pdf,sha256:createHash('sha256').update(bytes).digest('hex'),text}];packet.message='공식 PDF의 R1000 정의·연도·지역·최신 절대 단수 열 검증 완료 · 같은 연도 면적이 있는 지역만 생산량 추정';break;}
+/** Chart discovery is independent of the SCM narrative extractor. The dated URL
+ * orders candidates, but the bulletin's own date must match an official record. */
+export async function fetchLatestPotatoChartYields(options:{
+ fetcher?:typeof fetch;now?:Date;previous?:PotatoChartJrcPacket;extractPdfText?:(bytes:Uint8Array)=>Promise<string>;
+}={}):Promise<PotatoChartJrcPacket>{
+ const now=options.now||new Date(),fetcher=options.fetcher||fetch,checkedAt=now.toISOString();
+ const get=async(url:string,accept:string,ms=15000)=>{
+  const r=await fetcher(url,{redirect:'error',headers:{Accept:accept},signal:AbortSignal.timeout(ms)});
+  if(!r.ok||r.redirected||r.url&&r.url!==url)throw Error('JRC document unavailable');
+  return r;
+ };
+ const html=async(url:string)=>{
+  const body=await(await get(url,'text/html')).text();
+  if(body.length>3_000_000)throw Error('JRC HTML too large');return body;
+ };
+ const article=discoverJrcPotatoReports(await html(JRC_POTATO_INDEX),now)[0];
+ if(!article)throw Error('No dated European JRC bulletin');
+ const candidateUrl=article.url,previous=options.previous;
+ if(previous?.candidateUrl===candidateUrl&&/^20\d{2}-\d{2}-\d{2}$/.test(previous.latestReportDate)&&
+   previous.latestReportDate<=checkedAt.slice(0,10)&&
+   /^https:\/\/publications\.jrc\.ec\.europa\.eu\/repository\/bitstream\/JRC\d+\//.test(previous.latestReportUrl)&&
+   previous.forecasts.every(f=>f.sourceUrl===previous.latestReportUrl&&f.publishedAt===previous.latestReportDate&&
+    Number.isFinite(Date.parse(f.verifiedAt))&&Date.parse(f.verifiedAt)<=+now)){
+  return {...previous,checkedAt};
  }
- return packet;
+ const page=await html(candidateUrl),$=load(page),handles=new Set<string>();
+ const articleDate=(
+  page.match(/"datePublished"\s*:\s*"([^"\s]+)"/)?.[1]||$('meta[property="article:published_time"]').attr('content')||''
+ ).slice(0,10);
+ const articleContent=$('main, .ecl-page-header__description');
+ if(!$('main').length||!/JRC MARS Bulletin/i.test(articleContent.text()))throw Error('JRC bulletin announcement not verified');
+ articleContent.find('a[href]').each((_i,a)=>{
+  try{
+   const u=new URL($(a).attr('href')!,candidateUrl);
+   if(u.origin==='https://publications.jrc.ec.europa.eu'&&!u.username&&!u.password&&!u.search&&!u.hash&&/^\/repository\/handle\/JRC\d+$/.test(u.pathname))handles.add(u.href);
+  }catch{}
+ });
+ for(const handle of [...handles].slice(0,2)){
+  const repo=await html(handle),meta=load(repo),id=new URL(handle).pathname.split('/').at(-1)!;
+  const pdf=meta('meta[name="citation_pdf_url"]').attr('content');
+  if(!pdf)continue;
+  const u=new URL(pdf);
+  if(u.origin!=='https://publications.jrc.ec.europa.eu'||u.username||u.password||u.search||u.hash||
+    !u.pathname.startsWith('/repository/bitstream/'+id+'/')||!/\.pdf$/i.test(u.pathname))continue;
+  const repoDate=repo.match(/"dc\.date\.available"\s*:\s*"(20\d{2}-\d{2}-\d{2})(?:[^"]*)"/)?.[1];
+  const response=await get(pdf,'application/pdf',25000);
+  const bytes=new Uint8Array(await response.arrayBuffer());
+  if(bytes.length>50_000_000||Buffer.from(bytes.slice(0,5)).toString()!=='%PDF-')throw Error('Invalid JRC PDF');
+  const extract=options.extractPdfText||(async(data:Uint8Array)=>{
+   const parser=new PDFParse({data});try{return(await parser.getText()).text;}finally{await parser.destroy();}
+  });
+  const text=await extract(bytes),latestReportDate=jrcPdfIssueDate(text);
+  if(!latestReportDate||Date.parse(latestReportDate)>+now||
+    (latestReportDate!==articleDate&&latestReportDate!==repoDate))continue;
+  if(previous&&latestReportDate<previous.latestReportDate)throw Error('JRC bulletin predates the last verified issue');
+  const forecasts=parseJrcPotatoYieldTable(text,pdf,latestReportDate,now);
+  const message=forecasts.length?'공식 JRC 원문 단수 전망 검증 완료':'새 JRC 발행본에 검증 가능한 감자 단수 전망 없음 · 마지막 검증 추정 유지';
+  return {forecasts,latestReportDate,latestReportUrl:pdf,checkedAt,message,candidateUrl,
+   documents:[{sourceUrl:pdf,sha256:createHash('sha256').update(bytes).digest('hex'),text}]};
+ }
+ throw Error('Official JRC PDF or matching publication date unavailable');
 }

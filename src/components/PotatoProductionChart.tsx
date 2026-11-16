@@ -49,7 +49,7 @@ export function PotatoProductionChartView({snapshot,failed=false}:{snapshot:Pota
  // Split at gaps: shading is restricted to contiguous observed points, never estimates.
  const actualRuns= germanyActual.reduce<(typeof germanyActual)[]>((runs,p)=>{const run=runs.at(-1);if(!run||p.year!==run.at(-1)!.year+1)runs.push([p]);else run.push(p);return runs;},[]);
  const latest=regions.map(region=>rows.filter(p=>p.region===region).sort((a,b)=>a.year-b.year).at(-1));
- const forecast=all.find(p=>regions.includes(p.region)&&p.status==='Derived Estimate');
+ const forecast=all.filter(p=>regions.includes(p.region)&&p.status==='Derived Estimate').sort((a,b)=>b.publishedAt.localeCompare(a.publishedAt))[0];
  const tooltip=selectedYear!==null?<ChartTooltip xPct={x(selectedYear)/5} style={{left:'12px',right:'auto'}} role="tooltip" data-potato-tooltip>
   <div className="font-bold text-slate-800 border-b border-slate-100 pb-1 font-sans flex items-center justify-between gap-4"><span>{potatoHoverTitle(selectedYear,isEstimateYear)}</span><span className="text-[10px] text-slate-500 font-mono">EU POTATO PRODUCTION</span></div>
   {regions.map(region=>{const point=rows.find(p=>p.region===region&&p.year===selectedYear);return <div key={region} className="flex items-center justify-between gap-4" style={{color:COLORS[region]}}><span className="font-sans font-medium flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{backgroundColor:COLORS[region]}}/>{REGION_LABELS[region]}:</span><span className="font-bold" aria-description={point?[statusLabel(point.status),point.productionMMT.toFixed(3)+' MMT',point.formula||'',point.sourceUrl,point.areaSourceUrl||''].join(' · '):''}>{point?point.productionMMT.toFixed(3)+' MMT':'—'}</span></div>;})}
