@@ -2,6 +2,7 @@ import tapiocaSupplyHistory from '../data/tapioca_supply_history_verified.json';
 import {parseSoybeanOilSupply} from '../lib/soybeanOilSupply';
 import {SourceAttribution} from './SourceAttribution';
 import {PotatoRawSupplyCard} from './PotatoRawSupplyCard';
+import type {PotatoJrcPublication} from '../utils/potatoJrcPublication';
 import {verifiedSoybeanOilSupply,soybeanOilCrushIndicators,type SoybeanOilSupplyResult} from '../lib/soybeanOilSupply';
 import React, { useState, useEffect } from 'react';
 import { normalizeVerifiedOtherCommodityWasde, USDA_WORLD_IDS } from '../lib/verifiedWorldWasde';
@@ -16,6 +17,7 @@ export interface CommodityWasdeCardProps {
   className?: string;
   isSyncing?: boolean;
   refreshRevision?: number;
+  potatoJrcPublication?: PotatoJrcPublication;
 }
 
 /**
@@ -36,7 +38,8 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   customBrief,
   className = '',
   isSyncing = false,
-  refreshRevision = 0
+  refreshRevision = 0,
+  potatoJrcPublication
 }) => {
   const normalizedId = commodityId?.toLowerCase().trim() || 'wheat';
   const baseline = unavailableWasdeRecord(normalizedId);
@@ -192,7 +195,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
 
   const showSupplyFigures = !isVerifiedUsdaCommodity || (verifiedWorldPsd && verifiedCommodityId === normalizedId && data.commodity === normalizedId);
 
-  if (isPotatoStarch) return <PotatoRawSupplyCard data={potatoSourceData} history={potatoHistory} className={className}/>;
+  if (isPotatoStarch) return <PotatoRawSupplyCard data={potatoSourceData} history={potatoHistory} className={className} publication={potatoJrcPublication}/>;
 
   const isTapiocaStarch = normalizedId === 'tapioca-starch' || normalizedId === 'tapioca_starch';
 

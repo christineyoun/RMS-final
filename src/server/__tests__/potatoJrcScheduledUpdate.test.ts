@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {createHash} from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import {test} from 'node:test';
@@ -44,7 +45,10 @@ test('scheduled collector verifies the true issue date, persists updates and kee
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'potato-graph-audit-')),file=path.join(dir,'chart.json');
  try{
   const options={file,now:()=>clock,fetcher:async()=>new Response(JSON.stringify(eurostat(clock,official))),jrcFetcher:fetcher,
-   extractJrcPdfText:async()=>withoutTable?'JRC MARS Bulletin Vol. 1 No. 1 – '+issue.dateText:table(issue.dateText,issue.yieldValue)};
+   extractJrcPdfText:async(bytes:Uint8Array)=>{
+    structuredClone(bytes,{transfer:[bytes.buffer]});
+    return withoutTable?'JRC MARS Bulletin Vol. 1 No. 1 – '+issue.dateText:table(issue.dateText,issue.yieldValue);
+   }};
   let service=createRegionalPotatoHistory(options);
   const p=(d:Awaited<ReturnType<typeof service.refresh>>)=>d.points.find(row=>row.region==='DE'&&row.year===2026);
   const before=await service.refresh();
@@ -55,6 +59,10 @@ test('scheduled collector verifies the true issue date, persists updates and kee
   const after=await service.refresh();
   assert.equal(after.lastError,undefined);
   assert.equal(after.jrc?.latestReportDate,'2026-10-26');
+  assert.equal(after.potatoJrcPublication?.current.publishedAt,'2026-10-26');
+  assert.equal(after.potatoJrcPublication?.previous?.publishedAt,'2026-09-28');
+  assert.equal(after.potatoJrcPublication?.current.rows.length,6);
+  assert.equal(after.potatoJrcPublication?.current.pdfSha256,createHash('sha256').update('%PDF-fixture').digest('hex'));
   assert.equal(p(after)?.sourceUrl,document(issue.id));
   assert.equal(p(after)?.publishedAt,'2026-10-26');
   assert.equal(p(after)?.productionMMT,110*42/1000);
@@ -70,6 +78,7 @@ test('scheduled collector verifies the true issue date, persists updates and kee
   withoutTable=true;
   const noPotato=await service.refresh();
   assert.equal(noPotato.jrc?.latestReportDate,'2026-11-23');
+  assert.deepEqual(noPotato.potatoJrcPublication,after.potatoJrcPublication,'no potato table never advances the display date');
   assert.equal(p(noPotato)?.sourceUrl,document('JRC902'));
   assert.equal(p(noPotato)?.yieldMTHA,42);
   withoutTable=false;

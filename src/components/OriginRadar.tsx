@@ -1,6 +1,6 @@
 import {SourceAttribution} from './SourceAttribution';
 import React from 'react';
-import potatoJrc from '../data/potato_jrc_monthly_verified.json';
+import {POTATO_JRC_NAMES,retainedPotatoJrcPublication,type PotatoJrcPublication} from '../utils/potatoJrcPublication';
 import {insufficientWeather,weatherLocalDay,WEATHER_PILL_LABELS,type WeatherPill} from '../utils/originWeatherPills.ts';
 import { Globe } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export interface OriginItem {
   weatherHistoricalContext?:{points:Array<{agriculturalRepresentativeness?:string}>};
   weatherScreening?:import('../utils/originWeatherPills.ts').WeatherScreen['weatherScreening'];
 }
-interface OriginRadarProps {commodityId?:string;origins?:OriginItem[];title?:string;className?:string;sourceFooterText?:string;}
+interface OriginRadarProps {commodityId?:string;origins?:OriginItem[];title?:string;className?:string;sourceFooterText?:string;potatoJrcPublication?:PotatoJrcPublication;}
 const compact=(value?:string)=>String(value||'').replace(/\s+/g,' ').trim();
 /** Existing presentation completeness check; never changes backend screening. */
 function originWeatherObservationsComplete(origin:OriginItem,now:number):boolean {
@@ -125,7 +125,7 @@ export const originRadarDisplayText=(value:string,commodity:'corn'|'wheat'|'othe
   return text.replace(/\s*\((?:전월|전년|전기) 비교 자료 없음\)/g,'').replace(/^(?:전월|전년|전기) 비교 자료 없음$/,'').replace(/(?:20\d{2}[-./]\d{2}[-./]\d{2}\s*(?:기준|관측)?)/g,'').replace(/\s+/g,' ').trim();
 };
 const sourceLabel=(value:string)=>/저장 자료|저장 기상|cache|revalidat|retry|재확인|처리 중/i.test(value)?'':/USDA.*WASDE/i.test(value)?'USDA WASDE':/USDA.*PSD|USDA FAS|USDA Foreign Agricultural Service/i.test(value)?'USDA FAS PSD':/^Eurostat/.test(value)?'Eurostat':/^TTSA/.test(value)?'TTSA':value.replace(/\(기상\)/g,'').trim();
-export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodityId,className=''})=>{
+export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodityId,className='',potatoJrcPublication})=>{
   const [,reevaluate]=React.useReducer((n:number)=>n+1,0);
   const validitySchedule=origins.map(o=>originWeatherDisplayExpiry(o,Date.now())).join('|');
   React.useEffect(()=>{
@@ -146,9 +146,10 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
   },[validitySchedule]);
   const isCorn=commodityId==='corn',isWheat=commodityId==='wheat';
   const isPotato=commodityId==='potato-starch',isTapioca=commodityId==='tapioca-starch';
+  const jrc=isPotato?(potatoJrcPublication||retainedPotatoJrcPublication())?.current:undefined;
   const sources=[...new Set(origins.flatMap(o=>[o.sourceName||o.sourceOrg||'',o.weatherSource||'',...(o.supplyIndicators||[]).filter(s=>isPotato?s.display==='origin-summary'||s.source==='JRC MARS':!isTapioca||!/^원료·가공:/.test(s.text)).map(s=>s.source)]).filter(Boolean).map(v=>v==='USDA'?(isCorn?'USDA WASDE':'USDA FAS PSD'):sourceLabel(v)).filter(Boolean))];
   const primary=isCorn?'USDA WASDE':isWheat?'USDA FAS PSD':null;
-  const publishers=[...new Set([...(primary?[primary]:[]),...sources])];
+  const publishers=[...new Set([...(primary?[primary]:[]),...sources.filter(label=>!isPotato||label!=='JRC MARS'),...(jrc?['JRC MARS']:[])])];
   if(isTapioca)publishers.sort((a,b)=>['TTSA','AFSIS','Open-Meteo'].indexOf(a)-['TTSA','AFSIS','Open-Meteo'].indexOf(b));
   return <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className}`.trim()}>
     <div className="flex-1 flex flex-col gap-4">
@@ -162,16 +163,11 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
           const supply=[exports+(exports&&comparison?` (${comparison})`:''),origin.endingStocks?(/^기말재고\s/.test(origin.endingStocks)?origin.endingStocks:`기말재고 ${origin.endingStocks}`):''].filter(Boolean).join(' · ');
           const weather=originWeatherDisplayText(origin);
           const production=isPotato||isTapioca?origin.production?.match(/^\d+(?:\.\d+)?M MT/)?.[0]||origin.production:origin.production;
+          const forecast=jrc?.rows.find(r=>POTATO_JRC_NAMES[r.code]===origin.country||origin.region?.startsWith(POTATO_JRC_NAMES[r.code]+' '));
+          const forecastChange=forecast?(forecast.forecast/forecast.previousYear-1)*100:0;
           const supplyLabel=(s:NonNullable<OriginItem['supplyIndicators']>[number])=>{
             if((!isPotato&&!isTapioca)||s.display!=='origin-summary')return s.text;
-            if(isPotato){
-              const row=potatoJrc.rows.find(r=>r.country===origin.country||origin.region?.startsWith(r.country+' '));
-              if(row&&row.previousYear>0&&Number.isFinite(row.forecast)){
-                const change=(row.forecast/row.previousYear-1)*100;
-                return `${potatoJrc.forecastYear}년 단수 전망 ${row.forecast.toFixed(1)}t/ha (${potatoJrc.previousYear}년 대비 ${change<0?'−':change>0?'+':''}${Math.abs(change).toFixed(1)}%)`;
-              }
-              return s.text.replace(/^\d{4}년 생산(?:\(추정\))?\s*·\s*/, '');
-            }
+            if(isPotato)return s.text.replace(/^\d{4}년 생산(?:\(추정\))?\s*·\s*/, '');
             const change=s.text.match(/[+-]?\d+(?:\.\d+)?%$/)?.[0];
             const previousYear=isPotato&&/^\d{4}$/.test(s.period)?String(Number(s.period)-1):isTapioca?s.text.match(/^\d{4}\/\d{2}/)?.[0]:undefined;
             if(!change||!previousYear)return s.text;
@@ -187,7 +183,8 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
               </div>
               {(supply||weather)&&<div className="text-[10px] text-[#6b7280] mt-1 font-sans break-keep whitespace-normal leading-snug">
                 {supply&&<div>{origin.region?.includes('유럽연합')?'EU':'국가'} {originRadarDisplayText(supply,isCorn?'corn':isWheat?'wheat':'other')}</div>}
-                {origin.supplyIndicators?.filter(s=>commodityId==='potato-starch'?s.display==='origin-summary':commodityId!=='tapioca-starch'||!/^원료·가공:/.test(s.text)).map((s,i)=><div key={i} aria-description={`${s.source} · ${s.period} · ${s.url}${isPotato&&s.display==='origin-summary'?` · JRC MARS · ${potatoJrc.publishedAt} · ${potatoJrc.sources[0].url}`:''}`}>{supplyLabel(s)}</div>)}
+                {jrc&&forecast&&<div data-potato-national-yield aria-description={`JRC MARS · ${jrc.publishedAt} · ${jrc.sourceUrl}`}>{jrc.forecastYear}년 국가 단수 전망 {forecast.forecast.toFixed(1)}t/ha ({jrc.forecastYear-1}년 대비 {forecastChange<0?'−':forecastChange>0?'+':''}{Math.abs(forecastChange).toFixed(1)}%)</div>}
+                {origin.supplyIndicators?.filter(s=>commodityId==='potato-starch'?!forecast&&s.display==='origin-summary':commodityId!=='tapioca-starch'||!/^원료·가공:/.test(s.text)).map((s,i)=><div key={i} aria-description={`${s.source} · ${s.period} · ${s.url}`}>{supplyLabel(s)}</div>)}
                 {weather&&<div data-origin-weather className="mt-0.5">{weather}</div>}
               </div>}
             </div>
@@ -195,7 +192,7 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
         })}
       </div>
     </div>
-    {publishers.length>0&&<SourceAttribution data-origin-sources className="mt-auto pt-4 justify-end text-right" entries={publishers.map(label=>({label}))}/>}
+    {publishers.length>0&&<SourceAttribution data-origin-sources className="mt-auto pt-4 justify-end text-right" entries={publishers.map(label=>jrc&&label==='JRC MARS'?{label:'JRC '+jrc.publishedAt.slice(5),url:jrc.sourceUrl}:{label})}/>}
   </div>;
 };
 export default OriginRadar;

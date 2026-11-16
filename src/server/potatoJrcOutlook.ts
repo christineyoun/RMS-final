@@ -62,7 +62,8 @@ export async function fetchLatestJrcPotatoOutlook(options:{fetcher?:typeof fetch
 // Graph-only absolute yield table extraction; existing SCM outlook API above is unchanged.
 import {PDFParse} from 'pdf-parse';
 import type {PotatoYieldForecast} from '../utils/potatoProductionChart.ts';
-export type PotatoChartJrcPacket={forecasts:PotatoYieldForecast[];latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;candidateUrl?:string;documents?:{sourceUrl:string;sha256:string;text:string}[]};
+import {POTATO_JRC_REGIONS,validPotatoJrcIssue,type PotatoJrcIssue} from '../utils/potatoJrcPublication.ts';
+export type PotatoChartJrcPacket={forecasts:PotatoYieldForecast[];latestReportDate:string;latestReportUrl:string;checkedAt:string;message:string;candidateUrl?:string;issue?:PotatoJrcIssue;documents?:{sourceUrl:string;sha256:string;text:string}[]};
 /** Reuse the same verified JRC publication as RMS, without collecting on views.
  * Parse the hash-verified original PDF, rather than treating yield as production. */
 export async function readRetainedPotatoChartYields(root=process.cwd(),now=new Date()):Promise<PotatoChartJrcPacket>{
@@ -82,11 +83,11 @@ function jrcPdfIssueDate(text:string):string|undefined{
  const date=text.match(/JRC MARS Bulletin[^\n]*[–-]\s*(\d{1,2}\s+[A-Za-z]+\s+20\d{2})/i)?.[1];
  if(date&&Number.isFinite(Date.parse(date+' UTC')))return new Date(date+' UTC').toISOString().slice(0,10);
 }
-export function parseJrcPotatoYieldTable(text:string,sourceUrl:string,publishedAt:string,now=new Date()):PotatoYieldForecast[]{
+function parsePotatoYieldBlocks(text:string,sourceUrl:string,publishedAt:string,now:Date){
  if(!/^https:\/\/publications\.jrc\.ec\.europa\.eu\/repository\/bitstream\//.test(sourceUrl)||!Number.isFinite(Date.parse(publishedAt))||Date.parse(publishedAt)>+now)return [];
  const normalized=text.replace(/\b([A-Z])\s+(?=[a-z])/g,'$1').replace(/inc\s+luding/g,'including').replace(/s\s+eed/g,'seed').replace(/R\s+1000/g,'R1000');
  if(!/Potatoes\s+Potatoes\s*\(including seed potatoes\s*\)\s+R1000/i.test(normalized)||jrcPdfIssueDate(normalized)!==publishedAt)return [];
- const results:PotatoYieldForecast[]=[];
+ const results:{year:number;euScope:boolean;rows:RegExpMatchArray[]}[]=[];
  for(const match of normalized.matchAll(/^\s*Potatoes\s*$/gm)){
   const start=match.index!,tail=normalized.slice(start,start+220);
   const header=tail.match(/last\s*5yrs\s*avg\s*yield\s*(20\d{2})\s*yield\s*EU yield forecasts for (20\d{2})\s*\[t\/ha\]/i);
@@ -99,6 +100,13 @@ export function parseJrcPotatoYieldTable(text:string,sourceUrl:string,publishedA
   const observed=rows.map(r=>r[1].replace(/\s/g,''));
   // EU is mapped to EU27 only when the table explicitly enumerates the 27 member countries.
   const euScope=observed.length===28&&eu27.every(code=>observed.filter(c=>c===code).length===1);
+  results.push({year,euScope,rows});
+ }
+ return results;
+}
+export function parseJrcPotatoYieldTable(text:string,sourceUrl:string,publishedAt:string,now=new Date()):PotatoYieldForecast[]{
+ const results:PotatoYieldForecast[]=[];
+ for(const {year,euScope,rows} of parsePotatoYieldBlocks(text,sourceUrl,publishedAt,now)){
   for(const [code,region] of [['NL','NL'],['DK','DK'],['DE','DE'],['EU','EU27_2020']] as const){
    if(code==='EU'&&!euScope)continue;const values=rows.filter(r=>r[1].replace(/\s/g,'')===code);if(values.length!==1||values[0][4]==='—')continue;
    const yieldMTHA=Number(values[0][4].replace(',','.'));if(!Number.isFinite(yieldMTHA)||yieldMTHA<5||yieldMTHA>100)continue;
@@ -106,6 +114,16 @@ export function parseJrcPotatoYieldTable(text:string,sourceUrl:string,publishedA
   }
  }
  return results.filter(p=>results.filter(q=>q.region===p.region&&q.year===p.year).length===1);
+}
+export function parseJrcPotatoIssue(text:string,sourceUrl:string,publishedAt:string,pdfSha256:string,now=new Date()):PotatoJrcIssue|undefined{
+ const blocks=parsePotatoYieldBlocks(text,sourceUrl,publishedAt,now);
+ if(blocks.length!==1||!blocks[0].euScope)return;
+ const {year,rows}=blocks[0];
+ const issue={publishedAt,forecastYear:year,sourceUrl,pdfSha256,rows:POTATO_JRC_REGIONS.flatMap(code=>{
+  const matches=rows.filter(r=>r[1].replace(/\s/g,'')===code);
+  return matches.length===1?[{code,previousYear:Number(matches[0][3].replace(',','.')),forecast:Number(matches[0][4].replace(',','.'))}]:[];
+ })};
+ return validPotatoJrcIssue(issue,now)?issue:undefined;
 }
 /** Chart discovery is independent of the SCM narrative extractor. The dated URL
  * orders candidates, but the bulletin's own date must match an official record. */
@@ -155,6 +173,8 @@ export async function fetchLatestPotatoChartYields(options:{
   const response=await get(pdf,'application/pdf',25000);
   const bytes=new Uint8Array(await response.arrayBuffer());
   if(bytes.length>50_000_000||Buffer.from(bytes.slice(0,5)).toString()!=='%PDF-')throw Error('Invalid JRC PDF');
+  // PDF.js can transfer (detach) this buffer during extraction.
+  const pdfSha256=createHash('sha256').update(bytes).digest('hex');
   const extract=options.extractPdfText||(async(data:Uint8Array)=>{
    const parser=new PDFParse({data});try{return(await parser.getText()).text;}finally{await parser.destroy();}
   });
@@ -165,7 +185,8 @@ export async function fetchLatestPotatoChartYields(options:{
   const forecasts=parseJrcPotatoYieldTable(text,pdf,latestReportDate,now);
   const message=forecasts.length?'공식 JRC 원문 단수 전망 검증 완료':'새 JRC 발행본에 검증 가능한 감자 단수 전망 없음 · 마지막 검증 추정 유지';
   return {forecasts,latestReportDate,latestReportUrl:pdf,checkedAt,message,candidateUrl,
-   documents:[{sourceUrl:pdf,sha256:createHash('sha256').update(bytes).digest('hex'),text}]};
+   issue:parseJrcPotatoIssue(text,pdf,latestReportDate,pdfSha256,now),
+   documents:[{sourceUrl:pdf,sha256:pdfSha256,text}]};
  }
  throw Error('Official JRC PDF or matching publication date unavailable');
 }
