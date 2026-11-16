@@ -40,6 +40,7 @@ export function potatoProductionPayload(history=loadPotatoProductionHistory()){
 export type {PotatoChartSnapshot,PotatoChartPoint} from '../utils/potatoProductionChart.ts';
 import {POTATO_CHART_REGIONS,type PotatoChartSnapshot,type PotatoChartPoint,type PotatoArea,type PotatoYieldForecast,type PotatoOriginalPoint} from '../utils/potatoProductionChart.ts';
 import {fetchLatestPotatoChartYields,readRetainedPotatoChartYields,type PotatoChartJrcPacket} from './potatoJrcOutlook.ts';
+import {mergePotatoJrcPublication,readPotatoJrcPublication} from '../utils/potatoJrcPublication.ts';
 const regionalFile=()=>path.join(process.env.RMS_HISTORY_ROOT||process.cwd(),'.rms-price-history','potato-production-regions-v2.json');
 const regionalUrl='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_cpnh1';
 const regionalPage='https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en';
@@ -120,7 +121,10 @@ export function createRegionalPotatoHistory(options:{file?:string|null;now?:()=>
     return {...parsed,originalSeries};
    })(),(options.jrc||(()=>fetchLatestPotatoChartYields({
     now:clock(),fetcher:options.jrcFetcher,extractPdfText:options.extractJrcPdfText,
-    previous:state.jrc?.candidateUrl&&Array.isArray(state.jrc.forecasts)?{...state.jrc,forecasts:state.jrc.forecasts}:undefined
+    previous:state.jrc?.inspectedForSharedIssue&&state.jrc.candidateUrl&&Array.isArray(state.jrc.forecasts)?{
+     ...state.jrc,forecasts:state.jrc.forecasts,
+     issue:state.potatoJrcPublication?.current.publishedAt===state.jrc.latestReportDate?state.potatoJrcPublication.current:undefined
+    }:undefined
    })))()]);
    const map=new Map(state.points.map(p=>[p.region+':'+p.year,p]));
    if(official.status==='fulfilled'){
@@ -132,11 +136,24 @@ export function createRegionalPotatoHistory(options:{file?:string|null;now?:()=>
     errors.push(`Eurostat ${stage} 오류${code?' ('+code+')':''} · 기존 검증 생산량과 자료 갱신일 유지`);
    }
    if(jrc.status==='fulfilled'){
-    const packet=jrc.value;state.jrc={latestReportDate:packet.latestReportDate,latestReportUrl:packet.latestReportUrl,checkedAt:packet.checkedAt,message:packet.message,
-     ...(packet.candidateUrl?{candidateUrl:packet.candidateUrl,forecasts:packet.forecasts}:{}),
+    const packet=jrc.value;
+    // Advance the shared issue and the derived chart points together. Even a
+    // valid bulletin can't advance the chart if matching Eurostat area failed.
+    const retained=readPotatoJrcPublication(state.potatoJrcPublication,clock());
+    const comparable=official.status==='fulfilled'&&packet.issue?
+     deriveRegionalPotatoProduction(state.areas,packet.forecasts):[];
+    const complete=!!packet.issue&&['DE','NL','DK'].every(region=>
+     comparable.some(p=>p.region===region)||map.get(region+':'+packet.issue!.forecastYear)?.status&&
+       map.get(region+':'+packet.issue!.forecastYear)?.status!=='Derived Estimate');
+    if(complete&&official.status==='fulfilled')state.potatoJrcPublication=mergePotatoJrcPublication(retained,packet.issue,clock());
+    const usePacket=(!packet.candidateUrl||complete)&&
+     (!retained||packet.latestReportDate>=retained.current.publishedAt);
+    state.jrc={latestReportDate:packet.latestReportDate,latestReportUrl:packet.latestReportUrl,checkedAt:packet.checkedAt,message:packet.message,
+     ...(packet.candidateUrl?{candidateUrl:packet.candidateUrl,forecasts:packet.forecasts,
+      ...(!packet.issue||complete&&official.status==='fulfilled'?{inspectedForSharedIssue:true as const}:{})}:{}),
      ...(packet.documents?.[0]?{pdfSha256:packet.documents[0].sha256}:state.jrc?.latestReportUrl===packet.latestReportUrl?{pdfSha256:state.jrc?.pdfSha256}:{})};
     // Never derive new numbers using stale area carried through an API failure.
-    if(official.status==='fulfilled')for(const p of deriveRegionalPotatoProduction(state.areas,packet.forecasts)){
+    if(official.status==='fulfilled'&&usePacket)for(const p of deriveRegionalPotatoProduction(state.areas,packet.forecasts)){
      const old=map.get(p.region+':'+p.year);if(!old||old.status==='Derived Estimate'&&p.publishedAt>=old.publishedAt)map.set(p.region+':'+p.year,p);
     }
    }else errors.push('JRC 조회·추출 실패 · 마지막 검증 추정 유지');

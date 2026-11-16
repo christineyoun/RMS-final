@@ -6,6 +6,9 @@ import {withHistoricalWeatherContext} from './originHistoricalWeather.ts';
 import {getOriginWeather,screenCropWeatherEvents,currentSharedWeather,parseSharedOpenMeteo,sharedWeatherSummary,withSharedFreezingRisk,TROPICAL_FREEZING_CROPS,type WeatherPoint,type SharedWeatherEvidence} from './originWeatherService.ts';
 import {soybeanOilOriginService} from './soybeanOilOriginService.ts';
 import {fetchOfficialPotatoEurostat} from './officialPotatoEurostatService.ts';
+import {readStarchOriginSupply} from './starchOriginSupplyRefresh.ts';
+import {readFreeJson} from './freeDailyPublication.ts';
+import {POTATO_JRC_NAMES,readPotatoJrcPublication} from '../utils/potatoJrcPublication.ts';
 import fs from 'node:fs';
 import {deferredWeatherAssessment,screenPalmRain,insufficientWeather} from '../utils/originWeatherPills.ts';
 import path from 'node:path';
@@ -96,15 +99,20 @@ export function withOriginWeatherPills(id:string,value:OriginRadarResponse):Orig
 /** Reuse published country/crop evidence; never confuse national supply with point weather. */
 export function completeOriginRadar(id:string,value:OriginRadarResponse,root=process.cwd(),now=new Date()):OriginRadarResponse {
  let potato:any=null,jrc:any=null;
+ let currentJrc:ReturnType<typeof readPotatoJrcPublication>;
  let starchSupply:any[]=[];
  if(id==='potato-starch'||id==='tapioca-starch'){
-  try{const saved=JSON.parse(fs.readFileSync(path.join(root,'src/data/starch_origin_supply_verified.json'),'utf8'));if(Array.isArray(saved.records))starchSupply=saved.records;}catch{}
+  starchSupply=readStarchOriginSupply(root);
  }
  if(id==='potato-starch'){
   try{const receipt=JSON.parse(fs.readFileSync(path.join(root,'.rms-stage3/evidence/potato-stats.json'),'utf8'));
    if(receipt.status===200&&createHash('sha256').update(receipt.body).digest('hex')===receipt.sha256){const saved=JSON.parse(receipt.body);if(saved.success&&saved.data?.coverage?.join(',')==='DE,FR,NL,DK')potato=saved;}}catch{}
   try{const saved=JSON.parse(fs.readFileSync(path.join(root,'src/data/potato_jrc_monthly_verified.json'),'utf8'));
    if(saved.publishedAt<=now.toISOString().slice(0,10)&&saved.forecastYear===now.getUTCFullYear())jrc=saved;}catch{}
+  const newer=readFreeJson('free-potato-stats.json',path.join(root,'.rms-stage3'));
+  if(newer?.success&&['live-verified','last-verified'].includes(newer.dataStatus)&&newer.data?.coverage?.join(',')==='DE,FR,NL,DK'&&
+    Array.isArray(newer.data.countries)&&Number(newer.data.harvestYear)>=Number(potato?.data.harvestYear||0))potato=newer;
+  currentJrc=readPotatoJrcPublication(readFreeJson('potato-production-regions-v2.json',path.join(process.env.RMS_HISTORY_ROOT||root,'.rms-price-history'))?.potatoJrcPublication,now);
  }
  const planting=['soybean','soybean-oil'].includes(id)?selectProcurementNews('soybean',readVerifiedSoybeanNews(root,now),+now).find(a=>/마토그로소/.test(a.summary)&&/전체 파종.*일정대로/.test(a.summary)):null;
  const cassava=id==='tapioca-starch'?readVerifiedTapiocaNews(root).filter(a=>a.publishedAt<=now.toISOString().slice(0,10)):[];
@@ -122,7 +130,11 @@ export function completeOriginRadar(id:string,value:OriginRadarResponse,root=pro
     const change=prior?.production1000MT>0?(country.production1000MT/prior.production1000MT-1)*100:null;
     indicators.push({text:`${potato.data.harvestYear}년${potato.data.isEstimateOrProvisional?' 잠정':''} · `+(change!==null?`전년 생산 대비 ${change>=0?'+':''}${change.toFixed(1)}%`:`수확면적 ${country.area1000HA}천 ha`),source:'Eurostat',url:potato.sourceUrl,period:potato.data.harvestYear,display:'origin-summary'});
     indicators.push({text:`${potato.data.harvestYear} 국가 전체 감자 · 면적 ${country.area1000HA}천 ha · 단수 ${country.yieldMTHA}t/ha`,source:'Eurostat',url:potato.sourceUrl,period:potato.data.harvestYear});}
-   if(forecast){indicators.push({text:`JRC ${jrc.forecastYear} 국가 감자 단수 전망 ${forecast.forecast.toFixed(1)}t/ha · 전년 ${forecast.previousYear.toFixed(1)} · 전월 전망 ${forecast.previousForecast.toFixed(1)}`,source:'JRC MARS',url:jrc.sources[0].url,period:jrc.publishedAt});
+   const current=currentJrc?.current.rows.find(r=>r.code===code);
+   if(current&&currentJrc){
+    const issue=currentJrc.current;
+    indicators.push({text:`JRC ${issue.forecastYear} ${POTATO_JRC_NAMES[current.code]} 국가 감자 단수 전망 ${current.forecast.toFixed(1)}t/ha · 전년 ${current.previousYear.toFixed(1)}`,source:'JRC MARS',url:issue.sourceUrl,period:issue.publishedAt});
+   }else if(!currentJrc&&forecast){indicators.push({text:`JRC ${jrc.forecastYear} 국가 감자 단수 전망 ${forecast.forecast.toFixed(1)}t/ha · 전년 ${forecast.previousYear.toFixed(1)} · 전월 전망 ${forecast.previousForecast.toFixed(1)}`,source:'JRC MARS',url:jrc.sources[0].url,period:jrc.publishedAt});
     if(forecast.forecast<forecast.fiveYearMean&&/고온|건조/.test(jrc.conditions))context={warningSupported:true,basis:`JRC ${jrc.publishedAt}: ${forecast.country} 전체 감자 단수 전망이 평년보다 낮으며, 해당 생육기의 고온·건조 영향이 보고됐습니다. 현재 주간 강수만으로 피해를 판정한 결과가 아닙니다.`,sourceUrl:jrc.sources[0].url,publishedAt:jrc.publishedAt};}
   }
   if(id==='tapioca-starch'){

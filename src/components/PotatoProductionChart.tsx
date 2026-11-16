@@ -14,19 +14,26 @@ const statusLabel=(status:string)=>status==='Derived Estimate'?'산출 추정':s
 const signed=(v:number|null)=>v===null?'—':(v>=0?'+':'')+v.toFixed(1)+'%';
 const EUROSTAT='https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en';
 
-export function PotatoProductionChart({isSyncing=false}:{isSyncing?:boolean}){
+/** One saved snapshot for the graph, supply table and radar. No source collection on views. */
+export function useSavedPotatoProduction(enabled:boolean,isSyncing=false){
  const [snapshot,setSnapshot]=useState<PotatoChartSnapshot|null>(null),[failed,setFailed]=useState(false);
  useEffect(()=>{
-  let active=true;const controller=new AbortController();
-  const load=async()=>{try{
+  if(!enabled){setSnapshot(null);setFailed(false);return;}
+  let active=true,pending=false;const controller=new AbortController();
+  const load=async()=>{if(pending||document.hidden)return;pending=true;try{
    const response=await fetch('/api/potato-starch/production-regions',{cache:'no-store',signal:controller.signal});
    if(!response.ok)throw Error('Unavailable');const body=await response.json();
    if(body.version!==2||!Array.isArray(body.points))throw Error('Invalid response');
    if(active){setSnapshot(body);setFailed(!!body.lastError);}
-  }catch{if(active)setFailed(true);}};
-  void load();const timer=setInterval(()=>void load(),30*60000);
-  return()=>{active=false;controller.abort();clearInterval(timer);};
- },[isSyncing]);
+  }catch{if(active)setFailed(true);}finally{pending=false;}};
+  const recheck=()=>{void load();};
+  void load();const timer=setInterval(recheck,5*60000);
+  window.addEventListener('focus',recheck);document.addEventListener('visibilitychange',recheck);
+  return()=>{active=false;controller.abort();clearInterval(timer);window.removeEventListener('focus',recheck);document.removeEventListener('visibilitychange',recheck);};
+ },[enabled,isSyncing]);
+ return {snapshot,failed};
+}
+export function PotatoProductionChart({snapshot,failed=false}:{snapshot:PotatoChartSnapshot|null;failed?:boolean}){
  return <PotatoProductionChartView snapshot={snapshot} failed={failed}/>;
 }
 

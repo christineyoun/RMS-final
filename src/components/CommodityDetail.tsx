@@ -4,7 +4,8 @@ import { issuePdfFilename, stampPdfIssue } from '../utils/pdfPublication';
 import {commodityBenchmarkDisplay,commodityComparisonDisplay} from '../services/commodityQuoteSource';
 import {getRecommendationColor,getRiskBadgeColor} from '../utils/recommendationPresentation';
 import {ChartCanvas, ChartSummaryCard, ChartTooltip, ChartRedGradient, chartSmoothPath, chartValueBounds, chartButtonClass, chartPresentation} from './CommodityChartPresentation';
-import {PotatoProductionChart} from './PotatoProductionChart';
+import {PotatoProductionChart,useSavedPotatoProduction} from './PotatoProductionChart';
+import {readPotatoJrcPublication,retainedPotatoJrcPublication} from '../utils/potatoJrcPublication';
 import {PotatoPriceChangesDisplay} from './PotatoPriceChanges';
 import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 import PotatoBenchmarkValue from './PotatoBenchmarkValue';
@@ -24,6 +25,7 @@ import AiRecommendation from './AiRecommendation';
 import {rmsAiEditorial} from '../utils/rmsAiEditorial';
 import { CommodityWasdeCard } from './CommodityWasdeCard';
 import { OriginRadar } from './OriginRadar';
+import {watchSavedOriginRadar} from '../services/savedOriginRadar';
 
 export interface UsdaWheatSummary {
   commodityCode?: string;
@@ -273,6 +275,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const isPalmOil = commodity.id === 'palm-oil' || commodity.id === 'palmoil' || commodity.id === 'palm_oil';
   const isSugar = commodity.id === 'sugar';
   const isPotatoStarch = commodity.id === 'potato-starch';
+  const potatoProduction=useSavedPotatoProduction(isPotatoStarch,isSyncing);
+  const potatoJrcPublication=isPotatoStarch?(readPotatoJrcPublication(potatoProduction.snapshot?.potatoJrcPublication)||retainedPotatoJrcPublication()):undefined;
   const potatoExportQuote=commodity._potatoExportQuote||null;
   const isTapiocaStarch = commodity.id === 'tapioca-starch' || commodity.id === 'tapioca_starch';
 
@@ -610,27 +614,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       }
     };
 
-    const fetchOriginRadar = async () => {
-      try {
-        const baseEndpoint = isWheat ? '/api/wheat/origin-radar' : isCorn ? '/api/corn/origin-radar' : isSoybean ? '/api/soybean/origin-radar' : `/api/rms/origin-radar-all?commodity=${encodeURIComponent(commodity.id)}`;
-        if (!baseEndpoint) return;
-        const url = isWheat ? baseEndpoint : (isSyncing ? `${baseEndpoint}${baseEndpoint.includes('?')?'&':'?'}force=true` : baseEndpoint);
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (json.success && Array.isArray(json.origins) && isMounted) {
-          setOriginRadarData(json.origins);
-          setOriginRadarCommodityId(commodity.id);
-        }
-      } catch (err) {
-        console.warn('[CommodityDetail] Origin radar fetch notice:', err);
-      }
-    };
-
     fetchAmis();
-    fetchOriginRadar();
     return () => { isMounted = false; };
-  }, [commodity.id, isWheat, isCorn, isSoybean, isSoybeanOil, isSyncing]);
+  }, [isWheat, isSyncing]);
+
+  useEffect(()=>watchSavedOriginRadar(commodity.id,origins=>{
+    setOriginRadarData(origins);
+    setOriginRadarCommodityId(commodity.id);
+  },{initialForce:isSyncing}),[commodity.id,isSyncing]);
 
   // Corn SCM Procurement Analysis Fetch Hook
   useEffect(() => {
@@ -2168,7 +2159,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
       {(isSoybeanOil||isSugar)&&(!datedPriceSnapshot||datedPriceSnapshot.stale)&&<p className="text-[11px] text-amber-700">{datedPriceSnapshot?'시세 갱신 실패 · 이전 관측 시세':(isSugar?'설탕 시세 자료 없음':'대두유 시세 자료 없음')}</p>}
       {/* 3. Interactive Historical Trend & Technical Chart (Full Width 100%) */}
-      {isPotatoStarch ? <PotatoProductionChart isSyncing={isSyncing} /> : <>
+      {isPotatoStarch ? <PotatoProductionChart snapshot={potatoProduction.snapshot} failed={potatoProduction.failed} /> : <>
       <section className={chartPresentation.section}>
         <div className={chartPresentation.header}>
           <div className="flex items-center gap-2 flex-wrap">
@@ -3088,6 +3079,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           key={`wasde-card-${commodity.id}`}
           commodityId={commodity.id}
           refreshRevision={usdaRefreshRevision}
+          potatoJrcPublication={potatoJrcPublication}
           commodityName={commodity.nameKo}
           verifiedSupply={isSoybeanOil?commodity._soybeanOilPriceSnapshot?.supplyEvidence:undefined}
           customBrief={commodity.aiSynthesis}
@@ -3099,6 +3091,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
           key={`origin-radar-${commodity.id}`}
           commodityId={commodity.id}
           origins={combinedOrigins}
+          potatoJrcPublication={potatoJrcPublication}
           className="print:break-inside-avoid"
         />
       </div>
