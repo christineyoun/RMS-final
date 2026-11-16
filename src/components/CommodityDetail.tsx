@@ -25,6 +25,7 @@ import AiRecommendation from './AiRecommendation';
 import {rmsAiEditorial} from '../utils/rmsAiEditorial';
 import { CommodityWasdeCard } from './CommodityWasdeCard';
 import { OriginRadar } from './OriginRadar';
+import {watchSavedOriginRadar} from '../services/savedOriginRadar';
 
 export interface UsdaWheatSummary {
   commodityCode?: string;
@@ -613,27 +614,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       }
     };
 
-    const fetchOriginRadar = async () => {
-      try {
-        const baseEndpoint = isWheat ? '/api/wheat/origin-radar' : isCorn ? '/api/corn/origin-radar' : isSoybean ? '/api/soybean/origin-radar' : `/api/rms/origin-radar-all?commodity=${encodeURIComponent(commodity.id)}`;
-        if (!baseEndpoint) return;
-        const url = isWheat ? baseEndpoint : (isSyncing ? `${baseEndpoint}${baseEndpoint.includes('?')?'&':'?'}force=true` : baseEndpoint);
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (json.success && Array.isArray(json.origins) && isMounted) {
-          setOriginRadarData(json.origins);
-          setOriginRadarCommodityId(commodity.id);
-        }
-      } catch (err) {
-        console.warn('[CommodityDetail] Origin radar fetch notice:', err);
-      }
-    };
-
     fetchAmis();
-    fetchOriginRadar();
     return () => { isMounted = false; };
-  }, [commodity.id, isWheat, isCorn, isSoybean, isSoybeanOil, isSyncing]);
+  }, [isWheat, isSyncing]);
+
+  useEffect(()=>watchSavedOriginRadar(commodity.id,origins=>{
+    setOriginRadarData(origins);
+    setOriginRadarCommodityId(commodity.id);
+  },{initialForce:isSyncing}),[commodity.id,isSyncing]);
 
   // Corn SCM Procurement Analysis Fetch Hook
   useEffect(() => {
