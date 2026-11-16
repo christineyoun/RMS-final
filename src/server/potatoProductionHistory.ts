@@ -39,7 +39,7 @@ export function potatoProductionPayload(history=loadPotatoProductionHistory()){
 // Graph-only regional history. Existing four-country payload/SCM consumers above are unchanged.
 export type {PotatoChartSnapshot,PotatoChartPoint} from '../utils/potatoProductionChart.ts';
 import {POTATO_CHART_REGIONS,type PotatoChartSnapshot,type PotatoChartPoint,type PotatoArea,type PotatoYieldForecast,type PotatoOriginalPoint} from '../utils/potatoProductionChart.ts';
-import {readRetainedPotatoChartYields,type PotatoChartJrcPacket} from './potatoJrcOutlook.ts';
+import {fetchLatestPotatoChartYields,readRetainedPotatoChartYields,type PotatoChartJrcPacket} from './potatoJrcOutlook.ts';
 const regionalFile=()=>path.join(process.env.RMS_HISTORY_ROOT||process.cwd(),'.rms-price-history','potato-production-regions-v2.json');
 const regionalUrl='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_cpnh1';
 const regionalPage='https://ec.europa.eu/eurostat/databrowser/view/apro_cpnh1/default/table?lang=en';
@@ -102,7 +102,7 @@ function validRegionalPoint(p:any,now:Date):p is PotatoChartPoint{
  (p.status==='Derived Estimate'?p.areaSourceUrl===regionalPage&&Number.isFinite(p.area1000HA)&&p.area1000HA>0&&Number.isFinite(p.yieldMTHA)&&p.yieldMTHA>0&&Math.abs(p.productionMMT-p.area1000HA*p.yieldMTHA/1000)<1e-10&&/^https:\/\/publications\.jrc\.ec\.europa\.eu\//.test(p.sourceUrl):p.sourceUrl===regionalPage);
 }
 /** Injectable graph-only store; default reads never import manual production history. */
-export function createRegionalPotatoHistory(options:{file?:string|null;now?:()=>Date;fetcher?:typeof fetch;jrc?:()=>Promise<PotatoChartJrcPacket>}={}){
+export function createRegionalPotatoHistory(options:{file?:string|null;now?:()=>Date;fetcher?:typeof fetch;jrc?:()=>Promise<PotatoChartJrcPacket>;jrcFetcher?:typeof fetch;extractJrcPdfText?:(bytes:Uint8Array)=>Promise<string>}={}){
  const filename=options.file===undefined?regionalFile():options.file,clock=options.now||(()=>new Date());
  let state:PotatoChartSnapshot={version:2,points:[],areas:[]},loaded=false,expires=0,pending:Promise<PotatoChartSnapshot>|null=null;
  const read=()=>{if(loaded)return;loaded=true;if(filename)try{const raw=JSON.parse(fs.readFileSync(filename,'utf8'));if(raw.version===2&&Array.isArray(raw.points)&&raw.points.every((p:any)=>validRegionalPoint(p,clock()))){state=raw;state.originalSeries=Array.isArray(raw.originalSeries)?raw.originalSeries.filter((p:any)=>p.region==='ORIGINS4'&&JSON.stringify(p.coverage)===JSON.stringify(['DE','FR','NL','DK'])&&p.status!=='Derived Estimate'&&validRegionalPoint({...p,region:'DE'},clock())):[];}}catch{}};
@@ -118,7 +118,10 @@ export function createRegionalPotatoHistory(options:{file?:string|null;now?:()=>
     const parsed=parseRegionalPotatoProduction(raw,clock()),originalSeries=parseOriginalPotatoSeries(raw,clock());
     if(!parsed.points.length)throw Object.assign(Error('공식 생산량 차원·단위·기준일 검증 실패'),{stage:'validation'});
     return {...parsed,originalSeries};
-   })(),(options.jrc||(()=>readRetainedPotatoChartYields(process.cwd(),clock())))()]);
+   })(),(options.jrc||(()=>fetchLatestPotatoChartYields({
+    now:clock(),fetcher:options.jrcFetcher,extractPdfText:options.extractJrcPdfText,
+    previous:state.jrc?.candidateUrl&&Array.isArray(state.jrc.forecasts)?{...state.jrc,forecasts:state.jrc.forecasts}:undefined
+   })))()]);
    const map=new Map(state.points.map(p=>[p.region+':'+p.year,p]));
    if(official.status==='fulfilled'){
     for(const p of official.value.points){const old=map.get(p.region+':'+p.year);if(!old||p.publishedAt>=old.publishedAt||old.status==='Derived Estimate')map.set(p.region+':'+p.year,p);}
@@ -129,12 +132,14 @@ export function createRegionalPotatoHistory(options:{file?:string|null;now?:()=>
     errors.push(`Eurostat ${stage} 오류${code?' ('+code+')':''} · 기존 검증 생산량과 자료 갱신일 유지`);
    }
    if(jrc.status==='fulfilled'){
-    const packet=jrc.value;state.jrc={latestReportDate:packet.latestReportDate,latestReportUrl:packet.latestReportUrl,checkedAt:packet.checkedAt,message:packet.message,documents:packet.documents};
+    const packet=jrc.value;state.jrc={latestReportDate:packet.latestReportDate,latestReportUrl:packet.latestReportUrl,checkedAt:packet.checkedAt,message:packet.message,
+     ...(packet.candidateUrl?{candidateUrl:packet.candidateUrl,forecasts:packet.forecasts}:{}),
+     ...(packet.documents?.[0]?{pdfSha256:packet.documents[0].sha256}:state.jrc?.latestReportUrl===packet.latestReportUrl?{pdfSha256:state.jrc?.pdfSha256}:{})};
     // Never derive new numbers using stale area carried through an API failure.
     if(official.status==='fulfilled')for(const p of deriveRegionalPotatoProduction(state.areas,packet.forecasts)){
      const old=map.get(p.region+':'+p.year);if(!old||old.status==='Derived Estimate'&&p.publishedAt>=old.publishedAt)map.set(p.region+':'+p.year,p);
     }
-   }else errors.push('JRC 조회·추출 실패 · 검증되지 않은 생산량 추정 제외');
+   }else errors.push('JRC 조회·추출 실패 · 마지막 검증 추정 유지');
    state.points=[...map.values()].filter(p=>validRegionalPoint(p,clock())).sort((a,b)=>a.year-b.year||a.region.localeCompare(b.region));
    state.lastCheckedAt=clock().toISOString();state.lastError=errors.length?errors.join(' / '):undefined;
    if(filename)try{fs.mkdirSync(path.dirname(filename),{recursive:true});const temp=filename+'.'+process.pid+'.tmp';fs.writeFileSync(temp,JSON.stringify(state,null,2));fs.renameSync(temp,filename);}catch{state.lastError=(state.lastError||'')+' · 그래프 저장 실패';}
