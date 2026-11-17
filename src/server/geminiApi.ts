@@ -462,10 +462,13 @@ export function createGeminiApiMiddleware() {
     if (/^\/api\/starch\/tapioca-quote(\?|$)/.test(url)) {
       const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';
       const result = await fetchOfficialTapiocaQuote(force);
+      // Only the existing scheduled starch supply job collects crop surveys.
+      const {readSavedThaiCassavaSupply}=await import('./starchOriginSupplyRefresh.ts');
+      const cropSupply=readSavedThaiCassavaSupply();
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       res.setHeader('Cache-Control', 'no-store');
-      res.statusCode = result.success ? 200 : 503;
-      res.end(JSON.stringify(result, null, 2));
+      res.statusCode = result.success || cropSupply ? 200 : 503;
+      res.end(JSON.stringify({...result,cropSupply}, null, 2));
       return;
     }
 

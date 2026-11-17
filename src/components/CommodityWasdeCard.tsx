@@ -1,4 +1,5 @@
-import tapiocaSupplyHistory from '../data/tapioca_supply_history_verified.json';
+import {TapiocaCropSupplyCard,type TapiocaCardQuote} from './TapiocaCropSupplyCard';
+import {cassavaCropStart,readThaiCassavaSupply,type ThaiCassavaSupply} from '../utils/thaiCassavaSupply';
 import {parseSoybeanOilSupply} from '../lib/soybeanOilSupply';
 import {SourceAttribution} from './SourceAttribution';
 import {PotatoRawSupplyCard} from './PotatoRawSupplyCard';
@@ -56,8 +57,9 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   const [usdaVerifiedAt, setUsdaVerifiedAt] = useState('');
 
   // RMS Step 17 — official starch source separation
-  const [tapiocaQuote, setTapiocaQuote] = useState<{ date: string; usdPerMt: number; wowPct: number | null } | null>(null);
-  const [tapiocaQuoteStatus, setTapiocaQuoteStatus] = useState<'loading' | 'live-verified' | 'last-verified' | 'unavailable'>('loading');
+  const [tapiocaQuote,setTapiocaQuote]=useState<TapiocaCardQuote|null>(null);
+  const [tapiocaCrop,setTapiocaCrop]=useState<ThaiCassavaSupply|null>(null);
+  const [tapiocaLoading,setTapiocaLoading]=useState(true);
 
   // RMS Step 18 — Eurostat potato harvest statistics
   type PotatoSourceData = { harvestYear: string; dataset: string; productionMMT: number; area1000HA: number; weightedYieldMTHA: number; coverage: string[]; isEstimateOrProvisional: boolean };
@@ -87,18 +89,27 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   useEffect(() => {
     if (!['tapioca-starch', 'tapioca_starch'].includes(normalizedId)) return;
     let active = true;
-    setTapiocaQuoteStatus('loading');
-    const url = '/api/starch/tapioca-quote' + (refreshRevision > 0 ? '?force=true' : '');
-    fetch(url, { cache: 'no-store' }).then(async response => {
-      const json = await response.json();
-      if (!active) return;
-      if ((json.dataStatus === 'live-verified' || json.dataStatus === 'last-verified') &&
-          json.quote && Number.isFinite(json.quote.usdPerMt) && /^\d{4}-\d{2}-\d{2}$/.test(json.quote.date)) {
-        setTapiocaQuote(json.quote);
-        setTapiocaQuoteStatus(json.dataStatus);
-      } else { setTapiocaQuote(null); setTapiocaQuoteStatus('unavailable'); }
-    }).catch(() => { if (active) { setTapiocaQuote(null); setTapiocaQuoteStatus('unavailable'); } });
-    return () => { active = false; };
+    setTapiocaLoading(true);
+    // A saved-only read on both local and Cloud. Crop and quote validate independently.
+    fetch('/api/starch/tapioca-quote',{cache:'no-store'}).then(async response=>{
+      if(!response.ok)return;
+      const json=await response.json();
+      if(!active)return;
+      const crop=readThaiCassavaSupply(json.cropSupply);
+      if(crop)setTapiocaCrop(prior=>{
+        if(!prior)return crop;
+        const start=cassavaCropStart(crop.current.reportingYear)!,prev=cassavaCropStart(prior.current.reportingYear)!;
+        return start>prev||start===prev&&crop.source.reportDate>=prior.source.reportDate?crop:prior;
+      });
+      const q=json.quote;
+      if(['live-verified','last-verified'].includes(json.dataStatus)&&
+        Number.isFinite(q?.usdPerMt)&&q.usdPerMt>0&&/^\d{4}-\d{2}-\d{2}$/.test(q.date)){
+        setTapiocaQuote(prior=>!prior||q.date>=prior.date?{
+          date:q.date,usdPerMt:q.usdPerMt,wowPct:Number.isFinite(q.wowPct)?q.wowPct:null
+        }:prior);
+      }
+    }).catch(()=>{}).finally(()=>{if(active)setTapiocaLoading(false);});
+    return ()=>{active=false;};
   }, [normalizedId, refreshRevision]);
 
   useEffect(() => {
@@ -199,98 +210,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
 
   const isTapiocaStarch = normalizedId === 'tapioca-starch' || normalizedId === 'tapioca_starch';
 
-  const tapiocaCurrent=tapiocaSupplyHistory.rows.find(r=>r.marketYear==='2025/2026');
-  if (isTapiocaStarch) {
-    return (
-      <div className={`flex flex-col h-full justify-between bg-white p-6 rounded-xl border border-gray-100 shadow-sm pdf-section-card min-h-[280px] break-inside-avoid print:break-inside-avoid ${className || ''}`.trim()}>
-        {/* Upper Content Section */}
-        <div className="flex-1 space-y-3">
-          {/* Card Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-[#f3f4f6]">
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
-              <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
-              <h3 className="text-base font-bold text-slate-900 break-keep">
-                글로벌 수급 밸런스 (Global S&D Balance)
-              </h3>
-            </div>
-          </div>
-
-          <div className="text-xs text-slate-500" data-supply-year="current">Market Year: {tapiocaCurrent?.marketYear.replace(/\/20(\d{2})$/, '/$1')||'—'}</div>
-          <div data-supply-grid="current" className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] wasde-grid gap-3">
-            {/* Box 1: 카사바 생산량 (Cassava Production) */}
-            <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-              <span className="text-[10px] text-[#6b7280] block font-sans">카사바 생산량 (Cassava Production)</span>
-              <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                18.58 MMT
-              </span>
-              <span className="text-[10px] font-mono text-[#DF0029] font-semibold block mt-0.5">
-                vs 2024/25: 24.98 MMT (-25.6%)
-              </span>
-            </div>
-
-            {/* Box 2: 천연전분 수출량 (Native Starch Exports) */}
-            <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-              <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">천연전분 수출량 (Native Starch Exports)</span>
-              <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                2.85 MMT
-              </span>
-              <span className="text-[10px] font-mono text-[#059669] font-semibold block mt-0.5">
-                YoY: +4.2%
-              </span>
-            </div>
-
-            {/* Box 3: 변성전분 수출량 (Modified Starch Exports) */}
-            <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-              <span className="text-[10px] text-[#6b7280] block font-sans">변성전분 수출량 (Modified Starch Exports)</span>
-              <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                1.15 MMT
-              </span>
-              <span className="text-[10px] font-mono text-[#DF0029] font-semibold block mt-0.5">
-                YoY: -1.5%
-              </span>
-            </div>
-
-            {/* Box 4: 재배 면적 (Cassava Area) */}
-            <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-              <span className="text-[10px] text-[#6b7280] block font-sans">카사바 재배면적 (Planted Area)</span>
-              <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                6,615 kRAI
-              </span>
-              <span className="text-[10px] font-mono text-[#DF0029] font-semibold block mt-0.5">
-                vs 2024/25: 8,445 kRAI (-21.7%)
-              </span>
-            </div>
-
-            {/* Box 5: 카사바 단수 (Cassava Yield) */}
-            <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-              <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">카사바 평균단수 (Cassava Yield)</span>
-              <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                2.81 MT/Rai
-              </span>
-              <span className="text-[10px] font-mono text-[#DF0029] font-semibold block mt-0.5">
-                vs 2024/25: 2.96 MT/Rai (-5.0%)
-              </span>
-            </div>
-
-            {/* Box 6: TTSA FOB 가격 (FOB Bangkok) */}
-            <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-              <span className="text-[10px] text-[#6b7280] block font-sans">TTSA 기준시세 (FOB BKK)</span>
-              <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block">
-                {tapiocaQuote ? `$${tapiocaQuote.usdPerMt.toFixed(2)}/MT` : 'N/A'}
-              </span>
-              <span className="text-[10px] font-mono text-[#059669] font-semibold block mt-0.5">
-                {tapiocaQuote ? `발표 ${tapiocaQuote.date} · ${tapiocaQuote.wowPct !== null ? tapiocaQuote.wowPct.toFixed(2) + '% WoW' : '전주 대비 N/A'}` : '공식 주간 시세 확인 불가'}
-              </span>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Footer Source */}
-        <SourceAttribution className="mt-auto pt-4 justify-end" entries={[{label:'TTSA',url:'https://www.thaitapiocastarch.org/en/information/statistics/weekly_tapioca_starch_price'},{label:'TTSA 생산 통계',url:tapiocaSupplyHistory.sourceUrl}]}/>
-      </div>
-    );
-  }
+  if(isTapiocaStarch)return <TapiocaCropSupplyCard crop={tapiocaCrop} quote={tapiocaQuote} loading={tapiocaLoading} className={className}/>;
 
   const yearLabel=(year:string)=>['wheat','corn','soybean','soybean-oil'].includes(normalizedId)&&/^20\d{2}$/.test(year)?year+'/'+String(Number(year)+1).slice(-2):year;
 

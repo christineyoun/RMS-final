@@ -3,8 +3,9 @@ import path from 'node:path';
 import {load} from 'cheerio';
 import {PDFParse} from 'pdf-parse';
 import {readFreeJson,writeFreeJson} from './freeDailyPublication.ts';
+import {THAI_CASSAVA_SURVEYS,cassavaSurveyMetrics,readThaiCassavaSupply} from '../utils/thaiCassavaSupply.ts';
 
-export const THAI_CASSAVA_SURVEYS='https://ttta-tapioca.org/การสำรวจผลผลิต/?lang=en';
+export {THAI_CASSAVA_SURVEYS};
 export const AFSIS_ACO_INDEX='https://www.aptfsis.org/publication/aco/';
 const EUROSTAT='https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/apro_cpnh1';
 const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -13,8 +14,10 @@ type SourceId='thai-survey'|'afsis-aco'|'poland-eurostat';
 type Scope={scope:'national';crop:'fresh-cassava-roots'|'raw-potatoes-including-seed';unit:'tonnes'};
 export type OriginSupplyRecord=Scope&{commodityId:'potato-starch'|'tapioca-starch';originKey:string;
  reportingYear:string;productionTonnes:number;estimateStatus:'forecast'|'estimated'|'actual';
- previous?:Scope&{reportingYear:string;productionTonnes:number};
- source:{name:string;url:string;reportDate:string|null;retrievedAt:string;sha256:string;dataUpdatedAt?:string;edition?:string;issue?:number}};
+ harvestedAreaRai?:number;yieldTonnesPerRai?:number;
+ previous?:Scope&{reportingYear:string;productionTonnes:number;harvestedAreaRai?:number;yieldTonnesPerRai?:number};
+ source:{name:string;url:string;reportDate:string|null;retrievedAt:string;sha256:string;dataUpdatedAt?:string;edition?:string;issue?:number;
+  harvestedAreaRai?:number;yieldTonnesPerRai?:number;previousHarvestedAreaRai?:number;previousYieldTonnesPerRai?:number}};
 type Provenance=OriginSupplyRecord['source'];
 const trim=(s:string)=>s.replace(/\s+/g,' ').trim();
 const tonnes=(s:string)=>/^[0-9][0-9,]*(?:\.\d+)?\*?$/.test(s)?Number(s.replace(/[,\*]/g,'')):NaN;
@@ -40,12 +43,20 @@ export function parseThaiCassavaSurvey(html:string,now=new Date()):OriginSupplyR
   const rows=$(table).find('tr').toArray().map(r=>$(r).find('td,th').toArray().map(x=>trim($(x).text())));
   const years=rows.filter(r=>/^Year \(A\.D\.\)$/i.test(r[0])),values=rows.filter(r=>/^Total Production \(Ton\)$/i.test(r[0]));
   if(years.length!==1||values.length!==1||years[0].length!==values[0].length||years[0].length<3)return;
-  const entries=years[0].slice(1).map((y,i)=>({period:y.replace(/^\*/,''),forecast:y.startsWith('*'),value:tonnes(values[0][i+1])}));
+  const aligned=(label:RegExp)=>{
+   const matching=rows.filter(r=>label.test(r[0]));
+   return matching.length===1&&matching[0].length===years[0].length?matching[0]:[];
+  };
+  const area=aligned(/^Harvesting Acreage \(Rai\)$/i),yieldRow=aligned(/^Yield Per Rai \(Ton\/Rai\)$/i);
+  const entries=years[0].slice(1).map((y,i)=>({period:y.replace(/^\*/,''),forecast:y.startsWith('*'),value:tonnes(values[0][i+1]),
+   area:tonnes(area[i+1]||''),yieldPerRai:tonnes(yieldRow[i+1]||'')}));
   if(entries.some(x=>!/^20\d{2}\/\d{2}$/.test(x.period)||!usable(x.value)||cropYear(+x.period.slice(0,4)+1)!==x.period)||new Set(entries.map(x=>x.period)).size!==entries.length)return;
   const row=entries.sort((a,b)=>b.period.localeCompare(a.period))[0],prior=entries.find(x=>x.period===cropYear(+row.period.slice(0,4)));
   if(!prior||+row.period.slice(0,4)>now.getUTCFullYear()+1)return;
-  result.push(record('thailand',row.period,row.value,prior.period,prior.value,{name:'TTTA · 생산조사단',url:new URL(THAI_CASSAVA_SURVEYS).href,
-   reportDate:dates[0],retrievedAt:now.toISOString(),sha256:digest(html)},row.forecast?'forecast':'actual'));
+  const saved=record('thailand',row.period,row.value,prior.period,prior.value,{name:'TTTA · 생산조사단',url:new URL(THAI_CASSAVA_SURVEYS).href,
+   reportDate:dates[0],retrievedAt:now.toISOString(),sha256:digest(html)},row.forecast?'forecast':'actual');
+  result.push({...saved,...cassavaSurveyMetrics(row.period,row.value,row.area,row.yieldPerRai),previous:{...saved.previous!,
+   ...cassavaSurveyMetrics(prior.period,prior.value,prior.area,prior.yieldPerRai)}});
  });
  return result.length===1?result:[];
 }
@@ -128,6 +139,23 @@ export function readStarchOriginSupply(root=process.cwd()):OriginSupplyRecord[]{
  }
  return [...records.values()];
 }
+/** The detail card and Origin Radar share the same already verified national crop record. */
+export function readSavedThaiCassavaSupply(root=process.cwd(),now=new Date()){
+ const r=readStarchOriginSupply(root).find(r=>r.commodityId==='tapioca-starch'&&r.originKey==='thailand');
+ if(!r)return null;
+ const {source,previous}=r;
+ return readThaiCassavaSupply({scope:'thailand-cassava',source,estimateStatus:r.estimateStatus,
+  current:{reportingYear:r.reportingYear,productionTonnes:r.productionTonnes,
+   harvestedAreaRai:r.harvestedAreaRai??source.harvestedAreaRai,yieldTonnesPerRai:r.yieldTonnesPerRai??source.yieldTonnesPerRai},
+  ...(previous?.scope===r.scope&&previous.crop===r.crop&&previous.unit===r.unit?{
+   previous:{...previous,harvestedAreaRai:previous.harvestedAreaRai??source.previousHarvestedAreaRai,
+    yieldTonnesPerRai:previous.yieldTonnesPerRai??source.previousYieldTonnesPerRai}
+  }:{})},now);
+}
+const thaiMetrics=(r:OriginSupplyRecord)=>[
+ r.harvestedAreaRai,r.yieldTonnesPerRai,r.previous?.reportingYear,r.previous?.productionTonnes,
+ r.previous?.harvestedAreaRai,r.previous?.yieldTonnesPerRai
+];
 export async function refreshStarchOriginSupply(id:'potato-starch'|'tapioca-starch',options:{
  root?:string;now?:Date;fetcher?:typeof fetch;extractPdf?:(bytes:Uint8Array)=>Promise<string>;
 }={}){
@@ -162,7 +190,11 @@ export async function refreshStarchOriginSupply(id:'potato-starch'|'tapioca-star
   for(const r of result.value.rows){
    const prev=old.find(p=>key(p)===key(r));
    if(prev&&(period(prev)>period(r)||period(prev)===period(r)&&release(prev)>release(r)))continue;
-   if(prev&&period(prev)===period(r)&&release(prev)===release(r)&&prev.productionTonnes===r.productionTonnes&&prev.source.url===r.source.url)continue;
+   if(prev&&period(prev)===period(r)&&release(prev)===release(r)&&prev.productionTonnes===r.productionTonnes&&prev.source.url===r.source.url){
+    if(result.value.name!=='thai-survey'||JSON.stringify(thaiMetrics(prev))===JSON.stringify(thaiMetrics(r)))continue;
+    // A same-release incomplete response must not erase a reported metric or prior period.
+    if(thaiMetrics(prev).some((value,i)=>value!==undefined&&thaiMetrics(r)[i]===undefined))continue;
+   }
    oldMap.set(key(r),r);
   }
  }
