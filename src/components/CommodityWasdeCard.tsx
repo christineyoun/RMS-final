@@ -1,5 +1,6 @@
-import {TapiocaCropSupplyCard,type TapiocaCardQuote} from './TapiocaCropSupplyCard';
+import {TapiocaCropSupplyCard} from './TapiocaCropSupplyCard';
 import {cassavaCropStart,readThaiCassavaSupply,type ThaiCassavaSupply} from '../utils/thaiCassavaSupply';
+import {readThaiStarchExports,type ThaiStarchExports} from '../utils/thaiStarchExports';
 import {parseSoybeanOilSupply} from '../lib/soybeanOilSupply';
 import {SourceAttribution} from './SourceAttribution';
 import {PotatoRawSupplyCard} from './PotatoRawSupplyCard';
@@ -57,7 +58,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
   const [usdaVerifiedAt, setUsdaVerifiedAt] = useState('');
 
   // RMS Step 17 — official starch source separation
-  const [tapiocaQuote,setTapiocaQuote]=useState<TapiocaCardQuote|null>(null);
+  const [tapiocaExports,setTapiocaExports]=useState<ThaiStarchExports|null>(null);
   const [tapiocaCrop,setTapiocaCrop]=useState<ThaiCassavaSupply|null>(null);
   const [tapiocaLoading,setTapiocaLoading]=useState(true);
 
@@ -90,8 +91,8 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
     if (!['tapioca-starch', 'tapioca_starch'].includes(normalizedId)) return;
     let active = true;
     setTapiocaLoading(true);
-    // A saved-only read on both local and Cloud. Crop and quote validate independently.
-    fetch('/api/starch/tapioca-quote',{cache:'no-store'}).then(async response=>{
+    // A saved-only read on both local and Cloud. Crop and exports validate independently.
+    fetch('/api/starch/tapioca-supply',{cache:'no-store'}).then(async response=>{
       if(!response.ok)return;
       const json=await response.json();
       if(!active)return;
@@ -101,13 +102,9 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
         const start=cassavaCropStart(crop.current.reportingYear)!,prev=cassavaCropStart(prior.current.reportingYear)!;
         return start>prev||start===prev&&crop.source.reportDate>=prior.source.reportDate?crop:prior;
       });
-      const q=json.quote;
-      if(['live-verified','last-verified'].includes(json.dataStatus)&&
-        Number.isFinite(q?.usdPerMt)&&q.usdPerMt>0&&/^\d{4}-\d{2}-\d{2}$/.test(q.date)){
-        setTapiocaQuote(prior=>!prior||q.date>=prior.date?{
-          date:q.date,usdPerMt:q.usdPerMt,wowPct:Number.isFinite(q.wowPct)?q.wowPct:null
-        }:prior);
-      }
+      const exports=readThaiStarchExports(json.exportSupply);
+      if(exports)setTapiocaExports(prior=>!prior||exports.current.calendarYear>prior.current.calendarYear||
+        exports.current.calendarYear===prior.current.calendarYear&&exports.source.retrievedAt>=prior.source.retrievedAt?exports:prior);
     }).catch(()=>{}).finally(()=>{if(active)setTapiocaLoading(false);});
     return ()=>{active=false;};
   }, [normalizedId, refreshRevision]);
@@ -210,7 +207,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
 
   const isTapiocaStarch = normalizedId === 'tapioca-starch' || normalizedId === 'tapioca_starch';
 
-  if(isTapiocaStarch)return <TapiocaCropSupplyCard crop={tapiocaCrop} quote={tapiocaQuote} loading={tapiocaLoading} className={className}/>;
+  if(isTapiocaStarch)return <TapiocaCropSupplyCard crop={tapiocaCrop} exports={tapiocaExports} loading={tapiocaLoading} className={className}/>;
 
   const yearLabel=(year:string)=>['wheat','corn','soybean','soybean-oil'].includes(normalizedId)&&/^20\d{2}$/.test(year)?year+'/'+String(Number(year)+1).slice(-2):year;
 
@@ -244,7 +241,7 @@ export const CommodityWasdeCard: React.FC<CommodityWasdeCardProps> = ({
       </div>
 
       {/* Footer Source — the underlying verifiedAt stays available for freshness checks. */}
-      <SourceAttribution className="mt-auto pt-4 justify-end text-right" aria-description={isVerifiedUsdaCommodity && usdaVerifiedAt ? 'USDA 자료 검증일: '+usdaVerifiedAt.slice(0,10) : undefined} entries={[{label:'USDA FAS PSD Online',url:'https://apps.fas.usda.gov/psdonline/app/index.html'}]}/>
+      <SourceAttribution className="mt-auto pt-4 justify-end text-right" aria-description={isVerifiedUsdaCommodity && usdaVerifiedAt ? 'USDA 자료 검증일: '+usdaVerifiedAt.slice(0,10) : undefined} entries={[{label:'USDA FAS PSD',url:'https://apps.fas.usda.gov/psdonline/app/index.html'}]}/>
     </div>
   );
 };
@@ -266,7 +263,7 @@ export function SupplyMetricGrid({data,showSupplyFigures,previous=false,commodit
 
           {/* Box 2: 총소비 (Consumption) */}
           <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">Domestic Consumption (총소비)</span>
+            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">총소비 (Domestic Consumption)</span>
             <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-cons"}>
               {showSupplyFigures ? <>{data.consumptionMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : (previous?'—':'데이터 없음')}
             </span>
@@ -282,7 +279,7 @@ export function SupplyMetricGrid({data,showSupplyFigures,previous=false,commodit
               {showSupplyFigures ? <>{data.endingStocksMMT.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MMT</> : (previous?'—':'데이터 없음')}
             </span>
             <span className="text-[10px] font-mono text-slate-600 font-medium block mt-0.5" id={previous?undefined:"commodity-wasde-stu"}>
-              {showSupplyFigures ? <>재고율 {data.stocksToUseRatio.toFixed(1)}% (S/U)</> : "—"}
+              {showSupplyFigures ? <>재고율 (S/U) {data.stocksToUseRatio.toFixed(1)}%</> : "—"}
             </span>
           </div>
 
@@ -299,7 +296,7 @@ export function SupplyMetricGrid({data,showSupplyFigures,previous=false,commodit
 
           {/* Box 5: 수확면적 (Area Harvested) */}
           <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">{isSoybeanOil ? '원료 대두 압착량 (연간 전망)' : 'Area Harvested (수확 면적)'}</span>
+            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">{isSoybeanOil ? '연간 대두 압착량 전망 (Annual Soybean Crush Forecast)' : '수확 면적 (Area Harvested)'}</span>
             <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-area"}>
               {isSoybeanOil ? showSupplyFigures&&data.crush1000MT?(data.crush1000MT/1000).toFixed(3)+' MMT':'N/A' : !showSupplyFigures || !data.areaHarvestedMHA ? 'N/A' : <>{data.areaHarvestedMHA.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} M HA</>}
             </span>
@@ -310,7 +307,7 @@ export function SupplyMetricGrid({data,showSupplyFigures,previous=false,commodit
 
           {/* Box 6: 단수/수확량 (Yield) */}
           <div className="p-2.5 bg-[#f9fafb] rounded border border-[#e5e7eb]">
-            <span className="text-[10px] text-[#6b7280] block font-sans">{isSoybeanOil ? '생산/압착량 환산율' : '단수/수확량 (Yield)'}</span>
+            <span className="text-[10px] text-[#6b7280] block font-sans whitespace-normal break-keep">{isSoybeanOil ? '생산/압착량 환산율 (Oil Output-to-Crush Ratio)' : '단수 (Yield)'}</span>
             <span className="font-mono text-sm font-bold text-[#111827] mt-0.5 block" id={previous?undefined:"commodity-wasde-yield"}>
               {isSoybeanOil ? showSupplyFigures&&data.oilCrushRatioPct!==undefined?data.oilCrushRatioPct.toFixed(2)+'%':'N/A' : !showSupplyFigures || !data.yieldMTHA ? 'N/A' : <>{data.yieldMTHA.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT/HA</>}
             </span>

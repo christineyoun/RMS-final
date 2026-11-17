@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate }) => {
                   (Commodities)
                 </span>
               </div>
-              <span className="inline-flex items-center justify-center text-[10px] font-sans font-medium text-slate-500 bg-slate-100/90 border border-slate-200/80 px-2 h-5 rounded-full shrink-0 whitespace-nowrap leading-none tracking-tight">
+              <span className="text-[10px] bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded text-slate-600 font-sans font-medium shrink-0 whitespace-nowrap">
                 8종 실시간
               </span>
             </div>

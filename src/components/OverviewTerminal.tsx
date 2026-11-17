@@ -7,7 +7,7 @@ import {loadOverviewIntelligence} from '../utils/overviewIntelligence';
 import {overviewIssueSummary} from '../utils/overviewIssueSummary';
 import React, { useState, useEffect } from 'react';
 import { getPublisherPortalUrl, isInvalidOrSearchUrl } from '../utils/portalUrls';
-import { Download } from 'lucide-react';
+import { Newspaper as OverviewMarketIssuesIcon, Download, Globe } from 'lucide-react';
 import { Commodity, Currency, MacroDriver, MarketIssue } from '../types';
 import { exportGlobalDashboardToPdf } from '../utils/exportDashboardPdf';
 import {formatPercentChange} from '../utils/commodityPriceMetrics';
@@ -123,7 +123,7 @@ const getCardEyebrow = (item: { id: string; gradeEn: string }) => {
     case 'soybean-oil':
       return 'CBOT: ZL BENCHMARK';
     case 'palm-oil':
-      return 'MDEX: FCPO BENCHMARK';
+      return 'Bursa FCPO BENCHMARK';
     case 'sugar':
       return 'ICE: SBC1 BENCHMARK';
     case 'potato-starch':
@@ -205,12 +205,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
   }>(DEFAULT_MACRO_FALLBACKS.policy);
 
   const [portfolioUsda, setPortfolioUsda] = useState<UsdaPortfolioData>({});
-  const [portfolioLoading, setPortfolioLoading] = useState<boolean>(true);
 
   useEffect(() => {
     let mounted = true;
     const controller = new AbortController();
-    setPortfolioLoading(true);
     // Use the SAME endpoint and strict normalization as CommodityWasdeCard.
     // Never fall back to bundled WASDE_BASELINES or a different crop's numbers.
     const jobs = USDA_PORTFOLIO.map(async ({ id }) => {
@@ -233,14 +231,11 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         }
       }
     });
-    void Promise.allSettled(jobs).then(() => { if (mounted) setPortfolioLoading(false); });
+    void Promise.allSettled(jobs);
     return () => { mounted = false; controller.abort(); };
   }, [isSyncing]);
 
   const portfolioPeriod=(id:string,year:string)=>['wheat','corn','soybean','soybean-oil'].includes(id)&&/^20\d{2}$/.test(year)?`${year}/${String(Number(year)+1).slice(-2)}`:year;
-  const portfolioYears = Array.from(new Set(Object.entries(portfolioUsda as UsdaPortfolioData).map(([id,row]) => portfolioPeriod(id,row?.marketYear || '')).filter(Boolean)));
-  const portfolioMarketYear = portfolioYears.length === 1 && Object.keys(portfolioUsda).length === USDA_PORTFOLIO.length
-    ? portfolioYears[0] : '품목별';
 
   const [selectedWasdeKey, setSelectedWasdeKey] = useState<string>('wheat');
   const blankWeather={temp:null as number|null,precip:null as number|null,status:'판정 보류',asOf:'',windowStart:'',crop:'',basis:'',coordinates:[] as number[]};
@@ -391,7 +386,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
           {/* Left Column: Directive Badge + Full Title (Wraps naturally) */}
           <div className="flex-1 max-w-3xl min-w-0">
             <div className="mb-2 print:mb-1">
-              <span className="inline-flex items-center text-[11px] font-bold text-white bg-[#DF0029] px-2 py-0.5 rounded">
+              <span className="inline-flex items-center text-[11px] font-bold text-white bg-[#DF0029] px-2 py-1 rounded">
                 데스크 구매 지침 (DESK DIRECTIVE)
               </span>
             </div>
@@ -429,7 +424,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DF0029]"></span>
             </span>
             <span className="material-symbols-outlined text-[16px] text-[#DF0029]">trending_up</span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#111827]">
+            <span className="text-[13px] font-bold text-[#111827]">
               오늘의 주요 원자재 변동률 (Portfolio Top Movers)
             </span>
           </div>
@@ -480,7 +475,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         {/* Category 1: Grains */}
         {grainCommodities.length > 0 && (
           <section className="commodity-category-section transition-all duration-200 pdf-section-card break-inside-avoid print:break-inside-avoid" data-category="grain">
-            <div className="text-sm text-[#111827] font-bold border-b border-[#e5e7eb] pb-2 mb-3 flex items-center justify-between">
+            <div className="text-base text-[#111827] font-bold border-b border-[#e5e7eb] pb-2 mb-3 flex items-center justify-between">
               <span className="flex items-center gap-1.5">🌾 곡물류 (Grains - 3종)</span>
               <span className="text-[10px] text-[#6b7280] font-normal">CBOT 선물 벤치마크</span>
             </div>
@@ -497,7 +492,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
                           {getCardEyebrow(item)}
                         </span>
-                        <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                        <h3 className="text-base font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                           {item.nameKo} ({item.nameEn})
                         </h3>
                       </div>
@@ -576,9 +571,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         {/* Category 2: Oils */}
         {oilCommodities.length > 0 && (
           <section className="commodity-category-section transition-all duration-200 pdf-section-card break-inside-avoid print:break-inside-avoid" data-category="oils">
-            <div className="text-sm text-[#111827] font-bold border-b border-[#e5e7eb] pb-2 mb-3 flex items-center justify-between">
+            <div className="text-base text-[#111827] font-bold border-b border-[#e5e7eb] pb-2 mb-3 flex items-center justify-between">
               <span className="flex items-center gap-1.5">🛢️ 유지류 (Oils - 2종)</span>
-              <span className="text-[10px] text-[#6b7280] font-normal">CBOT & BMD 벤치마크</span>
+              <span className="text-[10px] text-[#6b7280] font-normal">CBOT & Bursa 선물 벤치마크</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {oilCommodities.map((item) => {
@@ -603,7 +598,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
                             {getCardEyebrow(item)}
                           </span>
-                          <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                          <h3 className="text-base font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                             {item.nameKo} ({item.nameEn})
                           </h3>
                         </div>
@@ -681,7 +676,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
         {/* Category 3: Sweeteners & Starches */}
         {starchCommodities.length > 0 && (
           <section className="commodity-category-section transition-all duration-200 pdf-section-card break-inside-avoid print:break-inside-avoid" data-category="starches">
-            <div className="text-sm text-[#111827] font-bold border-b border-[#e5e7eb] pb-2 mb-3 flex items-center justify-between">
+            <div className="text-base text-[#111827] font-bold border-b border-[#e5e7eb] pb-2 mb-3 flex items-center justify-between">
               <span className="flex items-center gap-1.5">🥔 당류 및 전분류 (Sweeteners & Starches - 3종)</span>
               <span className="text-[10px] text-[#6b7280] font-normal">ICE & FOB 아시아/유럽 벤치마크</span>
             </div>
@@ -704,7 +699,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
                             {getCardEyebrow(item)}
                           </span>
-                          <h3 className="text-sm font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                          <h3 className="text-base font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                             {item.nameKo} ({item.nameEn})
                           </h3>
                         </div>
@@ -796,15 +791,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-1.5 min-w-0">
                 <span className="material-symbols-outlined text-[18px] text-slate-800 shrink-0">inventory_2</span>
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 break-keep">
+                <h3 className="text-base font-bold text-slate-900 break-keep">
                   글로벌 수급 밸런스 (Global S&D Balance)
                 </h3>
               </div>
-              <span className="text-xs text-slate-500 font-normal text-right">Market Year: <span className="text-slate-800 font-semibold">{portfolioLoading && portfolioYears.length === 0 ? '확인 중' : portfolioMarketYear}</span></span>
             </div>
             
             <div className="flex-1 flex flex-col justify-center">
-              <table className="w-full text-left text-xs border-collapse tracking-tight">
+              <table className="w-full text-left text-xs border-collapse tracking-tight tabular-nums">
                 <thead className="bg-slate-50 text-slate-700 border-b border-slate-200 font-semibold">
                   <tr>
                     <th className="py-2 px-1.5 print:py-1.5">품목</th>
@@ -823,10 +817,10 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           {item.name}
                           <span className="block text-[9px] text-slate-500 font-normal">Market Year: <span className="text-slate-800 font-semibold">{portfolioPeriod(item.id,record?.marketYear || '—')}</span></span>
                         </td>
-                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.productionMMT)}</td>
-                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.consumptionMMT)}</td>
-                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs font-mono">{formatPortfolioMMT(record?.endingStocksMMT)}</td>
-                        <td className="py-2 px-1.5 print:py-1.5 text-right font-bold text-slate-900 text-xs font-mono">{formatPortfolioStocksRatio(record?.stocksToUseRatio)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs">{formatPortfolioMMT(record?.productionMMT)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs">{formatPortfolioMMT(record?.consumptionMMT)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-slate-700 text-xs">{formatPortfolioMMT(record?.endingStocksMMT)}</td>
+                        <td className="py-2 px-1.5 print:py-1.5 text-right font-bold text-slate-900 text-xs">{formatPortfolioStocksRatio(record?.stocksToUseRatio)}</td>
                       </tr>
                     );
                   })}
@@ -841,9 +835,9 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
           <div className="lg:col-span-5 print:col-span-5 bg-white border border-slate-200/80 rounded-xl p-5 print:p-3 shadow-sm flex flex-col w-full" id="external-pipeline-section">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[18px] text-sky-500">cloud</span>
-                <h3 className="text-sm font-bold text-slate-800">
-                  주요 생산지 기상 레이더
+                <Globe className="w-5 h-5 text-slate-700 shrink-0" aria-hidden="true"/>
+                <h3 className="text-base font-bold text-slate-800 break-keep">
+                  주요 생산지 기상 레이더 (Weather Radar)
                 </h3>
               </div>
             </div>
@@ -888,15 +882,14 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                   {/* Left: Icon + Title + Sub-region */}
                   <div className="flex items-center gap-1.5 min-w-0">
                     <span className="text-base flex-shrink-0">{item.icon}</span>
-                    <span className="font-bold text-slate-800 whitespace-nowrap">{item.title}</span>
-                    <span className="text-slate-400 text-[10px] font-normal whitespace-nowrap">({item.region})</span>
+                    <span className="font-bold text-slate-800 break-keep">{item.title} ({item.region})</span>
                   </div>
 
                   {/* Right: Temperature + 7-day Rainfall */}
-                  <div className="flex items-center gap-2 flex-shrink-0 ml-2" id={item.id} aria-description={[item.details.crop,item.details.coordinates.join(', '),item.details.windowStart+' ~ '+item.details.asOf,item.details.basis].join(' · ')}>
-                    <span className="font-mono font-semibold text-slate-700 text-xs">{item.temp}°C</span>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2 tabular-nums" id={item.id} aria-description={[item.details.crop,item.details.coordinates.join(', '),item.details.windowStart+' ~ '+item.details.asOf,item.details.basis].join(' · ')}>
+                    <span className="font-semibold text-slate-700 text-xs">{item.temp}°C</span>
                     <span className="text-slate-300">·</span>
-                    <span className="font-mono text-slate-500 text-[11px]">{item.rain}mm</span>
+                    <span className="text-slate-500 text-[11px]">{item.rain}mm</span>
                     
 
                   </div>
@@ -926,12 +919,12 @@ text-underline-offset: 2px;
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[18px] text-[#111827]">query_stats</span>
-              <h2 className="text-sm text-[#111827] font-bold tracking-tight break-keep">
+              <h2 className="text-base text-[#111827] font-bold tracking-tight break-keep">
                 거시경제 구매 요인 (Macroeconomic Sourcing Drivers)
               </h2>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] text-[#6b7280] uppercase">핵심 수입원가 요인 (Core Landed Cost Factors)</span>
+
             </div>
           </div>
 
@@ -946,10 +939,10 @@ text-underline-offset: 2px;
               <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
+                    <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       currency_exchange
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors truncate">
+                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       환율 (ECB 기준환율)
                     </span>
                   </div>
@@ -990,10 +983,10 @@ text-underline-offset: 2px;
               <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
+                    <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       local_gas_station
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors truncate">
+                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       유가 / 에너지 (BRENT)
                     </span>
                   </div>
@@ -1033,10 +1026,10 @@ text-underline-offset: 2px;
               <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
+                    <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       directions_boat
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors truncate">
+                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       해상운임 지수 (KCCI)
                     </span>
                   </div>
@@ -1072,7 +1065,7 @@ text-underline-offset: 2px;
               <div className="flex flex-1 flex-col">
                 <div className="flex items-center justify-between text-[#6b7280]">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="material-symbols-outlined text-[16px] text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0">
+                    <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       shield
                     </span>
                     <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
@@ -1082,9 +1075,11 @@ text-underline-offset: 2px;
 
                 </div>
                 <div className="mt-1 print:mt-1 flex flex-1 flex-col justify-center gap-2 print:gap-1">
-                  <div className="text-sm print:text-xs font-bold text-slate-900 leading-tight" id="driver-policy-val">
-                    {policyData.headline || DEFAULT_MACRO_FALLBACKS.policy.headline}
-                  </div>
+                  {policyData.headline?.trim() && policyData.headline.replace(/\s+/g, '') !== '통상정책' && (
+                    <div className="text-sm print:text-xs font-bold text-slate-900 leading-tight" id="driver-policy-val">
+                      {policyData.headline}
+                    </div>
+                  )}
                   <div className="text-[11px] print:text-[10px] text-slate-500 font-normal leading-relaxed">
                     {policyData.status === '관련 공식 발표 확인되지 않음' ? '현재 모니터링 대상에서 새로운 통상 정책 및 수출 제한 관련 발표가 없습니다.' : (policyData.note || DEFAULT_MACRO_FALLBACKS.policy.subline)}
                   </div>
@@ -1139,7 +1134,7 @@ text-underline-offset: 2px;
               ))}
             </div>
 
-            <SourceAttribution className="pt-2 justify-end text-right" entries={[{label:'품목별 RMS AI'}]}/>
+            <SourceAttribution className="mt-auto pt-2 justify-end text-right" entries={[{label:'품목별 RMS AI'}]}/>
           </div>
 
           {/* Right Column (5 cols): Key Market Issues */}
@@ -1147,8 +1142,8 @@ text-underline-offset: 2px;
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="material-symbols-outlined text-[20px] text-[#DF0029] shrink-0">notification_important</span>
-                  <h2 className="text-sm font-bold text-slate-900 break-keep">주요 시장 이슈 (Key Market Issues)</h2>
+                  <OverviewMarketIssuesIcon className="w-5 h-5 text-slate-900 shrink-0" aria-hidden="true" />
+                  <h2 className="text-base font-bold text-slate-900 break-keep">주요 시장 이슈 (Key Market Issues)</h2>
                 </div>
                 <span className="text-[10px] bg-slate-100 border border-slate-200/80 px-2 py-0.5 rounded text-slate-600 font-sans font-medium shrink-0">
                   {localMarketIssues.length}개 활성 모니터링
@@ -1163,7 +1158,7 @@ text-underline-offset: 2px;
                     rel="noopener noreferrer"
                     key={issue.id}
                     data-overview-issue={issue.url}
-                    className="group p-3 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
+                    className="group px-4 pt-4 pb-3.5 bg-white border border-slate-200/80 rounded-lg hover:border-[#DF0029] hover:shadow-md transition-all flex flex-col justify-between space-y-2 cursor-pointer"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="-ml-1.5 inline-flex items-center whitespace-nowrap rounded-md border border-blue-100 bg-blue-50 px-2 py-1 text-[11px] font-semibold leading-tight text-blue-700">{issue.category||'시장 동향'}</span>
@@ -1182,7 +1177,7 @@ text-underline-offset: 2px;
                       </p>
                     )}
 
-                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-medium text-slate-400">
                           {formatDateStandard(issue.publishedAt)}
