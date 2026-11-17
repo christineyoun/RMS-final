@@ -2,16 +2,16 @@ import fs from 'node:fs/promises';
 import {quoteFromResponse,COMMODITY_IDS} from '../services/commodityQuoteSource.ts';
 import {parseDatedDisplayFx} from '../utils/soybeanPriceSnapshot.ts';
 import {createHash} from 'node:crypto';
-import {publicRouteKey,PUBLIC_COMMODITIES,publicCaptureRoutes} from './publicDeploymentRoutes.mjs';
+import {publicRouteKey,PUBLIC_COMMODITIES,publicCaptureRoutes,assertPublicCaptureCoverage} from './publicDeploymentRoutes.mjs';
 import {dailyPublicationIssue} from '../utils/dailyPublicationIssue.ts';
 export type SavedResponse={status:number;payload:any};
 export type PublicBundle={version:1;publishedAt:string;revision:string;responses:Record<string,SavedResponse>};
 export const sha256=(bytes:Uint8Array|string)=>createHash('sha256').update(bytes).digest('hex');
-export function validatePublicBundle(bundle:PublicBundle) {
+export function validatePublicBundle(bundle:PublicBundle, {allowMissingAdditiveRoutes = false} = {}) {
  const pub=bundle?.responses?.['/api/rms/free-publication'];
  if(bundle?.version!==1||pub?.status!==200||!dailyPublicationIssue(pub.payload)||bundle.publishedAt!==pub.payload.publishedAt||bundle.revision!==pub.payload.revision)throw Error('Saved publication identity/Issue unavailable');
  for(const [route,response] of Object.entries(bundle.responses))if(publicRouteKey(route)!==route||!response||!Number.isInteger(response.status)||response.status<200||response.status>599)throw Error('Unreviewed or invalid saved response: '+route);
- for(const route of publicCaptureRoutes()){if(!bundle.responses[publicRouteKey(route)!])throw Error('Required saved response missing: '+route);}
+ assertPublicCaptureCoverage(bundle.responses,{includeAdditive:!allowMissingAdditiveRoutes});
  const fx=bundle.responses['/api/rms/free-fx']?.payload;if(!parseDatedDisplayFx(fx?.raw,fx?.verifiedAt))throw Error('Verified saved display FX missing');
  for(const id of COMMODITY_IDS){
   // Preserve the existing readers' approved/unavailable states. Deployment
@@ -60,11 +60,11 @@ export function validatePublicationPointer(pointer:PublicationPointer){
 export async function readCloudPointer(){const bucket=process.env.RMS_PUBLICATION_BUCKET;if(!bucket)throw Error('RMS_PUBLICATION_BUCKET missing');const result=await gcsRead(bucket,'current.json');return {pointer:validatePublicationPointer(JSON.parse(Buffer.from(result.bytes).toString())),generation:result.generation};}
 let cachedCloud:{key:string;hash:string;bundle:PublicBundle}|null=null;
 export async function loadPublicBundle(){
- if(process.env.RMS_PUBLICATION_FILE){if(process.env.K_SERVICE)throw Error('Cloud Run requires persistent bucket publications, not RMS_PUBLICATION_FILE');return validatePublicBundle(JSON.parse(await fs.readFile(process.env.RMS_PUBLICATION_FILE,'utf8')));}
+ if(process.env.RMS_PUBLICATION_FILE){if(process.env.K_SERVICE)throw Error('Cloud Run requires persistent bucket publications, not RMS_PUBLICATION_FILE');return validatePublicBundle(JSON.parse(await fs.readFile(process.env.RMS_PUBLICATION_FILE,'utf8')),{allowMissingAdditiveRoutes:true});}
  const {pointer}=await readCloudPointer();
  if(cachedCloud?.key===pointer.bundle.key&&cachedCloud.hash===pointer.bundle.sha256&&cachedCloud.bundle.revision===pointer.revision&&cachedCloud.bundle.publishedAt===pointer.publishedAt)return cachedCloud.bundle;
  const r=await gcsRead(process.env.RMS_PUBLICATION_BUCKET!,pointer.bundle.key);if(sha256(r.bytes)!==pointer.bundle.sha256)throw Error('Public publication integrity mismatch');
- const bundle=validatePublicBundle(JSON.parse(Buffer.from(r.bytes).toString()));if(bundle.revision!==pointer.revision||bundle.publishedAt!==pointer.publishedAt)throw Error('Publication pointer identity mismatch');cachedCloud={key:pointer.bundle.key,hash:pointer.bundle.sha256,bundle};return bundle;
+ const bundle=validatePublicBundle(JSON.parse(Buffer.from(r.bytes).toString()),{allowMissingAdditiveRoutes:true});if(bundle.revision!==pointer.revision||bundle.publishedAt!==pointer.publishedAt)throw Error('Publication pointer identity mismatch');cachedCloud={key:pointer.bundle.key,hash:pointer.bundle.sha256,bundle};return bundle;
 }
 
 export async function withCloudPublicationLease<T>(action:()=>Promise<T>):Promise<T>{
