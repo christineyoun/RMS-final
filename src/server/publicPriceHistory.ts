@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { load } from 'cheerio';
 import {createHash} from 'node:crypto';
-import {selectPalmObservations,normalizedPalmPoint,refreshPalmDatedFx,type DatedPalmFx} from './palmPricePolicy.ts';
+import {selectPalmObservations,normalizedPalmPoint,palmSettlementFxGap,refreshPalmDatedFx,type DatedPalmFx} from './palmPricePolicy.ts';
 import { observedPriceChanges } from '../utils/observedPriceChanges.ts';
 import {MPOC_CPO_URL,parseMpocCpoTable} from './mpocCpoParser.mjs';
 
@@ -212,7 +212,11 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
         savePublicHistory(id,history);
       }catch(e){const error=String((e as Error).message);issues.push(sourceUrl+': '+error);history.sourceChecks={...history.sourceChecks,[sourceUrl]:{...history.sourceChecks?.[sourceUrl],checkedAt,error}};}
     }
-    if(id==='palm-oil')history=await refreshPalmDatedFx(history);
+    if(id==='palm-oil'){
+      history=await refreshPalmDatedFx(history);
+      const gap=palmSettlementFxGap(history);
+      if(gap)issues.push(`Bursa FCPO ${gap.observationDate}: ${gap.error}`);
+    }
     history.lastCheckedAt=checkedAt;history.lastError=issues.join('; ')||undefined;savePublicHistory(id,history);return history;
   })();inFlight.set(id,job);try{return await job;}finally{inFlight.delete(id);}
 }

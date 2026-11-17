@@ -4,6 +4,7 @@ import {discoverAdditionalNews} from './additionalNewsDiscovery.ts';
 import {otherCommodityVerificationPool} from './otherCommodityNewsPool.ts';
 import fs from 'node:fs';import path from 'node:path';
 import {sharedWeatherScreen} from './originWeatherService.ts';
+import {originWeatherPublicationStatus} from './originWeatherPublicationStatus.ts';
 import type {FreeSourceJob} from './freeSourceRefresh.ts';
 import {readFreeJson,writeFreeJson,readFreePublication,observationFingerprint} from './freeDailyPublication.ts';
 import {parseDatedDisplayFx} from '../utils/soybeanPriceSnapshot.ts';
@@ -48,7 +49,9 @@ async function history(id:string){
       lastAttemptAt:entry?.checkedAt||null,lastSuccessAt:entry?.lastSuccessAt||null,
       latestPublisherObservation:entry?.lastObservationDate||null,error:entry?.error||null};
   };
-  return {...result,refresh:{benchmarks:{cpo:check(PRICE_SOURCES.mpocCpo,'Bursa settlement via MPOC'),olein:check(PRICE_SOURCES.olein,'FPOLc1')}}};
+  const {palmSettlementFxGap}=await import('./palmPricePolicy.ts');
+  const fxGap=palmSettlementFxGap(r);
+  return {...result,refresh:{cpoFxGap:fxGap,benchmarks:{cpo:check(PRICE_SOURCES.mpocCpo,'Bursa settlement via MPOC'),olein:check(PRICE_SOURCES.olein,'FPOLc1')}}};
  }
  const r:any=id==='sugar'?await(await import('./sugarPriceSnapshotService.ts')).sugarPriceSnapshotService.getSnapshot(true):await(await import('./historicalPriceService.ts')).fetchHistoricalData(id,'5Y',true);
  await(await import('./savedGraphHistory.ts')).rememberGraphRefresh(id,r);return packet(r,r.data?.at(-1)?.date,r.lastError||r.success===false&&'History unavailable');
@@ -56,9 +59,12 @@ async function history(id:string){
 async function world(id:string){const r=id==='soybean-oil'?await(await import('./usdaSoybeanOilLiveService.ts')).fetchSoybeanOilWorldPsd(false):await(await import('./usdaOtherCommoditiesLiveService.ts')).fetchOtherCommodityWorldPsd(id,false);return {...packet(r.data,r.data?`${r.data.marketYear}-${r.data.releaseMonth||''}`:null,sourceError(r)),verifiedAt:r.verifiedAt};}
 async function origin(id:string){const {originRadarService:s}=await import('./originRadarService.ts');
  const published=id==='wheat'?await s.getWheatOriginRadar(true):id==='corn'?await s.getCornOriginRadar(true):id==='soybean'?await s.getSoybeanOriginRadar(true):await(await import('./all8OriginRadarService.ts')).loadAll8OriginRadar(id,true);
- const weather=originWeatherPublicationStatus(published);const dates=weather.dates,errors=weather.errors;
+ const weather=await originWeatherPublicationStatus(id,published);
  writeFreeJson('free-origin-'+id+'.json',published);
- return packet(published,dates.at(-1),errors?`${errors} origins retain older or incomplete weather evidence`:undefined);
+ const {counts}=weather;
+ const lastError=counts.current===weather.points.length&&weather.points.length>0?undefined:
+  `Origin weather: ${counts.retained} older, ${counts.incomplete} incomplete, ${counts.missing} missing, ${counts.invalid} invalid of ${weather.points.length} configured points`;
+ return {...packet(published,weather.latestObservation,lastError),refresh:{weather}};
 }
 /** All eight commodities use the same free candidate intake and age/publisher
  * ordering. Wheat, Corn, Soybean and the other five retain their specialized
@@ -105,7 +111,6 @@ async function news(id:string){
   accepted.length?undefined:'No original public articles verified; existing approved publication retained');
 }
 
-export function originWeatherPublicationStatus(r:any){const errors=r.origins.filter((o:any)=>{const evidence=Array.isArray(o.weatherEvidence)?o.weatherEvidence:[o.weatherEvidence?.shared||o.weatherEvidence];return !evidence.length||evidence.some((e:any)=>!e||e.retrievalFailed||e.history?.length!==28||e.rainfallDays!==7||e.temperatureDays!==7||e.minimumTemperatureDays!==7);}).length;const dates=r.origins.flatMap((o:any)=>Array.isArray(o.weatherEvidence)?o.weatherEvidence:[o.weatherEvidence?.shared||o.weatherEvidence]).map((e:any)=>e?.lastDay).filter(Boolean).sort();return {errors,dates};}
 export function dailyFreeSourceJobs():FreeSourceJob[]{return [
  {key:'transport-policy',commodity:'overview / eight commodities',source:'Korea Customs Service official notices + U.S. Federal Register; original-page verified',cadenceHours:24,run:async()=>{
   const [{screenOfficialTradePolicy},wheat]=await Promise.all([

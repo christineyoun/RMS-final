@@ -11,7 +11,7 @@ import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextServ
 import PotatoBenchmarkValue from './PotatoBenchmarkValue';
 import {soybeanDisplayFactor} from '../utils/soybeanPriceSnapshot';
 import { prefixCurrency, priceUnit, formatCurrencyAmount, formatSignedCurrencyPerMt } from '../utils/currencyFormatting';
-import {latestCommonPalmSpread,palmClosingRange} from '../utils/palmPriceIntegrity';
+import {latestCommonPalmSpread,palmClosingRange,palmSettlementAwaitingFx} from '../utils/palmPriceIntegrity';
 import {ChartEndpointLabels} from './ChartEndpointLabels';
 import { observedPriceChanges } from '../utils/observedPriceChanges';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -297,8 +297,8 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   // Verified Scraped Market Benchmarks (with persistent cache_palmoil.json fallback)
   const palmObservedSeries = useMemo<any[]>(()=>historicalData?.data?.length ? historicalData.data : [],[historicalData]);
   const latestPalmSeriesPoint=[...palmObservedSeries].reverse().find(p=>Number.isFinite(p.cpoUsd??p.usdPerMT));
+  const palmFxGap=useMemo(()=>isPalmOil?palmSettlementAwaitingFx(palmObservedSeries):null,[isPalmOil,palmObservedSeries]);
   const latestOleinSeriesPoint=[...palmObservedSeries].reverse().find(p=>Number.isFinite(p.oleinUsdPerMt??p.oleinUsd));
-  const LIVE_CPO_MYR=latestPalmSeriesPoint?.cpoMyr??latestPalmSeriesPoint?.centsPerBushel??NaN;
   const LIVE_OLEIN_USD=latestOleinSeriesPoint?.oleinUsdPerMt??latestOleinSeriesPoint?.oleinUsd??NaN;
   const cpoUsdMt=Number(latestPalmSeriesPoint?.cpoUsd??latestPalmSeriesPoint?.usdPerMT??NaN);
 
@@ -2309,6 +2309,14 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
             })}
           </div>
         </div>
+
+        {palmFxGap && (
+          <p className="text-[11px] text-slate-600 font-sans">
+            최신 Bursa FCPO 정산가 {palmFxGap.date.replaceAll('-', '.')} · {palmFxGap.myr.toLocaleString('ko-KR')} MYR/MT
+            {' · 관측일 기준 환율 확인 대기'}
+            {palmFxGap.convertedDate ? ` (차트 마지막 환산 시세 ${palmFxGap.convertedDate.replaceAll('-', '.')})` : ''}
+          </p>
+        )}
 
         {chartQuoteDiffers && (
           <p className="text-[11px] text-slate-500 font-sans">
