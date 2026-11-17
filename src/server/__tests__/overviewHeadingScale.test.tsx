@@ -17,8 +17,14 @@ test('overview card and section headings use the commodity card type scale',()=>
   assert.equal(primary.length,5);
   assert.equal(primary.not('.'+size).length,0);
   assert.equal($('.commodity-category-section > div:first-child.'+size).length,3);
-  assert.equal($('.commodity-card h3.'+size).length,COMMODITIES.length);
-  for(const id of ['fx','energy','freight','policy'])assert.equal($('#driver-'+id+' span.text-sm.font-bold').length,1);
+  const commodityTitles=$('.commodity-card h3');
+  assert.equal(commodityTitles.length,COMMODITIES.length);
+  assert.equal(commodityTitles.filter((_,el)=>$(el).hasClass('text-[15px]')).length,COMMODITIES.length);
+  for(const id of ['fx','energy','freight','policy']){
+    const card=$('#driver-'+id);
+    assert.equal(card.find('span.font-bold').filter((_,el)=>$(el).hasClass('text-[15px]')).length,1);
+    assert.equal(card.find('span.material-symbols-outlined').filter((_,el)=>$(el).hasClass('[@media_screen]:!text-[18px]')).length,1);
+  }
   const movers=$('span').filter((_,el)=>$(el).text().trim()==='오늘의 주요 원자재 변동률 (Portfolio Top Movers)');
   assert.equal(movers.length,1);
   assert(movers.hasClass('text-[13px]'));
