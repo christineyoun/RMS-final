@@ -43,7 +43,7 @@ test('same dated table supplies current and previous harvest area and yield with
  const future=table(year+1,{details:true});assert.deepEqual(parseThaiCassavaSurvey(future,now),[]);
 });
 
-test('existing saved-only public capture reads the scheduled crop packet; new season and duplicate recovery preserve trust',async()=>{
+test('saved-only supply route reads the scheduled crop packet; new season and duplicate recovery preserve trust',async()=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'rms-cassava-card-'));
  const oldCwd=process.cwd(),oldHistory=process.env.RMS_HISTORY_ROOT;
  try{
@@ -54,7 +54,7 @@ test('existing saved-only public capture reads the scheduled crop packet; new se
   // No valid FOB quote is required to publish a valid crop supply packet.
   const middleware=createGeminiApiMiddleware();
   const read=()=>withSavedDataRead(()=>new Promise<any>((resolve,reject)=>{
-   const req={url:'/api/starch/tapioca-quote',method:'GET',headers:{},socket:{remoteAddress:'127.0.0.1'}};
+   const req={url:'/api/starch/tapioca-supply',method:'GET',headers:{},socket:{remoteAddress:'127.0.0.1'}};
    const res={statusCode:0,setHeader(){},end(value:string){resolve({status:this.statusCode,...JSON.parse(value)});}};
    void middleware(req as any,res as any,()=>reject(Error('Saved route not handled')));
   }));
@@ -70,7 +70,7 @@ test('existing saved-only public capture reads the scheduled crop packet; new se
   await refresh();
   const saved=await read();
   assert.equal(saved.status,200);
-  assert.equal(saved.quote,null);
+  assert.equal(saved.exportSupply,null);
   assert.equal(saved.cropSupply.current.reportingYear,period(year-1));
   assert.equal(saved.cropSupply.current.harvestedAreaRai,undefined);
 
@@ -92,11 +92,14 @@ test('existing saved-only public capture reads the scheduled crop packet; new se
   fail=false;html=table(year-1);await refresh();
   assert.deepEqual((await read()).cropSupply,newer.cropSupply,'older release never rolls the live card backwards');
 
-  const $=load(renderToStaticMarkup(createElement(TapiocaCropSupplyCard,{crop:newer.cropSupply,quote:{date:now.toISOString().slice(0,10),usdPerMt:475,wowPct:-1.5}})));
-  assert($('[data-supply-year]').text().includes(period(year)));
-  assert.match($.text(),/태국 카사바/);assert.match($.text(),/24\.00 MMT/);assert.match($.text(),/8,000 kRAI/);assert.match($.text(),/3\.000 MT\/Rai/);
-  assert.match($.text(),/\$475\.00\/MT/);assert.doesNotMatch($.text(),/2\.85 MMT|1\.15 MMT/);
-  assert.equal($('[data-supply-grid="current"] > div').length,6);
+  const $=load(renderToStaticMarkup(createElement(TapiocaCropSupplyCard,{crop:newer.cropSupply,exports:newer.exportSupply})));
+  assert.equal($('[data-supply-year]').text(),'Market Year: '+period(year));
+  assert.match($.text(),/24\.00 MMT/);assert.match($.text(),/8,000 kRAI/);assert.match($.text(),/3\.000 MT\/Rai/);
+  const sourceFooter=$('.rms-source-group');
+  assert.equal(sourceFooter.find('a').length,1);
+  assert.equal(sourceFooter.find('a').first().attr('href'),newer.cropSupply.source.url);
+  assert.doesNotMatch($.text(),/TTSA 시세|FOB BKK|2\.85 MMT|1\.15 MMT/);
+  assert.equal($('[data-supply-grid="current"] > div').length,3);
  }finally{
   process.chdir(oldCwd);
   if(oldHistory===undefined)delete process.env.RMS_HISTORY_ROOT;else process.env.RMS_HISTORY_ROOT=oldHistory;

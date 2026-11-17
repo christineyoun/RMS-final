@@ -2032,7 +2032,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     : commodity.ticker}
                 </span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug break-keep whitespace-normal">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-normal leading-snug break-keep whitespace-normal">
                 {commodity.nameKo} ({commodity.nameEn}) SCM 조달 분석
               </h1>
             </div>

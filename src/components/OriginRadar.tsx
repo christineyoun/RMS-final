@@ -156,13 +156,16 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-1">
         <div className="flex items-center gap-2"><Globe className="w-5 h-5 text-slate-700 shrink-0"/><h3 className="text-base font-bold text-slate-900 break-keep">{title||'주요 산지 수급 및 기상 현황 (Origin Radar)'}</h3></div>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 lg:[@media_screen]:grow">
         {origins.length===0?<p className="text-xs text-[#6b7280]">산지 자료를 불러오는 중입니다.</p>:origins.map((origin,idx)=>{
           const comparison=origin.exportComparison&&!/없음|미확인|자료 부족/.test(origin.exportComparison)?origin.exportComparison:'';
           const exports=origin.exports?(/^수출\s/.test(origin.exports)?origin.exports:`수출 ${origin.exports}`):'';
           const supply=[exports+(exports&&comparison?` (${comparison})`:''),origin.endingStocks?(/^기말재고\s/.test(origin.endingStocks)?origin.endingStocks:`기말재고 ${origin.endingStocks}`):''].filter(Boolean).join(' · ');
           const weather=originWeatherDisplayText(origin);
           const production=isPotato||isTapioca?origin.production?.match(/^\d+(?:\.\d+)?M MT/)?.[0]||origin.production:origin.production;
+          // Name the crop on starch pages because these tonnes measure the crop, not starch output.
+          const productionLabel=isPotato?`${origin.marketYear?origin.marketYear+' ':''}감자 생산${origin.production?.includes('추정')?' 추정':''}`:
+            isTapioca?'카사바 생산':origin.region?.includes('유럽연합')?'EU 생산':'국가 생산';
           const forecast=jrc?.rows.find(r=>POTATO_JRC_NAMES[r.code]===origin.country||origin.region?.startsWith(POTATO_JRC_NAMES[r.code]+' '));
           const forecastChange=forecast?(forecast.forecast/forecast.previousYear-1)*100:0;
           const supplyLabel=(s:NonNullable<OriginItem['supplyIndicators']>[number])=>{
@@ -176,10 +179,10 @@ export const OriginRadar:React.FC<OriginRadarProps>=({origins=[],title,commodity
           };
           const weatherStatus=originWeatherDisplayStatus(origin,commodityId);
           const provenance=[origin.sourceReportDate&&`국가 수급 ${origin.sourceReportDate}`,origin.weatherAsOf&&`지역 기상 ${origin.weatherAsOf}`,origin.exportComparisonBasis,origin.statusBasis,origin.retrievedAt].filter(Boolean).join(' · ');
-          return <div key={idx} aria-description={commodityId==='tapioca-starch'?[provenance,weatherStatus.basis].filter(Boolean).join(' · '):provenance} className="origin-card bg-[#f9fafb] border border-[#e5e7eb] p-2.5 rounded flex items-center justify-between gap-2">
+          return <div key={idx} aria-description={commodityId==='tapioca-starch'?[provenance,weatherStatus.basis].filter(Boolean).join(' · '):provenance} className="origin-card lg:[@media_screen]:grow-[0.15] bg-[#f9fafb] border border-[#e5e7eb] p-2.5 rounded flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap"><span className="font-semibold text-xs text-[#111827]">{origin.region||origin.country||'산지'}</span>
-                {origin.production&&<span className="text-[10px] bg-white border border-[#e5e7eb] px-2 py-0.5 rounded-md font-sans font-medium text-[#374151]">{commodityId==='soybean-oil'?'국가 대두유 생산':isPotato?`${origin.marketYear?origin.marketYear+' ':''}생산${origin.production?.includes('추정')?' 추정':''}`:isTapioca?'카사바 생산':commodityId==='sugar'?'국가 설탕 생산':origin.region?.includes('유럽연합')?'EU 생산':'국가 생산'} <span className="font-mono font-bold">{production}</span></span>}
+                {origin.production&&<span data-origin-production className="text-[10px] bg-white border border-[#e5e7eb] px-2 py-0.5 rounded-md font-sans font-medium text-[#374151]">{productionLabel} <span className="font-mono font-bold">{production}</span></span>}
               </div>
               {(supply||weather)&&<div className="text-[10px] text-[#6b7280] mt-1 font-sans break-keep whitespace-normal leading-snug">
                 {supply&&<div>{origin.region?.includes('유럽연합')?'EU':'국가'} {originRadarDisplayText(supply,isCorn?'corn':isWheat?'wheat':'other')}</div>}

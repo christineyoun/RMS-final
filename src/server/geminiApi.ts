@@ -458,6 +458,19 @@ export function createGeminiApiMiddleware() {
       return;
     }
 
+    // Supply card reads only the two independently retained supply packets.
+    if (req.method === 'GET' && url === '/api/starch/tapioca-supply') {
+      const [{readSavedThaiCassavaSupply},{readSavedThaiStarchExports}]=await Promise.all([
+        import('./starchOriginSupplyRefresh.ts'),import('./thaiStarchExportRefresh.ts')
+      ]);
+      const cropSupply=readSavedThaiCassavaSupply(),exportSupply=readSavedThaiStarchExports();
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.statusCode = 200;
+      res.end(JSON.stringify({cropSupply,exportSupply}));
+      return;
+    }
+
     // RMS Step 17 — official starch source separation
     if (/^\/api\/starch\/tapioca-quote(\?|$)/.test(url)) {
       const force = new URL(url, 'http://localhost').searchParams.get('force') === 'true';

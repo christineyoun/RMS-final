@@ -140,6 +140,10 @@ export function dailyFreeSourceJobs():FreeSourceJob[]{return [
  ...ids.filter(i=>i!=='potato-starch').map(id=>({key:id+'-history',commodity:id,source:id==='wheat'?'U.S. Wheat Associates':id.includes('starch')?'TTSA':id==='palm-oil'?'MPOC Bursa CPO settlements + Investing.com RBD Olein':'Yahoo Finance exchange-labelled history',run:()=>history(id)})),
  ...ids.filter(i=>!i.includes('starch')).map(id=>({key:id+'-world',commodity:id,source:'USDA FAS PSD',cadenceHours:24,run:()=>world(id)})),
  {key:'potato-export-quote',commodity:'potato-starch',source:'Eurostat Comext DS-045409',cadenceHours:24,run:async()=>{const r=await(await import('./officialPotatoComextService.ts')).fetchOfficialPotatoExportQuote(true);return packet({data:r.data,changes:r.changes},r.data?.period,sourceError(r));}},
+ {key:'tapioca-starch-exports',commodity:'tapioca-starch',source:'TTSA annual Thai Customs export volumes',cadenceHours:24,run:async()=>{
+  const {data,lastError}=await(await import('./thaiStarchExportRefresh.ts')).refreshThaiStarchExports();
+  return packet(data,data?.current.calendarYear,lastError);
+ }},
  {key:'potato-production-regions',commodity:'potato-starch',source:'Eurostat apro_cpnh1 + verified JRC MARS',run:async()=>{const r=await(await import('./potatoProductionHistory.ts')).refreshRegionalPotatoProduction();return packet(r,r.points.map(p=>p.year).sort().at(-1),r.lastError);}},
  {key:'potato-production-history',commodity:'potato-starch',source:'Eurostat four-country raw potato harvest',cadenceHours:24,run:async()=>{const r=await(await import('./potatoProductionHistory.ts')).refreshPotatoProductionHistory();const stats=await(await import('./officialPotatoEurostatService.ts')).fetchOfficialPotatoEurostat(false);if(stats.success&&stats.dataStatus==='live-verified')writeFreeJson('free-potato-stats.json',stats);return packet(r,r.years.at(-1)?.year,r.lastError);}},
  ...(['potato-starch','tapioca-starch'] as const).map(id=>({key:'starch-origin-supply-'+id,commodity:id,source:id==='potato-starch'?'Eurostat official Polish raw potatoes':'TTTA crop survey and AFSIS ACO',run:async()=>{

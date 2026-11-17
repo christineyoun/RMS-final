@@ -1,6 +1,6 @@
 import {formalAiText} from '../utils/aiReportPresentation';
 import React from 'react';
-import {TrendingUp, TriangleAlert, Clock3} from 'lucide-react';
+import { Bot as OverviewBriefBot,TrendingUp, TriangleAlert, Clock3} from 'lucide-react';
 import {BRIEF_SECTIONS}from'../utils/overviewDecisionBrief';
 interface AiMarketBriefProps {aiBriefText?:string;}
 const hiddenSection = '전일 대비 주요 변화';
@@ -27,6 +27,6 @@ export const renderBriefText=(text:string)=>BRIEF_SECTIONS.map((label,index)=>{
  </section>;
 });
 export default function AiMarketBrief({aiBriefText}:AiMarketBriefProps){return <div className="flex flex-col gap-3 min-h-[140px] pdf-section-card break-inside-avoid print:break-inside-avoid">
- <div className="flex items-center gap-1.5 min-w-0"><span className="material-symbols-outlined text-[20px] text-[#DF0029] shrink-0">auto_awesome</span><h2 className="text-sm text-[#111827] font-bold break-keep">AI 시장 브리프 (AI Market Brief)</h2></div>
+ <div className="flex items-center gap-1.5 min-w-0"><OverviewBriefBot className="w-5 h-5 text-slate-900 shrink-0" aria-hidden="true" /><h2 className="text-base text-[#111827] font-bold break-keep">AI 시장 브리프 (AI Market Brief)</h2></div>
  <div id="ai-synthesis-text" className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 my-2 space-y-3 text-sm text-[#334155] leading-relaxed">{renderBriefText(aiBriefText||DEFAULT_BRIEF)}</div>
  </div>;}
