@@ -1,3 +1,4 @@
+import {inspectErsReport,isErsPublication} from './ersReportNews.ts';
 import {visibleHeadlineArticleDate} from './newsVisibleArticleDate.ts';
 import {publisherVerifiedDate} from './newsPublisherDateAuthority.ts';
 import {structuredArticleDate} from './newsStructuredArticleDate.ts';
@@ -40,20 +41,21 @@ async function inspect(a:RetrievedSourceMetadata,key:string,onReject?:(reason:st
     const body=await r.text();if(!body.trim()||body.length>2_000_000)return reject('publisher-body-empty-or-oversized');
     const $=load(body);const publisherJsonLd=$('script[type="application/ld+json"]').toArray().map(node=>$(node).html()||'');$('script,style,noscript,nav,footer,header').remove();
     const headline=clean($('meta[property="og:title"]').attr('content')||$('h1').first().text()||$('title').first().text());
+    const linkedReport=isErsPublication(url)?await inspectErsReport(body,url,allowed):null;
     const articleText=clean($('article').first().text());
       const mainText=clean($('main').first().text());
-      const text=articleText.length>=400
+      const text=linkedReport?.text || (articleText.length>=400
         ? articleText
         : mainText.length>=400
           ? mainText
-          : clean($('body').text());
-    const headText=clean(headline+' '+text.slice(0,6000));
+          : clean($('body').text()));
+    const headText=clean(headline+' '+(linkedReport?.snippet || text.slice(0,6000)));
     if(!materialMarketHeadline(headline))return reject('non-market-publisher-headline');
     if(key==='potato-starch'&&!potatoStarchMarketSubject(headline,text))return reject('irrelevant-market-subject');
     if(!headline||!hasMarketArticleBody(text,headline))return reject('not-substantive-article');if(!allowed.test(headText))return reject('commodity-relevance-not-established');
     if(!isNarrativeMarketDocument({
-      headline, articleText, mainText:text,
-      paragraphs:$('article p, main p').toArray().map(node=>clean($(node).text())),
+      headline, articleText:linkedReport?.text || articleText, mainText:text,
+      paragraphs:linkedReport?.passages || $('article p, main p').toArray().map(node=>clean($(node).text())),
       hasArticleMarkup:$('article').length>0
     }))return null;
     const metadataDate=String($('meta[property="article:published_time"]').attr('content')||$('meta[name="date"]').attr('content')||$('time[datetime]').first().attr('datetime')||'');
@@ -64,7 +66,7 @@ async function inspect(a:RetrievedSourceMetadata,key:string,onReject?:(reason:st
       const visibleParts=visibleDate?.[0].split('/')||[];
       const visibleIso=visibleDate ? [visibleParts[2],visibleParts[0].padStart(2,'0'),visibleParts[1].padStart(2,'0')].join('-')+'T00:00:00Z' : '';
       const structuredDate=structuredArticleDate({scripts:publisherJsonLd,headline});
-      const date=metadataDate||visibleIso||structuredDate||visibleHeadlineArticleDate({headline,pageText:clean($('body').text()),provisionalIndexDate:a.publishedAt});
+      const date=linkedReport?.publishedAt||metadataDate||visibleIso||structuredDate||visibleHeadlineArticleDate({headline,pageText:clean($('body').text()),provisionalIndexDate:a.publishedAt});
     const tqVisibleDate = (() => {
       // Accept a visible date only on TQ Industry's article pages.
       if(url.hostname.replace(/^www\./,'')!=='tqindustry.com')
@@ -158,7 +160,8 @@ async function inspect(a:RetrievedSourceMetadata,key:string,onReject?:(reason:st
     const day=publisherVerifiedDate(pubDate,a.publishedAt,new Date(),key==='potato-starch'?61:31);
     if(!day)return null;
     
-    return {...a,rawTitle:headline.slice(0,200),rawSnippet:text.slice(0,5000),publishedAt:day,
+    return {...a,rawTitle:headline.slice(0,200),rawSnippet:(linkedReport?.snippet||text).slice(0,5000),publishedAt:day,
+      ...(linkedReport?{evidenceDocument:{url:linkedReport.documentUrl,sha256:linkedReport.documentSha256}}:{}),
       sourceName:url.hostname.replace(/^www\./,''),unavailable:false};
   }catch{return reject('publisher-fetch-or-parse-error');}
 }

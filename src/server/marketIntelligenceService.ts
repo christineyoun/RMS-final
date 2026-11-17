@@ -51,6 +51,7 @@ export type SourceType = 'news' | 'official' | 'company';
  * Source metadata captured immediately upon search retrieval, BEFORE any AI summarization.
  */
 export interface RetrievedSourceMetadata {
+  evidenceDocument?: {url:string;sha256:string};
   rawId: string;
   rawTitle: string;
   rawSnippet: string;
