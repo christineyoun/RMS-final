@@ -1,12 +1,16 @@
+import {discoverErsReportSeries} from './ersReportNews.ts';
 import {load} from 'cheerio';
 import type {RetrievedSourceMetadata} from './marketIntelligenceService.ts';
 
 const ROOT = 'https://www.ers.usda.gov/sitemap.xml';
+const OUTLOOK = 'https://www.ers.usda.gov/api/publications/v1.0?series=OCS&page=0&items_per_page=8';
 const ARTICLE = /^https:\/\/www\.ers\.usda\.gov\/data-products\/charts-of-note\/(\d+)\/?$/;
 
 export async function discoverErsSoybeanOil(fetcher:typeof fetch=fetch) {
   const errors:string[] = [];
   const candidates:RetrievedSourceMetadata[] = [];
+
+  const releases = discoverErsReportSeries(OUTLOOK,fetcher).catch(error=>({candidates:[],errors:[String(error)]}));
 
   async function read(url:string) {
     const response = await fetcher(url,{
@@ -90,5 +94,6 @@ export async function discoverErsSoybeanOil(fetcher:typeof fetch=fetch) {
     errors.push(`USDA sitemap discovery failed: ${String(e)}`);
   }
 
-  return {candidates:candidates.slice(0,4),errors};
+  const reports=await releases;
+  return {candidates:[...reports.candidates,...candidates.slice(0,4)],errors:[...errors,...reports.errors]};
 }
