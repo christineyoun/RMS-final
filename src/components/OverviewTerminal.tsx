@@ -1014,10 +1014,7 @@ text-underline-offset: 2px;
                   </div>
                 </div>
               </div>
-              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-between gap-2">
-                <span className="font-sans text-[11px] font-medium text-slate-400 tabular-nums">
-                  {oilData.observedOn ? formatMacroFooterDate(oilData.observedOn) + ' 기준' : ''}
-                </span>
+              <div className="mt-2.5 print:mt-1.5 pt-2 print:pt-1 min-h-[31.5px] print:min-h-[27.5px] border-t border-[#f1f5f9] flex items-center justify-end gap-2">
                 <span
                   className="rms-source text-xs text-slate-600 group-hover:text-[#DF0029] group-hover:underline font-semibold inline-flex items-center gap-0.5 transition-colors cursor-pointer shrink-0"
                 >
