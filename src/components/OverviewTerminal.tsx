@@ -492,7 +492,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                         <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
                           {getCardEyebrow(item)}
                         </span>
-                        <h3 className="text-base font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                        <h3 className="text-[15px] leading-normal font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                           {item.nameKo} ({item.nameEn})
                         </h3>
                       </div>
@@ -598,7 +598,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
                             {getCardEyebrow(item)}
                           </span>
-                          <h3 className="text-base font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                          <h3 className="text-[15px] leading-normal font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                             {item.nameKo} ({item.nameEn})
                           </h3>
                         </div>
@@ -699,7 +699,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
                           <span className="text-[10px] text-[#6b7280] uppercase tracking-wider font-bold">
                             {getCardEyebrow(item)}
                           </span>
-                          <h3 className="text-base font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
+                          <h3 className="text-[15px] leading-normal font-bold text-[#111827] group-hover:text-[#DF0029] transition-colors mt-0.5 break-keep">
                             {item.nameKo} ({item.nameEn})
                           </h3>
                         </div>
@@ -942,7 +942,7 @@ text-underline-offset: 2px;
                     <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       currency_exchange
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
+                    <span className="font-bold text-slate-800 text-[15px] print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       환율 (ECB 기준환율)
                     </span>
                   </div>
@@ -986,7 +986,7 @@ text-underline-offset: 2px;
                     <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       local_gas_station
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
+                    <span className="font-bold text-slate-800 text-[15px] print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       유가 / 에너지 (BRENT)
                     </span>
                   </div>
@@ -1029,7 +1029,7 @@ text-underline-offset: 2px;
                     <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       directions_boat
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
+                    <span className="font-bold text-slate-800 text-[15px] print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       해상운임 지수 (KCCI)
                     </span>
                   </div>
@@ -1068,7 +1068,7 @@ text-underline-offset: 2px;
                     <span className="material-symbols-outlined text-[#4b5563] group-hover:text-[#DF0029] transition-colors shrink-0 text-[18px] [@media_screen]:!text-[18px] [@media_screen]:!text-slate-800">
                       shield
                     </span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
+                    <span className="font-bold text-slate-800 text-[15px] print:text-xs group-hover:text-[#DF0029] transition-colors break-keep">
                       통상 정책 · 수출 쿼터 (Trade Policy · Export Quotas)
                     </span>
                   </div>
