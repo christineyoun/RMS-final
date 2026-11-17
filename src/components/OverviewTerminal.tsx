@@ -1105,7 +1105,7 @@ text-underline-offset: 2px;
     ? 'rms-source text-xs text-slate-600 font-semibold group-hover:text-[#DF0029] group-hover:underline underline-offset-2 transition-colors'
     : 'rms-source text-xs text-slate-500 font-normal'}>
                     {policyData.status === '관련 공식 발표 확인되지 않음' ?
-                      <>모니터링 출처: {policyData.sourceName || '공식 출처'}{'\u00a0'}<SourceLinkArrow /></> : '공식 출처 확인 불가'}
+                      <>{policyData.sourceName || '공식 출처'}{'\u00a0'}<SourceLinkArrow /></> : '공식 출처 확인 불가'}
                   </span>
                 )}
               </div>
