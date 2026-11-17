@@ -1,4 +1,4 @@
-export type PalmObservation={date:string;cpoUsd?:number;usdPerMT?:number;oleinUsd?:number;oleinUsdPerMt?:number;isSynthetic?:boolean};
+export type PalmObservation={date:string;cpoUsd?:number;usdPerMT?:number;cpoMyr?:number;cpoPriceType?:string;cpoSourceUrl?:string|null;oleinUsd?:number;oleinUsdPerMt?:number;isSynthetic?:boolean};
 export const palmUsd=(p:PalmObservation,benchmark:'cpo'|'olein'):number=>
   benchmark==='cpo'?(p.cpoUsd??p.usdPerMT??NaN):(p.oleinUsd??p.oleinUsdPerMt??NaN);
 export function latestCommonPalmSpread(rows:PalmObservation[]){
@@ -13,4 +13,14 @@ export function palmClosingRange(rows:PalmObservation[],benchmark:'cpo'|'olein',
   if(!points.length)return null;
   const prices=points.map(p=>palmUsd(p,benchmark));const low=Math.min(...prices),high=Math.max(...prices),current=prices.at(-1)!;
   return {low,high,current,asOf:points.at(-1)!.date,observations:points.length,pct:high===low?50:Math.max(0,Math.min(100,Math.round((current-low)/(high-low)*100)))};
+}
+
+/** Native settlement is independent of the latest plottable converted close. */
+export function palmSettlementAwaitingFx(rows:PalmObservation[]){
+  const ordered=rows.filter(p=>!p.isSynthetic&&/^\d{4}-\d{2}-\d{2}$/.test(p.date))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  const native=ordered.filter(p=>p.cpoSourceUrl&&p.cpoPriceType==='exchange-settlement'&&Number.isFinite(p.cpoMyr)&&(p.cpoMyr??0)>0).at(-1);
+  const converted=ordered.filter(p=>Number.isFinite(palmUsd(p,'cpo'))&&palmUsd(p,'cpo')>0).at(-1);
+  return native&&(!converted||native.date>converted.date)
+    ?{date:native.date,myr:native.cpoMyr!,convertedDate:converted?.date}:null;
 }
