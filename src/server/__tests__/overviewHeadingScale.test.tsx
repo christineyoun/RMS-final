@@ -27,7 +27,7 @@ test('overview card and section headings use the commodity card type scale',()=>
   }
   const movers=$('span').filter((_,el)=>$(el).text().trim()==='오늘의 주요 원자재 변동률 (Portfolio Top Movers)');
   assert.equal(movers.length,1);
-  assert(movers.hasClass('text-[13px]'));
+  assert(movers.hasClass('text-[15px]'));
   assert(movers.hasClass('font-bold'));
   const desk = $('span').filter((_, el) => $(el).text().trim() === '데스크 구매 지침 (DESK DIRECTIVE)');
   assert.equal(desk.length, 1);

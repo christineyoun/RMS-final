@@ -424,7 +424,7 @@ export const OverviewTerminal: React.FC<OverviewTerminalProps> = ({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DF0029]"></span>
             </span>
             <span className="material-symbols-outlined text-[16px] text-[#DF0029]">trending_up</span>
-            <span className="text-[13px] font-bold text-[#111827]">
+            <span className="text-[15px] font-bold text-[#111827]">
               오늘의 주요 원자재 변동률 (Portfolio Top Movers)
             </span>
           </div>
