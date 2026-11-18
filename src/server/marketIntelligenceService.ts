@@ -916,7 +916,7 @@ Output schema:
   {
     "rawId": "matching rawId",
     "evidenceIds": ["sourceEvidence.evidenceId for each original passage actually used"],
-    "title": "accurate, natural Korean headline",
+    "title": "Write a concise, natural Korean headline about the main development for the requested commodity, grounded in the same verified passages as the summary. For generic report titles, headline the relevant finding. Do not copy the publisher headline or the first sentence of the summary. Preserve direction, scope and uncertainty without adding facts.",
     "summary": "complete, readable professional Korean explaining the source-verified development, important figures/units/periods, and defensible ${key} procurement implications; use a soft 200–300 Korean-character editorial reference when supported, avoid secondary numerical lists, never omit essential verified developments; use only rawSnippet and preserve forecast uncertainty"
   }
 ]`;
@@ -957,7 +957,7 @@ Output schema:
               const repairPrompt=[
                 'The previous Korean news summaries failed original-source validation. Repair ONLY the verified input articles. The failedValidation field describes the exact failed claim. The previousRejectedDraft is NOT approved evidence.',
                 'Use rawSnippet and sourceEvidence from the SAME rawId only. Preserve EXACT source numbers, magnitudes, units, metrics and periods. Never round, truncate or invent numeric conversions. If a number is not directly supported, OMIT the entire unsupported claim, not just its unit. Correct evidenceIds to include every passage actually supporting each retained number in the title or summary. Do not cite passages about different metrics to justify a number. Keep the rest of each summary factual and substantive. Omit any item that lacks sufficient evidence.',
-                'Return ONLY JSON array of {rawId,evidenceIds,title,summary}. Do not add unsupported facts.',
+                'Write a concise, natural Korean headline about the main development for the requested commodity, grounded in the same verified passages as the summary. For generic report titles, headline the relevant finding. Do not copy the publisher headline or the first sentence of the summary. Preserve direction, scope and uncertainty without adding facts. Return ONLY JSON array of {rawId,evidenceIds,title,summary}. Do not add unsupported facts.',
                 NEWS_SUMMARY_EDITORIAL_GUIDANCE,
                 'Input:',JSON.stringify(repairInputs)
               ].join('\n');
