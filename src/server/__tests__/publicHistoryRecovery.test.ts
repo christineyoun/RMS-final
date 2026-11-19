@@ -19,9 +19,8 @@ try{
   const merged=mergePublicPrices(palm,[olein]);assert.equal(merged.history.points.filter(p=>p.benchmark==='palm-cpo').length,palm.points.filter(p=>p.benchmark==='palm-cpo').length);
   assert.equal(mergePublicPrices(merged.history,[olein]).changed,false,'publisher/source/benchmark/date dedup survives repeated checks');
   const payload=palmHistoryPayload(merged.history),row=payload.historicalSeries.find((p:any)=>p.date===olein.date);
-  const oldCpo=palm.points.find(p=>p.benchmark==='palm-cpo'&&p.date===olein.date);
-  assert.equal(row.cpoUsd,oldCpo?.usdPerMT,'Olein-only row cannot manufacture CPO');
-  assert.equal(row.oleinUsd,1200);
+  assert.equal(row,undefined,'Olein-only row is excluded from the public graph');
+  assert.ok(merged.history.points.some(p=>p.benchmark==='palm-olein'&&p.date===olein.date&&p.value===1200),'archived record remains available');
   assert.throws(()=>mergePublicPrices(palm,[{...olein,date:'2099-01-01'}]),/Invalid public price/);
   assert.equal(publisherDate('Feb 31, 2026'),null);assert.equal(publisherDate('October 09, 2026'),'2026-10-09');
   assert.equal(parsePalmHistory('<table><tr><td>Oct 09, 2026</td><td>4,700</td></tr></table>','palm-cpo')[0].date,'2026-10-09');

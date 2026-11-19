@@ -14,7 +14,7 @@ try{
  assert.ok(h.points.some(p=>p.date==='2026-10-07'&&p.value===4553),'old raw record preserved');
  assert.ok(selected.every(p=>normalizedPalmPoint(p,h).fxStatus==='dated'),'all selected CPO dates have verified FX');
  for(const p of selected){const fx=h.datedFx![p.date];assert.ok(fx.rateDate<=p.date);assert.ok(Date.parse(p.date)-Date.parse(fx.rateDate)<=7*86400000);assert.match(fx.sourceUrl,/^https:\/\/api.frankfurter.dev\/v1\//);}
- const payload=palmHistoryPayload(h);assert.equal(payload.cpoObservationDate,'2026-10-19');assert.equal(payload.oleinObservationDate,'2026-10-19');assert.equal(payload.historicalSeries.find(p=>p.date==='2026-10-19').oleinPublisherQuoteDate,'2026-10-19');assert.ok(payload.historicalSeries.some(p=>p.date==='2026-10-15'));assert.equal(payload.diagnostics.estimatedFxObservations,0);assert.equal(JSON.stringify(h.points),raw);
+ const payload=palmHistoryPayload(h);assert.equal(payload.cpoObservationDate,'2026-10-19');assert.equal(payload.oleinObservationDate,undefined);assert.doesNotMatch(JSON.stringify(payload),/olein/i);assert.ok(payload.historicalSeries.some(p=>p.date==='2026-10-15'));assert.equal(payload.diagnostics.estimatedFxObservations,0);assert.equal(JSON.stringify(h.points),raw);
  const point=selected[0];const noFx={version:1 as const,points:[{...point,provenance:'manual-import' as const,conversion:undefined}]};
  assert.equal(normalizedPalmPoint(noFx.points[0],noFx).fxStatus,'legacy-fixed-estimate');
  const dated=await refreshPalmDatedFx(noFx,async()=>Response.json({base:'USD',rates:{[point.date]:{MYR:4.2}}}));assert.equal(normalizedPalmPoint(point,dated).usdPerMT,Number((point.value/4.2).toFixed(2)));assert.deepEqual(dated.points,noFx.points);
@@ -24,7 +24,7 @@ try{
  fs.mkdirSync(path.join(temp,'.rms-stage3/evidence/articles'),{recursive:true});fs.copyFileSync('.rms-stage3/palm-news-verified.json',path.join(temp,'.rms-stage3/palm-news-verified.json'));
  for(const a of articles){const name='article-'+a.receiptSha256+'.json';fs.copyFileSync('.rms-stage3/evidence/articles/'+name,path.join(temp,'.rms-stage3/evidence/articles/'+name));}
  const outage=await refreshPalmNews(temp,async()=>new Response('',{status:403}));assert.equal(outage.articles.length,4,'verified originals survive outages');assert.equal(outage.failures.length,4);
- const evidence=await prepareAnalysisEvidence('palm-oil',process.cwd(),new Date(),{fetchSources:false});assert.ok(evidence.facts.some(f=>f.id==='palm-olein-2026-10-19'));assert.equal(evidence.facts.filter(f=>f.id.startsWith('article-')).length,4,'news and AI reuse the same retained original bodies');
+ const evidence=await prepareAnalysisEvidence('palm-oil',process.cwd(),new Date(),{fetchSources:false});assert.ok(!evidence.facts.some(f=>f.measure?.benchmark==='palm-olein'));assert.equal(evidence.facts.filter(f=>f.id.startsWith('article-')).length,4,'news and AI reuse the same retained original bodies');
  const today=new Date();const dates=Array.from({length:28},(_,i)=>new Date(today.getTime()-(28-i)*86400000).toISOString().slice(0,10));
  const weather=(rain:number[])=>parseMeteoWeather({latitude:3.59,longitude:98.67,timezone:'UTC',utc_offset_seconds:0,daily_units:{time:'iso8601',precipitation_sum:'mm',temperature_2m_max:'°C'},daily:{time:dates,precipitation_sum:rain,temperature_2m_max:Array(28).fill(25)}},{key:'indonesia',label:'Sumatra',lat:3.59,lon:98.67},today,true);
  const wet=weather([...Array(21).fill(10),...Array(7).fill(30)])!;assert.equal(wet.baselineMm,70);assert.equal(wet.mm,210);assert.ok(wet.complete);

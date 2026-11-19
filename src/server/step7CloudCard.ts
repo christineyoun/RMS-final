@@ -16,7 +16,7 @@ export function isSafeStep7Data(data:any,commodity:string):boolean {
  const risk=data.procurementRiskPreview;
  if(risk!==undefined && (risk?.commodityId!==commodity||
    !['안정','주의','경계','판정 보류'].includes(risk.level)||
-   typeof risk.summarySentenceKo!=='string'||[...risk.summarySentenceKo].length>120||
+   typeof risk.summarySentenceKo!=='string'||
    !Array.isArray(risk.evidence)||
    (risk.level!=='판정 보류'&&!risk.evidence.length)||
    !risk.evidence.every((e:any)=>safePublisherOriginal(e?.url)&&
@@ -30,7 +30,7 @@ export function hasAcceptedStep7ProcurementRisk(data:any,commodity:string):boole
  return Boolean(risk&&risk.commodityId===commodity&&
    ['안정','주의','경계','판정 보류'].includes(risk.level)&&
    typeof risk.summarySentenceKo==='string'&&risk.summarySentenceKo.trim().length>0&&
-   [...risk.summarySentenceKo].length<=120&&Array.isArray(risk.evidence)&&
+   Array.isArray(risk.evidence)&&
    (risk.level==='판정 보류'||risk.evidence.length>0));
 }
 export function readCloudStep7Card(commodity:string,root=process.cwd()):any|null {

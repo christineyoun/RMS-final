@@ -18,7 +18,7 @@ export function assessStep7AiRisk(commodity:string,risk:AiProcurementRisk|undefi
  if(!risk)return {risk:null,warning:null}; // Old STEP7 saves are still valid.
  if(!['안정','주의','경계','판정 보류'].includes(risk.level)||
    typeof risk.summary!=='string'||![...risk.summary.trim()].length||
-   [...risk.summary.trim()].length>120||!Array.isArray(risk.sourceIds)||
+   !Array.isArray(risk.sourceIds)||
    !risk.sourceIds.every(id=>typeof id==='string'))return {risk:null,warning:'AI 조달 리스크 필드 형식 오류'};
  const ids=[...new Set(risk.sourceIds)];
  const known=new Map(sources.map(x=>[x.id,x]));

@@ -20,7 +20,8 @@ assert.deepEqual(parsePalmHistory(cpoHtml,'palm-cpo',now,true).map(p=>[p.date,p.
 const bad={...parsed[0],date:'2026-10-19'};
 const quarantined=quarantinePublicObservation({version:1,points:[...parsed,bad]},'palm-olein','2026-10-19','not in verified table',PRICE_SOURCES.olein);
 assert.equal(quarantined.points.length,13);assert.deepEqual(quarantined.quarantined?.[0].point,bad,'suspect row is retained for audit');
-assert.equal(palmHistoryPayload(quarantined).oleinObservationDate,'2026-10-15');
+assert.equal(quarantined.points.at(-1)?.date,'2026-10-15');
+assert.equal(palmHistoryPayload(quarantined).historicalSeries.length,0,'archived Olein is never a public FCPO row');
 const manual={benchmark:'palm-cpo' as const,sourceUrl:PRICE_SOURCES.cpoLegacyImport,date:'2026-10-07',value:4553,usdPerMT:1114.7,unit:'MYR/MT' as const,provenance:'manual-import' as const};
 const corrected={...manual,sourceUrl:PRICE_SOURCES.cpoFcpo,value:4661,usdPerMT:1140.17,provenance:'source-verified' as const};
 const merged=appendMatchingPalmRows({version:1,points:[manual]},[corrected],PRICE_SOURCES.cpoFcpo);

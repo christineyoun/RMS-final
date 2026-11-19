@@ -389,7 +389,7 @@ return []; // Prices belong to authenticated publisher/source history, never mod
       // 6. Fetch U.S. Wheat Associates Price Report
       await this.fetchUsWheatPriceReport(force);
 
-      // 7. Scrape Palm Oil (FCPO / RBD Olein) live settlement
+      // 7. Scrape Palm Oil (Bursa FCPO) settlement
       await scrapeLivePalmOilPrices(force).catch((err) =>
         console.warn('[MarketDataService] Palm oil live sync notice:', err?.message || err)
       );

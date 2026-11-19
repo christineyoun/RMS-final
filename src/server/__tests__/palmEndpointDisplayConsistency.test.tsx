@@ -22,17 +22,14 @@ for(const currency of ['USD','EUR','KRW'] as const){
     commodity:display,currency,onNavigateBack(){},onRefreshGemini(){},isSyncing:false
   }));
   const $=load(html);
-  const red=$('[data-chart-endpoint-label="cpo"]').text();
-  const blue=$('[data-chart-endpoint-label="olein"]').text();
-  assert.match(red,/^FCPO .+\/MT$/,`${currency}: red floating badge shows FCPO plus /MT`);
-  assert.match(blue,/^RBD Olein .+\/MT$/,`${currency}: blue floating badge shows full RBD Olein plus /MT`);
-  assert(!/\s\/MT$/.test(red)&&!/\s\/MT$/.test(blue),`${currency}: no space before /MT`);
-  assert(html.includes('FCPO (팜유 선물)'),`${currency}: chart and percentile legends identify FCPO`);
-  assert(html.includes('RBD Olein (정제 올레인)'),`${currency}: blue legends identify RBD Olein`);
-  assert(!html.includes('> CPO (원유 팜유)'),`${currency}: generic CPO chart legend removed`);
+  const badge=$('[data-chart-endpoint-label="fcpo"]').text();
+  assert.match(badge,/\/MT$/,currency+': FCPO badge uses metric tonnes');
+  assert(!/\s\/MT$/.test(badge),currency+': no space before /MT');
+  assert(html.includes('Bursa FCPO'),currency+': active publisher label remains');
+  assert.doesNotMatch(html,/RBD Palm Olein|RBD Olein|FPOLc1/i,currency+': legacy benchmark is not rendered');
 }
 assert.equal(JSON.stringify(history),original,'price and FX observations are unchanged');
 const source=fs.readFileSync(new URL('../../components/CommodityDetail.tsx',import.meta.url),'utf8');
 assert(source.includes('</span> FCPO:'), 'tooltip uses FCPO');
-assert(source.includes('</span> RBD Olein:'), 'tooltip uses RBD Olein');
-console.log('PASS Palm FCPO and RBD Olein chart labels, /MT in both badges across USD/EUR/KRW, tooltip and 52-week naming, immutable data.');
+assert.doesNotMatch(source,/DISPLAY_PALM_OLEIN|RBD Palm Olein/i);
+console.log('PASS: FCPO-only chart across USD/EUR/KRW with archived inputs left untouched.');

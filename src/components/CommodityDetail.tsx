@@ -10,8 +10,8 @@ import {PotatoPriceChangesDisplay} from './PotatoPriceChanges';
 import type {PotatoExportQuoteResponse} from '../server/officialPotatoComextService';
 import PotatoBenchmarkValue from './PotatoBenchmarkValue';
 import {soybeanDisplayFactor} from '../utils/soybeanPriceSnapshot';
-import { prefixCurrency, priceUnit, formatCurrencyAmount, formatSignedCurrencyPerMt } from '../utils/currencyFormatting';
-import {latestCommonPalmSpread,palmClosingRange,palmSettlementAwaitingFx} from '../utils/palmPriceIntegrity';
+import { prefixCurrency, priceUnit, formatCurrencyAmount } from '../utils/currencyFormatting';
+import {palmClosingRange,palmSettlementAwaitingFx} from '../utils/palmPriceIntegrity';
 import {ChartEndpointLabels} from './ChartEndpointLabels';
 import { observedPriceChanges } from '../utils/observedPriceChanges';
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -270,8 +270,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const isCorn = commodity.id === 'corn';
   const isSoybean = commodity.id === 'soybean';
   const isSoybeanOil = commodity.id === 'soybean-oil';
-  // RMS_PALM_FCPO_ONLY_UI_20261112: hide RBD Palm Olein presentation; keep its data and pipeline.
-  const DISPLAY_PALM_OLEIN_IN_UI = false;
   const isPalmOil = commodity.id === 'palm-oil' || commodity.id === 'palmoil' || commodity.id === 'palm_oil';
   const isSugar = commodity.id === 'sugar';
   const isPotatoStarch = commodity.id === 'potato-starch';
@@ -298,8 +296,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const palmObservedSeries = useMemo<any[]>(()=>historicalData?.data?.length ? historicalData.data : [],[historicalData]);
   const latestPalmSeriesPoint=[...palmObservedSeries].reverse().find(p=>Number.isFinite(p.cpoUsd??p.usdPerMT));
   const palmFxGap=useMemo(()=>isPalmOil?palmSettlementAwaitingFx(palmObservedSeries):null,[isPalmOil,palmObservedSeries]);
-  const latestOleinSeriesPoint=[...palmObservedSeries].reverse().find(p=>Number.isFinite(p.oleinUsdPerMt??p.oleinUsd));
-  const LIVE_OLEIN_USD=latestOleinSeriesPoint?.oleinUsdPerMt??latestOleinSeriesPoint?.oleinUsd??NaN;
   const cpoUsdMt=Number(latestPalmSeriesPoint?.cpoUsd??latestPalmSeriesPoint?.usdPerMT??NaN);
 
   // Both series, current quotes, chart, changes and range use the same display FX.
@@ -307,14 +303,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const palmDisplayRateCandidate=exchangeRate;
   const palmDisplayRate=palmDisplayRateCandidate>0?palmDisplayRateCandidate:NaN;
   const cpoPrice=currency==='KRW'?Math.round(cpoUsdMt*palmDisplayRate):Number((cpoUsdMt*palmDisplayRate).toFixed(2));
-  const oleinPrice=currency==='KRW'?Math.round(LIVE_OLEIN_USD*palmDisplayRate):Number((LIVE_OLEIN_USD*palmDisplayRate).toFixed(2));
-  const commonPalmSpread=latestCommonPalmSpread(palmObservedSeries);
-  const spreadUsd=commonPalmSpread?.usdPerMT??NaN;
-  const currentSpread=spreadUsd*palmDisplayRate;
-  const spreadPrice=currentSpread;
-
-  const formattedSpread = `정규화 벤치마크 차이: ${formatSignedCurrencyPerMt(currentSpread, currency)}`;
-
   const formatPalmPrice = (val: number) => {
     if (!Number.isFinite(val)) return '--';
     if (currency === 'KRW') {
@@ -356,7 +344,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
 
     const rawSourceSeries = filterSeriesByTimeframe(fullCombinedSeries, activeTimeframe);
 
-    const visiblePalmRows = DISPLAY_PALM_OLEIN_IN_UI ? rawSourceSeries : rawSourceSeries.filter((p:any) => Number.isFinite(p.cpoUsd ?? p.usdPerMT));
+    const visiblePalmRows = rawSourceSeries.filter((p:any) => Number.isFinite(p.cpoUsd ?? p.usdPerMT));
     const pointsData = visiblePalmRows.map((p) => {
       // 1. Read raw FCPO MYR settlement price (checking all JSON keys)
       const rawMyr = p.cpoMyr ?? p.centsPerBushel ?? p.priceMyr;
@@ -364,34 +352,20 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       // Read the saved USD normalization; never apply today's MYR FX to old rows.
       const pointCpoUsd = p.cpoUsd ?? p.usdPerMT ?? NaN;
 
-      // 3. Keep working Olein USD/MT benchmark intact
-      const pointOleinUsd = Number.isFinite(p.oleinUsdPerMt)
-        ? p.oleinUsdPerMt
-        : (Number.isFinite(p.oleinUsd) ? p.oleinUsd : NaN);
-
       // 4. Apply currency toggle multiplier (KRW ₩, USD $, EUR €)
       const cpoPrice = pointCpoUsd * convRate;
-      const oleinPrice = pointOleinUsd * convRate;
-      const spreadUsd = Number((pointOleinUsd - pointCpoUsd).toFixed(2));
-      const spreadPrice = oleinPrice - cpoPrice;
-
       return {
         date: p.date.replace(/-/g, '.'),
         cpoPrice,
-        oleinPrice,
         cpoUsd: pointCpoUsd,
-        oleinUsd: pointOleinUsd,
-        spreadUsd,
-        spreadPrice,
         rawCpoMyr: rawMyr,
-        rawOleinUsd: pointOleinUsd,
         cpoSourceUrl: p.cpoSourceUrl ?? null,
         cpoPriceType: p.cpoPriceType ?? 'historical-import',
         cpoContractMonth: p.cpoContractMonth ?? null,
       };
     });
 
-    const allPrices = pointsData.flatMap(d => DISPLAY_PALM_OLEIN_IN_UI ? [d.cpoPrice, d.oleinPrice] : [d.cpoPrice]).filter(Number.isFinite);
+    const allPrices = pointsData.map(d => d.cpoPrice).filter(Number.isFinite);
     if(!allPrices.length)return null;
     const minPrice = Math.min(...allPrices);
     const maxPrice = Math.max(...allPrices);
@@ -418,8 +392,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       const t = getTs(pt.date);
       const x = timeRange > 0 ? Math.round(((t - minTime) / timeRange) * width) : 250;
       const yCpo = Math.round(height - padBottom - ((pt.cpoPrice - minVal) / valRange) * usableHeight);
-      const yOlein = Math.round(height - padBottom - ((pt.oleinPrice - minVal) / valRange) * usableHeight);
-      return { ...pt, x, yCpo, yOlein };
+      return { ...pt, x, yCpo };
     });
 
     const buildSplinePath = (pts: { x: number; y: number }[]) => {
@@ -428,7 +401,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     };
 
     const cpoLinePath = buildSplinePath(coords.filter(c=>Number.isFinite(c.yCpo)).map(c => ({ x: c.x, y: c.yCpo })));
-    const oleinLinePath = buildSplinePath(coords.filter(c=>Number.isFinite(c.yOlein)).map(c => ({ x: c.x, y: c.yOlein })));
     const cpoCoords=coords.filter(c=>Number.isFinite(c.yCpo));
     const cpoAreaPath = cpoLinePath ? `${cpoLinePath} L ${cpoCoords.at(-1)?.x??0},${height} L ${cpoCoords[0]?.x??0},${height} Z` : '';
 
@@ -443,9 +415,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     return {
       points: coords,
       lastCpo:coords.filter(c=>Number.isFinite(c.yCpo)).at(-1),
-      lastOlein:coords.filter(c=>Number.isFinite(c.yOlein)).at(-1),
       cpoLinePath,
-      oleinLinePath,
       cpoAreaPath,
       low: minPrice,
       high: maxPrice,
@@ -462,7 +432,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         formatDateFromTs(maxTime),
       ]
     };
-  }, [isPalmOil, activeTimeframe, currency, cpoUsdMt, liveUsdMyr, liveUsdKrw, liveEurUsd, historicalData, spreadUsd]);
+  }, [isPalmOil, activeTimeframe, currency, cpoUsdMt, liveUsdMyr, liveUsdKrw, liveEurUsd, historicalData, palmDisplayRate]);
 
   const [usdaData, setUsdaData] = useState<UsdaWheatSummary | null>(null);
   const [usdaLastUpdated, setUsdaLastUpdated] = useState<string>('');
@@ -909,7 +879,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         ? {...historicalUsdMom,pct:historicalMyrMom.pct}
         : primaryMom
     };
-    const oleinMoves=observedPriceChanges(pts.map((p:any)=>({date:p.date,usdPerMT:p.oleinUsdPerMt ?? p.oleinUsd,isSynthetic:p.isSynthetic})));
     const cpoWowPct=cpoMoves.wow.pct, cpoMomPct=cpoMoves.mom.pct;
     const cpoWowChangeMt=cpoMoves.wow.amountUsdMt ?? 0;
 
@@ -926,8 +895,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         ? selectedCpoMomMyr.amountUsdMt / liveUsdMyr
         : null
       : cpoMoves.mom.amountUsdMt;
-    const oleinWowPct=oleinMoves.wow.pct, oleinMomPct=oleinMoves.mom.pct;
-    const oleinWowChangeMt=oleinMoves.wow.amountUsdMt ?? 0, oleinMomChangeMt=oleinMoves.mom.amountUsdMt ?? 0;
 
     const cpoWowChangeConv = currency === 'KRW' ? Math.round(cpoWowChangeMt * exchangeRate) : Number((cpoWowChangeMt * exchangeRate).toFixed(2));
     const cpoMomChangeConv = cpoMomChangeMt == null
@@ -936,8 +903,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         ? Math.round(cpoMomChangeMt * exchangeRate)
         : Number((cpoMomChangeMt * exchangeRate).toFixed(2));
 
-    const oleinWowChangeConv = currency === 'KRW' ? Math.round(oleinWowChangeMt * exchangeRate) : Number((oleinWowChangeMt * exchangeRate).toFixed(2));
-    const oleinMomChangeConv = currency === 'KRW' ? Math.round(oleinMomChangeMt * exchangeRate) : Number((oleinMomChangeMt * exchangeRate).toFixed(2));
 
     return {
       cpo: {
@@ -946,12 +911,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         momPct: cpoMomPct,
         momChangeConv: cpoMomChangeConv,
       },
-      olein: {
-        wowPct: oleinWowPct,
-        wowChangeConv: oleinWowChangeConv,
-        momPct: oleinMomPct,
-        momChangeConv: oleinMomChangeConv,
-      }
     };
   }, [isPalmOil, fullYearHistoryData, historicalData, currency, exchangeRate, cpoPrice]);
 
@@ -1048,9 +1007,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
     snappedX: number;
     date: string;
     cpoPrice: number;
-    oleinPrice: number;
     yCpo: number;
-    yOlein: number;
     cpoSourceUrl: string | null;
     cpoPriceType: string;
     cpoContractMonth: string | null;
@@ -1644,11 +1601,10 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
   const palm52WeekStats = useMemo(() => {
     if(!isPalmOil)return null;
     const rows=fullYearHistoryData?.data?.length?fullYearHistoryData.data:palmObservedSeries;
-    const cpo=palmClosingRange(rows,'cpo'),olein=palmClosingRange(rows,'olein');
-    if(!cpo || (DISPLAY_PALM_OLEIN_IN_UI && !olein))return null;
+    const cpo=palmClosingRange(rows,'cpo');
+    if(!cpo)return null;
     const convert=(value:number)=>currency==='KRW'?Math.round(value*palmDisplayRate):Number((value*palmDisplayRate).toFixed(2));
-    return {cpoCurrent:convert(cpo.current),cpoLow:convert(cpo.low),cpoHigh:convert(cpo.high),cpoPct:cpo.pct,
-      oleinCurrent:olein?convert(olein.current):NaN,oleinLow:olein?convert(olein.low):NaN,oleinHigh:olein?convert(olein.high):NaN,oleinPct:olein?.pct??NaN};
+    return {cpoCurrent:convert(cpo.current),cpoLow:convert(cpo.low),cpoHigh:convert(cpo.high),cpoPct:cpo.pct};
   }, [isPalmOil,fullYearHistoryData,palmObservedSeries,currency,palmDisplayRate]);
 
   const wheat52WeekStats = useMemo(() => {
@@ -1712,7 +1668,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
       return;
     }
 
-    // Dedicated handler for Palm Oil dual-series chart (CPO vs Palm Olein)
+    // Dedicated handler for Palm Oil FCPO chart
     if (isPalmOil && palmChartData && palmChartData.points.length > 0) {
       const pts = palmChartData.points;
       let closest = pts[0];
@@ -1731,9 +1687,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
         snappedX: closest.x,
         date: closest.date,
         cpoPrice: closest.cpoPrice,
-        oleinPrice: closest.oleinPrice,
         yCpo: closest.yCpo,
-        yOlein: closest.yOlein,
         cpoSourceUrl: closest.cpoSourceUrl,
         cpoPriceType: closest.cpoPriceType,
         cpoContractMonth: closest.cpoContractMonth,
@@ -2016,7 +1970,7 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   {isWheat
                     ? 'CBOT: SRW · KCBT: HRW · MIAX: HRS'
                     : isPalmOil
-                    ? (DISPLAY_PALM_OLEIN_IN_UI ? 'Bursa FCPO · RBD Palm Olein' : 'Bursa FCPO')
+                    ? 'Bursa FCPO'
                     : isCorn
                     ? 'CBOT: CC1'
                     : isSoybean
@@ -2201,16 +2155,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                   >
                     Bursa FCPO{'\u00a0'}<SourceLinkArrow />
                   </a>
-                  {DISPLAY_PALM_OLEIN_IN_UI && (<>
-                  <span>·</span>
-                  <a
-                    href="https://www.investing.com/commodities/rbd-palm-olein"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline inline-flex items-center gap-0.5 text-gray-400 hover:text-[#2563EB] transition-colors font-normal font-sans"
-                  >
-                    RBD Palm Olein{'\u00a0'}<SourceLinkArrow />
-                  </a></>)}
                 </div>
               ) : isPotatoStarch ? (
                 <span className="rms-source inline-flex items-baseline gap-1">출처: <a
@@ -2399,110 +2343,6 @@ export const CommodityDetail: React.FC<CommodityDetailProps> = ({
                     </span>
                   </div>
                 </>} />
-          </div>
-        )}
-
-        {/* Metric Area: Palm Oil Dual Cards (CPO & Palm Olein) */}
-        {isPalmOil && DISPLAY_PALM_OLEIN_IN_UI && palmMetrics && (
-          <div className={DISPLAY_PALM_OLEIN_IN_UI ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3"}>
-            {/* Card 1: CPO (Raw Palm Oil) */}
-            <div className="bg-[#fafbfc] border border-[#e5e7eb] rounded-lg p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#DF0029] shrink-0"></span>
-                  <span className="text-xs font-bold text-slate-900 font-mono">MDEX FCPO</span>
-                  <span className="text-[11px] text-slate-500">원유팜유</span>
-                </div>
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-normal tracking-tight">
-                  Bursa Malaysia
-                </span>
-              </div>
-
-              <div className="flex items-baseline justify-between pt-0.5">
-                <div>
-                  <div className="text-lg sm:text-xl font-bold font-mono text-slate-900">
-                    {prefixCurrency(formatPalmPrice(cpoPrice), currencySymbol)}
-                    <span className="text-xs font-semibold text-slate-500">{currencyLabel}</span>
-                  </div>
-                </div>
-
-                <div className="text-right space-y-1">
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="text-[10px] text-slate-400">WoW:</span>
-                    <span className={`text-xs font-mono font-bold ${
-                      palmMetrics.cpo.wowChangeConv >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-                    }`}>
-                      {palmMetrics.cpo.wowPct === null ? '--' : `${palmMetrics.cpo.wowPct >= 0 ? '+' : ''}${palmMetrics.cpo.wowPct.toFixed(2)}%`}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {palmMetrics.cpo.wowPct === null ? '' : `(${palmMetrics.cpo.wowChangeConv >= 0 ? '+' : '−'}${prefixCurrency(formatPalmPrice(Math.abs(palmMetrics.cpo.wowChangeConv)), currencySymbol)})`}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="text-[10px] text-slate-400">MoM:</span>
-                    <span className={`text-xs font-mono font-bold ${
-                      palmMetrics.cpo.momPct != null && palmMetrics.cpo.momPct >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-                    }`}>
-                      {palmMetrics.cpo.momPct === null ? '--' : `${palmMetrics.cpo.momPct >= 0 ? '+' : ''}${palmMetrics.cpo.momPct.toFixed(2)}%`}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {palmMetrics.cpo.momPct === null || palmMetrics.cpo.momChangeConv == null ? '' : `(${palmMetrics.cpo.momChangeConv >= 0 ? '+' : '−'}${prefixCurrency(formatPalmPrice(Math.abs(palmMetrics.cpo.momChangeConv)), currencySymbol)})`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: RBD Olein (Refined Olein) */}
-            {DISPLAY_PALM_OLEIN_IN_UI && (
-<div className="bg-[#fafbfc] border border-[#e5e7eb] rounded-lg p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#2563EB] shrink-0"></span>
-                  <span className="text-xs font-bold text-slate-900 font-mono">RBD Palm Olein</span>
-                  <span className="text-[11px] text-slate-500">정제 팜올레인</span>
-                </div>
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px] font-normal tracking-tight">
-                  Bursa Malaysia FPOL
-                </span>
-              </div>
-
-              <div className="flex items-baseline justify-between pt-0.5">
-                <div>
-                  <div className="text-lg sm:text-xl font-bold font-mono text-slate-900">
-                    {prefixCurrency(formatPalmPrice(oleinPrice), currencySymbol)}
-                    <span className="text-xs font-semibold text-slate-500">{currencyLabel}</span>
-
-                  </div>
-                </div>
-
-                <div className="text-right space-y-1">
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="text-[10px] text-slate-400">WoW:</span>
-                    <span className={`text-xs font-mono font-bold ${
-                      palmMetrics.olein.wowChangeConv >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-                    }`}>
-                      {palmMetrics.olein.wowPct === null ? '--' : `${palmMetrics.olein.wowPct >= 0 ? '+' : ''}${palmMetrics.olein.wowPct.toFixed(2)}%`}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {palmMetrics.olein.wowPct === null ? '' : `(${palmMetrics.olein.wowChangeConv >= 0 ? '+' : '−'}${prefixCurrency(formatPalmPrice(Math.abs(palmMetrics.olein.wowChangeConv)), currencySymbol)})`}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-end gap-1">
-                    <span className="text-[10px] text-slate-400">MoM:</span>
-                    <span className={`text-xs font-mono font-bold ${
-                      palmMetrics.olein.momChangeConv >= 0 ? 'text-[#059669]' : 'text-[#DF0029]'
-                    }`}>
-                      {palmMetrics.olein.momPct === null ? '--' : `${palmMetrics.olein.momPct >= 0 ? '+' : ''}${palmMetrics.olein.momPct.toFixed(2)}%`}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {palmMetrics.olein.momPct === null ? '' : `(${palmMetrics.olein.momChangeConv >= 0 ? '+' : '−'}${prefixCurrency(formatPalmPrice(Math.abs(palmMetrics.olein.momChangeConv)), currencySymbol)})`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-)}
           </div>
         )}
 

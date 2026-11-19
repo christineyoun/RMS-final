@@ -1,3 +1,4 @@
+import {STEP7_RISK_SUMMARY_TARGET_MAX_CHARS} from '../../src/utils/step7RiskSummaryPolicy.ts';
 /** One billable final synthesis call after STOP or verified round-2 evidence. No Google Search. */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,7 +34,12 @@ const now=new Date().toISOString(),stamp=now.replace(/[:.]/g,'-');
 const out={stage:'final-market-outlook-and-procurement',recordedAt:now,commodity:data.commodity,
   status,route:data.route,model,modelFinishReason:response.candidates?.[0]?.finishReason||null,
   inputFiles:data.files,counts:data.counts,
-  result:parsed,audit,rawText:raw,usageMetadata:response.usageMetadata||null,
+  result:parsed,audit,rawText:raw,
+  riskSummaryStyle: parsed?.procurementRisk ? {
+    characters: [...parsed.procurementRisk.summary].length,
+    aboveWritingTarget: [...parsed.procurementRisk.summary].length > STEP7_RISK_SUMMARY_TARGET_MAX_CHARS
+  } : null,
+  usageMetadata:response.usageMetadata||null,
   safeguards:{sourceInventoryPreserved:true,GoogleSearchDisabled:true,noMoreResearchRounds:true,
     oldFilesOverwritten:false,rmsAndCloudRunUntouched:true}};
 const filename=path.join(dir,`step7-final-${stamp}.json`);

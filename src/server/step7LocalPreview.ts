@@ -80,7 +80,6 @@ function validateReceipt(receipt:any,commodity:string){
       a.procurementRiskPreview?.commodityId!==commodity||
       !['안정','주의','경계','판정 보류'].includes(a.procurementRiskPreview?.level)||
       typeof a.procurementRiskPreview?.summarySentenceKo!=='string'||
-      [...a.procurementRiskPreview.summarySentenceKo].length>120||
       !Array.isArray(a.procurementRiskPreview.evidence)||
       (a.procurementRiskPreview.level!=='판정 보류'&&!a.procurementRiskPreview.evidence.length)||
       !a.procurementRiskPreview.evidence.every((e:any)=>publisher(e?.url)&&

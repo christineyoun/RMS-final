@@ -181,8 +181,7 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
   const pending=inFlight.get(id);if(pending)return pending;
   const job=(async()=>{
     let history=loadPublicHistory(id);const issues:string[]=[];const checkedAt=new Date().toISOString();
-    // MPOC Bursa-settlement CPO replaces the blocked Investing.com FCPO request; Olein is unchanged.
-    const sources=id==='palm-oil'?[PRICE_SOURCES.mpocCpo,PRICE_SOURCES.olein]:[PRICE_SOURCES.tapioca];
+    const sources=id==='palm-oil'?[PRICE_SOURCES.mpocCpo]:[PRICE_SOURCES.tapioca];
     const year=new Date().getUTCFullYear();
     const targets=sources.flatMap(sourceUrl=>sourceUrl===PRICE_SOURCES.tapioca?(new Date().getUTCMonth()===0?[year-1,year]:[year]).map(y=>({sourceUrl,url:sourceUrl+'/'+y})):[{sourceUrl,url:sourceUrl}]);
     for(const {sourceUrl,url} of targets){
@@ -230,16 +229,21 @@ export function publicBenchmarkMetrics(history:PublicHistory,benchmark:PublicPri
   return {latest,moves:observedPriceChanges(comparable.map(p=>({date:p.date,usdPerMT:p.usdPerMT??(p.unit==='USD/MT'?p.value:NaN)})))};
 }
 export function palmHistoryPayload(history=loadPublicHistory('palm-oil')):any {
-  const rows=new Map<string,any>();
-  for(const p of ['palm-cpo','palm-olein'].flatMap(b=>selectPalmObservations(history,b as any)).map(p=>normalizedPalmPoint(p,history))){const row=rows.get(p.date)||{date:p.date};
-    if(p.benchmark==='palm-cpo'){row.cpoMyr=p.value;row.centsPerBushel=p.value;if(p.usdPerMT){row.cpoUsd=p.usdPerMT;row.usdPerMT=p.usdPerMT;}row.cpoSourceUrl=p.provenance==='source-verified'?p.sourceUrl:null;row.cpoPriceType=p.observationKind||'historical-import';row.cpoContractMonth=p.contractMonth||null;row.cpoFxStatus=p.fxStatus;row.cpoFxRateDate='fxRateDate' in p?p.fxRateDate:undefined;}
-    if(p.benchmark==='palm-olein'){row.oleinUsd=p.value;row.oleinUsdPerMt=p.value;row.oleinSourceUrl=p.sourceUrl;row.oleinPublisherQuoteDate=p.publisherQuoteDate;}
-    rows.set(p.date,row);
-  }
-  const cpo=publicBenchmarkMetrics(history,'palm-cpo'),olein=publicBenchmarkMetrics(history,'palm-olein');
-  return {priceMyr:cpo.latest?.value??null,cpoUsdMt:cpo.latest?.usdPerMT??null,oleinUsd:olein.latest?.value??null,
-    cpoObservationDate:cpo.latest?.date,oleinObservationDate:olein.latest?.date,updatedAt:history.lastCheckedAt||'',source:'CPO · RBD Palm Olein',
-    cpoSourceUrl:cpo.latest?.sourceUrl||PRICE_SOURCES.cpo,cpoPriceType:cpo.latest?.observationKind||'historical-import',cpoContractMonth:cpo.latest?.contractMonth||null,oleinSourceUrl:PRICE_SOURCES.olein,historicalSeries:[...rows.values()].sort((a,b)=>a.date.localeCompare(b.date)),
+  const points=selectPalmObservations(history,'palm-cpo').map(p=>normalizedPalmPoint(p,history));
+  const historicalSeries=points.map(p=>({
+    date:p.date,cpoMyr:p.value,centsPerBushel:p.value,
+    ...(p.usdPerMT?{cpoUsd:p.usdPerMT,usdPerMT:p.usdPerMT}:{}),
+    cpoSourceUrl:p.provenance==='source-verified'?p.sourceUrl:null,
+    cpoPriceType:p.observationKind||'historical-import',cpoContractMonth:p.contractMonth||null,
+    cpoFxStatus:p.fxStatus,cpoFxRateDate:'fxRateDate' in p?p.fxRateDate:undefined
+  }));
+  const latest=points.at(-1), check=history.sourceChecks?.[PRICE_SOURCES.mpocCpo];
+  const gap=palmSettlementFxGap(history);
+  return {priceMyr:latest?.value??null,cpoUsdMt:latest?.usdPerMT??null,cpoObservationDate:latest?.date,
+    updatedAt:history.lastCheckedAt||'',source:'Bursa FCPO',cpoSourceUrl:latest?.sourceUrl||PRICE_SOURCES.mpocCpo,
+    cpoPriceType:latest?.observationKind||'historical-import',cpoContractMonth:latest?.contractMonth||null,historicalSeries,
     fxPolicy:'CPO: observation-date USD/MYR or preceding published business day (maximum 7 days); original imports preserved. Display currencies share current USD FX.',
-    diagnostics:{lastError:history.lastError,sourceChecks:history.sourceChecks,cpoLatestProvenance:cpo.latest?.provenance,oleinLatestProvenance:olein.latest?.provenance,fxError:history.fxError,estimatedFxObservations:selectPalmObservations(history,'palm-cpo').map(p=>normalizedPalmPoint(p,history)).filter(p=>p.fxStatus==='legacy-fixed-estimate').length}};
+    diagnostics:{lastError:check?.error||gap?.error,sourceChecks:check?{[PRICE_SOURCES.mpocCpo]:check}:{},
+      cpoLatestProvenance:latest?.provenance,fxError:history.fxError,
+      estimatedFxObservations:points.filter(p=>p.fxStatus==='legacy-fixed-estimate').length}};
 }

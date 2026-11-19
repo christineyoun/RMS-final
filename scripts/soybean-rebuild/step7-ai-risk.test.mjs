@@ -33,10 +33,20 @@ for(const commodity of commodities){
 }
 test('existing STEP7 primary JSON parsing unaffected by malformed optional risk',()=>{
  for(const bad of [{level:'unknown',summary:'description',sourceIds:['G001']},
-   {level:'주의',summary:'A'.repeat(121),sourceIds:['G001']},
+   {level:'주의',summary:'   ',sourceIds:['G001']},
    {level:'주의',summary:'sample',sourceIds:'G001'}]){
   const p=parsed({...report,procurementRisk:bad});assert(p);assert.equal(p.procurementRisk,undefined);
   const adapted=adaptStep7ToRms(saved('soybean',p),[source,bsource]);assert.equal(adapted.data.purchaseActions[0],report.procurementStrategy);
+ }
+});
+test('risk summaries of 122, 127, 150, 151 and 300 characters survive unchanged',async()=>{
+ const {hasAcceptedStep7ProcurementRisk}=await import(pathToFileURL(srcDir+'/src/server/step7CloudCard.ts'));
+ for(const n of [122,127,150,151,300]){
+  const summary='가'.repeat(n-1)+'.';
+  const p=parsed({...report,procurementRisk:{...risk,summary}});
+  const got=adaptStep7ToRms(saved('soybean',p),[source,bsource]);
+  assert.equal(got.data.procurementRiskPreview?.summarySentenceKo,summary);
+  assert(hasAcceptedStep7ProcurementRisk(got.data,'soybean'));
  }
 });
 test('invalid source IDs or B-only sources cannot make a Gemini risk card',()=>{
