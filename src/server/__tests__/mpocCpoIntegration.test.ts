@@ -18,10 +18,10 @@ try {
   const pre=mergePublicPrices(seeded,[investing]).history;
   const file=path.join(temp,'.rms-price-history','palm-oil.json');
   fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(pre));
-  let calledInvestingCpo=false;
+  let calledInvestingCpo=false,calledOlein=false;
   globalThis.fetch=async(url:any)=>{
     if(String(url)===PRICE_SOURCES.mpocCpo)return new Response(html,{status:200,headers:{'content-type':'text/html'}});
-    if(String(url)===PRICE_SOURCES.olein)return new Response('',{status:403});
+    if(String(url)===PRICE_SOURCES.olein){calledOlein=true;return new Response('',{status:403});}
     if(String(url)===PRICE_SOURCES.cpoFcpo){calledInvestingCpo=true;throw Error('Unexpected blocked source request');}
     if(String(url).startsWith('https://api.frankfurter.dev/'))return Response.json({base:'USD',rates:{'2026-10-22':{MYR:4.25},'2026-11-04':{MYR:4.2}}});
     throw Error('Unexpected URL '+url);
@@ -29,11 +29,15 @@ try {
   const refreshed=await refreshPublicHistory('palm-oil');
   assert.equal(calledInvestingCpo,false,'no request to blocked Investing.com CPO URL');
   assert.equal(refreshed.sourceChecks?.[PRICE_SOURCES.mpocCpo]?.error,undefined);
-  assert.match(refreshed.sourceChecks?.[PRICE_SOURCES.olein]?.error||'',/403/,'Olein failure is independent');
+  assert.equal(calledOlein,false,'retired Olein source is not requested');
+  assert.equal(refreshed.lastError,undefined);
+  assert.deepEqual(refreshed.points.filter(p=>p.benchmark==='palm-olein'),
+    pre.points.filter(p=>p.benchmark==='palm-olein'),'legacy observations remain in private storage');
   const old=refreshed.points.find(p=>p.sourceUrl===PRICE_SOURCES.cpoFcpo&&p.date==='2026-10-19');
   assert.deepEqual(old,investing,'previous source-verified close unchanged');
   assert.deepEqual(refreshed.points.filter(p=>p.provenance==='manual-import'&&p.benchmark==='palm-cpo'),manualPoints,'all original manually imported CPO prices unchanged');
   const current=palmHistoryPayload(refreshed);
+  assert.doesNotMatch(JSON.stringify(current),/olein/i,'active payload excludes retired benchmark');
   assert.equal(current.cpoSourceUrl,PRICE_SOURCES.mpocCpo);
   assert.equal(current.cpoObservationDate,'2026-11-04');
   assert.equal(current.priceMyr,4496);
@@ -48,8 +52,8 @@ try {
   assert.equal(JSON.stringify(repeat.points),saved,'repeated refresh never duplicates or reprices observations');
   globalThis.fetch=async()=>new Response('',{status:403});
   const failed=await refreshPublicHistory('palm-oil');
-  assert.equal(JSON.stringify(failed.points),saved,'MPOC and Olein outage retains exactly the saved prices');
-  console.log('PASS: MPOC scheduled feed, independent Olein, closed/settlement source identity, dated FX, old verified prices and manual history retained, no CPO 403 retries, no duplicate or invented observations.');
+  assert.equal(JSON.stringify(failed.points),saved,'MPOC outage retains exactly the saved prices');
+  console.log('PASS: MPOC scheduled feed, no Olein requests, closed/settlement source identity, dated FX, old verified prices and manual history retained, no CPO 403 retries, no duplicate or invented observations.');
 } finally {
   globalThis.fetch=oldFetch;
   if(oldRoot===undefined)delete process.env.RMS_HISTORY_ROOT;else process.env.RMS_HISTORY_ROOT=oldRoot;

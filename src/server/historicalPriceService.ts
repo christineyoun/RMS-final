@@ -5,37 +5,31 @@ import { ttsaService } from './ttsaService.ts';
 import { LBS_PER_METRIC_TON, CORN_BUSHELS_PER_MT, WHEAT_SOY_BUSHELS_PER_MT, centsPerLbToUsdPerMt } from '../utils/commodityConversions.ts';
 import { updateSavedBaselinePrice } from './geminiApi.ts';
 import { getLiveExchangeRate } from '../services/currencyService.ts';
-import { scrapeInvestingOleinHistory } from './palmOleinScraperService.ts';
 
 const PALM_CACHE_FILE = path.join(process.cwd(), 'src/data/cache_palmoil.json');
 const TRADINGVIEW_FCPO_URL = 'https://www.tradingview.com/symbols/MYX-FCPO1!/';
-const INVESTING_OLEIN_URL = 'https://www.investing.com/commodities/rbd-palm-olein';
 
 export interface PalmOilDataPoint {
-  oleinPublisherQuoteDate?:string;
   cpoSourceUrl?:string | null;
   cpoPriceType?:string;
   cpoContractMonth?:string | null;
+  cpoFxStatus?:string;
+  cpoFxRateDate?:string;
   cpoMyr?: number;
   date: string;
   centsPerBushel: number; // MDEX FCPO in MYR/MT
   usdPerMT: number;       // CPO in USD/MT
   cpoUsd?: number;        // Explicit CPO in USD/MT
-  oleinUsd?: number;      // Explicit RBD Palm Olein in USD/MT
-  oleinUsdPerMt: number;  // RBD Palm Olein in USD/MT
 }
 
 export interface PalmOilCachePayload {
   diagnostics?:any;fxPolicy?:string;
   cpoObservationDate?:string;
-  oleinObservationDate?:string;
   priceMyr: number;
   cpoUsdMt: number;
-  oleinUsd: number;
   updatedAt: string;
   source: string;
   cpoSourceUrl: string;
-  oleinSourceUrl: string;
   historicalSeries: PalmOilDataPoint[];
 }
 
@@ -79,26 +73,6 @@ function parseTradingViewFcpoHtml(html: string): number | null {
       const val = parseFloat(match[1].replace(/,/g, ''));
       if (Number.isFinite(val) && val >= 3000 && val <= 7500) {
         return Math.round(val);
-      }
-    }
-  }
-  return null;
-}
-
-function parseInvestingOleinHtml(html: string): number | null {
-  const patterns = [
-    /data-test=["']instrument-price-last["'][^>]*>\s*([\d,]+(?:\.\d+)?)\s*</i,
-    /"last"\s*:\s*"?([\d,]+(?:\.\d+)?)"?/i,
-    /"last_numeric"\s*:\s*([\d.]+)/i,
-    /instrument-price-last[^>]*>([\d,]+(?:\.\d+)?)</i,
-    /RBD Palm Olein[\s\S]{0,500}?(\d{1},?\d{3}\.\d{2})/i
-  ];
-  for (const regex of patterns) {
-    const match = html.match(regex);
-    if (match && match[1]) {
-      const val = parseFloat(match[1].replace(/,/g, ''));
-      if (Number.isFinite(val) && val >= 700 && val <= 2200) {
-        return Number(val.toFixed(2));
       }
     }
   }
@@ -203,39 +177,33 @@ export async function fetchHistoricalData(commodityId: string = 'corn', timefram
 
     const formattedFiltered = filtered.map((pt) => {
       const cpoUsd = pt.cpoUsd ?? pt.usdPerMT;
-      const oleinUsd = pt.oleinUsd ?? pt.oleinUsdPerMt;
       return {
         date: pt.date,
         cpoMyr:pt.cpoMyr,
         cpoSourceUrl:pt.cpoSourceUrl,
         cpoPriceType:pt.cpoPriceType,
         cpoContractMonth:pt.cpoContractMonth,
+        cpoFxStatus:pt.cpoFxStatus,
+        cpoFxRateDate:pt.cpoFxRateDate,
         centsPerBushel: pt.centsPerBushel,
         usdPerMT: cpoUsd,
         cpoUsd,
-        oleinUsd,
-        oleinUsdPerMt: oleinUsd,
-        oleinPublisherQuoteDate:pt.oleinPublisherQuoteDate,
-        spreadUsd: Number((oleinUsd - cpoUsd).toFixed(2)),
       };
     });
 
     return {
       success: true,
       commodity: 'palm-oil',
-      symbol: 'MYX-FCPO1! · RBD Palm Olein',
+      symbol: 'MYX-FCPO1!',
+      source: palmPayload.source || 'Bursa FCPO',
       timeframe,
       range: timeframe,
-      source: palmPayload.source || 'MDEX (FCPO) · RBD Palm Olein (Investing.com)',
       cpoSourceUrl: palmPayload.cpoSourceUrl || TRADINGVIEW_FCPO_URL,
-      oleinSourceUrl: palmPayload.oleinSourceUrl || INVESTING_OLEIN_URL,
       updatedAt: palmPayload.updatedAt,
       diagnostics:palmPayload.diagnostics,fxPolicy:palmPayload.fxPolicy,
       priceMyr: palmPayload.priceMyr,
       cpoUsdMt: palmPayload.cpoUsdMt,
-      oleinUsd: palmPayload.oleinUsd,
       cpoObservationDate:palmPayload.cpoObservationDate,
-      oleinObservationDate:palmPayload.oleinObservationDate,
       data: formattedFiltered,
     };
   }

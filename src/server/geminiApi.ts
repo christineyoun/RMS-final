@@ -38,7 +38,6 @@ import { usdaFasService, getExecutiveBriefForCommodity, formatWasdeResponse, get
 import { fetchSoybeanOilWorldPsd } from './usdaSoybeanOilLiveService.ts';
 import { fetchOtherCommodityWorldPsd } from './usdaOtherCommoditiesLiveService.ts';
 import { fetchHistoricalData, scrapeLivePalmOilPrices } from './historicalPriceService.ts';
-import { syncAndRollPalmOleinData } from './palmOleinScraperService.ts';
 import { usWheatPriceReportService } from './usWheatService.ts';
 import { fetchLatestScmPolicyAlerts, getLiveTradePolicyAlert, fetchLiveMarketIssues } from './aiAnalysisService.ts';
 import { amisService } from './amisService.ts';
@@ -757,9 +756,6 @@ Return pure JSON only without markdown formatting. Ensure that the returned valu
 
     if (url.startsWith('/api/pipeline/telemetry')) {
       try {
-        if (url.includes('force=true')) {
-          await syncAndRollPalmOleinData();
-        }
         const pipelineData = await fetchLivePipelineMetrics();
         res.setHeader('Content-Type', 'application/json');
         res.statusCode = 200;

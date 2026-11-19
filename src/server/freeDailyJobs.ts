@@ -41,8 +41,6 @@ async function history(id:string){
   const r=await refreshPublicHistory(id);
   const result=packet(r,r.points.map(p=>p.date).sort().at(-1),r.lastError);
   if(id!=='palm-oil')return result;
-  // Show the independent CPO and Olein outcomes even when one source blocks a request.
-  // Overall source-job status retains its existing conservative error behavior.
   const check=(url:string,benchmark:string)=>{
     const entry=r.sourceChecks?.[url];
     return {benchmark,status:entry?.error?'retained-old-data':entry?.lastSuccessAt?'verified':'not-verified',
@@ -51,7 +49,7 @@ async function history(id:string){
   };
   const {palmSettlementFxGap}=await import('./palmPricePolicy.ts');
   const fxGap=palmSettlementFxGap(r);
-  return {...result,refresh:{cpoFxGap:fxGap,benchmarks:{cpo:check(PRICE_SOURCES.mpocCpo,'Bursa settlement via MPOC'),olein:check(PRICE_SOURCES.olein,'FPOLc1')}}};
+  return {...result,refresh:{cpoFxGap:fxGap,benchmarks:{cpo:check(PRICE_SOURCES.mpocCpo,'Bursa settlement via MPOC')}}};
  }
  const r:any=id==='sugar'?await(await import('./sugarPriceSnapshotService.ts')).sugarPriceSnapshotService.getSnapshot(true):await(await import('./historicalPriceService.ts')).fetchHistoricalData(id,'5Y',true);
  await(await import('./savedGraphHistory.ts')).rememberGraphRefresh(id,r);return packet(r,r.data?.at(-1)?.date,r.lastError||r.success===false&&'History unavailable');
@@ -137,7 +135,7 @@ export function dailyFreeSourceJobs():FreeSourceJob[]{return [
  {key:'energy',commodity:'overview',source:'Yahoo Finance Brent public quote',run:async()=>{const r=await(await import('./geminiApi.ts')).fetchLiveCrudeOilData('BZ=F',0);if(!r.observationDate||!(r.currentPrice>0))throw Error('No dated verified Brent quote; previous publication retained');saveVerifiedEnergy(r);return packet(r,r.sessionDate||r.observationDate);}},
  {key:'freight',commodity:'overview',source:'KOBC KCCI (official weekly composite)',cadenceHours:24,retryable:true,run:async()=>{const r=await(await import('./kcciScraperService.ts')).refreshVerifiedKcci();if(!r.observationDate)throw Error('KOBC KCCI publication unavailable; no guessed observation');return packet(r,r.observationDate,r.lastError);}},
  {key:'fx',commodity:'overview',source:'ECB / Frankfurter',run:fxJob},
- ...ids.filter(i=>i!=='potato-starch').map(id=>({key:id+'-history',commodity:id,source:id==='wheat'?'U.S. Wheat Associates':id.includes('starch')?'TTSA':id==='palm-oil'?'MPOC Bursa CPO settlements + Investing.com RBD Olein':'Yahoo Finance exchange-labelled history',run:()=>history(id)})),
+ ...ids.filter(i=>i!=='potato-starch').map(id=>({key:id+'-history',commodity:id,source:id==='wheat'?'U.S. Wheat Associates':id.includes('starch')?'TTSA':id==='palm-oil'?'MPOC Bursa CPO settlements':'Yahoo Finance exchange-labelled history',run:()=>history(id)})),
  ...ids.filter(i=>!i.includes('starch')).map(id=>({key:id+'-world',commodity:id,source:'USDA FAS PSD',cadenceHours:24,run:()=>world(id)})),
  {key:'potato-export-quote',commodity:'potato-starch',source:'Eurostat Comext DS-045409',cadenceHours:24,run:async()=>{const r=await(await import('./officialPotatoComextService.ts')).fetchOfficialPotatoExportQuote(true);return packet({data:r.data,changes:r.changes},r.data?.period,sourceError(r));}},
  {key:'tapioca-starch-exports',commodity:'tapioca-starch',source:'TTSA annual Thai Customs export volumes',cadenceHours:24,run:async()=>{

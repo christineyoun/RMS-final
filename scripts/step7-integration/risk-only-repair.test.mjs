@@ -67,7 +67,7 @@ test('invalid/non-A/unsupported risk IDs are rejected; valid one passes original
  assert.equal(evaluateRisk(risk,'soybean',sources).level,'주의');
  assert.throws(()=>evaluateRisk({...risk,sourceIds:['G999']},'soybean',sources));
  assert.throws(()=>evaluateRisk({...risk,sourceIds:['G001']},'soybean',[{...sources[0],grade:'B'}]));
- assert.throws(()=>evaluateRisk({...risk,summary:'x'.repeat(121)},'soybean',sources));
+ assert.equal(evaluateRisk({...risk,summary:risk.summary.repeat(6)},'soybean',sources).summary,risk.summary.repeat(6));
  assert.throws(()=>assertSameOutlook({executiveSummary:'first'}, {executiveSummary:'changed',sources:[]}));
 });
 test('no runtime hardcoded market facts or fixed risk output in production helper',()=>{
@@ -90,6 +90,8 @@ test('saved, evidence-bound risk can be applied atomically without Gemini or cha
    for(const n of ['risk-only-core.mjs','risk-only-repair.mjs'])fs.copyFileSync(path.join(currentRoot,'scripts','step7-integration',n),path.join(f.root,'scripts','step7-integration',n));
    fs.mkdirSync(path.join(f.root,'src','server'),{recursive:true});
    for(const n of ['step7LocalPreview.ts','step7CloudCard.ts'])fs.copyFileSync(path.join(currentRoot,'src','server',n),path.join(f.root,'src','server',n));
+   fs.mkdirSync(path.join(f.root,'src','utils'),{recursive:true});
+   for(const n of ['overviewTakeaway.ts','step7RiskSummaryPolicy.ts'])fs.copyFileSync(path.join(currentRoot,'src','utils',n),path.join(f.root,'src','utils',n));
    fs.writeFileSync(path.join(f.root,'package.json'),JSON.stringify({type:'module'}));
    const state=inspectRiskOnly(f.root,'soybean');assert.equal(state.status,'READY',state.reason);
    const c=state.candidate;

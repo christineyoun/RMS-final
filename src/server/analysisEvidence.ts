@@ -97,7 +97,7 @@ export function collectAnalysisEvidence(id:string,root=process.cwd(),now=new Dat
       const verified=new Map<string,AnalysisFact>();
       for(const name of fs.readdirSync(dir).filter(n=>/^publisher-[a-f0-9]{64}\.json$/.test(n)))try {
         const receipt=read(path.join(dir,name));
-        const benchmark=receipt.sourceUrl===PRICE_SOURCES.olein?'palm-olein':receipt.sourceUrl===PRICE_SOURCES.cpoFcpo?'palm-cpo':null;
+        const benchmark=receipt.sourceUrl===PRICE_SOURCES.cpoFcpo?'palm-cpo':null;
         if(!benchmark)continue;
         const htmlFile=path.join(dir,`publisher-${receipt.htmlSha256}.html`);
         if(!fs.existsSync(htmlFile)){evidence.failures.push('publisher-receipt-incomplete:'+name);continue;}
@@ -110,9 +110,9 @@ export function collectAnalysisEvidence(id:string,root=process.cwd(),now=new Dat
           if(!saved)continue;
           // A table/header disagreement is not resolved by silently advancing the quote date.
           if(row.publisherQuoteDate&&row.date>row.publisherQuoteDate)continue;
-          const topic=benchmark==='palm-cpo'?'CPO':'RBD Olein';
+          const topic='CPO';
           const fact:AnalysisFact={id:benchmark+'-'+row.date,commodity:id,topic,
-            text:`${row.date} ${benchmark==='palm-cpo'?'Kuala Lumpur FCPOc1 CPO':'Bursa Malaysia FPOLc1 RBD Olein'} 공표 종가 ${row.value} ${row.unit}.`,
+            text:`${row.date} Kuala Lumpur FCPOc1 CPO 공표 종가 ${row.value} ${row.unit}.`,
             sourceUrl:receipt.sourceUrl,sourceTitle:'Investing.com · '+topic,observedAt:row.date,verifiedAt:receipt.checkedAt,verification:'original-record',recordSha256:receipt.htmlSha256,
             measure:{metric:'price',scope:'publisher-futures-close',benchmark,unit:row.unit,value:row.value,valueKind:'actual'}};
           verified.set(fact.id,fact);
@@ -130,7 +130,7 @@ export function collectAnalysisEvidence(id:string,root=process.cwd(),now=new Dat
           verified.set(fact.id,fact);
         }
       }
-      for(const benchmark of ['palm-cpo','palm-olein']){
+      for(const benchmark of ['palm-cpo']){
         const all=[...verified.values()].filter(f=>f.measure?.benchmark===benchmark).sort((a,b)=>a.observedAt.localeCompare(b.observedAt));
         // Bound prompt size while retaining the baseline and recent real dates.
         const selected=[...new Map([all[0],...all.slice(-5)].filter(Boolean).map(f=>[f.id,f])).values()];

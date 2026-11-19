@@ -87,9 +87,9 @@ export function inspectRiskOnly(root,id){
 }
 export function evaluateRisk(risk,id,sources){
  if(!risk||!['안정','주의','경계','판정 보류'].includes(risk.level)||typeof risk.summary!=='string'||
-    risk.summary.trim().length<15||[...risk.summary.trim()].length>120||
+    risk.summary.trim().length<15||
     !Array.isArray(risk.sourceIds)||!risk.sourceIds.length||risk.sourceIds.length>5||
-    risk.sourceIds.some(s=>typeof s!=='string'))throw Error('Risk field rejected: invalid schema, empty citation or unsupported length');
+    risk.sourceIds.some(s=>typeof s!=='string'))throw Error('Risk field rejected: invalid schema, empty citation or insufficient summary');
  const ids=[...new Set(risk.sourceIds)],used=sources.filter(s=>ids.includes(s.id));
  if(used.length!==ids.length||used.some(s=>s.grade!=='A'||!s.url||!Array.isArray(s.excerpts)||!s.excerpts.some(e=>e.text?.trim())))
    throw Error('Risk references must all resolve to readable A-grade original publisher excerpts');

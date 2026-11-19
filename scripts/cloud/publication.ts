@@ -131,6 +131,8 @@ if(command==='prepare'){
  if(!destination)throw Error('Usage: publication.ts check-state PREPARED_DIRECTORY');
  const workspace=await fs.mkdtemp(path.join(os.tmpdir(),'rms-cloud-state-'));await restoreState(await fs.readFile(path.join(destination,'state.json.gz')),workspace);
  await privateServer(workspace,async base=>{const bundle=await capturePublicBundle(base);console.log('Restored saved-state API check passed:',bundle.revision);});
+}else if(command==='refresh-palm-price'){
+ await (await import('./palmPriceCatchup.ts')).runPalmPriceCatchup();
 }else if(command==='refresh'){
  if(!process.env.CLOUD_RUN_JOB||process.env.RMS_CLOUD_FREE_JOB!=='1')throw Error('Free job requires the private Cloud Run job environment');
  if(process.env.GOOGLE_API_KEY)throw Error('Use only the explicitly authorized private Gemini secret');
@@ -148,6 +150,6 @@ if(command==='prepare'){
  const result=await runRefreshWorkflow(paidPolicy,paidPolicy?cloudScheduledJournal((await import('../../src/server/freeSourceRefresh.ts')).freeRefreshDay().day):undefined);if(!result)return;
  await privateServer(workspace,async base=>{const bundle=await capturePublicBundle(base);await publish(bundle,await archiveState(workspace),generation||'0');});
  });
-}else throw Error('Commands: prepare, check-state, seed, refresh');
+}else throw Error('Commands: prepare, check-state, seed, refresh, refresh-palm-price');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href)await main();
