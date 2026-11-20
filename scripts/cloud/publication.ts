@@ -132,7 +132,7 @@ if(command==='prepare'){
  const workspace=await fs.mkdtemp(path.join(os.tmpdir(),'rms-cloud-state-'));await restoreState(await fs.readFile(path.join(destination,'state.json.gz')),workspace);
  await privateServer(workspace,async base=>{const bundle=await capturePublicBundle(base);console.log('Restored saved-state API check passed:',bundle.revision);});
 }else if(command==='refresh-palm-price'){
- await (await import('./palmPriceCatchup.ts')).runPalmPriceCatchup();
+ await (await import('./palmPriceCatchup.ts')).runPalmPriceCatchup({restoreState,publish,archiveState});
 }else if(command==='refresh'){
  if(!process.env.CLOUD_RUN_JOB||process.env.RMS_CLOUD_FREE_JOB!=='1')throw Error('Free job requires the private Cloud Run job environment');
  if(process.env.GOOGLE_API_KEY)throw Error('Use only the explicitly authorized private Gemini secret');

@@ -26,7 +26,9 @@ export function applyPalmHistory(bundle:PublicBundle, history:Record<string,any>
  return {...bundle,responses};
 }
 
-export async function runPalmPriceCatchup(){
+type PublicationIO=Pick<typeof import('./publication.ts'),'restoreState'|'publish'|'archiveState'>;
+
+export async function runPalmPriceCatchup({restoreState,publish,archiveState}:PublicationIO){
  if(!process.env.CLOUD_RUN_JOB||process.env.K_SERVICE||process.env.RMS_CLOUD_FREE_JOB!=='1')
   throw Error('Palm price catch-up requires the private Cloud Run job');
  const {freeRefreshDay}=await import('../../src/server/freeSourceRefresh.ts');
@@ -55,8 +57,14 @@ export async function runPalmPriceCatchup(){
   const workspace=await fs.mkdtemp(path.join(os.tmpdir(),'rms-palm-catchup-'));
   const originalCwd=process.cwd(),oldRoot=process.env.RMS_HISTORY_ROOT;
   try {
-   const {restoreState,publish,archiveState}=await import('./publication.ts');
-   await restoreState(stateObject.bytes,workspace);
+   // Restore only files read by the price collector. Keep all other archived
+   // files byte-identical without materializing or re-archiving them.
+   const priceInputs=['src/data/cache_palmoil.json','.rms-price-history/palm-oil.json'];
+   const files=Object.fromEntries(priceInputs.map(key=>{
+    if(typeof state.files[key]!=='string')throw Error('Missing archived Palm Oil input '+key);
+    return [key,state.files[key]];
+   }));
+   await restoreState(gzipSync(JSON.stringify({version:state.version,files})),workspace);
    process.chdir(workspace);
    process.env.RMS_HISTORY_ROOT=workspace;
    const {refreshPublicHistory}=await import('../../src/server/publicPriceHistory.ts');
