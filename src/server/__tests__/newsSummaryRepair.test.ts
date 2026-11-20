@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {planNewsSummaryRepair} from '../newsSummaryRepair.ts';
+import {newsSummaryRepairFeedback,planNewsSummaryRepair} from '../newsSummaryRepair.ts';
 
 const candidate=(id:number)=>({rawId:'source-'+id,originalUrl:`https://publisher${id}.org/news/${id}`,rawTitle:'Source report '+id,rawSnippet:'Original source market development and data '+id});
 const inputs=Array.from({length:6},(_,i)=>candidate(i));
@@ -30,4 +30,14 @@ test('no permission to fabricate input, retry irrelevant source, or exceed bound
   const corrupted=[{...inputs[0],rawSnippet:''},...inputs.slice(1),{...inputs[1]}];
   assert.deepEqual(planNewsSummaryRepair(corrupted,[],rejected,4,2),inputs.slice(1,3));
   assert.deepEqual(planNewsSummaryRepair(inputs,[],[{url:inputs[0].originalUrl,reason:'off-topic'}]),[]);
+});
+
+test('numeric failure removes the invalid draft and reported number from the repair input',()=>{
+  const draft={title:'Futures at 420.75',summary:'Unsupported numeric claim',evidenceIds:['old']};
+  assert.deepEqual(newsSummaryRepairFeedback('unsupported-number:420.75',draft),{
+    failedValidation:'unsupported-number',repairMode:'qualitative-from-original',previousRejectedDraft:null,
+  });
+  assert.deepEqual(newsSummaryRepairFeedback('invalid-or-missing-news-evidence-ids',draft),{
+    failedValidation:'invalid-or-missing-news-evidence-ids',repairMode:'correct-original-binding',previousRejectedDraft:draft,
+  });
 });

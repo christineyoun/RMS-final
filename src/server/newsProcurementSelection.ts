@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import reviewed from '../data/news_procurement_reviews.json' with { type: 'json' };
 import {assessNewsSummary} from '../utils/newsSummaryQuality.ts';
+import {recentMarketArticles} from './newsFreshnessPolicy.ts';
 import {materialEditorialHeadline,hasPotatoStarchLink,recurringNewsSeriesKey,editorialPublisherKey} from './newsEditorialPolicy.ts'; // RMS_MI_SELECTION_QUALITY_V8
 type Item={originalUrl:string;publishedAt:string;title:string;summary:string;sourceName?:string;sourceType?:string;unavailable?:boolean;[key:string]:any};
 type ReviewMap=Record<string,Array<{url:string;publishedAt:string;sourceSummarySha256:string;priority:number;theme:string;eventKey:string;decision:string;rationale:string;title?:string;summary?:string}>>;
@@ -44,7 +45,9 @@ export function selectProcurementNews<T extends Item>(commodity:string,verified:
   const score=priority*2+timeliness*2+credibility;
   return[{article:{...article,title,summary,...('title_kr' in article?{title_kr:title}:{}),...('summary_kr' in article?{summary_kr:summary}:{}),procurementReview:{kind:'independently-reviewed-news-selection',priority,legacyPriority:r?.priority,score,ageDays:age,theme:r?.theme||'market-development',rationale:'Verified market relevance, material development, source credibility and publication age; legacy approval confers no ranking bonus.',reviewedAt:r?current.reviewedAt:undefined}} as T,priority,score,credibility,timeliness,index,event:r?.eventKey||title.toLowerCase().replace(/\s+/g,'')}];
  });
- // Decision value precedes credibility and age; diversity breaks ties, never fills a quota.
+ // Protect the latest qualifying story from a full set of older context cards.
+ // Above gates still apply; the remaining slots use the normal decision ranking.
+ const recent=new Set(recentMarketArticles(candidates.map(c=>c.article),7,new Date(now)));
  const result:T[]=[],events=new Set<string>(),publishers=new Set<string>();
  const publisherCounts=new Map<string,number>(),recurringSeries=new Set<string>();
  while(result.length<4){const left=candidates.filter(c=>{
@@ -54,7 +57,12 @@ export function selectProcurementNews<T extends Item>(commodity:string,verified:
   const series=recurringNewsSeriesKey(c.article);
   return !series||!recurringSeries.has(publisher+'::'+series);
  });if(!left.length)break;
-  left.sort((a,b)=>b.score-a.score||b.priority-a.priority||b.timeliness-a.timeliness||b.credibility-a.credibility||Number(publishers.has(a.article.sourceName||''))-Number(publishers.has(b.article.sourceName||''))||b.article.publishedAt.localeCompare(a.article.publishedAt)||a.index-b.index);
+  const freshPriority=(a:typeof candidates[number],b:typeof candidates[number])=>{
+   if(result.length)return 0;
+   const aRecent=recent.has(a.article),bRecent=recent.has(b.article);
+   return Number(bRecent)-Number(aRecent)||(aRecent&&bRecent?b.article.publishedAt.slice(0,10).localeCompare(a.article.publishedAt.slice(0,10)):0);
+  };
+  left.sort((a,b)=>freshPriority(a,b)||b.score-a.score||b.priority-a.priority||b.timeliness-a.timeliness||b.credibility-a.credibility||Number(publishers.has(a.article.sourceName||''))-Number(publishers.has(b.article.sourceName||''))||b.article.publishedAt.localeCompare(a.article.publishedAt)||a.index-b.index);
   const next=left[0];result.push(next.article);events.add(next.event);publishers.add(next.article.sourceName||'');
   const publisher=editorialPublisherKey(next.article);
   publisherCounts.set(publisher,(publisherCounts.get(publisher)||0)+1);

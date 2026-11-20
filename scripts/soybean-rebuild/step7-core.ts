@@ -149,6 +149,24 @@ export function quantitativeBuyingFlags(text:string):string[]{
   return flags;
 }
 
+/** Use the same sentence scope in the audit and in narrowly scoped repair.
+ * A subject in another field/sentence cannot turn a valid price into output. */
+export function productionFinalitySentences(text:string){
+  const suspects:Array<{start:number;end:number;finalized:boolean;record:boolean}>=[];
+  const ends=[...text.matchAll(/[!?。\n]|\.(?!\d)|(?<!\d)\./g)].map(m=>m.index!+1);
+  let start=0;
+  for(const end of [...ends,text.length]){
+    const sentence=text.slice(start,end);
+    const finalized=/(?:생산량|수확량|기말재고|총생산량|생산 전망).{0,38}?확정(?!되지|전|여부|할 수 없)/.test(sentence)||
+      /사상 최대 (?:생산량|수확량|수확)을?\s*(?:확정|기록 중)/.test(sentence);
+    const record=[...sentence.matchAll(/(?:생산량|총생산량|수확량).{0,85}?사상\s*(?:최대|최고)(?:치)?(?:를|을)?\s*(?:경신|기록)/g)]
+      .some(m=>!/^\s*(?:할|될|전망|예상)/.test(sentence.slice(m.index!+m[0].length)));
+    if(finalized||record)suspects.push({start,end,finalized,record});
+    start=end;
+  }
+  return suspects;
+}
+
 export function auditFinalResult(result:FinalResult,data:ReturnType<typeof buildFinalData>){
   const known=new Map(data.sources.map(x=>[x.id,x]));
   const factorItems=[...result.bullishFactors,...result.bearishFactors,...result.monitoringFactors];
@@ -171,12 +189,12 @@ export function auditFinalResult(result:FinalResult,data:ReturnType<typeof build
   const quantitativeStrategyFlags=quantitativeBuyingFlags(result.procurementStrategy);
   const procurementScopeFlags=checkProcurementScope(result.procurementStrategy,data.commodity);
   const forecastFinalityFlags:string[]=[];
-  const marketAndFactors=[result.marketOutlook,...factorItems.map(x=>x.text)].join(' ');
-  if(/(?:생산량|수확량|기말재고|총생산량|생산 전망).{0,38}확정(?!되지|전|여부|할 수 없)/.test(marketAndFactors)||
-     /사상 최대 (?:생산량|수확량|수확)을? (?:확정|기록 중)/.test(marketAndFactors))
+  const marketFields=[result.marketOutlook,...factorItems.map(x=>x.text)];
+  const marketAndFactors=marketFields.join(' ');
+  const finality=marketFields.flatMap(productionFinalitySentences);
+  if(finality.some(s=>s.finalized))
     forecastFinalityFlags.push('production/stock forecast may be stated as finalized actual');
-  if(/(?:생산량|총생산량|수확량).{0,85}사상\s*(?:최대|최고)(?:치)?(?:를|을)?\s*(?:경신|기록)/.test(marketAndFactors) &&
-     !/(?:생산량|총생산량|수확량).{0,85}사상\s*(?:최대|최고)(?:치)?(?:를|을)?\s*(?:경신|기록)\s*(?:할|할\s*것으로|할\s*전망|예상)/.test(marketAndFactors))
+  if(finality.some(s=>s.record))
     forecastFinalityFlags.push('forecast may be framed as an achieved record; check forecast versus finalized output');
   if(/(?:약정|공약).{0,24}(?:의무 구매|집행 완료|수입 완료)/.test(marketAndFactors))
     forecastFinalityFlags.push('purchase pledge may be represented as executed/guaranteed trade');

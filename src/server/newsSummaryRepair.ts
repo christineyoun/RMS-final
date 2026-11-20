@@ -10,6 +10,15 @@ export type RepairInput = {
   rawSnippet: string;
 };
 export type RepairRejection = {url:string;reason:string};
+/** Do not anchor a numeric repair on an already rejected value or draft. */
+export function newsSummaryRepairFeedback<T>(reason:string,previousRejectedDraft:T|null) {
+  if(reason.startsWith('unsupported-number:'))return {
+    failedValidation:'unsupported-number',
+    repairMode:'qualitative-from-original',
+    previousRejectedDraft:null,
+  } as const;
+  return {failedValidation:reason,repairMode:'correct-original-binding',previousRejectedDraft} as const;
+}
 const repairable = (reason:string) =>
   reason === 'missing-model-output' ||
   reason === 'missing-or-invalid-korean-summary' ||

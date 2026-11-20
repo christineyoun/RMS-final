@@ -39,7 +39,7 @@ import { discoverSoybeanFreeSources, verifySoybeanCandidates, selectSoybeanNews 
 import { verifyOtherCommodityArticles } from './all8ArticleVerification.ts';
 import {verifyDynamicNewsIntake,assignVerifiedOriginalIds} from './newsVerifiedSourceIntake.ts';
 import { canSummarizeWithoutPaidSearch, canSummarizeUsingApprovedCoverage } from './newsFreeFirstPolicy.ts';
-import {planNewsSummaryRepair} from './newsSummaryRepair.ts';
+import {newsSummaryRepairFeedback,planNewsSummaryRepair} from './newsSummaryRepair.ts';
 import {NEWS_SUMMARY_EDITORIAL_GUIDANCE,summarizeNewsConsistency} from './newsSummaryConsistency.ts';
 import {planEvidenceBoundEditorialRevision,improvedEditorialRevision} from './newsSummaryEditorialRevision.ts';
 import {previouslyVerifiedEditorialSources} from './newsPreviouslyVerifiedEditorial.ts';
@@ -949,13 +949,13 @@ Output schema:
               const repairInputs=repair.map(m=>({
                 rawId:m.rawId,rawTitle:m.rawTitle,rawSnippet:m.rawSnippet,
                 publishedAt:m.publishedAt,sourceName:m.sourceName,sourceEvidence:newsSourceEvidence(m),
-                failedValidation:rejectionByUrl.get(m.originalUrl)||'missing-or-invalid-korean-summary',
-                previousRejectedDraft:(()=>{const prev=priorById.get(m.rawId);return prev?{
+                ...newsSummaryRepairFeedback(rejectionByUrl.get(m.originalUrl)||'missing-or-invalid-korean-summary',(()=>{const prev=priorById.get(m.rawId);return prev?{
                   title:String(prev.title||''),summary:String(prev.summary||''),
-                  evidenceIds:Array.isArray(prev.evidenceIds)?prev.evidenceIds:[]}:null;})()
+                  evidenceIds:Array.isArray(prev.evidenceIds)?prev.evidenceIds:[]}:null;})())
               }));
               const repairPrompt=[
                 'The previous Korean news summaries failed original-source validation. Repair ONLY the verified input articles. The failedValidation field describes the exact failed claim. The previousRejectedDraft is NOT approved evidence.',
+                'For repairMode qualitative-from-original, start from the original passages, not the rejected draft. Do not try another price, amount, percentage, or other quantity in either the title or summary. State the material market change in qualitative terms only when those terms are explicitly supported by the cited passages. Omit the item if a useful, faithful summary depends on a numeric claim. For correct-original-binding, follow the usual exact numeric and passage requirements.',
                 'Use rawSnippet and sourceEvidence from the SAME rawId only. Preserve EXACT source numbers, magnitudes, units, metrics and periods. Never round, truncate or invent numeric conversions. If a number is not directly supported, OMIT the entire unsupported claim, not just its unit. Correct evidenceIds to include every passage actually supporting each retained number in the title or summary. Do not cite passages about different metrics to justify a number. Keep the rest of each summary factual and substantive. Omit any item that lacks sufficient evidence.',
                 'Write a concise, natural Korean headline about the main development for the requested commodity, grounded in the same verified passages as the summary. For generic report titles, headline the relevant finding. Do not copy the publisher headline or the first sentence of the summary. Preserve direction, scope and uncertainty without adding facts. Return ONLY JSON array of {rawId,evidenceIds,title,summary}. Do not add unsupported facts.',
                 NEWS_SUMMARY_EDITORIAL_GUIDANCE,
@@ -1089,7 +1089,10 @@ ${JSON.stringify(editorialPlan.map(({source,originalSummary})=>({rawId:source.ra
             verification:report?.summary,selectedForSummary:verifiedLocked.length,
           selectedPublishers:[...new Set(verifiedLocked.map(x=>x.sourceName))],
           selectedDates:verifiedLocked.map(x=>x.publishedAt),
-            goodKoreanSummaries:groundedArticles.length});
+            goodKoreanSummaries:groundedArticles.length,
+            summaryAcceptedUrls:groundedArticles.map(a=>a.originalUrl),
+            postWheatRankingUrls:publishable.map(a=>a.originalUrl),
+            rejections:summaryRejections});
         }
       } catch (err: any) {
         const errStr = String(err?.message || err);
