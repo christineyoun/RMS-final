@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {loadPublicHistory,refreshPublicHistory,palmHistoryPayload,PRICE_SOURCES,mergePublicPrices,type PublicPricePoint} from '../publicPriceHistory.ts';
+import {loadPublicHistory,refreshPublicHistory,palmHistoryPayload,PRICE_SOURCES,mergePublicPrices,priorMalaysiaWeekday,type PublicPricePoint} from '../publicPriceHistory.ts';
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'rms-mpoc-ingestion-'));
 const oldRoot=process.env.RMS_HISTORY_ROOT;
 const oldFetch=globalThis.fetch;
@@ -53,6 +53,52 @@ try {
   globalThis.fetch=async()=>new Response('',{status:403});
   const failed=await refreshPublicHistory('palm-oil');
   assert.equal(JSON.stringify(failed.points),saved,'MPOC outage retains exactly the saved prices');
+  assert.equal(priorMalaysiaWeekday(new Date('2026-11-23T00:00:00Z')),'2026-11-20');
+  assert.equal(priorMalaysiaWeekday(new Date('2026-11-04T16:05:00Z')),'2026-11-04');
+
+  const target='2026-11-05';
+  const newer=html.replace('</tbody>','<tr><td>5 Nov 26</td><td>4500</td></tr></tbody>');
+  let mpocCalls=0;
+  let recheckResponse=html;
+  let firstResponse=html;
+  globalThis.fetch=async(url:any,options?:RequestInit)=>{
+    if(String(url)===PRICE_SOURCES.mpocCpo){
+      mpocCalls++;
+      if(mpocCalls===1)return new Response(firstResponse);
+      assert.equal(options?.cache,'no-cache');
+      assert.equal(new Headers(options?.headers).get('Cache-Control'),'no-cache');
+      return new Response(recheckResponse);
+    }
+    if(String(url).startsWith('https://api.frankfurter.dev/'))return Response.json({base:'USD',rates:{[target]:{MYR:4.2}}});
+    throw Error('Unexpected URL '+url);
+  };
+  const morning=()=>refreshPublicHistory('palm-oil',undefined,{expectedMpocDate:target});
+  const stale=await morning();
+  assert.equal(mpocCalls,2,'only one recheck during the scheduled run');
+  assert.equal(stale.sourceChecks?.[PRICE_SOURCES.mpocCpo]?.morningCheck?.recheck,'still-behind');
+  assert.equal(palmHistoryPayload(stale).cpoObservationDate,'2026-11-04');
+  assert.equal(stale.points.some(p=>p.date===target),false,'no synthesized holiday or delayed settlement');
+
+  mpocCalls=0;recheckResponse=newer;
+  const updated=await morning();
+  assert.equal(mpocCalls,2);
+  assert.deepEqual(updated.sourceChecks?.[PRICE_SOURCES.mpocCpo]?.morningCheck,
+    {targetDate:target,firstObservationDate:'2026-11-04',recheck:'target-reached'});
+  assert.equal(palmHistoryPayload(updated).cpoObservationDate,target);
+  assert.equal(palmHistoryPayload(updated).historicalSeries.find(p=>p.date===target)?.cpoUsd,Number((4500/4.2).toFixed(2)));
+
+  mpocCalls=0;firstResponse=newer;
+  const alreadyFresh=await morning();
+  assert.equal(mpocCalls,1);
+  assert.equal(alreadyFresh.sourceChecks?.[PRICE_SOURCES.mpocCpo]?.morningCheck?.recheck,'not-needed');
+  assert.deepEqual(alreadyFresh.points,updated.points);
+
+  mpocCalls=0;firstResponse=html;recheckResponse='<html>not an MPOC table</html>';
+  const badRecheck=await morning();
+  assert.equal(mpocCalls,2);
+  assert.equal(badRecheck.sourceChecks?.[PRICE_SOURCES.mpocCpo]?.morningCheck?.recheck,'unavailable');
+  assert.deepEqual(badRecheck.points,updated.points,'an invalid recheck cannot erase verified settlements');
+  console.log('PASS: same-run FCPO recheck, fresh first response, missing settlement, and invalid recheck.');
   console.log('PASS: MPOC scheduled feed, no Olein requests, closed/settlement source identity, dated FX, old verified prices and manual history retained, no CPO 403 retries, no duplicate or invented observations.');
 } finally {
   globalThis.fetch=oldFetch;
