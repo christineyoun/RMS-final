@@ -27,7 +27,8 @@ export type PublicPricePoint = {
   publisherQuoteDate?:string;observationKind?:'publisher-close'|'exchange-settlement';contractMonth?:string;
   conversion?:{rate:number;checkedAt:string;observationDate?:string;sourceUrl?:string};
 };
-export type PublicHistory = {version:1;points:PublicPricePoint[];datedFx?:Record<string,DatedPalmFx>;fxError?:string;quarantined?:Array<{point:PublicPricePoint;reason:string;evidenceUrl:string;checkedAt:string}>;revisions?:Array<{before:PublicPricePoint;after:PublicPricePoint;checkedAt:string}>;lastCheckedAt?:string;lastError?:string;sourceChecks?:Record<string,{checkedAt:string;lastSuccessAt?:string;error?:string;lastObservationDate?:string;observationCount?:number}>};
+type MpocMorningCheck = {targetDate:string;firstObservationDate:string;recheck:'not-needed'|'target-reached'|'still-behind'|'unavailable'};
+export type PublicHistory = {version:1;points:PublicPricePoint[];datedFx?:Record<string,DatedPalmFx>;fxError?:string;quarantined?:Array<{point:PublicPricePoint;reason:string;evidenceUrl:string;checkedAt:string}>;revisions?:Array<{before:PublicPricePoint;after:PublicPricePoint;checkedAt:string}>;lastCheckedAt?:string;lastError?:string;sourceChecks?:Record<string,{checkedAt:string;lastSuccessAt?:string;error?:string;lastObservationDate?:string;observationCount?:number;morningCheck?:MpocMorningCheck}>};
 const fileFor=(id:string)=>path.join(process.env.RMS_HISTORY_ROOT||process.cwd(),'.rms-price-history',id+'.json');
 export function publisherDate(input:string):string|null {
   const s=String(input||'').replace(/\s+/g,' ').trim();
@@ -177,7 +178,15 @@ export function parseTtsaHistory(html:string,now=new Date()):PublicPricePoint[]{
   const map=new Map<string,PublicPricePoint>();for(const p of out){const old=map.get(p.date);if(old&&old.value!==p.value)throw Error('Conflicting TTSA rows: '+p.date);map.set(p.date,p);}return [...map.values()];
 }
 const inFlight=new Map<string,Promise<PublicHistory>>();
-export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr?:number):Promise<PublicHistory>{
+/** A fetch target, not a claim that Bursa traded on this date (e.g. holidays). */
+export function priorMalaysiaWeekday(now=new Date()):string{
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kuala_Lumpur',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+  const part=(name:string)=>Number(parts.find(p=>p.type===name)?.value);
+  const day=new Date(Date.UTC(part('year'),part('month')-1,part('day')-1));
+  while(day.getUTCDay()===0||day.getUTCDay()===6)day.setUTCDate(day.getUTCDate()-1);
+  return day.toISOString().slice(0,10);
+}
+export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr?:number,{expectedMpocDate}: {expectedMpocDate?:string}={}):Promise<PublicHistory>{
   const pending=inFlight.get(id);if(pending)return pending;
   const job=(async()=>{
     let history=loadPublicHistory(id);const issues:string[]=[];const checkedAt=new Date().toISOString();
@@ -188,10 +197,29 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
       try{
         const r=await fetch(url,{headers:{Accept:'text/html','User-Agent':'RMS-Procurement/1.0'},signal:AbortSignal.timeout(10000)});
         if(!r.ok)throw Error('HTTP '+r.status); // Never circumvent a blocked source.
-        const html=await r.text();
+        let html=await r.text();
         if(sourceUrl!==PRICE_SOURCES.tapioca&&sourceUrl!==PRICE_SOURCES.mpocCpo)validatePalmPublisher(html,sourceUrl===PRICE_SOURCES.olein?'palm-olein':'palm-cpo',sourceUrl);
         let incoming=sourceUrl===PRICE_SOURCES.tapioca?parseTtsaHistory(html):sourceUrl===PRICE_SOURCES.mpocCpo?parseMpocCpoHistory(html):parsePalmHistory(html,sourceUrl===PRICE_SOURCES.olein?'palm-olein':'palm-cpo',new Date(),true);
         if(!incoming.length)throw Error('No dated price rows in accessible source');
+        let morningCheck:MpocMorningCheck|undefined;
+        if(sourceUrl===PRICE_SOURCES.mpocCpo&&expectedMpocDate){
+          const latest=(rows:PublicPricePoint[])=>rows.map(p=>p.date).sort().at(-1)!;
+          const firstObservationDate=latest(incoming);
+          morningCheck={targetDate:expectedMpocDate,firstObservationDate,recheck:'not-needed'};
+          if(firstObservationDate<expectedMpocDate){
+            try{
+              // Revalidate the same public URL once. Never substitute another
+              // contract or turn an unavailable settlement into a chart point.
+              const fresh=await fetch(url,{cache:'no-cache',headers:{Accept:'text/html','User-Agent':'RMS-Procurement/1.0','Cache-Control':'no-cache'},signal:AbortSignal.timeout(10000)});
+              if(!fresh.ok)throw Error('MPOC recheck unavailable');
+              const freshHtml=await fresh.text();
+              const freshRows=parseMpocCpoHistory(freshHtml);
+              const freshDate=latest(freshRows);
+              morningCheck.recheck=freshDate>=expectedMpocDate?'target-reached':'still-behind';
+              if(freshDate>=firstObservationDate){html=freshHtml;incoming=freshRows;}
+            }catch{morningCheck.recheck='unavailable';}
+          }
+        }
         if(id==='palm-oil'){
           const digest=createHash('sha256').update(html).digest('hex');
           const dir=path.join(path.dirname(fileFor(id)),'source-evidence');fs.mkdirSync(dir,{recursive:true});
@@ -206,10 +234,10 @@ export async function refreshPublicHistory(id:'palm-oil'|'tapioca-starch',usdMyr
           catch(error){issues.push(sourceUrl+': '+String((error as Error).message));} // Native observations still persist; never use today's FX for older prices.
         }
         history=sourceUrl===PRICE_SOURCES.tapioca?mergePublicPrices(history,incoming).history:appendMatchingPalmRows(history,incoming,sourceUrl);
-        history.sourceChecks={...history.sourceChecks,[sourceUrl]:{checkedAt,lastSuccessAt:checkedAt,lastObservationDate:incoming.map(p=>p.date).sort().at(-1),observationCount:incoming.length}};
+        history.sourceChecks={...history.sourceChecks,[sourceUrl]:{checkedAt,lastSuccessAt:checkedAt,lastObservationDate:incoming.map(p=>p.date).sort().at(-1),observationCount:incoming.length,...(morningCheck?{morningCheck}:{})}};
         // Persist each successful benchmark independently of later publisher failures.
         savePublicHistory(id,history);
-      }catch(e){const error=String((e as Error).message);issues.push(sourceUrl+': '+error);history.sourceChecks={...history.sourceChecks,[sourceUrl]:{...history.sourceChecks?.[sourceUrl],checkedAt,error}};}
+      }catch(e){const error=String((e as Error).message);issues.push(sourceUrl+': '+error);history.sourceChecks={...history.sourceChecks,[sourceUrl]:{...history.sourceChecks?.[sourceUrl],checkedAt,error,morningCheck:undefined}};}
     }
     if(id==='palm-oil'){
       history=await refreshPalmDatedFx(history);

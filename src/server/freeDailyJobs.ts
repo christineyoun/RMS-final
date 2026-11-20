@@ -37,15 +37,18 @@ async function history(id:string){
   const r=id==='soybean'?await(await import('./soybeanIntelligenceService.ts')).soybeanIntelligenceService.getSoybeanPriceSnapshot(true,'scheduled'):await(await import('./soybeanOilIntelligenceService.ts')).soybeanOilIntelligenceService.getSoybeanOilPriceSnapshot(true,'scheduled');return packet(r,r.data.at(-1)?.date,r.lastError);
  }
  if(id==='palm-oil'||id==='tapioca-starch'){
-  const {refreshPublicHistory,PRICE_SOURCES}=await import('./publicPriceHistory.ts');
-  const r=await refreshPublicHistory(id);
+  const {refreshPublicHistory,PRICE_SOURCES,priorMalaysiaWeekday}=await import('./publicPriceHistory.ts');
+  const r=await refreshPublicHistory(id,undefined,id==='palm-oil'?{expectedMpocDate:priorMalaysiaWeekday()}:undefined);
   const result=packet(r,r.points.map(p=>p.date).sort().at(-1),r.lastError);
   if(id!=='palm-oil')return result;
   const check=(url:string,benchmark:string)=>{
     const entry=r.sourceChecks?.[url];
-    return {benchmark,status:entry?.error?'retained-old-data':entry?.lastSuccessAt?'verified':'not-verified',
+    const morning=entry?.morningCheck;
+    const behind=morning&&entry?.lastObservationDate&&entry.lastObservationDate<morning.targetDate;
+    return {benchmark,status:entry?.error?'retained-old-data':behind?'verified-behind-morning-target':entry?.lastSuccessAt?'verified':'not-verified',
       lastAttemptAt:entry?.checkedAt||null,lastSuccessAt:entry?.lastSuccessAt||null,
-      latestPublisherObservation:entry?.lastObservationDate||null,error:entry?.error||null};
+      latestPublisherObservation:entry?.lastObservationDate||null,error:entry?.error||null,
+      ...(morning?{morningCheck:morning}:{})};
   };
   const {palmSettlementFxGap}=await import('./palmPricePolicy.ts');
   const fxGap=palmSettlementFxGap(r);
