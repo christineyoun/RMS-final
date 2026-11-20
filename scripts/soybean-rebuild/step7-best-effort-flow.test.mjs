@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {finishFactReview} from './step7-fact-core.ts';
+import {auditFinalResult} from './step7-core.ts';
 import {validatedLocalCard} from './step7-local-card-status.mjs';
 const sources=[{id:'G001',grade:'A',title:'Producer',url:'https://example.org/report',citationUrl:null,date:'2026-11-01',
  excerpts:[{id:'G001-E1',topic:'crop',text:'Production forecast remains preliminary.'}]}];
@@ -30,6 +31,29 @@ test('unknown or excluded source ID remains blocking, despite best-effort',()=>{
  const saved=report();saved.sourceIds=['G999'];
  const result=finishFactReview(saved,null,sources,'palm-oil');
  assert.equal(result.publishable,false);assert(result.critical.some(x=>x.includes('source IDs')));
+});
+test('record output with a decimal is repaired without dropping a separate supported forecast',()=>{
+ const saved=report();
+ const forecast='수확량이 사상 최고치를 기록할 전망입니다.';
+ saved.marketOutlook='팜유 생산량 19.7백만 톤으로 사상 최고치를 경신했습니다. '+forecast+' 수급 여건은 계속 점검해야 합니다.';
+ const evidence={commodity:'palm-oil',sources};
+ assert(auditFinalResult(saved,evidence).forecastFinalityFlags.some(x=>x.includes('achieved record')));
+ const result=finishFactReview(saved,{status:'checked',issues:[]},sources,'palm-oil');
+ assert.equal(result.publishable,true,JSON.stringify(result.critical));
+ assert.equal(result.reviewComplete,true);
+ assert.doesNotMatch(result.result.marketOutlook,/19\.7|경신했습니다/);
+ assert(result.result.marketOutlook.includes(forecast));
+ assert.match(result.result.marketOutlook,/수급 여건은 계속 점검해야/);
+ assert.equal(result.result.procurementStrategy,saved.procurementStrategy);
+ assert.equal(result.fixes.filter(x=>x.kind==='cautious-finality-fallback').length,1);
+});
+test('an adjacent price record is not misidentified as finalized production',()=>{
+ const saved=report();
+ saved.marketOutlook='팜유 생산량은 잠정 전망입니다. 팜유 가격은 사상 최고치를 기록했습니다.';
+ const result=finishFactReview(saved,{status:'checked',issues:[]},sources,'palm-oil');
+ assert.equal(result.publishable,true);
+ assert.deepEqual(result.result,saved);
+ assert.equal(result.fixes.length,0);
 });
 test('clean report with unavailable reviewer is still review-incomplete and acceptable',()=>{
  const saved=report();saved.marketOutlook='팜유 공급 여건이 불확실합니다. 원문 발표를 모니터링합니다.';

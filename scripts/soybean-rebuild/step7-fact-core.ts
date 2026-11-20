@@ -1,6 +1,6 @@
 /** STEP 7-1: fact-focused, field-scoped correction. Never rewrites an original report. */
 import crypto from 'node:crypto';
-import {auditFinalResult, type FinalResult, type EvidenceSource} from './step7-core.ts';
+import {auditFinalResult,productionFinalitySentences,type FinalResult,type EvidenceSource} from './step7-core.ts';
 import {checkProcurementScope} from './step7-scope.ts';
 import {parseOverviewTakeaway} from './step7-overview-takeaway.ts';
 
@@ -152,22 +152,18 @@ export function finishFactReview(original:FinalResult, review:ModelReview|null, 
  // forecast presented as finalized actual. We CANNOT verify or invent numbers,
  // so qualify ONLY the questionable claim, not the report or other factors.
  // Other critical audit failures (source IDs, traceability, etc.) stay blocking.
- const finalityPatterns=[
-   /(?:생산량|수확량|기말재고|총생산량|생산 전망)[^.!?。\n]{0,38}?확정(?!되지|전|여부|할 수 없)[가-힣]*/g,
-   /사상 최대 (?:생산량|수확량|수확)을?\s*(?:확정|기록 중)/g,
-   /(?:생산량|총생산량|수확량)[^.!?。\n]{0,85}?사상\s*(?:최대|최고)(?:치)?(?:를|을)?\s*(?:경신|기록)(?!\s*(?:할|전망|예상))/g,
- ];
- const cautious='해당 생산·재고 지표의 확정 여부는 추가 확인이 필요';
+ const cautious='해당 생산·재고 지표의 확정 여부는 추가 확인이 필요합니다.';
  const softenFinality=(field:string,index?:number)=>{
    const current=spans(result,field,index);
    if(typeof current!=='string')return;
    let updated=current;
-   for(const pattern of finalityPatterns){
-     updated=updated.replace(pattern,(matched)=>{
-       fixes.push({field:index===undefined?field:`${field}[${index}]`,original:matched,replacement:cautious,
-         kind:'cautious-finality-fallback',reason:'Production/stock finality unverified; no invented actual or forecast'});
-       return cautious;
-     });
+   for(const {start,end} of productionFinalitySentences(current).reverse()){
+     const matched=current.slice(start,end);
+     const prefix=/^\s*/.exec(matched)?.[0]||'';
+     const suffix=matched.endsWith('\n')?'\n':'';
+     updated=updated.slice(0,start)+prefix+cautious+suffix+updated.slice(end);
+     fixes.push({field:index===undefined?field:`${field}[${index}]`,original:matched.trim(),replacement:cautious,
+       kind:'cautious-finality-fallback',reason:'Production/stock finality unverified; no invented actual or forecast'});
    }
    if(updated===current)return;
    if(index!==undefined&&[...updated].length>70){
