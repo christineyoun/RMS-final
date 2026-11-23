@@ -39,7 +39,10 @@ import { discoverSoybeanFreeSources, verifySoybeanCandidates, selectSoybeanNews 
 import { verifyOtherCommodityArticles } from './all8ArticleVerification.ts';
 import {verifyDynamicNewsIntake,assignVerifiedOriginalIds} from './newsVerifiedSourceIntake.ts';
 import { canSummarizeWithoutPaidSearch, canSummarizeUsingApprovedCoverage } from './newsFreeFirstPolicy.ts';
-import {newsSummaryRepairFeedback,planNewsSummaryRepair} from './newsSummaryRepair.ts';
+import {newsSummaryRepairFeedback,planNewsSummaryRepair,NEWS_SUMMARY_REPAIR_GUIDANCE} from './newsSummaryRepair.ts';
+import {shortlistVerifiedNewsForSummary} from './newsSummarizationShortlist.ts';
+import {auditNewsEditorialHandoff} from './newsEditorialHandoffAudit.ts';
+import {includeNewestValidatedNews} from './newsLatestValidatedHandoff.ts';
 import {NEWS_SUMMARY_EDITORIAL_GUIDANCE,summarizeNewsConsistency} from './newsSummaryConsistency.ts';
 import {planEvidenceBoundEditorialRevision,improvedEditorialRevision} from './newsSummaryEditorialRevision.ts';
 import {previouslyVerifiedEditorialSources} from './newsPreviouslyVerifiedEditorial.ts';
@@ -595,6 +598,12 @@ export class MarketIntelligenceService {
     const baseArticles: MarketArticle[] = []; // No simulated news for any commodity
     let finalArticles: MarketArticle[] = [...baseArticles];
     let nonPilotAcceptance: {verifiedSources:number;acceptedSummaries:number;rejections:Array<{url:string;reason:string}>}|null = null;
+    let freshnessInputs: {
+      verifiedPool:RetrievedSourceMetadata[];
+      summarized:RetrievedSourceMetadata[];
+      accepted:MarketArticle[];
+      rejections:Array<{url:string;reason:string}>;
+    }|null=null;
 
     if (hasValidKey && now >= intelligenceCooldownUntil) {
       try {
@@ -866,7 +875,8 @@ Never use Google News as sourceName.`;
         const verifiedLocked: RetrievedSourceMetadata[]=key==='wheat'
           ? selectWheatVerifiedNews(cloudSourcePool,6)
           : key==='corn' ? selectCornNews(cloudSourcePool,6)
-          : key==='soybean' ? selectSoybeanNews(cloudSourcePool,6) : cloudSourcePool;
+          : key==='soybean' ? selectSoybeanNews(cloudSourcePool,6)
+          : shortlistVerifiedNewsForSummary(cloudSourcePool);
         // Transport IDs from independent RSS queries may collide (e.g. each
         // query's first result). Bind each verified original to a deterministic
         // URL-derived ID before any Gemini prompt or source-evidence receipt.
@@ -934,7 +944,7 @@ Output schema:
           // technical summary failures, with the SAME source evidence and the
           // existing provider-call and estimated-budget authorization. Never
           // retry weak/off-topic evidence or bypass the original quality gates.
-          const repair=planNewsSummaryRepair(verifiedLocked,groundedArticles,summaryRejections);
+          const repair=planNewsSummaryRepair(verifiedLocked,groundedArticles,summaryRejections,4,6,new Date(retrievedAt));
           const paidContext=getStage3RunContext();
           if(repair.length && paidContext && !paidContext.cancelled &&
              paidContext.attempts<paidContext.maxCalls){
@@ -958,6 +968,7 @@ Output schema:
                 'For repairMode qualitative-from-original, start from the original passages, not the rejected draft. Do not try another price, amount, percentage, or other quantity in either the title or summary. State the material market change in qualitative terms only when those terms are explicitly supported by the cited passages. Omit the item if a useful, faithful summary depends on a numeric claim. For correct-original-binding, follow the usual exact numeric and passage requirements.',
                 'Use rawSnippet and sourceEvidence from the SAME rawId only. Preserve EXACT source numbers, magnitudes, units, metrics and periods. Never round, truncate or invent numeric conversions. If a number is not directly supported, OMIT the entire unsupported claim, not just its unit. Correct evidenceIds to include every passage actually supporting each retained number in the title or summary. Do not cite passages about different metrics to justify a number. Keep the rest of each summary factual and substantive. Omit any item that lacks sufficient evidence.',
                 'Write a concise, natural Korean headline about the main development for the requested commodity, grounded in the same verified passages as the summary. For generic report titles, headline the relevant finding. Do not copy the publisher headline or the first sentence of the summary. Preserve direction, scope and uncertainty without adding facts. Return ONLY JSON array of {rawId,evidenceIds,title,summary}. Do not add unsupported facts.',
+                NEWS_SUMMARY_REPAIR_GUIDANCE,
                 NEWS_SUMMARY_EDITORIAL_GUIDANCE,
                 'Input:',JSON.stringify(repairInputs)
               ].join('\n');
@@ -1042,6 +1053,10 @@ ${JSON.stringify(editorialPlan.map(({source,originalSummary})=>({rawId:source.ra
               verifiedSources:verifiedLocked.length,publishable:groundedArticles.length,rejections:summaryRejections,
               rejectionChecks:['source passage IDs bind original publisher content; optional quotations must match','summary must pass commodity-specific informativeness gate']},key);
           }
+          // Capture exact stage boundaries for a passive, per-commodity freshness
+          // audit. Verification alone never upgrades a news article to publishable.
+          freshnessInputs={verifiedPool:cloudSourcePool,summarized:verifiedLocked,
+            accepted:groundedArticles,rejections:summaryRejections};
           // Rank individually valid summaries; one to four articles can publish.
           const cornGrounded = key==='corn'
             ? selectCornNews(groundedArticles.map(a=>({rawId:a.originalUrl,
@@ -1071,9 +1086,14 @@ ${JSON.stringify(editorialPlan.map(({source,originalSummary})=>({rawId:source.ra
             : key==='wheat' ? groundedArticles.filter(a=>wheatAllowedUrls.has(a.originalUrl))
             : key==='soybean' ? groundedArticles.filter(a=>soyAllowedUrls.has(a.originalUrl))
             : groundedArticles;
+          // A specialized top-four shortlist may prefer a more authoritative
+          // older report. It must not hide a newer independently verified and
+          // evidence-approved development from the shared FINAL selector.
+          // The final procurement quality/diversity gate is still authoritative.
+          const finalRankingCandidates=includeNewestValidatedNews(publishable,groundedArticles);
           // Revisions to previously published articles go through exactly the
           // same final selection and later publication verification as new news.
-          finalArticles = [...publishable, ...revisedPreviouslyPublished, ...baseArticles];
+          finalArticles = [...finalRankingCandidates, ...revisedPreviouslyPublished, ...baseArticles];
           if(key==='soybean')writeNewsAudit({stage:publishable.length?'articles-ready':'no-valid-summary',
             selectedForSummary:verifiedLocked.length,goodKoreanSummaries:publishable.length,
             rejectedAfterSummary:verifiedLocked.length-groundedArticles.length},'soybean');
@@ -1131,6 +1151,16 @@ ${JSON.stringify(editorialPlan.map(({source,originalSummary})=>({rawId:source.ra
       finalSelected:deduplicated.length,
       selectedUrls:deduplicated.map(a=>a.originalUrl)
     },key);
+
+    // Expose silent coverage gaps in the normal saved diagnostics, without
+    // additional discovery, provider calls, source approval or publication.
+    if(freshnessInputs){
+      const audit=auditNewsEditorialHandoff(freshnessInputs.verifiedPool,
+        freshnessInputs.summarized,freshnessInputs.accepted,deduplicated,
+        freshnessInputs.rejections);
+      writeNewsAudit({stage:'editorial-handoff-audited',
+        ...audit,rejections:freshnessInputs.rejections},key);
+    }
 
     // Advisory-only editorial measurement: do not suppress verified news to
     // make cards the same height. Never change accepted text after grounding.
