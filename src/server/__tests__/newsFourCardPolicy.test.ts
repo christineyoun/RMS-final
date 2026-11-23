@@ -30,7 +30,14 @@ test('the latest eligible material story survives a handoff with four higher-sco
  const output=selectProcurementNews('wheat',[...earlier,latest],+now);
  assert.equal(output.length,4);
  assert.equal(output[0]?.originalUrl,latest.originalUrl);
- assert(output[0].procurementReview.score<output[1].procurementReview.score,'the fixture reproduces displacement by higher scores');
+ const reviewedScore=(article:(typeof output)[number])=>{
+  assert.ok('procurementReview' in article,'selection should attach review metadata');
+  const review=article.procurementReview;
+  assert.ok(review&&typeof review==='object'&&'score' in review&&typeof review.score==='number',
+   'review metadata should contain a numeric score');
+  return review.score;
+ };
+ assert(reviewedScore(output[0])<reviewedScore(output[1]),'the fixture reproduces displacement by higher scores');
  const laterDuplicate={...latest,originalUrl:'https://example.org/copy',publishedAt:'2026-11-03'};
  const ineligible={...latest,originalUrl:'https://example.org/non-market',publishedAt:'2026-11-05',sourceHeadline:'Company appoints a new CEO'};
  const guarded=selectProcurementNews('wheat',[...earlier,latest,laterDuplicate,ineligible],+now);
