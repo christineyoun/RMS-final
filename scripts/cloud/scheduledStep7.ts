@@ -66,7 +66,7 @@ async function invokeWorker(commodity:string,mode:'inspect'|'free'|'paid-local'|
         try{
           const r=JSON.parse(line.slice('RMS_SCHEDULED_STEP7_JSON='.length));
           if(r.commodity===commodity&&Number.isSafeInteger(r.paidCalls)&&r.paidCalls>=0&&r.paidCalls<=((mode==='paid-local'||mode==='paid-cloud')?7:0)&&['done','execute','stop'].includes(r.action)){
-            const allowedFailureCodes=new Set(['runner-spawn-failed','prior-paid-attempt-reserved','provider-rate-limited','provider-auth-rejected','provider-temporarily-unavailable','provider-network-or-timeout','response-truncated-or-invalid','missing-google-grounding','provider-call-failed','snapshot-not-created','runner-exited-nonzero','risk-field-missing','unclassified-incomplete']);
+            const allowedFailureCodes=new Set(['runner-spawn-failed','prior-paid-attempt-reserved','provider-rate-limited','provider-auth-rejected','provider-temporarily-unavailable','provider-network-or-timeout','response-truncated-or-invalid','decision-references-need-review','search-plan-needs-review','missing-google-grounding','provider-call-failed','snapshot-not-created','runner-exited-nonzero','risk-field-missing','unclassified-incomplete']);
             finish({commodity,action:r.action,stage:typeof r.stage==='string'?r.stage:undefined,paidCalls:r.paidCalls,code:0,
               failureCode:typeof r.failureCode==='string'&&allowedFailureCodes.has(r.failureCode)?r.failureCode:undefined});return;
           }

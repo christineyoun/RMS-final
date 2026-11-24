@@ -4,7 +4,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 import {GoogleGenAI} from '@google/genai';
 import {loadDecisionContext} from './step5-decision-local.ts';
-import {parseDecisionResponse,auditDecisionReferences,renderDecisionReport,STEP5_DECISION_RESPONSE_JSON_SCHEMA} from './step5-decision-core.ts';
+import {parseDecisionResponse,normalizeDecisionSourceIds,auditDecisionReferences,renderDecisionReport,STEP5_DECISION_RESPONSE_JSON_SCHEMA} from './step5-decision-core.ts';
 
 const c=loadDecisionContext(); // fail before API usage
 const priorRuns=fs.readdirSync(c.dir).filter(f=>/^step5-round1-decision-.*\.json$/.test(f));
@@ -43,7 +43,9 @@ try{
 }
 if(response){
   const rawText=typeof response.text==='string'?response.text:'';
-  const decision=parseDecisionResponse(rawText);
+  const parsed=parseDecisionResponse(rawText);
+  const normalized=parsed?normalizeDecisionSourceIds(parsed,c.input):null;
+  const decision=normalized?.decision??null;
   const audit=decision?auditDecisionReferences(decision,c.input):null;
   const status=!decision?'model-json-invalid':
     audit?.invalidIds.length?'decision-references-need-review':
@@ -54,7 +56,7 @@ if(response){
   const save={stage:'round1-evidence-sufficiency-decision',recordedAt:new Date().toISOString(),
     commodity:c.input.commodity,model,status,
     inputFiles:{step4:c.prior,step5Graded:c.graded},counts:c.input.counts,
-    decision,referenceAudit:audit,rawText,usageMetadata:usage,modelFinishReason,
+    decision,referenceAudit:audit,referenceFormattingRepairs:normalized?.repairs??[],rawText,usageMetadata:usage,modelFinishReason,
     protected:{oldSourcesPreserved:true,allPreviousExcerptsPreserved:true,allNewExcerptsPreserved:true,
       googleSearchDisabled:true,round2SearchExecuted:false,marketOutlookGenerated:false,
       oldFilesOverwritten:false,rmsAndCloudRunUntouched:true}};
