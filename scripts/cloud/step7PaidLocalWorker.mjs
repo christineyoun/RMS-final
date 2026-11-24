@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {COMMODITIES,researchDir,inspect} from '../soybean-rebuild/research-pipeline-runner.mjs';
+import {COMMODITIES,researchDir,inspect,readLatest} from '../soybean-rebuild/research-pipeline-runner.mjs';
+import {classifyStep7Failure} from './step7FailureClassification.mjs';
 import {validatedLocalCard,validatedLocalRiskCard} from '../soybean-rebuild/step7-local-card-status.mjs';
 
 const args=process.argv.slice(2),idx=args.indexOf('--commodity');
@@ -65,7 +66,7 @@ if(await validatedLocalRiskCard(dir,commodity)){
 if(validatedLocalCard(dir,commodity)){
  report('stop','new-reviewed-card-missing-ai-risk','risk-field-missing');process.exit(0);
 }
-let stage='unverified-or-incomplete';
+let stage='unverified-or-incomplete', decisionStatus=null;
 try {
   const current=inspect(root,commodity);
   if(typeof current.stage==='string'&&current.stage!=='stop')stage=current.stage;
@@ -78,22 +79,15 @@ try {
     const progress=Array.isArray(current.progress)?current.progress:[];
     const last=progress.map(x=>typeof x==='string'?x.split(':',1)[0]:'').filter(x=>allowed.has(x)).at(-1);
     if(last)stage='last-recorded:'+last;
+    if(last==='step5decision'){
+      const saved=readLatest(dir,/^step5-round1-decision-.*\.json$/);
+      if(saved?.data.commodity===commodity&&saved.data.stage==='round1-evidence-sufficiency-decision'&&
+        progress.at(-1)===`step5decision: ${saved.name}`)decisionStatus=saved.data.status;
+    }
   }
 }catch{}
 // Allowlisted error categories only; no user or provider text leaks to logs.
-const outcome=childOut+'\n'+childErr;
-let failureCode='unclassified-incomplete';
-if(spawnError)failureCode='runner-spawn-failed';
-else if(/Previous paid attempt recorded|previous paid attempt|paid attempt already/i.test(outcome))failureCode='prior-paid-attempt-reserved';
-else if(/429|RESOURCE_EXHAUSTED|quota exceeded|rate.limit/i.test(outcome))failureCode='provider-rate-limited';
-else if(/401|403|PERMISSION_DENIED|invalid api.key|API_KEY_INVALID/i.test(outcome))failureCode='provider-auth-rejected';
-else if(/503|502|UNAVAILABLE|overloaded|internal server error/i.test(outcome))failureCode='provider-temporarily-unavailable';
-else if(/ETIMEDOUT|ECONNRESET|network error|timed out/i.test(outcome))failureCode='provider-network-or-timeout';
-else if(/MAX_TOKENS|invalid-or-incomplete-json|model-json-invalid/i.test(outcome))failureCode='response-truncated-or-invalid';
-else if(/No actual Google grounding citations|no-google-citations|no grounded sources/i.test(outcome))failureCode='missing-google-grounding';
-else if(/Google search call failed|generateContent.*failed/i.test(outcome))failureCode='provider-call-failed';
-else if(/exited 0 but did not create|snapshot.*missing/i.test(outcome))failureCode='snapshot-not-created';
-else if(code!==0)failureCode='runner-exited-nonzero';
+const failureCode=classifyStep7Failure({spawnError,decisionStatus,stdout:childOut,stderr:childErr,code});
 // This metadata never authorizes a retry or erases the paid-attempt reservation.
 try{
  const diagnosticDir=path.join(root,'.rms-research-runner',commodity,'daily',day);

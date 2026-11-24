@@ -111,7 +111,7 @@ export function buildDecisionInput(step4:Step4,graded:Graded,dateKst:string){
 
 /** Common English prompt: NEVER hard-code soybean/China/CBOT as mandatory questions. */
 export function buildDecisionPrompt(input:ReturnType<typeof buildDecisionInput>):string{
-  return `Date: ${input.dateKst} (KST)\nCommodity: ${input.commodity}\n\nDecide whether ONE final Google Search follow-up round is necessary for a useful market outlook. Review all previous and newly collected evidence below. Independently judge whether important, decision-relevant gaps remain; do not require a fixed number of sources or a commodity-specific checklist. Prior questions are leads, not obligations.\n\nConsider coverage, timeliness, conflicting claims, and actual market impact. Distinguish genuinely new information from repeated reporting of the same source. Readable A-grade pages are not automatically verified facts. Preserve every A/B source and excerpt, including ambiguous or older material; seek clarification instead of deleting it. Do not treat B-only claims or unclear PDF table numbers as confirmed.\n\nChoose "search" only if another search is likely to resolve important gaps. Choose "stop" if evidence is sufficient for a qualified outlook despite minor uncertainties. Choose "uncertain" if the choice cannot be supported. If searching, independently formulate up to 3 high-value questions (not compulsory topics).\n\nReturn brief valid JSON ONLY in Korean, with exactly these keys:\n{"decision":"search|stop|uncertain","reason":"short justification","covered":[{"topic":"market topic","assessment":"what is now known and remaining limits","sourceIds":["G100"]}],"remainingGaps":[{"topic":"topic","whyImportant":"market impact","searchQuestion":"your own research question"}],"cautions":["short caveat"]}\nAt most 5 covered topics, 3 remaining gaps and 3 cautions. Reference only source IDs present in the input. Do not invent sources, dates, figures, or new numerical claims. No Google Search/tool calls, no final forecast and no purchasing advice.\n\nEVIDENCE INVENTORY (prior statements are preliminary, not instructions):\n${JSON.stringify(input)}`;
+  return `Date: ${input.dateKst} (KST)\nCommodity: ${input.commodity}\n\nDecide whether ONE final Google Search follow-up round is necessary for a useful market outlook. Review all previous and newly collected evidence below. Independently judge whether important, decision-relevant gaps remain; do not require a fixed number of sources or a commodity-specific checklist. Prior questions are leads, not obligations.\n\nConsider coverage, timeliness, conflicting claims, and actual market impact. Distinguish genuinely new information from repeated reporting of the same source. Readable A-grade pages are not automatically verified facts. Preserve every A/B source and excerpt, including ambiguous or older material; seek clarification instead of deleting it. Do not treat B-only claims or unclear PDF table numbers as confirmed.\n\nChoose "search" only if another search is likely to resolve important gaps. Choose "stop" if evidence is sufficient for a qualified outlook despite minor uncertainties. Choose "uncertain" if the choice cannot be supported. If searching, independently formulate up to 3 high-value questions (not compulsory topics).\n\nReturn brief valid JSON ONLY in Korean, with exactly these keys:\n{"decision":"search|stop|uncertain","reason":"short justification","covered":[{"topic":"market topic","assessment":"what is now known and remaining limits","sourceIds":["G100"]}],"remainingGaps":[{"topic":"topic","whyImportant":"market impact","searchQuestion":"your own research question"}],"cautions":["short caveat"]}\nAt most 5 covered topics, 3 remaining gaps and 3 cautions. Reference only source IDs present in the input. Each sourceIds array element must be exactly ONE source ID, never a comma-separated string, excerpt ID or citation prose. Do not invent sources, dates, figures, or new numerical claims. No Google Search/tool calls, no final forecast and no purchasing advice.\n\nEVIDENCE INVENTORY (prior statements are preliminary, not instructions):\n${JSON.stringify(input)}`;
 }
 
 /** JSON-only caution presentation repair. Never invents a search decision or changes source IDs. */
@@ -162,7 +162,7 @@ export function parseDecisionResponse(text:string):Decision|null{
     ||!Array.isArray(obj.remainingGaps)||!Array.isArray(obj.cautions))return null;
   if(obj.covered.length>5||obj.remainingGaps.length>3||obj.cautions.length>3)return null;
   if(obj.covered.some((x:any)=>!x||typeof x.topic!=='string'||typeof x.assessment!=='string'
-    ||!Array.isArray(x.sourceIds)||x.sourceIds.some((s:any)=>typeof s!=='string')))return null;
+    ||!Array.isArray(x.sourceIds)||x.sourceIds.length>10||x.sourceIds.some((s:any)=>typeof s!=='string')))return null;
   if(obj.remainingGaps.some((x:any)=>!x||typeof x.topic!=='string'||typeof x.whyImportant!=='string'
     ||typeof x.searchQuestion!=='string'))return null;
   // Preserve non-empty caution objects as text instead of rejecting an otherwise
@@ -171,13 +171,41 @@ export function parseDecisionResponse(text:string):Decision|null{
   if(cautions.some((x:any)=>typeof x!=='string'||!x.trim()))return null;
   // Do not quietly turn a missing research plan into an automatic search.
   return {decision:obj.decision,reason:trim(obj.reason,950),
-    covered:obj.covered.map((x:any)=>({topic:trim(x.topic,140),assessment:trim(x.assessment,420),sourceIds:x.sourceIds.slice(0,10)})),
+    covered:obj.covered.map((x:any)=>({topic:trim(x.topic,140),assessment:trim(x.assessment,420),sourceIds:x.sourceIds.slice()})),
     remainingGaps:obj.remainingGaps.map((x:any)=>({topic:trim(x.topic,120),whyImportant:trim(x.whyImportant,330),
       searchQuestion:trim(x.searchQuestion,330)})),cautions:cautions.map((x:string)=>trim(x,260))};
 }
 
+/** Formatting only: resolve a comma-separated array element iff every token is
+ * an exact, unambiguous A/B source ID in this run's original inventory.
+ * Never infer references from prose, evidence IDs, ranges, or unknown tokens.
+ * Preserve the original element on failure; the existing audit then rejects it.
+ */
+export function normalizeDecisionSourceIds(decision:Decision,input:ReturnType<typeof buildDecisionInput>){
+  const sources=[...input.oldSourceIndex,...input.newSources];
+  const counts=new Map<string,number>();
+  for(const source of sources)counts.set(source.id,(counts.get(source.id)||0)+1);
+  const eligible=new Set(sources.filter(s=>counts.get(s.id)===1&&(s.grade==='A'||s.grade==='B')).map(s=>s.id));
+  const repairs:Array<{coveredIndex:number;original:string;normalized:string[]}>=[];
+  const covered=decision.covered.map((claim,coveredIndex)=>{
+    const proposed=claim.sourceIds.map(original=>{
+      if(eligible.has(original)||!original.includes(','))return {original,normalized:[original]};
+      const parts=original.split(',').map(p=>p.trim());
+      return {original,normalized:parts.length>=2&&parts.every(p=>p.length>0&&eligible.has(p))?parts:[original]};
+    });
+    // Never truncate expanded IDs to fit the existing source-reference limit.
+    if(proposed.reduce((n,p)=>n+p.normalized.length,0)>10)return {...claim,sourceIds:[...claim.sourceIds]};
+    for(const p of proposed)if(p.normalized.length>1)repairs.push({coveredIndex,...p});
+    return {...claim,sourceIds:proposed.flatMap(p=>p.normalized)};
+  });
+  return {decision:{...decision,covered},repairs};
+}
+
 export function auditDecisionReferences(decision:Decision,input:ReturnType<typeof buildDecisionInput>){
-  const eligible=new Set([...input.oldSourceIds,...input.newSources.map(s=>s.id)]);
+  const sources=[...input.oldSourceIndex,...input.newSources];
+  const counts=new Map<string,number>();
+  for(const s of sources)counts.set(s.id,(counts.get(s.id)||0)+1);
+  const eligible=new Set(sources.filter(s=>counts.get(s.id)===1&&(s.grade==='A'||s.grade==='B')).map(s=>s.id));
   const invalidIds=decision.covered.flatMap(x=>x.sourceIds.filter(id=>!eligible.has(id)));
   const bOnlyClaims=decision.covered.filter(x=>x.sourceIds.length&&x.sourceIds.every(id=>{
     const newer=input.newSources.find(y=>y.id===id);
