@@ -35,7 +35,10 @@ export function parseUsWheatFuturesPdf(text: string, reportDate: string, contrac
   if (!publishedDate.test(text)) return null;
   const marketCode = FUTURES_CODES[contractMonth];
   // The publisher includes $/MT only for the front futures month. Refuse a different contract.
-  if (!marketCode || !new RegExp(`\\b${contractMonth.slice(0,3)}\\s*\\(${marketCode}${String(year).slice(-2)}\\)`, 'i').test(text)) return null;
+  // A front contract can expire in the following calendar year. Determine its
+  // nearest non-past contract month from the report calendar, not the report year alone.
+  const contractYear = year + (MONTHS.indexOf(contractMonth) + 1 < month ? 1 : 0);
+  if (!marketCode || !new RegExp(`\\b${contractMonth.slice(0,3)}\\s*\\(${marketCode}${String(contractYear).slice(-2)}\\)`, 'i').test(text)) return null;
   const start = text.search(/Futures\s+Exchange\s+Settlements/i);
   if (start < 0) return null;
   const segment = text.slice(start, start + 9000).split(/\bLegend\s*:/i)[0];
