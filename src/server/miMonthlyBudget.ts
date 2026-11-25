@@ -1,20 +1,35 @@
 /**
  * Fail-closed scheduled Market Intelligence spend reservation.
  * This is a conservative ESTIMATE, not a substitute for the provider's actual billing caps.
- * All previous daily reservations for the KST calendar month are counted before a new
- * paid transport is allowed. An invalid/missing FX observation blocks new MI spending.
+ * All previous daily requests for the KST calendar month are counted before a new
+ * paid transport is allowed. A durable post-response usage estimate reconciles a
+ * reservation; missing or zero estimates retain the full reservation. Estimates
+ * are conservative telemetry, not invoices. An invalid/missing FX observation
+ * blocks new MI spending.
  */
 export type MiPaidRequest = { reservedUsd:number; estimatedUsd?:number };
 export type MiDailySpend = { version:number; day:string; requests:MiPaidRequest[] };
 
+/** The existing journal writes estimatedUsd only in the post-response onUsage
+ * callback. Failed or uncertain transport leaves it absent; missing provider
+ * usage is recorded as the original reservation. Never release a reserve merely
+ * because an article was rejected or a phase ended. */
+export function miAccountedUsd(r:MiPaidRequest):number {
+  if(!r||!Number.isFinite(r.reservedUsd)||r.reservedUsd<=0||
+    (r.estimatedUsd!==undefined&&(!Number.isFinite(r.estimatedUsd)||r.estimatedUsd<0)))
+    throw Error('Invalid paid request record; refusing new paid requests');
+  return r.estimatedUsd!==undefined&&r.estimatedUsd>0?r.estimatedUsd:r.reservedUsd;
+}
+
+/** Legacy exported name retained for callers. Includes reconciled estimates and
+ * unresolved reservations, not the gross sum of past preflight reservations. */
 export function miReservedKrw(requests:readonly MiPaidRequest[], safetyKrwPerUsd:number):number {
   if(!Number.isFinite(safetyKrwPerUsd)||safetyKrwPerUsd<=0||!Array.isArray(requests))
     throw Error('Verified FX and well-formed paid request history required');
   return requests.reduce((sum,r)=>{
-    if(!r||!Number.isFinite(r.reservedUsd)||r.reservedUsd<=0||
-      (r.estimatedUsd!==undefined&&(!Number.isFinite(r.estimatedUsd)||r.estimatedUsd<0)))
-      throw Error('Invalid paid request record; refusing new paid requests');
-    return sum+Math.ceil(Math.max(r.reservedUsd,r.estimatedUsd||0)*safetyKrwPerUsd);
+    const next=sum+Math.ceil(miAccountedUsd(r)*safetyKrwPerUsd);
+    if(!Number.isSafeInteger(next))throw Error('Invalid paid request accounting total');
+    return next;
   },0);
 }
 
@@ -26,6 +41,7 @@ export function requireMiMonthlyRoom(
      !Number.isFinite(nextUsd)||nextUsd<=0)throw Error('Invalid monthly AI spending authorization');
   const requested=Math.ceil(nextUsd*safetyKrwPerUsd);
   const projected=historicalKrw+miReservedKrw(todayRequests,safetyKrwPerUsd)+requested;
+  if(!Number.isSafeInteger(requested)||!Number.isSafeInteger(projected))throw Error('Invalid monthly AI spending authorization');
   if(projected>limitKrw)throw Error('Market Intelligence monthly estimated spending reservation limit reached; previous publications retained');
   return requested;
 }
