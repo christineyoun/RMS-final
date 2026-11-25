@@ -16,7 +16,7 @@ import {acceptedScheduledNews,publishScheduledContent,readScheduledContent} from
 import {gcsRead,gcsWrite} from './cloudPublication.ts';
 import {assertPaidRunActive,recordPaidRequestEvent,PaidRequestError} from './paidRequestTransport.ts';
 import {savedGeminiBudget,type KrwBudgetPolicy} from './geminiKrwBudget.ts';
-import {previousMonthMiKrw,requireMiMonthlyRoom} from './miMonthlyBudget.ts';
+import {previousMonthMiKrw,requireMiMonthlyRoom,miAccountedUsd,miReservedKrw} from './miMonthlyBudget.ts';
 
 export type ScheduledAiPolicy=KrwBudgetPolicy&{version:'weekday-ai-prepaid-v3';enabled:boolean;approvalId:string;analysisModel:string;newsModel:string;monthlyOperatingBudgetKrw:number;funding:'manual-prepaid';automaticTopUp:false;automaticPayment:false};
 export const policyHash=(p:ScheduledAiPolicy)=>createHash('sha256').update(JSON.stringify(p)).digest('hex');
@@ -44,8 +44,10 @@ export function cloudScheduledJournal(day:string):ScheduledJournalStore{
  let generation='0';const bucket=process.env.RMS_STATE_BUCKET!,key='control/paid-daily/'+day+'.json';
  return {async read(){try{const r=await gcsRead(bucket,key);generation=r.generation!;return JSON.parse(Buffer.from(r.bytes).toString());}catch(e){if(/HTTP 404$/.test((e as Error).message))return null;throw e;}},async save(j){const r=await gcsWrite(bucket,key,Buffer.from(JSON.stringify(j)),generation);generation=String(r.generation);}};
 }
-const charged=(j:DailyAiJournal)=>j.requests.reduce((n,r)=>n+Math.max(r.reservedUsd,r.estimatedUsd||0),0);
-const chargedKrw=(j:DailyAiJournal,rate:number|null)=>rate===null?null:j.requests.reduce((n,r)=>n+Math.ceil(Math.max(r.reservedUsd,r.estimatedUsd||0)*rate),0);
+// Keep scheduled summary consistent with the authorization ledger; individual
+// gross reservations remain durable in the journal for audit.
+const charged=(j:DailyAiJournal)=>j.requests.reduce((n,r)=>n+miAccountedUsd(r),0);
+const chargedKrw=(j:DailyAiJournal,rate:number|null)=>rate===null?null:miReservedKrw(j.requests,rate);
 /** STEP 1–7–2 owns ALL market analyses. Retain scheduled Market Intelligence NEWS only. */
 export function scheduledPhasePlan(day:string){
  const offset=Math.floor(Date.parse(day+'T00:00:00Z')/86400000)%COMMODITY_IDS.length;
