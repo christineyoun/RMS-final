@@ -44,7 +44,7 @@ export async function rememberGraphRefresh(id:string,payload:any){
 }
 function savedWheat(){
  if(!fs.existsSync(path.join(process.cwd(),'.rms-price-history/wheat.json')))throw Error('저장된 U.S. Wheat 가격 이력이 없습니다.');
- const stored=loadWheatHistory(),data=toChartPoints(stored.points),metrics=buildWheatMetrics(stored.points),latest=stored.points.at(-1);
+ const stored=loadWheatHistory(),data=toChartPoints(stored.points),metrics=buildWheatMetrics(stored.points,stored.contractComparisons),latest=stored.points.at(-1);
  if(!metrics||!data.length||!latest)throw Error('저장된 U.S. Wheat 가격 이력을 확인할 수 없습니다.');
  return {success:true,statusCode:200,source:'U.S. Wheat Associates',sourceUrl:WHEAT_PRICE_SOURCE,
   reportDate:data.at(-1)!.reportDate,lastRetrievalTime:stored.lastCheckedAt,primaryUnit:'USD/MT',secondaryUnit:'USD/bu',
