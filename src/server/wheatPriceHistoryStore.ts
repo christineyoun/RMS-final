@@ -4,6 +4,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
+import {wheatContractCode} from './wheatContractTable.ts';
 import { rawDefaultWheatSeries } from '../data/wheatHistory.ts';
 import type { UsWheatHistoryDataPoint, UsWheatClassMetric } from '../types.ts';
 
@@ -19,13 +21,21 @@ export type WheatStoredPoint = {
   hrwMt: number;
   hrsMt: number;
   contractMonth: string;
+  srwBu?:number;hrwBu?:number;hrsBu?:number;
   provenance: 'imported-baseline' | 'source-verified';
   sourceUrl?: string;
   receiptPath?:string;receiptSha256?:string;
 };
+export type WheatContractComparison = {
+  date:string;contractMonth:string;code:string;
+  srwBu:number;hrwBu:number;hrsBu:number;
+  frontCode:string;frontMt:[number,number,number];
+  sourceUrl:string;receiptPath:string;receiptSha256:string;
+};
 export type WheatHistoryStore = {
   version: number;
   points: WheatStoredPoint[];
+  contractComparisons?:WheatContractComparison[];
   lastCheckedAt?: string;
   lastVerifiedAt?: string;
   lastError?: string;
@@ -86,7 +96,16 @@ export function loadWheatHistory(): WheatHistoryStore {
   try {
     const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (parsed?.version !== HISTORY_VERSION || !Array.isArray(parsed.points)) throw new Error('Unsupported wheat history store format');
-    return { ...parsed, points: trimHistory(parsed.points) };
+    const points=trimHistory(parsed.points);
+    const comparisons=Array.isArray(parsed.contractComparisons)?parsed.contractComparisons.filter((c:WheatContractComparison)=>{
+      if(!validWheatComparison(c,points))return false;
+      try{
+        const receipt=JSON.parse(fs.readFileSync(c.receiptPath,'utf8'));
+        const bytes=Buffer.from(receipt.pdfBase64,'base64');
+        return receipt.sourceUrl===c.sourceUrl&&receipt.status===200&&receipt.sha256===c.receiptSha256&&bytes.length>=2000&&bytes.length<=5_000_000&&bytes.subarray(0,4).toString()==='%PDF'&&createHash('sha256').update(bytes).digest('hex')===c.receiptSha256;
+      }catch{return false;}
+    }):[];
+    return { ...parsed, points,contractComparisons:comparisons };
   } catch (error) {
     // Fail closed: do not overwrite a corrupted file with a fresh seed.
     throw new Error(`Saved Wheat history cannot be read safely: ${error instanceof Error ? error.message : String(error)}`);
@@ -126,6 +145,7 @@ export function mergePublishedWheatReport(history: WheatHistoryStore, report: Wh
     hrwMt: hasPrintedMt ? report.hrwMt! : toMetricTon(report.hrwBu),
     hrsMt: hasPrintedMt ? report.hrsMt! : toMetricTon(report.hrsBu),
     contractMonth: report.contractMonth,
+    srwBu:report.srwBu,hrwBu:report.hrwBu,hrsBu:report.hrsBu,
     provenance: 'source-verified',
     sourceUrl: report.sourceUrl,...(report.receiptPath?{receiptPath:report.receiptPath,receiptSha256:report.receiptSha256}:{})
   };
@@ -156,28 +176,38 @@ export function mergePublishedWheatReport(history: WheatHistoryStore, report: Wh
 }
 
 const DAY = 86400000;
-function findComparison(points: WheatStoredPoint[], latest: WheatStoredPoint, targetDays: number, tolerance: number): WheatStoredPoint | null {
+export function validWheatComparison(c:WheatContractComparison,points:WheatStoredPoint[]):boolean {
+  if(!c||!Array.isArray(c.frontMt)||c.frontMt.length!==3||!/^[FGHJKMNQUVXZ]\d{2}$/.test(c.code)||!/^https:\/\/(?:www\.)?uswheat\.org\//i.test(c.sourceUrl)||!/^([a-f0-9]{64})$/.test(c.receiptSha256)||c.receiptSha256===createHash('sha256').digest('hex')||c.receiptPath!=='.rms-price-history/source-evidence/wheat/'+c.receiptSha256+'.json')return false;
+  const front=points.find(p=>p.date===c.date&&p.provenance==='source-verified');
+  return !!front&&wheatContractCode(front.date,front.contractMonth)===c.frontCode&&c.frontMt.every((v,i)=>v===[front.srwMt,front.hrwMt,front.hrsMt][i])&&[c.srwBu,c.hrwBu,c.hrsBu].every(v=>Number.isFinite(v)&&v>=2&&v<=25);
+}
+function findComparison(points: WheatStoredPoint[], latest: WheatStoredPoint, targetDays: number, tolerance: number, comparisons:WheatContractComparison[]): WheatStoredPoint | null {
   const latestMs = Date.parse(`${latest.date}T00:00:00Z`);
-  const candidates = points.filter(p => p.date < latest.date && p.contractMonth === latest.contractMonth)
+  const code=wheatContractCode(latest.date,latest.contractMonth);
+  const eligible=points.filter(p=>p.date<latest.date&&p.contractMonth===latest.contractMonth&&wheatContractCode(p.date,p.contractMonth)===code&&(latest.provenance!=='source-verified'||p.provenance==='source-verified'));
+  const secondary=comparisons.filter(c=>c.code===code&&c.contractMonth===latest.contractMonth&&c.date<latest.date&&validWheatComparison(c,points)&&!eligible.some(p=>p.date===c.date)).map(c=>({date:c.date,contractMonth:c.contractMonth,provenance:'source-verified' as const,srwMt:toMetricTon(c.srwBu),hrwMt:toMetricTon(c.hrwBu),hrsMt:toMetricTon(c.hrsBu),srwBu:c.srwBu,hrwBu:c.hrwBu,hrsBu:c.hrsBu}));
+  const candidates = [...eligible,...secondary]
     .map(p => ({ p, offset: (latestMs - Date.parse(`${p.date}T00:00:00Z`)) / DAY }))
     .filter(({ offset }) => Math.abs(offset - targetDays) <= tolerance)
-    .sort((a,b) => Math.abs(a.offset-targetDays) - Math.abs(b.offset-targetDays));
+    .sort((a,b) => Math.abs(a.offset-targetDays) - Math.abs(b.offset-targetDays)||b.p.date.localeCompare(a.p.date));
   return candidates[0]?.p || null;
 }
 
-export function buildWheatMetrics(points: WheatStoredPoint[]): { srw: UsWheatClassMetric; hrw: UsWheatClassMetric; hrs: UsWheatClassMetric } | null {
+export function buildWheatMetrics(points: WheatStoredPoint[], comparisons:WheatContractComparison[]=[]): { srw: UsWheatClassMetric; hrw: UsWheatClassMetric; hrs: UsWheatClassMetric } | null {
   const latest = points[points.length - 1];
   if (!latest) return null;
-  const wow = findComparison(points, latest, 7, 5);
-  const mom = findComparison(points, latest, 30, 10);
+  const wow = findComparison(points, latest, 7, 5, comparisons);
+  const mom = findComparison(points, latest, 30, 10, comparisons);
   const metric = (wheatClass: 'SRW' | 'HRW' | 'HRS', nameKo: string, nameEn: string, exchange: string): UsWheatClassMetric => {
     const k = `${wheatClass.toLowerCase()}Mt` as 'srwMt' | 'hrwMt' | 'hrsMt';
     const current = latest[k];
-    const calc = (previous: WheatStoredPoint | null) => previous ? {
-      pct: round2(((current - previous[k]) / previous[k]) * 100),
-      mt: round2(current - previous[k]),
-      bu: round2((current - previous[k]) / BUSHELS_PER_METRIC_TON)
-    } : { pct: 0, mt: 0, bu: 0 };
+    const bk = `${wheatClass.toLowerCase()}Bu` as 'srwBu'|'hrwBu'|'hrsBu';
+    const calc = (previous: WheatStoredPoint | null) => {
+      if(!previous)return {pct:0,mt:0,bu:0};
+      const a=latest[bk],b=previous[bk];
+      const exact=typeof a==='number'&&typeof b==='number'&&a>=2&&b>=2&&a<=25&&b<=25&&Math.abs(a*BUSHELS_PER_METRIC_TON-current)<=.15&&Math.abs(b*BUSHELS_PER_METRIC_TON-previous[k])<=.15;
+      return {pct:round2(exact?(a!/b!-1)*100:((current-previous[k])/previous[k])*100),mt:round2(current-previous[k]),bu:round2(exact?a!-b!:(current-previous[k])/BUSHELS_PER_METRIC_TON)};
+    };
     const w = calc(wow), m = calc(mom);
     return {
       wheatClass, classNameKo: nameKo, classNameEn: nameEn, exchange, contractMonth: latest.contractMonth,

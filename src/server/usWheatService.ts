@@ -8,9 +8,7 @@ import type {
 } from '../types.ts';
 import { loadWheatHistory, saveWheatHistory, mergePublishedWheatReport, toChartPoints, buildWheatMetrics, asIsoDate, toMetricTon, WHEAT_PRICE_SOURCE } from './wheatPriceHistoryStore.ts';
 import { PDFParse } from 'pdf-parse';
-import fs from 'node:fs';
-import path from 'node:path';
-import {createHash} from 'node:crypto';
+import {wheatPdfReceipt,persistWheatPdfReceipt,fillWheatComparisons} from './wheatContractEvidence.ts';
 import { usWheatPdfCandidates, parseUsWheatFuturesPdf } from './wheatReportFuturesPdf.ts';
 import { getKSTDateString, getKSTFormattedTime } from './marketDataService.ts';
 import { getSourceDefinition } from './sourceRegistry.ts';
@@ -475,14 +473,13 @@ export class UsWheatPriceReportService {
         if (contentLength > 5_000_000) continue;
         const bytes = new Uint8Array(await result.arrayBuffer());
         if (bytes.length < 2000 || bytes.length > 5_000_000 || String.fromCharCode(...bytes.slice(0,4)) !== '%PDF') continue;
-        const parser = new PDFParse({ data: bytes });
+        const evidence=wheatPdfReceipt(bytes,result.url,result.status);
+        const parser = new PDFParse({ data: new Uint8Array(bytes) });
         let extracted;try{extracted=await parser.getText();}finally{await parser.destroy();}
         const exact = parseUsWheatFuturesPdf(extracted?.text || '', iso, contractMonth);
         if (!exact){failures.push('dated contract/settlement rows or USD units could not be parsed');continue;}
         if ([exact.srwBu,exact.hrwBu,exact.hrsBu].some((v,i) => Math.abs(v - roundedBu[i]) > 0.06)){failures.push('printed settlements disagree with publisher report summary');continue;}
-        const receiptSha256=createHash('sha256').update(bytes).digest('hex'),receiptPath='.rms-price-history/source-evidence/wheat/'+receiptSha256+'.json';
-        fs.mkdirSync(path.dirname(receiptPath),{recursive:true});
-        if(!fs.existsSync(receiptPath))fs.writeFileSync(receiptPath,JSON.stringify({sourceUrl:result.url,retrievedAt:new Date().toISOString(),status:result.status,sha256:receiptSha256,pdfBase64:Buffer.from(bytes).toString('base64')}),{flag:'wx',mode:0o600});
+        const {receiptPath,receiptSha256}=persistWheatPdfReceipt(evidence);
         return { ...exact, pdfUrl: result.url,receiptPath,receiptSha256 };
       } catch (e) {
         failures.push((e as Error).message.slice(0,180));
@@ -534,6 +531,11 @@ export class UsWheatPriceReportService {
         });
         stored = merge.history;
         updated = merge.changed;
+        try{
+          const prior=JSON.stringify(stored.contractComparisons||[]);
+          stored=await fillWheatComparisons(stored,latest.historicalReports.map(item=>item.url));
+          updated=updated||prior!==JSON.stringify(stored.contractComparisons||[]);
+        }catch(error){console.warn('[WheatComparison] Existing verified prices retained:',error instanceof Error?error.message:String(error));}
         sourceError = '';
       } catch (error) {
         // Preserve all saved observations; an unavailable publisher never becomes a new data point.
@@ -545,7 +547,7 @@ export class UsWheatPriceReportService {
       saveWheatHistory(stored);
     }
     const points = toChartPoints(stored.points);
-    const metrics = buildWheatMetrics(stored.points);
+    const metrics = buildWheatMetrics(stored.points,stored.contractComparisons);
     if (!metrics || !points.length) {
       return {
         success: false, statusCode: 503, source: 'U.S. Wheat Associates', sourceUrl: WHEAT_PRICE_SOURCE,
